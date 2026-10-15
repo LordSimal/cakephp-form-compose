@@ -7,12 +7,16 @@ use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
 
 /**
- * Prepared option or choice group, with independent input, label, and wrapper attributes.
+ * Holds template data for one select option, radio/checkbox choice, or choice group.
+ *
+ * Choices builds these records; NativeType selects the matching option or choice
+ * template. An item has input attributes and optional label/container attributes.
+ * A group carries child Choice records so templates can render nested options.
  */
 final readonly class Choice
 {
     /**
-     * Describe a choice without HTML strings or a legacy widget dependency.
+     * Describe an option or group and its presentation attributes.
      *
      * @param list<\FormCompose\Field\Choice> $children Nested choices.
      * @param array<string, \FormCompose\Rendering\Attributes> $presentation Label and container attributes.

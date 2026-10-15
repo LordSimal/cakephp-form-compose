@@ -8,7 +8,11 @@ use FormCompose\Binding\FormBinding;
 use InvalidArgumentException;
 
 /**
- * Resolves native form actions through Cake routing without HTML helper dependencies.
+ * Resolves both the form action attribute and the URL used for its security token.
+ *
+ * FormConstruction passes route arrays or URL strings through CakePHP routing.
+ * An omitted URL uses the current request target; url => false omits the action
+ * attribute. The security URL retains the target path and query string.
  */
 final class ActionUrl
 {

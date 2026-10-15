@@ -7,7 +7,17 @@ use InvalidArgumentException;
 use Stringable;
 
 /**
- * Immutable HTML attributes with explicit class and ID-reference composition.
+ * Stores HTML attributes and serializes them with escaping and boolean semantics.
+ *
+ * merge() combines class and ARIA ID-reference tokens; replace() replaces them.
+ * Null or false omits an attribute, while true emits its name alone. Operations
+ * return new bags, allowing templates to customize a field's prepared attributes.
+ *
+ * ```php
+ * $attributes = new Attributes(['class' => 'control', 'required' => true]);
+ * echo (string)$attributes->merge(['class' => ['wide' => true]]);
+ * // Emits: class="control wide" required (with a leading space).
+ * ```
  */
 final readonly class Attributes implements Stringable
 {

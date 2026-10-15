@@ -1,11 +1,12 @@
 # FormCompose
 
 Composable form binding and native PHP rendering for CakePHP. The plugin provides
-`FormCompose\View\Helper\FormHelper` alongside Cake's existing helper.
+`FormCompose\View\Helper\FormHelper` for building complete controls or composing
+individual field parts in application templates.
 
 FormCompose separates resolved field state from HTML composition. Use complete
 controls, individual parts, or handwritten inputs against the same context and
-submission contract. The core never constructs or delegates to Cake's FormHelper.
+submission contract.
 Forms, buttons, native inputs, choices, and hidden infrastructure fields all render
 through one PHP template system. It supplies plain semantic HTML, with no CSS
 framework or JavaScript dependency. Application or plugin themes own styling and
@@ -33,14 +34,11 @@ Load the helper in `AppView::initialize()`:
 $this->loadHelper('Form', ['className' => 'FormCompose.Form']);
 ```
 
-This opts into the new API for `$this->Form`. To keep Cake's existing helper in
-the same view, load the new helper under an alias instead:
+This exposes the API as `$this->Form`. Alternatively, load it under another alias:
 
 ```php
 $this->loadHelper('Compose', ['className' => 'FormCompose.Form']);
 ```
-
-Existing FormHelper calls are not automatically translated to this API.
 
 ## Complete controls
 
@@ -218,8 +216,8 @@ They do not resolve conflicting CSS utilities. Control identity and behavior suc
 as `name`, `id`, `type`, `value`, and `secure` belong in field options rather than
 HTML attribute bags.
 
-The plugin bundles no framework themes. A theme for Tailwind, daisyUI, Bootstrap,
-or another system can live entirely in the application or a separate plugin.
+Themes for Tailwind, daisyUI, Bootstrap, or another design system can live in
+the application or a separate plugin.
 For Tailwind, write complete class names and include theme files in source scanning.
 
 ## Optional reusable definitions
@@ -240,9 +238,9 @@ echo $form->open(), $form->render(), $form->submit('Save'), $form->close();
 
 Definitions are immutable and reusable. Fields remain individually accessible with
 `field()` and `control()`; per-call options override definition options. Definitions
-do not introduce a layout DSL, another validator, or persistence behavior.
+describe fields; application services handle validation and persistence.
 
-## Custom controls and existing widgets
+## Custom controls and renderers
 
 Implement `FieldTypeInterface` to render a custom control and return its submitted
 names as `Submission` objects. Register it using
@@ -254,15 +252,6 @@ names as `Submission` objects. Register it using
 `disabled` and other submission behavior. Use `Submission($name, value: $value)`
 for a hidden value that must remain locked. Explicit unlocking is available with
 `locked: false`. Presentation templates cannot infer these semantics from HTML.
-
-Existing Cake widgets are an explicit compatibility integration. Wrap an already
-constructed widget with `FormCompose\Compatibility\WidgetType($widget, $context)`
-and register it in the `types` map. The adapter honors
-`WidgetInterface::secureFields()` without loading FormHelper or its widget locator.
-Applications construct legacy widgets and their string templaters outside the core.
-The old `widgets` and `widgetTemplates` factory options are rejected. Complex locked
-values should use a custom field type. Existing FormHelper method overrides are
-not adapted.
 
 Custom renderers implement `RendererInterface::render(string $part, RenderNode $node)`.
 A node exposes its `scope`, `type`, prepared `variables`, and presentation `options`.
@@ -277,6 +266,70 @@ versions are required when upgrading that integration.
 File controls require `['type' => 'file']` or multipart `enctype` when opening the
 form. Dynamic collection protocols, reactive validation, and frontend state
 synchronization are left to integrations.
+
+## Extending behavior
+
+Service classes support subclassing, with protected methods and dependencies for
+specialization. Use theme elements for markup changes and `FieldTypeInterface` for
+new control semantics. To adjust built-in behavior, these hooks connect subclasses
+to the normal form-building API:
+
+| Class | Extension points |
+| --- | --- |
+| `FormHelper` | `createSession()` selects the session returned by `bind()` |
+| `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
+| `FieldResolver` | `find()`, `inferType()`, and factories for bound fields, field types, and value resolution |
+| `ValueResolver` | `fromSources()` specializes request/context lookup |
+| `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
+| `NativeType` | `choice()` and `createChoices()` specialize standard controls |
+| `PhpRenderer` | `layered()` and `element()` customize template lookup and execution |
+
+For example, an application helper can select a session that uses a custom resolver:
+
+```php
+use FormCompose\Binding\FieldResolver;
+use FormCompose\Binding\FormBinding;
+use FormCompose\FormSession;
+use FormCompose\Rendering\RenderContext;
+use FormCompose\View\Helper\FormHelper;
+
+class AppFormHelper extends FormHelper
+{
+    protected function createSession(FormBinding $binding, RenderContext $rendering): FormSession
+    {
+        return new AppFormSession($binding, $rendering);
+    }
+}
+
+class AppFormSession extends FormSession
+{
+    protected function createFieldResolver(): FieldResolver
+    {
+        return new AppFieldResolver($this->binding, $this->rendering);
+    }
+}
+
+class AppFieldResolver extends FieldResolver
+{
+    protected function inferType(string $path, array $options): string
+    {
+        return $path === 'website' ? 'url' : parent::inferType($path, $options);
+    }
+}
+```
+
+Load `AppFormHelper` using CakePHP's helper `className` option. Explicit field types
+still take priority over type inference. `Choices`, `ChoiceAttributes`, and
+`FieldAttributes` also support subclassing. `FormLifecycle` accepts custom
+`FormConstruction` and `FormProtection` instances through its constructor;
+override the session's `createLifecycle()` to supply them. Preserve lifecycle
+checks and register the inputs actually rendered when specializing these services.
+
+Service dependencies use readonly properties, while subclasses can declare their
+own mutable state. Immutable configuration and data objects, including `Theme`,
+`FieldDefinition`, `FieldState`, `Attributes`, and `RenderNode`, remain final so their
+value and escaping contracts stay consistent. Small stateless utilities such as
+`InputNames` and `NativeValue` are also final.
 
 ## Development
 

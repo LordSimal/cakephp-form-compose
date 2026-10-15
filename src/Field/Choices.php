@@ -8,17 +8,23 @@ use FormCompose\Rendering\Html;
 use FormCompose\Rendering\Theme;
 
 /**
- * Normalizes option sources into immutable template data with stable choice identities.
+ * Turns an iterable of option values and labels into a tree of Choice records.
+ *
+ * Used by NativeType for selects, radios, and checkbox groups. Supports simple
+ * value/label pairs, nested groups, and extended options with value, text, and
+ * attributes. Assigns unique choice IDs and prepares label and wrapper defaults
+ * from the theme before passing the records to templates. Override
+ * createChoiceAttributes() to supply custom per-option attribute rules.
  */
-final class Choices
+class Choices
 {
     /** @var array<string, true> */
-    private array $ids = [];
+    protected array $ids = [];
 
     /**
-     * Use the selected theme's independent choice-part defaults.
+     * Use the selected theme's defaults for options, labels, and choice groups.
      */
-    public function __construct(private readonly Theme $theme)
+    public function __construct(protected readonly Theme $theme)
     {
     }
 
@@ -57,7 +63,7 @@ final class Choices
             $choices[] = new Choice(
                 'item',
                 $text instanceof Html ? $text : (string)$text,
-                new ChoiceAttributes($this->theme)->resolve($state, $attributes, $option),
+                $this->createChoiceAttributes()->resolve($state, $attributes, $option),
                 [],
                 [
                     'label' => $this->theme->attributes('choice-label', $state->type)->replace(['for' => $id]),
@@ -67,5 +73,13 @@ final class Choices
         }
 
         return $choices;
+    }
+
+    /**
+     * Create the attribute resolver used for each option in this choice tree.
+     */
+    protected function createChoiceAttributes(): ChoiceAttributes
+    {
+        return new ChoiceAttributes($this->theme);
     }
 }

@@ -11,19 +11,30 @@ use FormCompose\Rendering\RenderNode;
 use FormCompose\Rendering\Theme;
 
 /**
- * Immutable field state shared by automatic controls and application-owned markup.
+ * Provides the rendering API for one resolved field in a form session.
+ *
+ * Exposes FieldState for inspection and renders either a complete control or its
+ * input, label, help, and error parts. input() registers submitted names after
+ * successful rendering; register() serves handwritten inputs using the same type.
+ * Subclasses can customize field parts and supply their own FieldAttributes resolver.
+ *
+ * ```php
+ * $email = $form->field('email', ['type' => 'email']);
+ * echo $email->label(), $email->input(['class' => 'contact-input']);
+ * echo $email->errors();
+ * ```
  */
-final readonly class BoundField
+class BoundField
 {
     /**
      * Compose immutable state, rendering, and a submission contract.
      */
     public function __construct(
-        public FieldState $state,
-        private FormLifecycle $lifecycle,
-        private RendererInterface $renderer,
-        private Theme $theme,
-        private FieldTypeInterface $fieldType,
+        public readonly FieldState $state,
+        protected readonly FormLifecycle $lifecycle,
+        protected readonly RendererInterface $renderer,
+        protected readonly Theme $theme,
+        protected readonly FieldTypeInterface $fieldType,
     ) {
     }
 
@@ -34,7 +45,7 @@ final readonly class BoundField
      */
     public function attributes(string $part = 'input', array $extra = []): Attributes
     {
-        return new FieldAttributes($this->theme)->resolve($this->state, $part, $extra);
+        return $this->createFieldAttributes()->resolve($this->state, $part, $extra);
     }
 
     /**
@@ -119,5 +130,13 @@ final readonly class BoundField
         return $this->state->hasErrors()
             ? $this->renderer->render('errors', RenderNode::field($this, $this->attributes('errors', $attributes)))
             : '';
+    }
+
+    /**
+     * Create the attribute resolver used by every part of this field.
+     */
+    protected function createFieldAttributes(): FieldAttributes
+    {
+        return new FieldAttributes($this->theme);
     }
 }

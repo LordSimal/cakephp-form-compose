@@ -7,7 +7,17 @@ use FormCompose\Rendering\Html;
 use InvalidArgumentException;
 
 /**
- * Reusable field configuration, independent of requests and rendering.
+ * Stores a reusable field path and its behavior and presentation options.
+ *
+ * Definitions contain configuration; FieldResolver combines them with a form's
+ * context to produce BoundField instances. Fluent methods return new definitions,
+ * so a definition can be shared across forms and customized per use.
+ *
+ * ```php
+ * $email = FieldDefinition::make('email', 'email')
+ *     ->label('Work email')
+ *     ->help('Use your work address.');
+ * ```
  */
 final readonly class FieldDefinition
 {

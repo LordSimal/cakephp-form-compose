@@ -16,18 +16,29 @@ use LogicException;
 use Throwable;
 
 /**
- * Public form facade over independent binding, lifecycle, and PHP rendering services.
+ * Coordinates the public API for building and rendering one bound form.
+ *
+ * Created by FormHelper::bind(). Uses the binding to resolve fields, the renderer
+ * to produce themed markup, and the lifecycle to track submitted inputs and tokens.
+ * A session can open once; render its inputs before closing it. Override
+ * createFieldResolver() or createLifecycle() to supply specialized collaborators.
+ *
+ * ```php
+ * $form = $this->Form->bind($article);
+ * echo $form->open(), $form->control('title');
+ * echo $form->submit('Save'), $form->close();
+ * ```
  */
-final class FormSession
+class FormSession
 {
-    private readonly FormLifecycle $lifecycle;
+    protected readonly FormLifecycle $lifecycle;
 
     /**
-     * Create isolated lifecycle state without constructing or inheriting Cake's FormHelper.
+     * Create a form session with its binding and rendering configuration.
      */
-    public function __construct(public readonly FormBinding $binding, private readonly RenderContext $rendering)
+    public function __construct(public readonly FormBinding $binding, protected readonly RenderContext $rendering)
     {
-        $this->lifecycle = new FormLifecycle($binding);
+        $this->lifecycle = $this->createLifecycle();
     }
 
     /**
@@ -94,7 +105,7 @@ final class FormSession
      */
     public function field(string|FieldDefinition $field, array $options = []): BoundField
     {
-        return new FieldResolver($this->binding, $this->rendering)->resolve($field, $options, $this->lifecycle);
+        return $this->createFieldResolver()->resolve($field, $options, $this->lifecycle);
     }
 
     /**
@@ -175,5 +186,21 @@ final class FormSession
         }
 
         return $html;
+    }
+
+    /**
+     * Create lifecycle coordination for this session before opening the form.
+     */
+    protected function createLifecycle(): FormLifecycle
+    {
+        return new FormLifecycle($this->binding);
+    }
+
+    /**
+     * Create the resolver used by field() and control().
+     */
+    protected function createFieldResolver(): FieldResolver
+    {
+        return new FieldResolver($this->binding, $this->rendering);
     }
 }

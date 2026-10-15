@@ -8,7 +8,11 @@ use Cake\View\Form\ContextInterface;
 use FormCompose\FormDefinition;
 
 /**
- * Request and context configuration shared by fields of one form.
+ * Holds the data sources and configuration shared by one form session.
+ *
+ * The CakePHP context supplies schema, entity values, and validation errors; the
+ * request supplies submitted data and security metadata. FieldResolver and
+ * FormConstruction read this object to prepare fields and form metadata.
  */
 final readonly class FormBinding
 {

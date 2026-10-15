@@ -5,26 +5,11 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\Core\Configure;
 use Cake\View\Form\ArrayContext;
-use Cake\View\Helper\FormHelper as LegacyFormHelper;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 
-class IndependentFormTest extends FormTestCase
+class FormConstructionTest extends FormTestCase
 {
-    #[RunInSeparateProcess]
-    #[PreserveGlobalState(false)]
-    public function testOrdinaryRenderingNeverLoadsLegacyFormHelper(): void
-    {
-        static::assertFalse(class_exists(LegacyFormHelper::class, false));
-        $form = $this->helper(attributes: ['formTokenData' => []])->bind(null, ['method' => 'patch']);
-        $html = $form->open() . $form->control('name') . $form->submit('Save') . $form->close();
-        static::assertStringContainsString('<form', $html);
-        static::assertStringContainsString('_Token[fields]', $html);
-        static::assertFalse(class_exists(LegacyFormHelper::class, false));
-    }
-
     public function testGetFormOmitsCsrfAndProtectionInfrastructure(): void
     {
         $form = $this->helper(attributes: [
@@ -71,12 +56,6 @@ class IndependentFormTest extends FormTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->helper()->bind(null, ['method' => 'invalid'])->open();
-    }
-
-    public function testLegacyWidgetFactoryOptionsAreRejected(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(null, ['widgets' => []]);
     }
 
     public function testProductionModeDoesNotExposeDebugSecurityData(): void

@@ -8,7 +8,12 @@ use InvalidArgumentException;
 use Stringable;
 
 /**
- * Converts resolved values into browser representations without reading request state.
+ * Formats bound PHP values for use in standard browser controls.
+ *
+ * NativeAttributes and NativeType use these conversions when preparing templates.
+ * Date/time objects use HTML input formats, false becomes the string zero, and
+ * unsupported composite values are rejected. Password and file inputs receive no
+ * prefilled value. Escaping is performed when templates render the prepared value.
  */
 final class NativeValue
 {

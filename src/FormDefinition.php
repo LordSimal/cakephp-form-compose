@@ -7,7 +7,12 @@ use FormCompose\Field\FieldDefinition;
 use InvalidArgumentException;
 
 /**
- * Optional reusable field collection; validation and persistence remain application concerns.
+ * Groups reusable FieldDefinition objects in their intended rendering order.
+ *
+ * Pass a definition to FormHelper::bind(), then call FormSession::render() to render
+ * its fields together. Individual fields remain available through field() and
+ * control(), with per-call options overriding the definition. Each field path must
+ * be unique within the collection.
  */
 final readonly class FormDefinition
 {

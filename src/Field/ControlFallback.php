@@ -6,7 +6,12 @@ namespace FormCompose\Field;
 use FormCompose\Rendering\Attributes;
 
 /**
- * Describes native empty submissions independently of their hidden-field templates.
+ * Prepares the hidden input used when a choice control submits no selection.
+ *
+ * Browsers omit unchecked checkboxes and empty multiple selections. NativeType
+ * renders this fallback before the visible control so an unchecked checkbox can
+ * submit its uncheckedValue (zero by default), or an empty choice group can submit
+ * an empty string. The hiddenField option disables this behavior.
  */
 final class ControlFallback
 {

@@ -105,7 +105,7 @@ class RenderingTest extends FormTestCase
         $form->close();
     }
 
-    public function testThemeAttributesRemainFrameworkIndependent(): void
+    public function testThemeDefaultsAndFieldAttributesAreMerged(): void
     {
         $theme = new Theme(defaults: [
             'input' => ['class' => 'control'],
@@ -131,10 +131,10 @@ class RenderingTest extends FormTestCase
         $this->helper()->bind()->field('email')->attributes(extra: ['name' => 'other']);
     }
 
-    public function testUnknownFrameworkNamesAreNotBuiltIn(): void
+    public function testUnknownThemeNameIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(theme: 'SomeFramework');
+        $this->helper()->bind(theme: 'UnknownTheme');
     }
 
     public function testHiddenControlsDoNotReferenceUnrenderedFeedback(): void

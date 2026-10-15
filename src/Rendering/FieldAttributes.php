@@ -7,14 +7,19 @@ use FormCompose\Field\FieldState;
 use InvalidArgumentException;
 
 /**
- * Composes per-part attributes without affecting binding or submission state.
+ * Builds attribute bags for a field's input, label, help, errors, or container.
+ *
+ * BoundField uses this to combine theme defaults, resolved field metadata, field
+ * configuration, and local attributes. It adds label/help/error associations and
+ * ARIA feedback, and rejects identity changes through input attribute bags;
+ * name, id, type, and value are configured as field options.
  */
-final readonly class FieldAttributes
+class FieldAttributes
 {
     /**
-     * Resolve attributes using framework-independent theme defaults.
+     * Use theme defaults as the starting point for each field part.
      */
-    public function __construct(private Theme $theme)
+    public function __construct(protected readonly Theme $theme)
     {
     }
 
@@ -62,7 +67,7 @@ final readonly class FieldAttributes
      *
      * @return array<string, string>
      */
-    private function descriptions(FieldState $state): array
+    protected function descriptions(FieldState $state): array
     {
         if ($state->type === 'hidden') {
             return [];

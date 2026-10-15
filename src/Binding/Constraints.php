@@ -6,12 +6,16 @@ namespace FormCompose\Binding;
 use Cake\View\Form\ContextInterface;
 
 /**
- * Converts existing Cake context metadata into native browser constraints.
+ * Translates CakePHP context metadata into browser validation attributes.
+ *
+ * FieldResolver uses this when creating FieldState. Required status, maximum text
+ * length, and numeric step come from the context; field options can set required,
+ * disabled, readonly, and multiple. Server-side validation stays in the application.
  */
 final class Constraints
 {
     /**
-     * Resolve browser constraints without creating a second validation system.
+     * Resolve browser constraints from context metadata and field options.
      *
      * @param array<string, mixed> $options Field overrides.
      * @return array<string, mixed>

@@ -4,7 +4,11 @@ declare(strict_types=1);
 namespace FormCompose\Rendering;
 
 /**
- * Framework-independent presentation dependencies for one form.
+ * Groups the presentation dependencies shared by a form and its fields.
+ *
+ * FormHelper creates it when binding a form. FormSession and FieldResolver use its
+ * renderer and theme; the types map supplies named FieldTypeInterface instances
+ * for custom controls. Request data and entity metadata live in FormBinding.
  */
 final readonly class RenderContext
 {

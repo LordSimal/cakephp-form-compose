@@ -4,9 +4,8 @@ These instructions apply to the entire plugin repository.
 
 ## Purpose and architecture
 
-- Build an opt-in CakePHP plugin for composable form binding and rendering, independent of the existing FormHelper.
-- Never instantiate or delegate to Cake\View\Helper\FormHelper. Native form, button, field, choice, and infrastructure markup belongs in the shared PHP template system.
-- Keep legacy widget compatibility behind explicit adapters; the native rendering path must stand on its own.
+- Build a CakePHP plugin for composable form binding and rendering.
+- Render form, button, field, choice, and hidden-input markup through the shared PHP template system.
 - Prioritize bound fields and application-owned markup. Keep reusable PHP form definitions an optional layer.
 - Separate field configuration, resolved field state, rendering, and per-form submission/security bookkeeping.
 - Reuse CakePHP context providers, validation metadata, routing, request abstractions, and form protection through public APIs.
@@ -23,8 +22,11 @@ These instructions apply to the entire plugin repository.
 - Follow the standard plugin structure: `src/`, `templates/`, `config/`, and `tests/`, adding directories only when needed. Keep tests under `tests/TestCase/` and fixtures under `tests/Fixture/`.
 - Use CakePHP's plugin lifecycle and dependency injection facilities. Avoid global state, hidden service lookups, and host-application-specific assumptions.
 - Prefer small cohesive objects and composition. Add interfaces for real extension boundaries rather than every implementation class.
+- Keep behavior services extensible. Prefer protected methods and dependencies over private members so application subclasses can reuse and specialize behavior. Provide protected factories or constructor injection where collaborators need to be replaced through the normal API.
+- Reserve final classes for immutable configuration/data objects and stateless implementation utilities. Document extension points on behavior classes, and test that overrides work through public form-building entry points.
+- Use readonly properties for fixed service dependencies rather than readonly service classes, so subclasses can maintain their own state.
 - Declare property, parameter, and return types. Use constructor property promotion and readonly state where appropriate; keep mutable form-session state explicit.
-- Document classes and nontrivial contracts. Give functions and methods meaningful docblocks as required by the CakePHP preset; document array shapes, generics, exceptions, and behavior that native types cannot express.
+- Explain each class's responsibility and its place in the form workflow in its docblock. Add concise examples for public extension points or behavior that is easier to understand concretely. Document nontrivial contracts. Give functions and methods meaningful docblocks as required by the CakePHP preset; document array shapes, generics, exceptions, and behavior that native types cannot express.
 - Keep inline comments focused on otherwise unclear intent. Use imported class names in executable code.
 - Use CakePHP translation functions for user-facing messages and routing APIs for generated URLs.
 - Avoid unrelated refactors and dependencies. Document intentional public API changes and update usage examples with them.

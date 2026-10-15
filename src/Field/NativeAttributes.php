@@ -6,7 +6,12 @@ namespace FormCompose\Field;
 use FormCompose\Rendering\Attributes;
 
 /**
- * Prepares native control attributes independently of markup and security registration.
+ * Adapts resolved field attributes to standard HTML input behavior.
+ *
+ * NativeType uses this before rendering its native template. It adds checkbox
+ * values and checked state, appends [] for multiple-value controls, and prepares
+ * the type and value of ordinary inputs. Choices handles individual options;
+ * textarea values are supplied separately as template content.
  */
 final class NativeAttributes
 {

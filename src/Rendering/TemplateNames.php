@@ -6,7 +6,12 @@ namespace FormCompose\Rendering;
 use InvalidArgumentException;
 
 /**
- * Builds safe lookup names consistently across all renderable scopes.
+ * Builds and validates relative template candidates for PhpRenderer.
+ *
+ * Candidates are ordered by variant, type, then generic part. Field candidates are
+ * relative to the theme layer directly; form and button candidates include their
+ * scope prefix. For example, a primary submit button tries
+ * button/variants/primary/control before button/submit/control and button/control.
  */
 final class TemplateNames
 {

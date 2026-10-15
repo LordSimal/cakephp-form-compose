@@ -7,20 +7,27 @@ use Cake\Utility\Hash;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Field\FieldState;
+use FormCompose\Field\FieldTypeInterface;
 use FormCompose\Field\NativeType;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\RenderContext;
 use InvalidArgumentException;
 
 /**
- * Resolves field metadata once for use by any renderer.
+ * Builds a BoundField from a context path or reusable FieldDefinition.
+ *
+ * Combines definition options with per-call overrides, infers a control type,
+ * resolves its value, and derives its input name, ID, constraints, and errors.
+ * The resulting field uses a registered custom type or the standard NativeType.
+ * Called by FormSession::field(); resolving a field does not render its input.
+ * Subclasses can specialize inferType() and the field/type/value resolver factories.
  */
-final readonly class FieldResolver
+class FieldResolver
 {
     /**
      * Use one form's binding and presentation dependencies.
      */
-    public function __construct(private FormBinding $binding, private RenderContext $rendering)
+    public function __construct(protected readonly FormBinding $binding, protected readonly RenderContext $rendering)
     {
     }
 
@@ -49,7 +56,7 @@ final readonly class FieldResolver
             static fn(mixed $message): string => (string)$message,
             array_values(Hash::flatten($this->binding->context->error($path))),
         );
-        $state = new FieldState($path, $type, new ValueResolver($this->binding)->resolve($path, $options), [
+        $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $options), [
             'name' => $name,
             'id' => $id,
             'messages' => $messages,
@@ -57,19 +64,13 @@ final readonly class FieldResolver
             'options' => $options,
         ]);
 
-        return new BoundField(
-            $state,
-            $lifecycle,
-            $this->rendering->renderer,
-            $this->rendering->theme,
-            $this->rendering->types[$type] ?? new NativeType($this->rendering->renderer, $this->rendering->theme),
-        );
+        return $this->createBoundField($state, $lifecycle);
     }
 
     /**
-     * Read a definition without requiring schema-based form generation.
+     * Find the configured definition for a path, or create one with default options.
      */
-    private function find(string $path): FieldDefinition
+    protected function find(string $path): FieldDefinition
     {
         foreach ($this->binding->definition->fields ?? [] as $field) {
             if ($field->path === $path) {
@@ -85,7 +86,7 @@ final readonly class FieldResolver
      *
      * @param array<string, mixed> $options Explicit field options.
      */
-    private function inferType(string $path, array $options): string
+    protected function inferType(string $path, array $options): string
     {
         if (isset($options['options'])) {
             return 'select';
@@ -106,5 +107,35 @@ final readonly class FieldResolver
             'binary' => 'file',
             default => 'text',
         };
+    }
+
+    /**
+     * Create the field object exposed to application templates.
+     */
+    protected function createBoundField(FieldState $state, FormLifecycle $lifecycle): BoundField
+    {
+        return new BoundField(
+            $state,
+            $lifecycle,
+            $this->rendering->renderer,
+            $this->rendering->theme,
+            $this->createFieldType($state->type),
+        );
+    }
+
+    /**
+     * Select a registered control type or create the default native implementation.
+     */
+    protected function createFieldType(string $type): FieldTypeInterface
+    {
+        return $this->rendering->types[$type] ?? new NativeType($this->rendering->renderer, $this->rendering->theme);
+    }
+
+    /**
+     * Create the source resolver used to populate field values.
+     */
+    protected function createValueResolver(): ValueResolver
+    {
+        return new ValueResolver($this->binding);
     }
 }

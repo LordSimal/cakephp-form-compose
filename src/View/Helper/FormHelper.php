@@ -16,16 +16,26 @@ use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
 
 /**
- * Opt-in view entry point for independent, composable form sessions.
+ * Creates bound form sessions from a CakePHP view.
+ *
+ * bind() selects a CakePHP form context for the supplied data and collects the
+ * form's theme, renderer, and custom field types. Each returned FormSession has
+ * its own field resolution, rendering, and submission lifecycle. Override
+ * createSession() to select an application-specific FormSession subclass.
+ *
+ * ```php
+ * $form = $this->Form->bind($article, ['url' => ['action' => 'edit', $article->id]]);
+ * echo $form->open(), $form->control('title'), $form->submit('Save'), $form->close();
+ * ```
  *
  * @extends \Cake\View\Helper<\Cake\View\View>
  */
 class FormHelper extends Helper
 {
-    private int $sequence = 0;
+    protected int $sequence = 0;
 
     /**
-     * Bind context and presentation without emitting HTML or changing legacy FormHelper state.
+     * Create a form session for the given context and presentation.
      *
      * @param array<string, mixed> $options Form options, context, valueSources, and custom field types.
      */
@@ -36,11 +46,6 @@ class FormHelper extends Helper
         ?FormDefinition $definition = null,
         ?RendererInterface $renderer = null,
     ): FormSession {
-        if (isset($options['widgets']) || isset($options['widgetTemplates'])) {
-            throw new InvalidArgumentException(
-                'Use explicit field types for widget compatibility and PHP elements for native markup.',
-            );
-        }
         $view = $this->getView();
         /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
         $types = $options['types'] ?? [];
@@ -65,9 +70,17 @@ class FormHelper extends Helper
         $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
         unset($options['context'], $options['types']);
 
-        return new FormSession(
+        return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $definition),
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types),
         );
+    }
+
+    /**
+     * Create the session used by bind(); override to supply an application session subclass.
+     */
+    protected function createSession(FormBinding $binding, RenderContext $rendering): FormSession
+    {
+        return new FormSession($binding, $rendering);
     }
 }

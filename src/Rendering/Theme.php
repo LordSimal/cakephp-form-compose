@@ -6,7 +6,19 @@ namespace FormCompose\Rendering;
 use InvalidArgumentException;
 
 /**
- * Immutable PHP element layers and per-control presentation defaults.
+ * Configures ordered template layers and attribute defaults for a design system.
+ *
+ * PhpRenderer searches each CakePHP element prefix in order, followed by the base
+ * elements. Defaults are keyed by part or type.part; type-specific values replace
+ * generic values before field and local attributes are merged.
+ *
+ * ```php
+ * $theme = new Theme(
+ *     layers: ['forms/application'],
+ *     defaults: ['input' => ['class' => 'control']],
+ * );
+ * $form = $this->Form->bind($article, theme: $theme);
+ * ```
  */
 final readonly class Theme
 {
@@ -34,7 +46,7 @@ final readonly class Theme
     }
 
     /**
-     * Resolve independent attribute defaults for a field part and control type.
+     * Resolve generic and type-specific attribute defaults for a part.
      */
     public function attributes(string $part, string $type): Attributes
     {

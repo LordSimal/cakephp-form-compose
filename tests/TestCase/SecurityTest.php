@@ -4,15 +4,12 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\Form\FormProtector;
-use Cake\View\Form\NullContext;
 use DOMDocument;
 use DOMElement;
 use DOMNodeList;
 use DOMXPath;
-use FormCompose\Compatibility\WidgetType;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Test\Fixture\FailOnceRenderer;
-use FormCompose\Test\Fixture\LegacyWidget;
 use FormCompose\Test\Fixture\RangeType;
 use FormCompose\Test\FormTestCase;
 use RuntimeException;
@@ -20,7 +17,7 @@ use RuntimeException;
 class SecurityTest extends FormTestCase
 {
     /**
-     * Extract the security fields emitted by the real Cake form lifecycle.
+     * Extract form-protection token values from rendered hidden inputs.
      *
      * @return array<string, string>
      */
@@ -104,24 +101,7 @@ class SecurityTest extends FormTestCase
         ));
     }
 
-    public function testLegacyWidgetAdapterPreservesSecureFields(): void
-    {
-        $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, [
-            'url' => '/articles/save',
-            'types' => ['legacy' => new WidgetType(new LegacyWidget(), new NullContext([]))],
-        ]);
-        $html = $form->open() . $form->control('pair', ['type' => 'legacy']) . $form->close();
-        static::assertStringContainsString('legacy widget', $html);
-        $data = ['pair' => ['left' => 'a', 'right' => 'b'], '_Token' => $this->tokens($html)];
-        static::assertTrue(new FormProtector()->validate(
-            $data,
-            '/articles/save',
-            $helper->getView()->getRequest()->getSession()->id(),
-        ));
-    }
-
-    public function testNamedSubmitButtonsUseCakeOptionalSubmissionSemantics(): void
+    public function testNamedSubmitButtonsAreOptional(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $form = $helper->bind(null, ['url' => '/articles/save']);

@@ -9,19 +9,28 @@ use FormCompose\Rendering\RenderNode;
 use FormCompose\Rendering\Theme;
 
 /**
- * Native control semantics rendered exclusively through FormCompose PHP templates.
+ * Implements standard HTML controls, including inputs, textareas, and choice lists.
+ *
+ * This is the default FieldTypeInterface implementation selected by FieldResolver.
+ * It prepares browser values, checked/selected attributes, choice groups, and hidden
+ * fallbacks, then asks the renderer for native and choice templates. submissions()
+ * describes the control's submitted name and locks hidden values for form protection.
+ * Override choice() or createChoices() to specialize choice preparation and rendering.
+ *
+ * For example, control('active', ['type' => 'checkbox']) uses this class to prepare
+ * the checkbox and its unchecked fallback; the theme determines their markup.
  */
-final readonly class NativeType implements FieldTypeInterface
+class NativeType implements FieldTypeInterface
 {
     /**
      * Use the shared renderer for native inputs, choices, and fallback fields.
      */
-    public function __construct(private RendererInterface $renderer, private Theme $theme)
+    public function __construct(protected readonly RendererInterface $renderer, protected readonly Theme $theme)
     {
     }
 
     /**
-     * Compose prepared native values and choices without producing HTML in PHP classes.
+     * Prepare native control data and render its fallback, input, and choice templates.
      */
     public function render(BoundField $field, Attributes $attributes): string
     {
@@ -30,7 +39,7 @@ final readonly class NativeType implements FieldTypeInterface
         $native = NativeAttributes::resolve($field->state, $attributes);
         /** @var iterable<array-key, mixed> $options */
         $options = $field->state->options['options'] ?? [];
-        $choices = new Choices($this->theme)->resolve($field->state, $native, $options);
+        $choices = $this->createChoices()->resolve($field->state, $native, $options);
         $value = $field->state->type === 'textarea' ? NativeValue::scalar($field->state->value) : '';
 
         return $prefix . $this->renderer->render('native', RenderNode::field($field, $native, [
@@ -43,7 +52,7 @@ final readonly class NativeType implements FieldTypeInterface
     /**
      * Render each choice and its children through the same themed field-part lookup.
      */
-    private function choice(BoundField $field, Choice $choice): string
+    protected function choice(BoundField $field, Choice $choice): string
     {
         $part = $field->state->type === 'select' ? 'option' : 'choice';
         $part = $choice->kind === 'group' ? $part . '-group' : $part;
@@ -70,5 +79,13 @@ final readonly class NativeType implements FieldTypeInterface
             ($field->state->options['secure'] ?? true) !== false,
             $field->state->type === 'hidden' ? NativeValue::scalar($field->state->value) : null,
         )];
+    }
+
+    /**
+     * Create the choice builder used by selects, radios, and checkbox groups.
+     */
+    protected function createChoices(): Choices
+    {
+        return new Choices($this->theme);
     }
 }

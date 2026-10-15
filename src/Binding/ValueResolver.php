@@ -7,14 +7,20 @@ use BackedEnum;
 use InvalidArgumentException;
 
 /**
- * Resolves submitted and contextual values while preserving explicit empty states.
+ * Chooses a field value from explicit options, request data, and the CakePHP context.
+ *
+ * An explicit value option wins, including null. Otherwise the form's valueSources
+ * are consulted in order (data then context by default), followed by the field's
+ * default. Request lookups preserve explicit empty values; backed enums are
+ * converted to their scalar value before being stored in FieldState. Subclasses
+ * can override fromSources() while retaining explicit-value precedence in resolve().
  */
-final readonly class ValueResolver
+class ValueResolver
 {
     /**
      * Bind a value resolver to a form's request and context.
      */
-    public function __construct(private FormBinding $binding)
+    public function __construct(protected readonly FormBinding $binding)
     {
     }
 
@@ -36,7 +42,7 @@ final readonly class ValueResolver
      *
      * @param array<string, mixed> $options Field value options.
      */
-    private function fromSources(string $path, array $options): mixed
+    protected function fromSources(string $path, array $options): mixed
     {
         /** @var list<string> $sources */
         $sources = $this->binding->options['valueSources'] ?? ['data', 'context'];

@@ -10,16 +10,22 @@ use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
 
 /**
- * Prepares native form metadata and infrastructure fields without generating HTML.
+ * Converts form binding and opening options into a prepared FormState.
+ *
+ * Resolves the action URL, effective HTTP method, multipart encoding, theme
+ * attributes, and initial CSRF/method hidden inputs. New contexts default to POST
+ * and existing records to PUT. FormLifecycle requests this data before FormSession
+ * renders the opening template and commits the open state. Subclasses can override
+ * hidden() to specialize initial infrastructure fields while reusing prepare().
  */
-final class FormConstruction
+class FormConstruction
 {
     /**
      * Resolve HTML attributes, multipart encoding, method overrides, and CSRF fields.
      *
      * @param array<string, mixed> $extra Per-opening options.
      */
-    public static function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
+    public function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
     {
         $options = array_replace($binding->options, $extra);
         $defaultMethod = $binding->context->isCreate() ? 'post' : 'put';
@@ -54,7 +60,7 @@ final class FormConstruction
                 'enctype' => $enctype === null ? null : strtolower($enctype),
             ]);
 
-        return new FormState($attributes, $method, $url['signed'], self::hidden($binding, $method), $presentation);
+        return new FormState($attributes, $method, $url['signed'], $this->hidden($binding, $method), $presentation);
     }
 
     /**
@@ -62,7 +68,7 @@ final class FormConstruction
      *
      * @return list<\FormCompose\Rendering\Attributes>
      */
-    private static function hidden(FormBinding $binding, string $method): array
+    protected function hidden(FormBinding $binding, string $method): array
     {
         $hidden = [];
         if (!in_array($method, ['get', 'post'], true)) {

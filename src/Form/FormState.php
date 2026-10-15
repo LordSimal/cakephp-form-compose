@@ -6,7 +6,12 @@ namespace FormCompose\Form;
 use FormCompose\Rendering\Attributes;
 
 /**
- * Prepared form metadata that templates can render without invoking helpers.
+ * Stores prepared form metadata for lifecycle checks and form templates.
+ *
+ * FormConstruction creates it from a FormBinding and opening options. attributes
+ * contains the browser method and action; method retains the effective HTTP verb
+ * and action the path/query used for signing. hidden contains the initial method
+ * and CSRF inputs; final form-protection inputs are collected during closing.
  */
 final readonly class FormState
 {

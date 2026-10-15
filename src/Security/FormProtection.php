@@ -10,16 +10,24 @@ use FormCompose\Form\FormState;
 use FormCompose\Rendering\Attributes;
 
 /**
- * Version-tested integration with Cake's form protection mechanism, independent of FormHelper.
+ * Collects submitted field names and builds CakePHP form-protection token values.
+ *
+ * FormLifecycle starts protection when FormProtectionComponent has supplied
+ * formTokenData on the request. Field types describe submitted names and locked
+ * hidden values; optional buttons are unlocked. During closing, token values are
+ * returned as attribute bags for the form's hidden-input templates.
+ *
+ * Uses CakePHP's internal FormProtector API; supported CakePHP versions are tested
+ * for compatibility with this integration.
  */
-final class FormProtection
+class FormProtection
 {
-    private ?FormProtector $protector = null;
+    protected ?FormProtector $protector = null;
 
     /**
      * Capture the current request without starting a session or registering inputs.
      */
-    public function __construct(private readonly ServerRequest $request)
+    public function __construct(protected readonly ServerRequest $request)
     {
     }
 

@@ -4,7 +4,16 @@ declare(strict_types=1);
 namespace FormCompose\Rendering;
 
 /**
- * Explicitly trusted HTML, distinct from ordinary escaped text.
+ * Marks developer-controlled HTML that should be rendered as trusted markup.
+ *
+ * Labels, help text, and button content normally pass through text() for escaping.
+ * Wrapping content in Html preserves it verbatim, so only trusted markup should be
+ * wrapped; this class does not sanitize HTML.
+ *
+ * ```php
+ * $form->submit(new Html('<strong>Save</strong>'));
+ * Html::text('Save & continue'); // Returns 'Save &amp; continue'.
+ * ```
  */
 final readonly class Html
 {

@@ -4,7 +4,12 @@ declare(strict_types=1);
 namespace FormCompose\Rendering;
 
 /**
- * Unified template boundary for fields, form lifecycle markup, and buttons.
+ * Defines the rendering boundary shared by fields, forms, buttons, and hidden inputs.
+ *
+ * Implement this to choose how a named part and its RenderNode become HTML.
+ * PhpRenderer supplies CakePHP element lookup; alternative renderers can use
+ * another template engine. The node provides resolved data and presentation
+ * options; binding and submission registration remain with the calling session.
  */
 interface RendererInterface
 {

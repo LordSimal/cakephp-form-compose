@@ -8,14 +8,20 @@ use Closure;
 use RuntimeException;
 
 /**
- * Resolves scoped Cake PHP elements with deterministic theme and parent-part lookup.
+ * Renders form parts as CakePHP elements using a Theme's ordered layers.
+ *
+ * An explicit template override takes priority. Otherwise each layer is searched
+ * for a variant, type-specific, then generic part, with bundled base elements last.
+ * Elements receive RenderNode variables and a $parent() closure that renders the
+ * same part in the next layer, or resumes theme lookup after an explicit override.
+ * Subclasses can specialize layered() for lookup or element() for execution.
  */
-final readonly class PhpRenderer implements RendererInterface
+class PhpRenderer implements RendererInterface
 {
     /**
-     * Bind a renderer to a Cake view and framework-independent theme.
+     * Use the Cake view to render elements from the selected theme.
      */
-    public function __construct(private View $view, public Theme $theme = new Theme())
+    public function __construct(protected readonly View $view, public readonly Theme $theme = new Theme())
     {
     }
 
@@ -36,7 +42,7 @@ final readonly class PhpRenderer implements RendererInterface
     /**
      * Search each layer by variant, type, then generic scoped part.
      */
-    private function layered(string $part, RenderNode $node, int $start = 0): string
+    protected function layered(string $part, RenderNode $node, int $start = 0): string
     {
         $names = TemplateNames::resolve($part, $node);
         $layers = [...$this->theme->layers, 'FormCompose.form/base'];
@@ -54,7 +60,7 @@ final readonly class PhpRenderer implements RendererInterface
     /**
      * Supply prepared variables and a parent-part callback to an ordinary Cake element.
      */
-    private function element(string $element, RenderNode $node, Closure $parent): string
+    protected function element(string $element, RenderNode $node, Closure $parent): string
     {
         return $this->view->element($element, array_replace($node->variables, ['parent' => $parent]));
     }

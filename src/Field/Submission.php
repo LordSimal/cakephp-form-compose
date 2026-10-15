@@ -4,7 +4,16 @@ declare(strict_types=1);
 namespace FormCompose\Field;
 
 /**
- * Describes one submitted name and its optional immutable hidden value.
+ * Describes one input name emitted by a field type for form protection.
+ *
+ * FieldTypeInterface::submissions() returns these records. A normal field protects
+ * its presence; a non-null value also locks its contents, as needed for hidden
+ * inputs. Setting locked to false allows that name to vary or be omitted.
+ *
+ * ```php
+ * new Submission('period[start]');
+ * new Submission('record_id', value: '42');
+ * ```
  */
 final readonly class Submission
 {

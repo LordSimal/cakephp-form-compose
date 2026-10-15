@@ -6,7 +6,11 @@ namespace FormCompose;
 use Cake\Core\BasePlugin;
 
 /**
- * Registers the composable forms plugin and its native PHP templates.
+ * Registers FormCompose with CakePHP's plugin loader.
+ *
+ * Provides the plugin name used to locate its helper and bundled PHP elements.
+ * Add FormComposePlugin::class in the application's bootstrap() method to make
+ * those resources available.
  */
 class FormComposePlugin extends BasePlugin
 {

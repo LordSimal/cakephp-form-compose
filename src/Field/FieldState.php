@@ -6,7 +6,12 @@ namespace FormCompose\Field;
 use FormCompose\Rendering\Html;
 
 /**
- * Immutable resolved metadata usable without any HTML renderer.
+ * Contains the resolved identity, value, constraints, and feedback for one field.
+ *
+ * Created by FieldResolver and exposed through BoundField::state. Templates and
+ * custom field types read this immutable snapshot to build markup. path identifies
+ * the context value (for example comments.0.body); name is the corresponding HTML
+ * input name (comments[0][body]). Reading state does not register an input.
  */
 final readonly class FieldState
 {

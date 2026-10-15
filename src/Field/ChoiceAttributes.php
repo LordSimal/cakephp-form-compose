@@ -7,14 +7,18 @@ use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Theme;
 
 /**
- * Prepares attributes for individual native options, radios, and checkboxes.
+ * Resolves the attributes of one option within a choice control.
+ *
+ * Choices supplies the field value, common input attributes, and option-specific
+ * data. This class computes selected or checked status and merges theme defaults
+ * while preserving the input name, control type, and a disabled parent state.
  */
-final readonly class ChoiceAttributes
+class ChoiceAttributes
 {
     /**
-     * Bind per-part defaults to a framework-independent theme.
+     * Use theme defaults when preparing individual choice attributes.
      */
-    public function __construct(private Theme $theme)
+    public function __construct(protected readonly Theme $theme)
     {
     }
 
@@ -55,7 +59,7 @@ final readonly class ChoiceAttributes
     /**
      * Match scalar or multiple values without conflating null with an empty selection.
      */
-    private function selected(FieldState $state, string $value): bool
+    protected function selected(FieldState $state, string $value): bool
     {
         if ($state->value === null) {
             return false;

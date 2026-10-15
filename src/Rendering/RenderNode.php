@@ -6,7 +6,16 @@ namespace FormCompose\Rendering;
 use FormCompose\Field\BoundField;
 
 /**
- * A typed rendering request scoped to fields, forms, or buttons.
+ * Carries prepared template data and lookup options to a RendererInterface.
+ *
+ * scope distinguishes field, form, and button parts. type selects a control type
+ * or effective method; variables become template locals. options supplies variant
+ * and explicit template choices. The part name is passed separately to render().
+ *
+ * ```php
+ * $node = RenderNode::field($field, $field->attributes('label'));
+ * $html = $renderer->render('label', $node);
+ * ```
  */
 final readonly class RenderNode
 {

@@ -11,25 +11,35 @@ use FormCompose\Security\FormProtection;
 use LogicException;
 
 /**
- * Owns the state machine and submission bookkeeping independently of rendering.
+ * Tracks when a form can render inputs and collects its submission protection data.
+ *
+ * FormSession opens and closes this lifecycle; BoundField registers successfully
+ * rendered inputs with it. It rejects duplicate input IDs, file inputs in ordinary
+ * forms, and registrations outside the open phase. Closing prepares final tokens;
+ * a failed closing template restores the open phase so rendering can be retried.
+ * The constructor accepts custom construction and protection services; supply a
+ * lifecycle instance through FormSession::createLifecycle().
  */
-final class FormLifecycle
+class FormLifecycle
 {
-    private ?FormState $state = null;
+    protected ?FormState $state = null;
 
-    private FormPhase $phase = FormPhase::Pending;
+    protected FormPhase $phase = FormPhase::Pending;
 
     /** @var array<string, true> */
-    private array $rendered = [];
+    protected array $rendered = [];
 
-    private readonly FormProtection $protection;
+    protected readonly FormProtection $protection;
 
     /**
-     * Create per-form security coordination without constructing a view helper.
+     * Initialize submission protection for the bound form.
      */
-    public function __construct(private readonly FormBinding $binding)
-    {
-        $this->protection = new FormProtection($binding->request);
+    public function __construct(
+        protected readonly FormBinding $binding,
+        protected readonly FormConstruction $construction = new FormConstruction(),
+        ?FormProtection $protection = null,
+    ) {
+        $this->protection = $protection ?? new FormProtection($binding->request);
     }
 
     /**
@@ -43,7 +53,7 @@ final class FormLifecycle
             throw new LogicException('A form session can only be opened once.');
         }
 
-        return FormConstruction::prepare($this->binding, $theme, $options);
+        return $this->construction->prepare($this->binding, $theme, $options);
     }
 
     /**
