@@ -9,7 +9,7 @@ use InvalidArgumentException;
 /**
  * Carries prepared template data and lookup options to a RendererInterface.
  *
- * scope distinguishes field, form, and button parts. type selects a control type
+ * scope distinguishes field, form, button, and definition parts. type selects a control type
  * or effective method; variables become template locals. options supplies variant
  * and explicit template choices. Every node exposes a templateData array in its
  * variables, preserving custom PHP values without replacing prepared variables.

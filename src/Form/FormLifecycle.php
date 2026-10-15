@@ -26,10 +26,9 @@ class FormLifecycle
 
     protected FormPhase $phase = FormPhase::Pending;
 
-    /** @var array<string, true> */
-    protected array $rendered = [];
-
     protected readonly FormProtection $protection;
+
+    public readonly InputRegistry $inputs;
 
     /**
      * Initialize submission protection for the bound form.
@@ -38,8 +37,10 @@ class FormLifecycle
         protected readonly FormBinding $binding,
         protected readonly FormConstruction $construction = new FormConstruction(),
         ?FormProtection $protection = null,
+        ?InputRegistry $inputs = null,
     ) {
         $this->protection = $protection ?? new FormProtection($binding->request);
+        $this->inputs = $inputs ?? new InputRegistry($this->protection);
     }
 
     /**
@@ -84,9 +85,7 @@ class FormLifecycle
     public function assertInput(BoundField $field): void
     {
         $state = $this->assertOpen();
-        if (isset($this->rendered[$field->state->id])) {
-            throw new LogicException('An input with this ID has already been rendered: ' . $field->state->id);
-        }
+        $this->inputs->assertAvailable($field->state->id);
 
         if ($field->state->type === 'file' && !$state->multipart()) {
             throw new LogicException('File inputs require a multipart form.');
@@ -101,8 +100,7 @@ class FormLifecycle
     public function register(BoundField $field, array $submissions): void
     {
         $this->assertInput($field);
-        $this->protection->register($submissions);
-        $this->rendered[$field->state->id] = true;
+        $this->inputs->register($field->state->id, $submissions);
     }
 
     /**

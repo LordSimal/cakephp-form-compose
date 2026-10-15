@@ -22,7 +22,7 @@ control.php
 Layers are searched in their supplied order. The bundled `FormCompose.form/base`
 layer is last. The first matching element is rendered.
 
-Form and button paths have scope prefixes. A primary submit button tries:
+Form, button, and definition paths have scope prefixes. A primary submit button tries:
 
 ```text
 button/variants/primary/control.php
@@ -75,7 +75,7 @@ Both spellings work through `field()` and reusable field definitions too. During
 resolution, `template` is normalized to `templates['control']`, so custom renderers
 receive the same canonical options.
 
-The singular shorthand applies to field controls. Hidden fields continue to
+The singular shorthand applies to field controls and definition layouts. Hidden fields continue to
 render their input part directly. Set per-form `templates` using `open`, `close`,
 or `hidden` keys in `bind()`; set per-button `templates` using the `control` key in
 `submit()`.
@@ -120,6 +120,7 @@ The same applies to `$attributes`, `$parent`, and other prepared variables.
 | `FieldDefinition::with(['templateData' => ...])` | The same field elements, including when rendering a reusable collection. |
 | `bind()` options or `open()` options | That form's opening, closing, and infrastructure hidden-input elements. |
 | `submit()` options | That button's element. |
+| `Form` attribute, `FormDefinition::presentation()`, or `definition()` options | That definition's layout, independently of child field or embedded layout data. |
 
 Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
 their field, form, or button. Form data does not become a default for its fields
@@ -225,6 +226,26 @@ prepared fields.
 Button templates receive `$form`, `$label`, `$attributes`, and `$templateData`. Use
 `Html::text($label)` to escape ordinary labels while preserving explicitly trusted
 `Html` labels.
+
+## Definition layouts
+
+Definition nodes use scope `definition`, type `default`, and part `control`.
+Each theme layer tries `definition/variants/{variant}/control.php` when selected,
+then `definition/default/control.php`, then `definition/control.php`.
+The bundled default renders ordered fields and embeds without a wrapper.
+
+| Variable | Meaning |
+| --- | --- |
+| `$form` | A scoped `DefinitionView` with `has()`, `field()`, `control()`, and `embedded()`. |
+| `$definition` | The final compiled `FormDefinition`, relative to this mount. |
+| `$attributes` | Escaped attribute bag from theme defaults and local definition options. |
+| `$templateData` | This definition's application-owned presentation data. |
+| `$parent` | The standard callback to resume theme lookup. |
+
+Use theme defaults keyed by `definition.control` for layout attributes. The default
+layout adds no element, so a custom wrapper must emit `$attributes` when needed.
+Selecting a layout does not forward its data to individual controls or children.
+See [nested definitions and layouts](./composition.md) for complete PHP examples.
 
 ## Attributes
 

@@ -7,34 +7,34 @@ use FormCompose\Field\FieldDefinition;
 use InvalidArgumentException;
 
 /**
- * Builds an ordered, reusable collection of field configuration.
+ * Stores an immutable, ordered composition of fields and resolved embeds.
  *
- * A definition holds no bound data, markup, or submission state. add() and with()
- * return new collections, so the original can be reused across screens and forms.
- * Render it at any position with FormSession::definition(), or pass a field()
- * result to the session's field() or control() for an application-owned layout.
- * Each field path must be unique within the collection.
- *
- * ```php
- * $contact = FormDefinition::make()
- *     ->add(FieldDefinition::make('name')->label('Full name'))
- *     ->add(FieldDefinition::make('email', 'email'));
- * echo $form->definition($contact->with('email', ['label' => 'Work email']));
- * ```
+ * entries preserves the rendering tree; fields exposes flattened, qualified
+ * leaves for existing binding defaults and field lookup. Presentation selects
+ * an optional PHP layout, without storing bound values or submission state.
  */
 final readonly class FormDefinition
 {
+    /** @var list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition> Ordered relative children. */
+    public array $entries;
+
+    /** @var list<\FormCompose\Field\FieldDefinition> Flattened field configuration. */
+    public array $fields;
+
+    public DefinitionIndex $index;
+
     /**
-     * Collect uniquely named definitions in presentation order.
+     * Collect unique entries, retaining compatibility with flat collections.
      *
-     * @param list<\FormCompose\Field\FieldDefinition> $fields Fields to render.
+     * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition> $fields Ordered entries.
+     * @param array<string, mixed> $options Definition presentation options.
+     * @param list<string> $removed Explicitly removed paths for conditional layouts.
      */
-    public function __construct(public array $fields)
+    public function __construct(array $fields, public array $options = [], public array $removed = [])
     {
-        $paths = array_map(static fn(FieldDefinition $field): string => $field->path, $fields);
-        if (count(array_unique($paths)) !== count($paths)) {
-            throw new InvalidArgumentException('Form definitions cannot contain duplicate field paths.');
-        }
+        $this->entries = array_values($fields);
+        $this->index = new DefinitionIndex($this->entries, $removed);
+        $this->fields = $this->index->fields;
     }
 
     /**
@@ -47,18 +47,38 @@ final readonly class FormDefinition
 
     /**
      * Append a field without changing the original collection.
-     *
-     * @throws \InvalidArgumentException When the path is already present.
      */
     public function add(FieldDefinition $field): self
     {
-        return new self([...$this->fields, $field]);
+        return new self([...$this->entries, $field], $this->options, $this->removed);
     }
 
     /**
-     * Retrieve configuration for manual composition, without binding or rendering.
+     * Append a resolved child at a relative association or indexed path.
+     */
+    public function embed(string $path, self $definition): self
+    {
+        return new self(
+            [...$this->entries, new EmbeddedDefinition($path, $definition)],
+            $this->options,
+            $this->removed,
+        );
+    }
+
+    /**
+     * Override definition presentation without changing field configuration.
      *
-     * @throws \InvalidArgumentException When the path is not in this collection.
+     * @param array<string, mixed> $options Template, templates, templateData, variant, or attributes.
+     */
+    public function presentation(array $options): self
+    {
+        return new self($this->entries, array_replace($this->options, $options), $this->removed);
+    }
+
+    /**
+     * Retrieve a field without binding or rendering it.
+     *
+     * @throws \InvalidArgumentException When the field is unavailable.
      */
     public function field(string $path): FieldDefinition
     {
@@ -72,43 +92,70 @@ final readonly class FormDefinition
     }
 
     /**
-     * Check collection membership without binding or rendering a field.
+     * Retrieve an already compiled embed with local paths and presentation.
+     */
+    public function embedded(string $path): self
+    {
+        return (
+            $this->index->embeds[$path]
+                ?? throw new InvalidArgumentException(sprintf('Embed "%s" is not in this definition.', $path))
+        );
+    }
+
+    /**
+     * Check final field or embed membership without rendering side effects.
      */
     public function has(string $path): bool
     {
-        return in_array($path, array_column($this->fields, 'path'), true);
+        return in_array($path, $this->index->paths, true);
     }
 
     /**
-     * Remove an existing field while preserving the remaining order and original collection.
+     * Remove a field or entire embed, retaining omitted control identities.
      *
-     * @throws \InvalidArgumentException When the path is not in this collection.
+     * @throws \InvalidArgumentException When the path is unavailable.
      */
     public function remove(string $path): self
     {
-        $this->field($path);
+        if (!$this->has($path)) {
+            throw new InvalidArgumentException(sprintf('Path "%s" is not in this definition.', $path));
+        }
 
-        return new self(array_values(array_filter(
-            $this->fields,
-            static fn(FieldDefinition $field): bool => $field->path !== $path,
-        )));
+        $removed = isset($this->index->embeds[$path])
+            ? array_values(array_filter(
+                [...$this->index->paths, ...$this->index->removed],
+                static fn(string $child): bool => str_starts_with($child, $path . '.'),
+            ))
+            : [];
+        $entries = DefinitionEntries::change(
+            $this->entries,
+            $path,
+            static fn(FieldDefinition|EmbeddedDefinition $entry): null => null,
+            static fn(self $child, string $relative): self => $child->remove($relative),
+        );
+
+        return new self($entries, $this->options, [...$this->removed, $path, ...$removed]);
     }
 
     /**
-     * Override an existing field's options while preserving collection order.
+     * Override a field, including an embedded leaf, without moving it.
      *
-     * Options replace matching top-level keys, as with FieldDefinition::with().
-     *
-     * @param array<string, mixed> $options Field behavior and presentation overrides.
-     * @throws \InvalidArgumentException When the path is not in this collection.
+     * @param array<string, mixed> $options Field options, replacing matching top-level keys.
+     * @throws \InvalidArgumentException When the field is unavailable.
      */
     public function with(string $path, array $options): self
     {
         $replacement = $this->field($path)->with($options);
+        $entries = DefinitionEntries::change(
+            $this->entries,
+            $path,
+            static fn(FieldDefinition|EmbeddedDefinition $entry): FieldDefinition => new FieldDefinition(
+                $entry->path,
+                $replacement->options,
+            ),
+            static fn(self $child, string $relative): self => $child->with($relative, $options),
+        );
 
-        return new self(array_map(
-            static fn(FieldDefinition $field): FieldDefinition => $field->path === $path ? $replacement : $field,
-            $this->fields,
-        ));
+        return new self($entries, $this->options, $this->removed);
     }
 }
