@@ -1,0 +1,28 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.4', '8.5']
+        cakephp: ['^5.4']
+        include:
+          - php: '8.5'
+            cakephp: '6.x-dev'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: intl, mbstring
+          coverage: xdebug
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+      - if: matrix.cakephp == '6.x-dev'
+        run: |
+          composer config minimum-stability dev
+          composer require cakephp/cakephp:6.x-dev --no-interaction --no-progress
+      - run: composer validate --strict
+      - run: composer check
+      - run: composer test-coverage

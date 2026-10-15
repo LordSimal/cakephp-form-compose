@@ -1,0 +1,79 @@
+<?php
+declare(strict_types=1);
+
+namespace FormCompose\Form;
+
+use Cake\Core\Configure;
+use FormCompose\Binding\FormBinding;
+use FormCompose\Rendering\Attributes;
+use FormCompose\Rendering\Theme;
+use InvalidArgumentException;
+
+/**
+ * Prepares native form metadata and infrastructure fields without generating HTML.
+ */
+final class FormConstruction
+{
+    /**
+     * Resolve HTML attributes, multipart encoding, method overrides, and CSRF fields.
+     *
+     * @param array<string, mixed> $extra Per-opening options.
+     */
+    public static function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
+    {
+        $options = array_replace($binding->options, $extra);
+        $defaultMethod = $binding->context->isCreate() ? 'post' : 'put';
+        $type = strtolower((string)($options['type'] ?? $defaultMethod));
+        $method = strtolower((string)($options['method'] ?? ($type === 'file' ? $defaultMethod : $type)));
+        if (!in_array($method, ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'], true)) {
+            throw new InvalidArgumentException('Unsupported form method.');
+        }
+        $url = ActionUrl::resolve($binding, $options);
+        $presentation = array_intersect_key($options, array_flip(['templates', 'variant']));
+        /** @var string $encoding */
+        $encoding = $options['encoding'] ?? Configure::read('App.encoding', 'UTF-8');
+        /** @var string|null $enctype */
+        $enctype = $options['enctype'] ?? ($type === 'file' ? 'multipart/form-data' : null);
+        unset(
+            $options['url'],
+            $options['type'],
+            $options['method'],
+            $options['encoding'],
+            $options['enctype'],
+            $options['templates'],
+            $options['variant'],
+            $options['valueSources'],
+        );
+        $attributes = $theme->attributes('form.open', $method)
+            ->merge($options)
+            ->replace([
+                'id' => $binding->id,
+                'action' => $url['attribute'],
+                'method' => $method === 'get' ? 'get' : 'post',
+                'accept-charset' => strtolower($encoding),
+                'enctype' => $enctype === null ? null : strtolower($enctype),
+            ]);
+
+        return new FormState($attributes, $method, $url['signed'], self::hidden($binding, $method), $presentation);
+    }
+
+    /**
+     * Describe method and CSRF inputs separately from their visual presentation.
+     *
+     * @return list<\FormCompose\Rendering\Attributes>
+     */
+    private static function hidden(FormBinding $binding, string $method): array
+    {
+        $hidden = [];
+        if (!in_array($method, ['get', 'post'], true)) {
+            $hidden[] = new Attributes(['type' => 'hidden', 'name' => '_method', 'value' => strtoupper($method)]);
+        }
+        /** @var string|null $csrf */
+        $csrf = $binding->request->getAttribute('csrfToken');
+        if ($method !== 'get' && $csrf !== null) {
+            $hidden[] = new Attributes(['type' => 'hidden', 'name' => '_csrfToken', 'value' => $csrf]);
+        }
+
+        return $hidden;
+    }
+}

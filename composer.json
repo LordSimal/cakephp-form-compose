@@ -1,0 +1,48 @@
+{
+    "name": "josbeir/cakephp-form-compose",
+    "description": "Composable bound fields and native PHP form themes for CakePHP.",
+    "type": "cakephp-plugin",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "cakephp/cakephp": "^5.4 || ^6.0@dev"
+    },
+    "require-dev": {
+        "cakephp/mago-rules": "dev-main",
+        "carthage-software/mago": "^1.47",
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "FormCompose\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "FormCompose\\Test\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test-coverage": [
+            "phpunit --coverage-clover=build/clover.xml",
+            "@php scripts/check-coverage.php build/clover.xml"
+        ],
+        "analyze": "mago analyze",
+        "lint": "mago lint",
+        "format-check": "mago format --check",
+        "format": "mago format",
+        "lint-fix": "mago lint --fix --format-after-fix --fail-on-remaining",
+        "check": [
+            "@test",
+            "@analyze",
+            "@lint",
+            "@format-check"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": false
+    },
+    "prefer-stable": true
+}
