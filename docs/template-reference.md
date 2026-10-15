@@ -95,9 +95,79 @@ layer. For example, an application can wrap a shared control:
 In an explicit override, `$parent()` resumes normal theme lookup. Within a layer,
 it moves to the next layer rather than trying another file in that same layer.
 
+## Template data
+
+Pass custom presentation data through the `templateData` option. Each element
+receives it as a `$templateData` array alongside its prepared variables:
+
+```php
+echo $form->control('email', [
+    'template' => 'forms/special-email',
+    'templateData' => ['prefix' => '@', 'account' => $account],
+]);
+```
+
+The [control guide](./usage.md#choose-a-template-for-one-control) shows the call and
+its PHP element together. No custom keys are extracted into local variables:
+`$templateData['field']` is ordinary custom data and cannot replace `$field`.
+The same applies to `$attributes`, `$parent`, and other prepared variables.
+
+### Availability and scope
+
+| Supplied through | Available to |
+| --- | --- |
+| `control()` or `field()` options | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
+| `FieldDefinition::with(['templateData' => ...])` | The same field elements, including when rendering a reusable collection. |
+| `bind()` options or `open()` options | That form's opening, closing, and infrastructure hidden-input elements. |
+| `submit()` options | That button's element. |
+
+Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
+their field, form, or button. Form data does not become a default for its fields
+or buttons; supply their own data explicitly. Metadata is removed from form and
+button HTML attributes before rendering.
+
+For example, form and button elements can use separate configuration:
+
+```php
+$form = $this->Form->bind($article, [
+    'templateData' => ['layout' => 'stacked'],
+]);
+
+echo $form->open();
+echo $form->control('title');
+echo $form->submit('Save', ['templateData' => ['icon' => 'save']]);
+echo $form->close();
+```
+
+Here form elements receive `['layout' => 'stacked']`, the title field receives
+`[]`, and the button receives `['icon' => 'save']`.
+
+### Values, replacement, and escaping
+
+When omitted, the bag is `[]`. Supplying a non-array container, including explicit
+null, throws `InvalidArgumentException` before the affected template renders or
+its submission is registered. Values *inside* the array may include objects,
+nested arrays, false, zero, null, and explicitly trusted `Html` instances. Objects
+keep their identity; metadata is not serialized, stringified, or pre-escaped.
+
+Existing option precedence applies: per-call field metadata replaces the entire
+definition bag, and `open()` metadata replaces the entire binding bag. Pass `[]`
+to clear earlier metadata. To keep existing keys, combine the arrays explicitly
+before supplying the new bag, for example with `array_replace()`.
+
+::: tip Escape at the point of output
+Templates receive original PHP values. Use `Html::text()` for text; it escapes
+ordinary strings and preserves explicitly trusted `Html`. Use an `Attributes` bag
+when intentionally putting a value into an HTML attribute.
+:::
+
+Custom renderers receive the validated bag through
+`$node->variables['templateData']`, including `[]` when none was supplied.
+
 ## Field templates
 
-Field elements receive `$field` (`BoundField`) and `$attributes` (`Attributes`).
+Field elements receive `$field` (`BoundField`), `$attributes` (`Attributes`), and
+the `$templateData` array.
 The field's immutable `state` exposes its path, name, ID, type, value, messages,
 constraints, and options.
 
@@ -145,13 +215,14 @@ Forms also support method-specific paths such as `form/patch/open.php`.
 Opening and closing templates receive `$form`, prepared `$state`, `$attributes`,
 and a `$hidden` list of attribute bags. Render the supplied hidden inputs with
 `$form->hiddenFields($hidden, $state->presentation)`. The hidden element receives
-an `$attributes` bag for one input.
+an `$attributes` bag for one input. All three form elements also receive the
+form's `$templateData` bag.
 
 Retain the supplied infrastructure fields when replacing opening and closing
 markup. Token generation belongs to the form lifecycle; the elements output its
 prepared fields.
 
-Button templates receive `$form`, `$label`, and `$attributes`. Use
+Button templates receive `$form`, `$label`, `$attributes`, and `$templateData`. Use
 `Html::text($label)` to escape ordinary labels while preserving explicitly trusted
 `Html` labels.
 

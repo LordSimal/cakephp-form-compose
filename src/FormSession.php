@@ -112,6 +112,7 @@ class FormSession
      *
      * Set template to a CakePHP element name for this control's layout, or use
      * templates to override individual parts. Conflicting control overrides fail.
+     * templateData supplies a separate data bag to the control and all its parts.
      *
      * @param array<string, mixed> $options Field options.
      */
@@ -136,13 +137,13 @@ class FormSession
     /**
      * Render a themed button and register its optional submission only after rendering succeeds.
      *
-     * @param array<string, mixed> $attributes Button attributes and optional templates or variant.
+     * @param array<string, mixed> $attributes Button attributes and optional templates, variant, or templateData.
      */
     public function submit(string|Html $label, array $attributes = []): string
     {
         $this->lifecycle->assertOpen();
-        $options = array_intersect_key($attributes, array_flip(['templates', 'variant']));
-        unset($attributes['templates'], $attributes['variant']);
+        $options = array_intersect_key($attributes, array_flip(['templates', 'variant', 'templateData']));
+        unset($attributes['templates'], $attributes['variant'], $attributes['templateData']);
         $type = (string)($attributes['type'] ?? 'submit');
         $bag = $this->rendering->theme->attributes('button', $type)->merge(['type' => 'submit'])->merge($attributes);
         $html = $this->rendering->renderer->render(

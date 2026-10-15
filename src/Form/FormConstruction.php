@@ -35,7 +35,7 @@ class FormConstruction
             throw new InvalidArgumentException('Unsupported form method.');
         }
         $url = ActionUrl::resolve($binding, $options);
-        $presentation = array_intersect_key($options, array_flip(['templates', 'variant']));
+        $presentation = array_intersect_key($options, array_flip(['templates', 'variant', 'templateData']));
         /** @var string $encoding */
         $encoding = $options['encoding'] ?? Configure::read('App.encoding', 'UTF-8');
         /** @var string|null $enctype */
@@ -48,6 +48,7 @@ class FormConstruction
             $options['enctype'],
             $options['templates'],
             $options['variant'],
+            $options['templateData'],
             $options['valueSources'],
         );
         $attributes = $theme->attributes('form.open', $method)

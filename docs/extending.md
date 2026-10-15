@@ -27,6 +27,8 @@ for a hidden value that must remain locked. Explicit unlocking is available with
 
 Custom renderers implement `RendererInterface::render(string $part, RenderNode $node)`.
 A node exposes its `scope`, `type`, prepared `variables`, and presentation `options`.
+Its `variables['templateData']` always contains the validated custom data bag,
+defaulting to `[]`. Preserve it when forwarding nodes or preparing template locals.
 Fields, forms, buttons, and hidden inputs all use this same contract. Native
 rendering performs no binding or security mutations; the lifecycle commits state
 only after the relevant rendering succeeds.

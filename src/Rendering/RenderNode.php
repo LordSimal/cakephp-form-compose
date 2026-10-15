@@ -4,13 +4,16 @@ declare(strict_types=1);
 namespace FormCompose\Rendering;
 
 use FormCompose\Field\BoundField;
+use InvalidArgumentException;
 
 /**
  * Carries prepared template data and lookup options to a RendererInterface.
  *
  * scope distinguishes field, form, and button parts. type selects a control type
  * or effective method; variables become template locals. options supplies variant
- * and explicit template choices. The part name is passed separately to render().
+ * and explicit template choices. Every node exposes a templateData array in its
+ * variables, preserving custom PHP values without replacing prepared variables.
+ * The part name is passed separately to render().
  *
  * ```php
  * $node = RenderNode::field($field, $field->attributes('label'));
@@ -19,18 +22,28 @@ use FormCompose\Field\BoundField;
  */
 final readonly class RenderNode
 {
+    /** @var array<string, mixed> Prepared template locals, including the templateData bag. */
+    public array $variables;
+
     /**
      * Capture template variables and explicit presentation overrides.
      *
      * @param array<string, mixed> $variables Variables made available to PHP elements.
-     * @param array<string, mixed> $options Optional templates and variant configuration.
+     * @param array<string, mixed> $options Optional templates, variant, and templateData configuration.
+     * @throws \InvalidArgumentException When templateData is not an array.
      */
     public function __construct(
         public string $scope,
         public string $type,
-        public array $variables,
+        array $variables,
         public array $options = [],
     ) {
+        /** @var mixed $templateData */
+        $templateData = array_key_exists('templateData', $options) ? $options['templateData'] : [];
+        if (!is_array($templateData)) {
+            throw new InvalidArgumentException('The templateData option must be an array.');
+        }
+        $this->variables = array_replace($variables, ['templateData' => $templateData]);
     }
 
     /**

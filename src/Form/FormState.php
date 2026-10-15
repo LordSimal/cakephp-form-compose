@@ -19,7 +19,7 @@ final readonly class FormState
      * Describe the browser attributes, effective method, signed action, and initial hidden inputs.
      *
      * @param list<\FormCompose\Rendering\Attributes> $hidden Initial method and CSRF fields.
-     * @param array<string, mixed> $presentation Template and variant configuration.
+     * @param array<string, mixed> $presentation Templates, variant, and templateData configuration.
      */
     public function __construct(
         public Attributes $attributes,

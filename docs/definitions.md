@@ -102,6 +102,25 @@ This selects `templates/element/forms/special-email.php`. See
 [choosing a template](./usage.md#choose-a-template-for-one-control) for the element
 and the `templates` option for individual parts.
 
+### Share template data
+
+Use the same option when a reusable field needs custom presentation metadata:
+
+```php
+$contact = $contact->with('email', [
+    'template' => 'forms/special-email',
+    'templateData' => ['prefix' => '@', 'account' => $account],
+]);
+
+echo $form->definition($contact);
+```
+
+The element and that field's parts receive a `$templateData` array. A later
+`with()` or per-call override replaces the entire bag, like other nested field
+options; pass `[]` to clear it. The original shared definition remains unchanged.
+The [template data reference](./template-reference.md#template-data) explains
+typed values, scope, and escaping.
+
 ::: tip Configuration stays local
 Rendering `$form->definition($contact)` does not install session-wide defaults.
 A later `$form->field('email')` or `$form->control('email')` uses its own options

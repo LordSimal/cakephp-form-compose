@@ -51,6 +51,7 @@ one email field its own layout without changing the form's theme:
 echo $form->control('email', [
     'type' => 'email',
     'template' => 'forms/special-email',
+    'templateData' => ['prefix' => '@'],
 ]);
 ```
 
@@ -58,15 +59,18 @@ echo $form->control('email', [
 <?php
 declare(strict_types=1);
 
+use FormCompose\Rendering\Html;
+
 /**
  * @var \FormCompose\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
+ * @var array{prefix?: string} $templateData
  */
 ?>
 <div<?= (string)$attributes ?>>
     <?= $field->label() ?>
     <div class="email-input">
-        <span aria-hidden="true">@</span>
+        <span aria-hidden="true"><?= Html::text($templateData['prefix'] ?? '') ?></span>
         <?= $field->input() ?>
     </div>
     <?= $field->help() ?>
@@ -99,6 +103,29 @@ To customize every email field in a theme, use its `email/control.php` element
 instead. See [creating a theme](./themes.md) and the
 [template reference](./template-reference.md#explicit-overrides) for all part names
 and parent-template behavior.
+
+### Pass data to a template
+
+`templateData` supplies a named array to the selected control element and all of
+that field's parts, including parent templates. Every template receives the bag;
+it defaults to `[]`. It works with theme elements as well as explicit overrides.
+
+```php
+echo $form->control('email', [
+    'type' => 'email',
+    'template' => 'forms/special-email',
+    'templateData' => ['prefix' => '@', 'account' => $account],
+]);
+```
+
+The element can read `$templateData['prefix']` or use the original account object
+through `$templateData['account']`. Data keys stay inside the array and do not
+replace prepared variables such as `$field` or become HTML attributes. Escape
+text when outputting it, as the element above does with `Html::text()`.
+
+Form and button elements accept their own `templateData`. See the
+[template data reference](./template-reference.md#template-data) for scope,
+replacement behavior, and supported values.
 
 ## Data and value sources
 

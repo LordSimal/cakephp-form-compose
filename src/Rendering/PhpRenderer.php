@@ -12,8 +12,9 @@ use RuntimeException;
  *
  * An explicit template override takes priority. Otherwise each layer is searched
  * for a variant, type-specific, then generic part, with bundled base elements last.
- * Elements receive RenderNode variables and a $parent() closure that renders the
- * same part in the next layer, or resumes theme lookup after an explicit override.
+ * Elements receive RenderNode variables, including the templateData bag, and a
+ * $parent() closure that renders the same part in the next layer, or resumes
+ * theme lookup after an explicit override.
  * Subclasses can specialize layered() for lookup or element() for execution.
  */
 class PhpRenderer implements RendererInterface

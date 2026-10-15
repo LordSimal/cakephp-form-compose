@@ -11,7 +11,9 @@ use InvalidArgumentException;
  *
  * Definitions contain configuration; FieldResolver combines them with a form's
  * context to produce BoundField instances. Fluent methods return new definitions,
- * so a definition can be shared across forms and customized per use.
+ * so a definition can be shared across forms and customized per use. Custom
+ * presentation values can be stored in the templateData option; rendering exposes
+ * that array to the field's templates without turning its keys into HTML attributes.
  *
  * ```php
  * $email = FieldDefinition::make('email', 'email')
