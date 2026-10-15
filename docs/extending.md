@@ -60,6 +60,8 @@ to the normal form-building API:
 | `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
 | `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
 | `BlueprintCompiler` | `createBuilder()` supplies the builder passed to blueprint hooks |
+| `DefinitionRenderer` | `createView()` supplies the scoped layout API |
+| `DefinitionView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
 | `ValueResolver` | `fromSources()` specializes request/context lookup |
 | `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
 | `NativeType` | `choice()` and `createChoices()` specialize standard controls |
@@ -134,6 +136,21 @@ to supply application-specific association or choice-list conventions. The defau
 `FormConstruction` and `FormProtection` instances through its constructor;
 override the session's `createLifecycle()` to supply them. Preserve lifecycle
 checks and register the inputs actually rendered when specializing these services.
+
+`FormSession` accepts an optional fourth `DefinitionRenderer` constructor argument.
+Supply a subclass from the helper's `createSession()` override to customize its
+protected `createView()` factory. The default view delegates to the original
+session's field and control methods, retaining application resolver and field
+subclasses. It does not construct another lifecycle.
+
+`FormLifecycle` accepts an optional fourth `InputRegistry` dependency. Its registry
+shares the lifecycle's `FormProtection` service and stages nested definition inputs
+until the whole layout succeeds. Preserve duplicate-ID checks and rollback when
+replacing that collaborator.
+
+The factory injects a scoped resolver through `BlueprintCompiler::withResolver()`
+and `FormBuilder::withResolver()`. Custom compiler and builder factories retain
+string embedding support without changing their existing factory signatures.
 
 ::: details Which classes support inheritance?
 

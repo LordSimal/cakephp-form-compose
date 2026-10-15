@@ -13,6 +13,7 @@ use FormCompose\Rendering\Html;
  * Repeat on the class for additional fields. options accepts the same options as
  * FieldDefinition; explicitly supplied type, label, and help override those keys.
  * Use options for explicit nulls and configuration outside the common shorthand.
+ * Template arguments use the same normalization as ordinary control options.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Field
@@ -20,7 +21,12 @@ final readonly class Field
     /**
      * Store reusable configuration using the existing field definition contract.
      *
+     * Keep existing positional arguments while exposing named presentation shorthand.
+     *
      * @param array<string, mixed> $options Additional field options.
+     * @param array<string, string>|null $templates Field part overrides.
+     * @param array<string, mixed>|null $templateData Application-owned template variables.
+     * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
         public string $path,
@@ -28,6 +34,9 @@ final readonly class Field
         public string|Html|false|null $label = null,
         public string|Html|null $help = null,
         public array $options = [],
+        public ?string $template = null,
+        public ?array $templates = null,
+        public ?array $templateData = null,
     ) {
     }
 
@@ -37,7 +46,14 @@ final readonly class Field
     public function definition(): FieldDefinition
     {
         $options = $this->options;
-        foreach (['type' => $this->type, 'label' => $this->label, 'help' => $this->help] as $key => $value) {
+        foreach ([
+            'type' => $this->type,
+            'label' => $this->label,
+            'help' => $this->help,
+            'template' => $this->template,
+            'templates' => $this->templates,
+            'templateData' => $this->templateData,
+        ] as $key => $value) {
             if ($value === null) {
                 continue;
             }

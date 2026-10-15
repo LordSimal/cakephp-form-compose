@@ -33,6 +33,7 @@ export default defineConfig({
           { text: 'Association fields', link: '/associations' },
           { text: 'Reusable definitions', link: '/definitions' },
           { text: 'Form blueprints', link: '/blueprints' },
+          { text: 'Nested definitions and layouts', link: '/composition' },
           { text: 'Create a theme', link: '/themes' },
         ],
       },

@@ -186,13 +186,17 @@ session includes rendered inputs in submission protection when closing.
 | Call | Result |
 | --- | --- |
 | `FormDefinition::make()` | An empty, immutable collection. |
-| `new FormDefinition([$name, $email])` | A collection from an ordered list of `FieldDefinition` objects. |
+| `new FormDefinition([$name, $email])` | A collection from ordered field or resolved embed entries. |
 | `$definition->add($field)` | A new collection with the field appended. |
 | `$definition->with('email', $options)` | A new collection with that field's options overridden. |
-| `$definition->has('email')` | Whether the collection contains this path. |
+| `$definition->has('email')` | Whether an active field or embed has this path. |
 | `$definition->remove('email')` | A new collection without that field. |
 | `$definition->field('email')` | The existing `FieldDefinition` for that exact path. |
-| `$definition->fields` | The ordered list of field definitions, available for iteration. |
+| `$definition->fields` | The flattened, ordered list of qualified field definitions. |
+| `$definition->entries` | Ordered fields and embedded definitions, retaining the rendering tree. |
+| `$definition->embed('author', $child)` | A new collection with a relative child mounted at this path. |
+| `$definition->embedded('author')` | The compiled child with paths relative to its own root. |
+| `$definition->presentation($options)` | A new collection with definition layout options. |
 | `$form->definition()` | HTML for the collection selected at `bind()`, or an empty string. |
 | `$form->definition($definition)` | HTML for the immutable collection, rendered in the current open form. |
 | `$form->definition('profile')` / `$form->definition(ProfileForm::class)` | Resolve and render a blueprint locally using this session’s context. |
@@ -202,7 +206,8 @@ paths, and unknown override targets throw `InvalidArgumentException`. Dot-separa
 paths such as `comments.0.body` work as they do in ordinary controls.
 
 The form must be open when calling `definition()`, including for an empty
-collection. An empty collection returns an empty string. File controls still
+collection. The bundled default layout renders an empty collection as an empty string; a
+custom layout can supply its own static markup. File controls still
 require a multipart form, and themes and custom field types work as usual.
 
 Input IDs must remain unique across the entire form, including across collections
@@ -236,3 +241,7 @@ an unknown path throws `InvalidArgumentException`.
 
 Blueprint classes compile to this same immutable representation. See
 [blueprint configuration and precedence](./blueprints.md#configuration-order).
+
+Definitions can select a PHP layout and embed reusable child definitions at association
+paths. See [nested definitions and layouts](./composition.md) for examples and the
+scoped layout API.

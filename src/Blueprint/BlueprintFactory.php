@@ -58,9 +58,12 @@ class BlueprintFactory
         }
 
         $class = $this->validateClass($class, FormBlueprint::class);
+        $context = $context->enter($class);
         $blueprint = $this->createInstance($class, FormBlueprint::class);
 
-        return $this->createCompiler()->compile($blueprint, $context);
+        return $this->createCompiler()
+            ->withResolver($this->definition(...))
+            ->compile($blueprint, $context);
     }
 
     /**

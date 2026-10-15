@@ -32,6 +32,8 @@ class FormSession
 {
     protected readonly FormLifecycle $lifecycle;
 
+    protected readonly DefinitionRenderer $definitions;
+
     /**
      * Create a session with binding, rendering, and blueprint construction dependencies.
      */
@@ -39,8 +41,10 @@ class FormSession
         public readonly FormBinding $binding,
         protected readonly RenderContext $rendering,
         protected readonly BlueprintFactory $blueprints = new BlueprintFactory(),
+        ?DefinitionRenderer $definitions = null,
     ) {
         $this->lifecycle = $this->createLifecycle();
+        $this->definitions = $definitions ?? new DefinitionRenderer($rendering);
     }
 
     /**
@@ -132,20 +136,31 @@ class FormSession
      * supplied collection, blueprint alias, or class stays local to this call and
      * does not replace defaults. Blueprints use this session's factory and context.
      * The form must be open; a session without a definition renders an empty string.
+     * at mounts relative fields at a root context path. Definition layout options
+     * stay local, including when a compiled child is passed by DefinitionView.
+     *
+     * @param array<string, mixed> $options Definition presentation overrides.
      */
-    public function definition(FormDefinition|string|null $definition = null): string
-    {
+    public function definition(
+        FormDefinition|string|null $definition = null,
+        ?string $at = null,
+        array $options = [],
+    ): string {
         $this->lifecycle->assertOpen();
+        $context = new FormContext($this->binding->context, $this->binding->request);
+        if ($at !== null) {
+            $context = $context->at($at);
+        }
+
         if (is_string($definition)) {
-            $definition = $this->blueprints->definition(
-                $definition,
-                new FormContext($this->binding->context, $this->binding->request),
-            );
+            $definition = $this->blueprints->definition($definition, $context);
         }
 
         $definition ??= $this->binding->definition ?? FormDefinition::make();
 
-        return implode('', array_map($this->control(...), $definition->fields));
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->definitions->render($this, $definition, $at ?? '', $options),
+        );
     }
 
     /**

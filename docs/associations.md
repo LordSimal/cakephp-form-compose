@@ -143,3 +143,10 @@ to the host application.
 Pass the resulting request data to CakePHP's normal `patchEntity()` workflow with
 the appropriate `associated` configuration, then validate and save through the
 ORM. Definitions, templates, and form sessions do not load or persist associations.
+
+## Reuse associated field definitions
+
+Use `#[Embed('author', AuthorForm::class)]` to compose a child blueprint, or render
+a relative definition with `$form->definition(AuthorForm::class, at: 'author')`.
+The child keeps its own PHP layout and relative field names. See
+[nested definitions and layouts](./composition.md#compose-an-association).

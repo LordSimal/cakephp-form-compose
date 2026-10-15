@@ -43,8 +43,8 @@ class FieldResolver
     {
         $definition = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
         $path = $definition->path;
-        $defaults = $this->binding->definition?->has($path)
-            ? $this->binding->definition->field($path)->options
+        $defaults = in_array($path, array_column($this->binding->definition->fields ?? [], 'path'), true)
+            ? $this->binding->definition?->field($path)->options ?? []
             : [];
         $conventions = $this->createFieldConventions();
         $options = TemplateOptions::normalize($conventions->resolve($path, array_replace(

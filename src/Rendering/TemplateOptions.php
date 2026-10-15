@@ -6,10 +6,10 @@ namespace FormCompose\Rendering;
 use InvalidArgumentException;
 
 /**
- * Normalizes field template selection into the renderer's part-to-element map.
+ * Normalizes control and definition layout selection into the renderer's part-to-element map.
  *
- * FieldResolver calls this after merging reusable and inline configuration. The
- * singular template option selects the complete control; templates selects named
+ * FieldResolver and DefinitionRenderer call this after merging configuration. The
+ * singular template option selects the complete control or layout; templates selects named
  * parts. Normalizing once lets both PhpRenderer and custom renderers consume the
  * same options, and rejects conflicting control choices before any HTML is rendered.
  */

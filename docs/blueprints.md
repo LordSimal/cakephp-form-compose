@@ -85,14 +85,13 @@ options override matching defaults for that rendering, and the selected defaults
 remain available to later calls. Without a selected definition, a no-argument
 `definition()` renders nothing.
 
-The `Field` shorthand accepts `path`, `type`, `label`, and `help`. Its `options`
-argument accepts the same configuration as a `FieldDefinition`, including choices,
-attributes, template overrides, and `templateData`:
+The `Field` shorthand accepts `path`, `type`, `label`, `help`, `template`,
+`templates`, and `templateData`. Its `options` argument accepts the same
+configuration as a `FieldDefinition`, including choices and attributes:
 
 ```php
-#[Field('email', type: 'email', options: [
+#[Field('email', type: 'email', template: 'forms/email', options: [
     'attributes' => ['autocomplete' => 'email', 'data-controller' => 'email'],
-    'template' => 'forms/email',
 ])]
 ```
 
@@ -126,12 +125,16 @@ and submission protection. Each blueprint runs its configuration hook when its
 `definition()` call is made, without changing later field defaults. Opening and
 closing tags belong to the session, so render them once.
 
-Choose distinct paths, such as `billing.street`, for independent sections; the
-plugin does not add prefixes automatically. Overlapping definitions retain the
+Choose distinct paths, such as `billing.street`, for independent sections, or
+[mount relative definitions with `at` or `Embed`](./composition.md#compose-an-association). Overlapping definitions retain the
 ordinary duplicate-input and ID checks. Merely selecting a definition does not
 register its fields: successful input rendering does.
 
 ## Keep control of the layout
+
+Select a default element with `#[Form('profile', template: 'forms/profile')]`,
+or use the bundled sequential layout. The [layouts and composition guide](./composition.md)
+shows grouping fields in PHP elements, nested definitions, and conditional `has()` checks.
 
 You can select fields individually instead of rendering the whole collection:
 
