@@ -2,7 +2,7 @@ extends = "vendor/cakephp/mago-rules/cakephp.mago.toml"
 php-version = "8.5"
 
 [source]
-paths = ["src", "tests", "templates", "scripts"]
+paths = ["src", "tests", "templates", "scripts", "rector.php"]
 includes = ["vendor"]
 
 [formatter]

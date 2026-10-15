@@ -59,6 +59,7 @@ class AssociationRenderingTest extends AssociationTestCase
         $helper->getView()->set('tags', ['unwanted' => 'Unwanted']);
         $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
         $form->open();
+
         $html = $form->control('tags._ids', [
             'options' => ['css' => 'CSS'],
             'value' => ['css'],

@@ -17,6 +17,7 @@ class NestedAssociationTest extends AssociationTestCase
         $helper->getView()->set('authors', [1 => 'Grace', 2 => 'Ada']);
         $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
         $form->open();
+
         $html = $form->control('author_id') . $form->control('comments.0.author_id');
         $form->close();
         $xpath = $this->xpath($html);
@@ -58,6 +59,7 @@ class NestedAssociationTest extends AssociationTestCase
         $comments = $article->get('comments');
         $comment = $comments[0];
         $comment->setError('body', ['invalid' => 'Fix this comment']);
+
         $form = $this->helper(['comments' => [['body' => 'Submitted comment']]])->bind($article, [
             'context' => ['table' => $this->articles],
         ]);
@@ -132,6 +134,7 @@ class NestedAssociationTest extends AssociationTestCase
         /** @var Entity $author */
         $author = $article->get('author');
         $author->setError('name', ['invalid' => 'Fix the author name']);
+
         $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
         $field = $form->field('author.name');
 

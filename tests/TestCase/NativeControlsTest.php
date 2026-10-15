@@ -15,6 +15,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $select = $form->control('comments.0.tags', ['options' => ['a' => 'A'], 'multiple' => true]);
         static::assertStringContainsString('name="comments[0][tags][]"', $select);
         static::assertStringContainsString('type="hidden" name="comments[0][tags]"', $select);
@@ -33,6 +34,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $value = new DateTimeImmutable('2026-10-15 14:23:45');
         static::assertStringContainsString('value="2026-10-15"', $form->control('day', [
             'type' => 'date',
@@ -65,6 +67,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->control('status', [
             'value' => 'a',
             'options' => ['<Group>' => [['value' => 'a', 'text' => '<Active>', 'data-extra' => '"><unsafe>']]],
@@ -80,6 +83,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->control('status', [
             'type' => 'radio',
             'options' => [
@@ -98,6 +102,7 @@ class NativeControlsTest extends FormTestCase
             $ids[] = $id;
             static::assertStringContainsString('for="' . $id . '"', $html);
         }
+
         static::assertCount(3, array_unique($ids));
         $form->close();
     }
@@ -106,6 +111,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->control('status', [
             'type' => 'radio',
             'disabled' => true,
@@ -122,6 +128,7 @@ class NativeControlsTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->control('tags', ['options' => ['a' => 'A'], 'multiple' => 'multiple']);
         static::assertStringContainsString('name="tags[]"', $html);
         static::assertStringContainsString('multiple="multiple"', $html);

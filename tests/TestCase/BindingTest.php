@@ -75,6 +75,7 @@ class BindingTest extends FormTestCase
         $table->getValidator()->requirePresence('title')->maxLength('title', 40);
         $entity = new Entity(['title' => 'Bound']);
         $entity->setError('title', ['invalid' => 'Fix it']);
+
         $form = $this->helper()->bind($entity, ['context' => ['table' => $table]]);
         static::assertSame('Bound', $form->field('title')->state->value);
         static::assertSame(40, $form->field('title')->state->constraints['maxlength']);

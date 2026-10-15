@@ -85,9 +85,18 @@ Provide these Composer scripts when creating `composer.json`:
 | `format-check` | `mago format --check` |
 | `format` | `mago format` |
 | `lint-fix` | `mago lint --fix --format-after-fix --fail-on-remaining` |
-| `check` | Run tests, analysis, linting, and format checks |
+| `rector` | `rector process --dry-run` |
+| `rector-fix` | Apply Rector refactorings, then run Mago formatting |
+| `check` | Run tests, analysis, linting, Rector, and format checks |
 
 Composer scripts resolve dependency binaries from `vendor/bin`. For direct execution, use `vendor/bin/mago` and `vendor/bin/phpunit`.
+
+## Rector integration
+
+- Run Rector through `composer rector` for a dry run or `composer rector-fix` to apply refactorings and format the result with Mago.
+- Keep Rector's PHP target aligned with Composer and review changes for public API and subclass compatibility.
+- Mago rules take precedence. Preserve the approved Rector skips for CakePHP assertion style, explicit string casts, mixed-value annotations, fluent return contracts, and normalized template paths. Do not weaken Mago rules to accommodate Rector.
+- Include the Rector dry run in `composer check` so local checks and CI enforce the same refactorings. Review automated changes and rerun the full suite and coverage before handing off.
 
 ## Documentation site
 

@@ -25,6 +25,7 @@ final class NativeValue
         if ($value === false) {
             return '0';
         }
+
         if ($value !== null && !is_scalar($value) && !$value instanceof Stringable) {
             throw new InvalidArgumentException('Native input values must be scalar or stringable.');
         }
@@ -40,6 +41,7 @@ final class NativeValue
         if (in_array($state->type, ['file', 'password'], true) || $state->value === null) {
             return null;
         }
+
         if ($state->value instanceof DateTimeInterface) {
             $format = match ($state->type) {
                 'date' => 'Y-m-d',

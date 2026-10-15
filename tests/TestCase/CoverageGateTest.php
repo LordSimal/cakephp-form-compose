@@ -17,6 +17,7 @@ class CoverageGateTest extends TestCase
         if ($path === false) {
             throw new RuntimeException('Cannot create a temporary coverage report.');
         }
+
         file_put_contents($path, $xml);
         try {
             $pipes = [];
@@ -28,6 +29,7 @@ class CoverageGateTest extends TestCase
             if (!is_resource($process)) {
                 throw new RuntimeException('Cannot execute the coverage gate.');
             }
+
             foreach ($pipes as $pipe) {
                 stream_get_contents($pipe);
                 fclose($pipe);

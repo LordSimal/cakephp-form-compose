@@ -53,6 +53,7 @@ class EdgeCasesTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open(['url' => '/articles/save']);
+
         $checkbox = $form->control('flag', [
             'type' => 'checkbox',
             'value' => '"><script>',
@@ -85,12 +86,14 @@ class EdgeCasesTest extends FormTestCase
         };
         $form = $this->helper()->bind(renderer: $renderer);
         $form->open(['url' => '/articles/save']);
+
         $field = $form->field('name');
         try {
             $field->input();
-        } catch (RuntimeException $exception) {
-            static::assertSame('Rendering failed', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Rendering failed', $runtimeException->getMessage());
         }
+
         $field->register();
         static::assertSame('', $form->close());
     }
@@ -107,6 +110,7 @@ class EdgeCasesTest extends FormTestCase
         );
         $helper = $this->helper();
         $helper->setConfig('contextFactory', $factory);
+
         $form = $helper->bind('custom source');
         static::assertSame('date', $form->field('when')->state->type);
         $form->open(['url' => '/articles/save']);

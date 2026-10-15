@@ -48,6 +48,7 @@ class Choices
                 );
                 continue;
             }
+
             /** @var array<string, mixed> $option */
             $option = is_array($label) ? $label : ['value' => $value, 'text' => $label];
             $id = (string)($option['id'] ?? $state->id . '-' . rawurlencode(NativeValue::scalar($option['value'])));
@@ -56,6 +57,7 @@ class Choices
             while (isset($this->ids[$id])) {
                 $id = $base . '-' . ++$suffix;
             }
+
             $this->ids[$id] = true;
             $option['id'] = $id;
             /** @var mixed $text */

@@ -41,6 +41,7 @@ final readonly class Field
             if ($value === null) {
                 continue;
             }
+
             $options[$key] = $value;
         }
 

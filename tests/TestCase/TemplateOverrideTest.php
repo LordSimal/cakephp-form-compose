@@ -23,6 +23,7 @@ class TemplateOverrideTest extends FormTestCase
             theme: new Theme(['themes/application']),
         );
         $form->open();
+
         $html = $form->control('email', [
             'type' => 'email',
             'variant' => 'compact',
@@ -53,6 +54,7 @@ class TemplateOverrideTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->control('email', [
             'type' => 'email',
             'templates' => ['control' => 'themes/custom/control'],
@@ -107,6 +109,7 @@ class TemplateOverrideTest extends FormTestCase
     {
         $form = $this->helper()->bind(theme: new Theme(['themes/application']));
         $form->open();
+
         $html = $form->control('email', [
             'type' => 'email',
             'template' => 'themes/library/control',

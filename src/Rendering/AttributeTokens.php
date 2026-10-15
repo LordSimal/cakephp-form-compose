@@ -25,6 +25,7 @@ final class AttributeTokens
         if (!is_array($value)) {
             return trim((string)$value);
         }
+
         $tokens = [];
         /** @var mixed $enabled */
         foreach ($value as $key => $enabled) {
@@ -34,6 +35,7 @@ final class AttributeTokens
                 $tokens[] = $key;
             }
         }
+
         $parts = preg_split('/\s+/', trim(implode(' ', $tokens))) ?: [];
 
         return implode(' ', array_unique(array_filter($parts, static fn(string $part): bool => $part !== '')));

@@ -23,6 +23,7 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
         $helper->setConfig('blueprintFactory', $factory);
+
         $form = $helper->bind(
             new ArrayContext(['data' => ['label' => 'Email']]),
             ['url' => '/articles/save'],

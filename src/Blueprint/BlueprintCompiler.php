@@ -36,18 +36,21 @@ class BlueprintCompiler
             array_unshift($hierarchy, $parent);
             $reflection = $parent;
         }
+
         $definition = FormDefinition::make();
         foreach ($hierarchy as $level) {
             $declared = FormDefinition::make();
             foreach ($level->getAttributes(Field::class) as $attribute) {
                 $declared = $declared->add($attribute->newInstance()->definition());
             }
+
             foreach ($declared->fields as $field) {
                 $definition = $definition->has($field->path)
                     ? $definition->with($field->path, $field->options)
                     : $definition->add($field);
             }
         }
+
         $builder = $this->createBuilder($definition);
         $blueprint->configure($builder, $context);
 

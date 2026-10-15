@@ -41,6 +41,7 @@ class ChoiceAttributes
                     'selected' => $selected ? 'selected' : false,
                 ]);
         }
+
         $input = $common->merge($extra)
             ->replace([
                 'type' => $state->type === 'radio' ? 'radio' : 'checkbox',
@@ -64,6 +65,7 @@ class ChoiceAttributes
         if ($state->value === null) {
             return false;
         }
+
         $values = is_array($state->value) ? $state->value : [$state->value];
 
         return in_array($value, array_map(NativeValue::scalar(...), $values), true);

@@ -30,6 +30,7 @@ final class TemplateNames
                 throw new InvalidArgumentException('Invalid template part, scope, type, or variant.');
             }
         }
+
         $prefix = $node->scope === 'field' ? '' : $node->scope . '/';
         $names = [$prefix . $node->type . '/' . $part, $prefix . $part];
         if ($variant !== null) {

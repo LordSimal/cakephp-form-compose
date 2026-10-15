@@ -72,15 +72,18 @@ class FieldAttributes
         if ($state->type === 'hidden') {
             return [];
         }
+
         $ids = [];
         $attributes = [];
         if ($state->hasHelp()) {
             $ids[] = $state->id . '-help';
         }
+
         if ($state->hasErrors()) {
             $ids[] = $state->id . '-errors';
             $attributes['aria-invalid'] = 'true';
         }
+
         if ($ids !== []) {
             $attributes['aria-describedby'] = implode(' ', $ids);
         }

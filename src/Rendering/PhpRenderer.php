@@ -55,6 +55,7 @@ class PhpRenderer implements RendererInterface
                 }
             }
         }
+
         throw new RuntimeException('No template for ' . $node->scope . ' part: ' . $part);
     }
 

@@ -46,6 +46,7 @@ class FormComposePlugin extends BasePlugin
         if ($container->hasDefinition(BlueprintFactory::class)) {
             return;
         }
+
         $container->addShared(
             BlueprintFactory::class,
             static fn(): BlueprintFactory => new BlueprintFactory($container),

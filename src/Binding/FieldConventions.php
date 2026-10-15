@@ -42,12 +42,15 @@ class FieldConventions
         if (isset($options['type'])) {
             return $options;
         }
+
         if (FieldPath::association($path) !== null) {
             return $options + ['type' => 'select', 'multiple' => true];
         }
+
         if ($this->binding->context->isPrimaryKey($path)) {
             return $options + ['type' => 'hidden'];
         }
+
         if (str_ends_with($path, '_id')) {
             $options['type'] = 'select';
         }
@@ -85,12 +88,14 @@ class FieldConventions
      */
     protected function choices(string $path, array $options): array
     {
-        if (array_key_exists('options', $options) || $this->viewVariable === null) {
+        if (array_key_exists('options', $options) || !$this->viewVariable instanceof Closure) {
             return $options;
         }
+
         if (!in_array($options['type'] ?? 'select', ['select', 'radio', 'multicheckbox'], true)) {
             return $options;
         }
+
         /** @var mixed $choices */
         $choices = ($this->viewVariable)(FieldPath::optionsVariable($path));
         if (is_iterable($choices)) {

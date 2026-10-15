@@ -35,7 +35,9 @@ class NativeType implements FieldTypeInterface
     public function render(BoundField $field, Attributes $attributes): string
     {
         $fallback = ControlFallback::resolve($field->state, $attributes);
-        $prefix = $fallback === null ? '' : $this->renderer->render('fallback', RenderNode::field($field, $fallback));
+        $prefix = $fallback instanceof Attributes
+            ? $this->renderer->render('fallback', RenderNode::field($field, $fallback))
+            : '';
         $native = NativeAttributes::resolve($field->state, $attributes);
         /** @var iterable<array-key, mixed> $options */
         $options = $field->state->options['options'] ?? [];

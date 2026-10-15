@@ -10,7 +10,8 @@
     "require-dev": {
         "cakephp/mago-rules": "dev-main",
         "carthage-software/mago": "^1.47",
-        "phpunit/phpunit": "^12.5"
+        "phpunit/phpunit": "^12.5",
+        "rector/rector": "^2.7"
     },
     "autoload": {
         "psr-4": {
@@ -33,10 +34,16 @@
         "format-check": "mago format --check",
         "format": "mago format",
         "lint-fix": "mago lint --fix --format-after-fix --fail-on-remaining",
+        "rector": "rector process --dry-run",
+        "rector-fix": [
+            "rector process",
+            "@format"
+        ],
         "check": [
             "@test",
             "@analyze",
             "@lint",
+            "@rector",
             "@format-check"
         ]
     },

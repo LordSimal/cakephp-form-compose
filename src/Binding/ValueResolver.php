@@ -49,6 +49,7 @@ class ValueResolver
         if ($sources === [] || array_diff($sources, ['data', 'context', 'query']) !== []) {
             throw new InvalidArgumentException('Value sources must contain data, context, or query.');
         }
+
         /** @var mixed $default */
         $default = $options['default'] ?? null;
         foreach ($sources as $source) {
@@ -61,8 +62,10 @@ class ValueResolver
                 if ($value !== null) {
                     return $value;
                 }
+
                 continue;
             }
+
             /** @var mixed $data */
             $data = $source === 'query'
                 ? $this->binding->request->getQueryParams()
