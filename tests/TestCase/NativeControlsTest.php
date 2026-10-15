@@ -4,10 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use DateTimeImmutable;
-use DOMDocument;
-use DOMElement;
-use DOMNodeList;
-use DOMXPath;
+use Dom\Element;
+use Dom\NodeList;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 
@@ -90,14 +88,13 @@ class NativeControlsTest extends FormTestCase
                 ['value' => 'a', 'text' => 'Third'],
             ],
         ]);
-        $document = new DOMDocument();
-        $document->loadHTML($html);
-        /** @var DOMNodeList<DOMElement>|false $nodes */
-        $nodes = new DOMXPath($document)->query('//input[@type="radio"]');
-        static::assertInstanceOf(DOMNodeList::class, $nodes);
+        /** @var NodeList<Element>|false $nodes */
+        $nodes = $this->xpath($html)->query('//input[@type="radio"]');
+        static::assertInstanceOf(NodeList::class, $nodes);
         $ids = [];
         foreach ($nodes as $node) {
             $id = $node->getAttribute('id');
+            static::assertNotNull($id);
             $ids[] = $id;
             static::assertStringContainsString('for="' . $id . '"', $html);
         }

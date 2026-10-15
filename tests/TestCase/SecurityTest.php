@@ -4,10 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\Form\FormProtector;
-use DOMDocument;
-use DOMElement;
-use DOMNodeList;
-use DOMXPath;
+use Dom\Element;
+use Dom\NodeList;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\FormDefinition;
 use FormCompose\Rendering\PhpRenderer;
@@ -57,15 +55,17 @@ class SecurityTest extends FormTestCase
      */
     private function tokens(string $html): array
     {
-        $document = new DOMDocument();
-        $document->loadHTML($html);
-        /** @var DOMNodeList<DOMElement>|false $nodes */
-        $nodes = new DOMXPath($document)->query('//input[starts-with(@name, "_Token[")]');
+        /** @var NodeList<Element>|false $nodes */
+        $nodes = $this->xpath($html)->query('//input[starts-with(@name, "_Token[")]');
         $tokens = [];
-        static::assertInstanceOf(DOMNodeList::class, $nodes);
+        static::assertInstanceOf(NodeList::class, $nodes);
         foreach ($nodes as $node) {
-            static::assertInstanceOf(DOMElement::class, $node);
-            $tokens[substr($node->getAttribute('name'), 7, -1)] = $node->getAttribute('value');
+            static::assertInstanceOf(Element::class, $node);
+            $name = $node->getAttribute('name');
+            $value = $node->getAttribute('value');
+            static::assertNotNull($name);
+            static::assertNotNull($value);
+            $tokens[substr($name, 7, -1)] = $value;
         }
 
         return $tokens;

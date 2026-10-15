@@ -5,8 +5,8 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\Form\FormProtector;
 use Cake\ORM\Entity;
-use DOMElement;
-use DOMNodeList;
+use Dom\Element;
+use Dom\NodeList;
 use FormCompose\Test\AssociationTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -169,13 +169,17 @@ class AssociationSubmissionTest extends AssociationTestCase
      */
     protected function tokens(string $html): array
     {
-        /** @var DOMNodeList<DOMElement>|false $nodes */
+        /** @var NodeList<Element>|false $nodes */
         $nodes = $this->xpath($html)->query('//input[starts-with(@name, "_Token[")]');
-        static::assertInstanceOf(DOMNodeList::class, $nodes);
+        static::assertInstanceOf(NodeList::class, $nodes);
         $tokens = [];
         foreach ($nodes as $node) {
-            static::assertInstanceOf(DOMElement::class, $node);
-            $tokens[substr($node->getAttribute('name'), 7, -1)] = $node->getAttribute('value');
+            static::assertInstanceOf(Element::class, $node);
+            $name = $node->getAttribute('name');
+            $value = $node->getAttribute('value');
+            static::assertNotNull($name);
+            static::assertNotNull($value);
+            $tokens[substr($name, 7, -1)] = $value;
         }
 
         return $tokens;

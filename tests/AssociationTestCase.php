@@ -6,8 +6,6 @@ namespace FormCompose\Test;
 use Cake\Database\Schema\TableSchema;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
-use DOMDocument;
-use DOMXPath;
 
 /**
  * Builds real ORM associations and entity graphs without requiring stored records.
@@ -130,16 +128,5 @@ abstract class AssociationTestCase extends FormTestCase
             'tags' => $tags,
             'topic_tags' => $tags,
         ], ['source' => 'Articles', 'markNew' => false]);
-    }
-
-    /**
-     * Parse rendered markup for selection, naming, and accessibility assertions.
-     */
-    protected function xpath(string $html): DOMXPath
-    {
-        $document = new DOMDocument();
-        $document->loadHTML($html);
-
-        return new DOMXPath($document);
     }
 }
