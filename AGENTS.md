@@ -89,6 +89,16 @@ Provide these Composer scripts when creating `composer.json`:
 
 Composer scripts resolve dependency binaries from `vendor/bin`. For direct execution, use `vendor/bin/mago` and `vendor/bin/phpunit`.
 
+## Documentation site
+
+- Maintain the VitePress site in `docs/` and its configuration in `docs/.vitepress/`. Keep Node dependencies separate from the PHP runtime dependencies.
+- Keep the README concise and link to the documentation site. The site owns the full explanation: show the problem and a control call connected to its PHP element before detailed setup, recipes, and reference material.
+- Keep the homepage short, with a few tabbed code examples. Put conceptual explanations, recipes, and detailed contracts in the guides and reference pages.
+- Prefer built-in navigation, local search, code groups, callouts, and details blocks over custom Vue components when they meet the need.
+- Run `npm ci` and `npm run docs:build` for documentation-site changes. Fix broken links rather than disabling VitePress's link checks.
+- Keep the repository Pages base path configured, and publish only from `main`. Pull requests must build the site without deploying it.
+- Commit the npm lockfile; exclude installed dependencies, VitePress caches, and build output.
+
 ## Completion requirements
 
 - CI must run `composer validate --strict`, `composer check`, and `composer test-coverage` with the required coverage driver enabled.
