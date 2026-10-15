@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
-use Cake\Utility\Hash;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Field\FieldState;
@@ -11,16 +10,19 @@ use FormCompose\Field\FieldTypeInterface;
 use FormCompose\Field\NativeType;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\RenderContext;
+use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
 /**
  * Builds a BoundField from a context path or reusable FieldDefinition.
  *
- * Combines definition options with per-call overrides, infers a control type,
- * resolves its value, and derives its input name, ID, constraints, and errors.
+ * Combines definition options with per-call overrides, normalizes the template
+ * shorthand to templates['control'], infers a control type,
+ * applies association conventions, resolves its value, and derives its input
+ * name, ID, constraints, and errors.
  * The resulting field uses a registered custom type or the standard NativeType.
  * Called by FormSession::field(); resolving a field does not render its input.
- * Subclasses can specialize inferType() and the field/type/value resolver factories.
+ * Subclasses can specialize inferType() and the field/type/value/convention factories.
  */
 class FieldResolver
 {
@@ -39,8 +41,12 @@ class FieldResolver
     public function resolve(string|FieldDefinition $field, array $options, FormLifecycle $lifecycle): BoundField
     {
         $definition = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
-        $options = array_replace($definition->options, $options);
         $path = $definition->path;
+        $conventions = $this->createFieldConventions();
+        $options = TemplateOptions::normalize($conventions->resolve($path, array_replace(
+            $definition->options,
+            $options,
+        )));
         $type = (string)($options['type'] ?? $this->inferType($path, $options));
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
             throw new InvalidArgumentException('Invalid control type.');
@@ -52,14 +58,10 @@ class FieldResolver
         if ($id === '' || !preg_match('/^[a-zA-Z0-9_.:-]+(?:\[[a-zA-Z0-9_.:-]*\])*$/D', $name)) {
             throw new InvalidArgumentException('Use a nonempty ID and a valid bracket-notation input name.');
         }
-        $messages = array_map(
-            static fn(mixed $message): string => (string)$message,
-            array_values(Hash::flatten($this->binding->context->error($path))),
-        );
         $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $options), [
             'name' => $name,
             'id' => $id,
-            'messages' => $messages,
+            'messages' => $conventions->messages($path),
             'constraints' => Constraints::resolve($this->binding->context, $path, $type, $options),
             'options' => $options,
         ]);
@@ -123,5 +125,13 @@ class FieldResolver
     protected function createValueResolver(): ValueResolver
     {
         return new ValueResolver($this->binding);
+    }
+
+    /**
+     * Create association defaults and choice discovery; override to specialize conventions.
+     */
+    protected function createFieldConventions(): FieldConventions
+    {
+        return new FieldConventions($this->binding, $this->rendering->viewVariable);
     }
 }

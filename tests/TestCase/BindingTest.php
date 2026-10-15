@@ -107,4 +107,24 @@ class BindingTest extends FormTestCase
         $this->expectException(InvalidArgumentException::class);
         FieldDefinition::make('../name');
     }
+
+    public function testArrayContextsApplyAssociationAndChoiceConventions(): void
+    {
+        $helper = $this->helper();
+        $helper->getView()->set('tags', ['a' => 'A']);
+        $helper->getView()->set('statuses', ['draft' => 'Draft']);
+        $form = $helper->bind(new ArrayContext([
+            'data' => ['tags' => ['_ids' => ['a']]],
+            'errors' => ['tags' => ['invalid' => 'Invalid tags']],
+            'required' => ['tags' => true],
+        ]));
+        $field = $form->field('tags._ids');
+
+        static::assertSame(['a'], $field->state->value);
+        static::assertSame(['Invalid tags'], $field->state->messages);
+        static::assertTrue($field->state->constraints['multiple']);
+        static::assertTrue($field->state->constraints['required']);
+        static::assertSame('select', $form->field('status')->state->type);
+        static::assertSame(['draft' => 'Draft'], $form->field('status')->state->options['options']);
+    }
 }

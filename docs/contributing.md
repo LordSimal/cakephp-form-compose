@@ -6,6 +6,9 @@ description: Run the PHP checks, enforce coverage, and work on the VitePress doc
 
 ## PHP checks
 
+Enable PDO SQLite for the association integration tests. They use an in-memory
+database to verify choice queries and CakePHP entity marshalling.
+
 ```sh
 composer install
 composer check

@@ -22,10 +22,15 @@ final class Constraints
      */
     public static function resolve(ContextInterface $context, string $path, string $type, array $options): array
     {
-        $constraints = ['required' => $options['required'] ?? $context->isRequired($path) ?? false];
+        $constraints = [
+            'required' => $options['required'] ?? $context->isRequired(FieldPath::association($path) ?? $path) ?? false,
+        ];
         $constraints += array_intersect_key($options, array_flip(['disabled', 'readonly', 'multiple']));
         $maxLength = $context->getMaxLength($path);
-        if ($maxLength !== null && in_array($type, ['text', 'email', 'password', 'search', 'tel', 'url'], true)) {
+        if (
+            $maxLength !== null
+            && in_array($type, ['text', 'textarea', 'email', 'password', 'search', 'tel', 'url'], true)
+        ) {
             $constraints['maxlength'] = $maxLength;
         }
         if ($type === 'number') {

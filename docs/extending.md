@@ -51,7 +51,8 @@ to the normal form-building API:
 | --- | --- |
 | `FormHelper` | `createSession()` selects the session returned by `bind()` |
 | `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
-| `FieldResolver` | `find()`, `inferType()`, and factories for bound fields, field types, and value resolution |
+| `FieldResolver` | `inferType()` and factories for bound fields, field types, value resolution, and field conventions |
+| `FieldConventions` | `choices()`, `resolve()`, and `messages()` specialize choice discovery and association defaults |
 | `ValueResolver` | `fromSources()` specializes request/context lookup |
 | `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
 | `NativeType` | `choice()` and `createChoices()` specialize standard controls |
@@ -107,7 +108,10 @@ class AppFieldResolver extends FieldResolver
 :::
 
 Load `AppFormHelper` using CakePHP's helper `className` option. Explicit field types
-still take priority over type inference. `Choices`, `ChoiceAttributes`, and
+still take priority over type inference. Override `FieldResolver::createFieldConventions()`
+to supply application-specific association or choice-list conventions. The default
+`FieldConventions` uses the binding and the rendering context's optional live
+`viewVariable` lookup. `Choices`, `ChoiceAttributes`, and
 `FieldAttributes` also support subclassing. `FormLifecycle` accepts custom
 `FormConstruction` and `FormProtection` instances through its constructor;
 override the session's `createLifecycle()` to supply them. Preserve lifecycle

@@ -35,18 +35,50 @@ hyphens, beginning with a letter.
 
 ### Explicit overrides
 
-A per-field `templates` entry takes priority over layer lookup:
+Use singular `template` to select the complete field control element. It takes
+priority over variant and layer lookup:
 
 ```php
 $form->control('email', [
     'type' => 'email',
-    'templates' => ['control' => 'forms/special-email'],
+    'template' => 'forms/special-email',
 ]);
 ```
 
-Here the control uses `templates/element/forms/special-email.php`. Set per-form
-`templates` using `open`, `close`, or `hidden` keys in `bind()`; set per-button
-`templates` using the `control` key in `submit()`.
+Here the control uses `templates/element/forms/special-email.php`. Use CakePHP
+element names without `.php`, including plugin-qualified names such as
+`MyDesignSystem.forms/email`. The [control guide](./usage.md#choose-a-template-for-one-control)
+shows the call and a complete element together.
+
+Plural `templates` maps individual parts to elements. The existing
+`templates['control']` spelling remains supported:
+
+```php
+$form->control('email', [
+    'type' => 'email',
+    'templates' => [
+        'control' => 'forms/special-email',
+        'input' => 'forms/email-input',
+        'help' => 'forms/email-help',
+    ],
+]);
+```
+
+Each entry names its own element. Parts without an explicit override keep their
+normal theme lookup. You can combine `template` with `templates` entries for other
+parts. Supplying different values for `template` and `templates['control']` throws
+`InvalidArgumentException` during field resolution; identical values are accepted.
+The shorthand must be a nonempty string. Conflict checking uses the merged
+definition and per-call options.
+
+Both spellings work through `field()` and reusable field definitions too. During
+resolution, `template` is normalized to `templates['control']`, so custom renderers
+receive the same canonical options.
+
+The singular shorthand applies to field controls. Hidden fields continue to
+render their input part directly. Set per-form `templates` using `open`, `close`,
+or `hidden` keys in `bind()`; set per-button `templates` using the `control` key in
+`submit()`.
 
 ### Calling the parent layer
 

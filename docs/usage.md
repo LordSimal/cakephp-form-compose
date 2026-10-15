@@ -40,6 +40,66 @@ additional input registration is rejected. Failed opening, closing, or button
 templates leave the lifecycle and submission registry available for a safe retry.
 :::
 
+### Choose a template for one control
+
+Set `template` to render a different PHP element for this call. For example, give
+one email field its own layout without changing the form's theme:
+
+::: code-group
+
+```php [Control call]
+echo $form->control('email', [
+    'type' => 'email',
+    'template' => 'forms/special-email',
+]);
+```
+
+```php [templates/element/forms/special-email.php]
+<?php
+declare(strict_types=1);
+
+/**
+ * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+?>
+<div<?= (string)$attributes ?>>
+    <?= $field->label() ?>
+    <div class="email-input">
+        <span aria-hidden="true">@</span>
+        <?= $field->input() ?>
+    </div>
+    <?= $field->help() ?>
+    <?= $field->errors() ?>
+</div>
+```
+
+:::
+
+Use a CakePHP element name without the `.php` extension. The explicit element
+takes priority over variants and theme layers. Its field parts still use the
+normal templates, data binding, escaping, and submission protection.
+
+Use plural `templates` when selecting individual parts. Both options can be
+combined:
+
+```php
+echo $form->control('email', [
+    'type' => 'email',
+    'template' => 'forms/special-email',
+    'templates' => ['input' => 'forms/email-input'],
+]);
+```
+
+This also requires a `templates/element/forms/email-input.php` element for the
+input part. `template` is shorthand for `templates['control']`; supplying different
+values for both throws `InvalidArgumentException`. Matching values are accepted.
+
+To customize every email field in a theme, use its `email/control.php` element
+instead. See [creating a theme](./themes.md) and the
+[template reference](./template-reference.md#explicit-overrides) for all part names
+and parent-template behavior.
+
 ## Data and value sources
 
 Bind ORM entities, Cake `Form` objects, array contexts, existing `ContextInterface`
@@ -54,6 +114,14 @@ and empty strings. Context values follow the existing Cake context's semantics.
 
 File controls require `['type' => 'file']` or multipart `enctype` when opening the
 form.
+
+## Association fields
+
+Use CakePHP's usual paths such as `author_id`, `tags._ids`, `details.summary`, and
+`comments.0.body`. FormCompose discovers conventional choice lists, resolves
+associated values and validation metadata, and keeps nested submission names.
+See [association fields](./associations.md) for selects, checkbox groups, nested
+records, junction data, and validation feedback.
 
 ## Composing field parts
 

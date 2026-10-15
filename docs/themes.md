@@ -66,6 +66,13 @@ Every email control in a form using this theme now gets this layout. Other types
 continue to use the base control element, and all parts without overrides still
 use their base elements.
 
+::: tip Change just one control
+For an individual field, pass `['template' => 'forms/special-email']` to
+`control()`. This directly selects `templates/element/forms/special-email.php`
+without changing the theme. The [control guide](./usage.md#choose-a-template-for-one-control)
+shows a complete example; plural `templates` selects overrides for individual parts.
+:::
+
 ## 3. Add default classes
 
 Put shared class and attribute defaults in the theme:

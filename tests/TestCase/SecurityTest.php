@@ -80,7 +80,7 @@ class SecurityTest extends FormTestCase
         $unused->attributes();
         $html = $form->open();
         static::assertStringContainsString('value="' . $csrf . '"', $html);
-        $html .= $form->control('title');
+        $html .= $form->control('title', ['template' => 'themes/custom/control']);
         $html .= $form->control('id', ['type' => 'hidden', 'value' => '42']);
         $html .= $form->control('disabled', ['disabled' => true]);
         $html .= $form->close();

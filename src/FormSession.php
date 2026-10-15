@@ -110,6 +110,9 @@ class FormSession
     /**
      * Render a complete field using the same bound state as manual composition.
      *
+     * Set template to a CakePHP element name for this control's layout, or use
+     * templates to override individual parts. Conflicting control overrides fail.
+     *
      * @param array<string, mixed> $options Field options.
      */
     public function control(string|FieldDefinition $field, array $options = []): string

@@ -19,7 +19,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: intl, mbstring
+          extensions: intl, mbstring, pdo_sqlite
           coverage: xdebug
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist

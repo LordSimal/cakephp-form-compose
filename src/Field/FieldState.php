@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Field;
 
+use FormCompose\Binding\FieldPath;
 use FormCompose\Rendering\Html;
 
 /**
@@ -72,11 +73,7 @@ final readonly class FieldState
     public function labelText(): string
     {
         /** @var string|Html|false $label */
-        $label = $this->options['label'] ?? ucfirst(str_replace(
-            '_',
-            ' ',
-            basename(str_replace('.', '/', $this->path)),
-        ));
+        $label = $this->options['label'] ?? FieldPath::label($this->path);
 
         return Html::text($label instanceof Html ? $label : (string)$label);
     }

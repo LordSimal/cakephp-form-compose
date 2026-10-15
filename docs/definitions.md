@@ -90,6 +90,18 @@ echo $form->definition($administrationContact);
 field's position. Other keys remain unchanged. Nested arrays such as `attributes`
 are replaced as a whole; this follows `FieldDefinition::with()`.
 
+Choose a different control element for one use in the same way:
+
+```php
+echo $form->definition(
+    $contact->with('email', ['template' => 'forms/special-email']),
+);
+```
+
+This selects `templates/element/forms/special-email.php`. See
+[choosing a template](./usage.md#choose-a-template-for-one-control) for the element
+and the `templates` option for individual parts.
+
 ::: tip Configuration stays local
 Rendering `$form->definition($contact)` does not install session-wide defaults.
 A later `$form->field('email')` or `$form->control('email')` uses its own options

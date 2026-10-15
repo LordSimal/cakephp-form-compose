@@ -70,7 +70,7 @@ class FormHelper extends Helper
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options),
-            new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types),
+            new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
         );
     }
 
