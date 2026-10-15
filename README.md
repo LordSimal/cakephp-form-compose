@@ -1,9 +1,10 @@
 # FormCompose
 
+[![Packagist](https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist)](https://packagist.org/packages/josbeir/cakephp-form-compose)
 [![CI](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/josbeir/cakephp-form-compose/branch/main/graph/badge.svg)](https://app.codecov.io/gh/josbeir/cakephp-form-compose)
 
-**CakePHP forms built with PHP element templates.**
+**A replacement for CakePHP's FormHelper, with PHP element templates.**
 
 FormCompose keeps form data binding separate from markup. A `control()` call
 renders a PHP element where you arrange the field's label, input, help, and errors.

@@ -1,25 +1,38 @@
 ---
 title: Why FormCompose?
-description: Understand the problem FormCompose solves and compare its PHP element templates with core FormHelper.
+description: FormCompose replaces CakePHP's FormHelper with composable bound fields and PHP element templates.
 ---
 
-# Why FormCompose?
+# A replacement for CakePHP's FormHelper
 
-## The problem: markup becomes application code
+**FormCompose replaces CakePHP's FormHelper as your form-building API.** Its
+helper binds form data, opens and closes forms, renders controls, and prepares
+CSRF and form-protection fields.
+
+The central change is how you build the markup: **a control renders an ordinary
+PHP element with a bound field object**. That element decides where the label,
+input, help text, and validation errors appear. You can reuse the layout through
+a theme or arrange individual field parts directly in your view.
+
+FormCompose uses CakePHP's contexts, association conventions, validation metadata,
+routing, and form protection. Your application keeps its existing validation and
+persistence workflow. Adopting FormCompose means porting your form calls to its
+own API, described in the comparison below.
+
+## Why rethink form rendering?
 
 A form may start with a label and input. A design system adds an icon, a hint,
 feedback in a particular position, and several variants of that structure. The
 same layout then needs to work across many forms and field types.
 
-Core FormHelper already supports individual input methods, string templates, and
-custom widgets. String templates work well for substituting markup around values.
-As a layout needs PHP conditionals or other view elements, you may want a PHP
-file as the place to compose it.
+Core FormHelper assembles controls using string templates and widgets. Adapting
+that structure to a design system can spread layout decisions across template
+configuration, custom widgets, and helper overrides.
 
-FormCompose makes that the standard rendering model: **a control renders a PHP
-element with a bound field object**. Its label, input, help, and errors can be
-arranged inside that file. Changing the layout leaves the field's data binding
-and submission behavior in place.
+FormCompose puts the control layout in a PHP element, with normal conditionals,
+element includes, and access to each field part. Tailwind, daisyUI, Bootstrap, or
+your own design system can use the markup they require. Changing that layout
+preserves the field's data binding and submission behavior.
 
 ## String templates and PHP elements
 
@@ -51,8 +64,8 @@ wrapper around just the input. The label, input, help, and errors themselves als
 render through replaceable PHP elements.
 
 Core's [FormHelper guide](https://book.cakephp.org/5/en/views/helpers/form.html#customizing-the-templates-formhelper-uses)
-documents its string templates and custom widgets. The difference here is the
-built-in composition model; both systems have extension points.
+documents its string templates and custom widgets. FormCompose makes PHP elements
+and independently renderable field parts the foundation of its rendering API.
 
 ## What changes in practice?
 
@@ -64,10 +77,6 @@ built-in composition model; both systems have extension points.
 | Shared presentation | Configure templates and widgets | Select application or plugin theme layers |
 | Form API | `create()`, field methods, `end()` | `bind()`, then session `open()`, field methods, `close()` |
 
-FormCompose continues to use CakePHP contexts, schema and validation metadata,
-routing, requests, and form protection. Validation rules and persistence stay in
-your application's existing layers.
-
 ## What this enables
 
 Use a theme to reuse your application's PHP markup across forms. Compose
@@ -75,8 +84,8 @@ individual field parts for custom layouts, or inspect resolved values,
 constraints, and validation feedback before rendering.
 
 ::: info Experimental API
-FormCompose is a separate API, with evolving behavior and no full core feature
-parity. Existing FormHelper calls and custom widgets need to be ported.
+The replacement API is still evolving. Existing FormHelper calls and custom
+widgets need to be ported to FormCompose's sessions, field types, and templates.
 :::
 
 Next, [follow a control from data to HTML](./rendering.md), or

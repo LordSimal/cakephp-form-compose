@@ -4,7 +4,7 @@ const repository = 'https://github.com/josbeir/cakephp-form-compose';
 
 export default defineConfig({
   title: 'FormCompose',
-  description: 'CakePHP form controls rendered through PHP element templates.',
+  description: 'A CakePHP FormHelper replacement with PHP element templates and composable fields.',
   lang: 'en-US',
   base: '/cakephp-form-compose/',
   lastUpdated: true,

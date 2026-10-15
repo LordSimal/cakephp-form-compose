@@ -1,12 +1,12 @@
 ---
 layout: home
 
-description: CakePHP forms rendered with PHP element templates and composable field parts.
+description: A replacement for CakePHP's FormHelper, with PHP element templates and composable bound fields.
 
 hero:
   name: FormCompose
-  text: CakePHP forms with PHP templates.
-  tagline: Keep the data binding. Write the markup in ordinary CakePHP elements.
+  text: A replacement for FormHelper.
+  tagline: Build CakePHP forms with bound fields and ordinary PHP element templates.
   actions:
     - theme: brand
       text: Get started
