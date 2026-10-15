@@ -69,12 +69,14 @@ class FormHelper extends Helper
         if (!$theme instanceof Theme) {
             throw new InvalidArgumentException('Use Base or a Theme instance.');
         }
+
         $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
         unset($options['context'], $options['types']);
         $factory = $this->createBlueprintFactory();
         if (is_string($definition)) {
             $definition = $factory->definition($definition, new FormContext($context, $view->getRequest()));
         }
+
         $types = $factory->types($types);
 
         return $this->createSession(

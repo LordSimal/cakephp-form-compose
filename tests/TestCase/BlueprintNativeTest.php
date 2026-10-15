@@ -56,6 +56,7 @@ class BlueprintNativeTest extends FormTestCase
             static::assertNotNull($value);
             $tokens[substr($name, 7, -1)] = $value;
         }
+
         $submitted = ['tags' => ['b'], 'status' => 'a', 'attachment' => '', '_Token' => $tokens];
         $session = $helper->getView()->getRequest()->getSession()->id();
         static::assertTrue(new FormProtector()->validate($submitted, '/articles/save', $session));

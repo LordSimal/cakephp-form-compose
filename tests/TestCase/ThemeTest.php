@@ -19,6 +19,7 @@ class ThemeTest extends FormTestCase
         $theme = new Theme(['themes/application', 'themes/library']);
         $form = $helper->bind(theme: $theme);
         $form->open(['url' => '/articles/save']);
+
         $html = $form->control('email', ['type' => 'email']);
         static::assertStringContainsString('<section data-layout="application">', $html);
         static::assertStringContainsString('<article data-layout="library">', $html);

@@ -41,6 +41,7 @@ class TemplateDataValidationTest extends FormTestCase
         if ($scope !== 'form') {
             $form->open();
         }
+
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('The templateData option must be an array.');
         match ($scope) {
@@ -57,9 +58,10 @@ class TemplateDataValidationTest extends FormTestCase
         try {
             $form->control('email', ['templateData' => null]);
             static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $exception) {
-            static::assertSame('The templateData option must be an array.', $exception->getMessage());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
         }
+
         static::assertStringContainsString('name="email"', $form->control('email'));
         $form->close();
     }
@@ -70,9 +72,10 @@ class TemplateDataValidationTest extends FormTestCase
         try {
             $form->open();
             static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $exception) {
-            static::assertSame('The templateData option must be an array.', $exception->getMessage());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
         }
+
         static::assertStringContainsString('<form', $form->open(['templateData' => []]));
         $form->close();
     }

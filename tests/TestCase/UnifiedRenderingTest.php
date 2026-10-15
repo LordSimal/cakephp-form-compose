@@ -64,6 +64,7 @@ class UnifiedRenderingTest extends FormTestCase
     {
         $form = $this->helper()->bind(theme: new Theme(['themes/unified']));
         $form->open();
+
         $select = $form->control('status', ['options' => ['a' => 'Active'], 'value' => 'a']);
         static::assertStringContainsString('data-option', $select);
         static::assertStringContainsString('selected="selected"', $select);
@@ -79,9 +80,10 @@ class UnifiedRenderingTest extends FormTestCase
         try {
             $form->open();
             static::fail('Expected the opening template to fail.');
-        } catch (RuntimeException $exception) {
-            static::assertSame('Template failed', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Template failed', $runtimeException->getMessage());
         }
+
         static::assertStringContainsString('<form', $form->open());
         static::assertStringContainsString('</form>', $form->close());
     }
@@ -96,9 +98,10 @@ class UnifiedRenderingTest extends FormTestCase
         try {
             $form->close();
             static::fail('Expected the closing template to fail.');
-        } catch (RuntimeException $exception) {
-            static::assertSame('Template failed', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Template failed', $runtimeException->getMessage());
         }
+
         static::assertStringContainsString('</form>', $form->close());
     }
 
@@ -110,9 +113,10 @@ class UnifiedRenderingTest extends FormTestCase
         try {
             $form->close();
             static::fail('Expected a late input to be rejected.');
-        } catch (LogicException $exception) {
-            static::assertStringContainsString('current phase is Finalizing', $exception->getMessage());
+        } catch (LogicException $logicException) {
+            static::assertStringContainsString('current phase is Finalizing', $logicException->getMessage());
         }
+
         static::assertStringContainsString('name="after_failure"', $form->control('after_failure'));
         static::assertStringContainsString('</form>', $form->close());
     }

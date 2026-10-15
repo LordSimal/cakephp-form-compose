@@ -49,7 +49,7 @@ class FormLifecycle
      */
     public function prepare(Theme $theme, array $options): FormState
     {
-        if ($this->state !== null) {
+        if ($this->state instanceof FormState) {
             throw new LogicException('A form session can only be opened once.');
         }
 
@@ -71,7 +71,7 @@ class FormLifecycle
      */
     public function assertOpen(): FormState
     {
-        if ($this->state === null || $this->phase !== FormPhase::Open) {
+        if (!$this->state instanceof FormState || $this->phase !== FormPhase::Open) {
             throw new LogicException('Expected an open form; current phase is ' . $this->phase->name . '.');
         }
 
@@ -87,6 +87,7 @@ class FormLifecycle
         if (isset($this->rendered[$field->state->id])) {
             throw new LogicException('An input with this ID has already been rendered: ' . $field->state->id);
         }
+
         if ($field->state->type === 'file' && !$state->multipart()) {
             throw new LogicException('File inputs require a multipart form.');
         }

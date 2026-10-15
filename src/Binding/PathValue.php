@@ -35,6 +35,7 @@ final readonly class PathValue
             if (!is_array($value) || !array_key_exists($part, $value)) {
                 return new self(false);
             }
+
             /** @var mixed $value */
             $value = $value[$part];
         }

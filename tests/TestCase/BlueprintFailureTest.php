@@ -93,9 +93,10 @@ class BlueprintFailureTest extends FormTestCase
         try {
             $helper->bind(definition: FailingForm::class);
             static::fail('Expected configuration to fail.');
-        } catch (RuntimeException $exception) {
-            static::assertSame('Configuration failed.', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Configuration failed.', $runtimeException->getMessage());
         }
+
         static::assertNull($helper->bind()->binding->definition);
         static::assertSame([], $helper->bind()->field('partial')->state->options);
     }

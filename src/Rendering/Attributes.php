@@ -33,9 +33,11 @@ final readonly class Attributes implements Stringable
                 throw new InvalidArgumentException('Invalid HTML attribute name: ' . $name);
             }
         }
+
         if (array_key_exists('class', $values) && $values['class'] !== null) {
             $values['class'] = AttributeTokens::normalize($values['class']);
         }
+
         $this->values = $values;
     }
 
@@ -58,6 +60,7 @@ final readonly class Attributes implements Stringable
                     AttributeTokens::normalize($value),
                 ]);
             }
+
             $merged[$name] = $value;
         }
 
@@ -93,10 +96,12 @@ final readonly class Attributes implements Stringable
             if ($value === null || $value === false) {
                 continue;
             }
+
             if ($value === true) {
                 $html .= ' ' . $name;
                 continue;
             }
+
             $html .=
                 ' '
                 . $name

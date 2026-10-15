@@ -43,6 +43,7 @@ final readonly class RenderNode
         if (!is_array($templateData)) {
             throw new InvalidArgumentException('The templateData option must be an array.');
         }
+
         $this->variables = array_replace($variables, ['templateData' => $templateData]);
     }
 

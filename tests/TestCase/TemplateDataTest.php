@@ -22,6 +22,7 @@ class TemplateDataTest extends FormTestCase
     {
         $form = $this->helper()->bind(theme: new Theme(['themes/data']));
         $form->open();
+
         $html = $form->control('email', [
             'template' => 'themes/data/control',
             'templateData' => ['marker' => 'contact', 'content' => '<script>alert(1)</script>'],
@@ -79,12 +80,15 @@ class TemplateDataTest extends FormTestCase
             if ($call['node']->scope !== 'field') {
                 continue;
             }
+
             static::assertSame($data, $call['node']->variables['templateData']);
             $rendered[] = $call['part'];
         }
+
         foreach (['control', ...$parts] as $part) {
             static::assertContains($part, $rendered);
         }
+
         static::assertStringContainsString('template-data: shared', $html);
         static::assertStringNotContainsString('templateData=', $html);
         static::assertStringNotContainsString('account=', $html);
@@ -99,6 +103,7 @@ class TemplateDataTest extends FormTestCase
         $customized = $contact->with('email', ['templateData' => ['marker' => 'customized']]);
         $form = $this->helper()->bind();
         $form->open();
+
         $html = $form->definition($customized);
         $form->close();
         static::assertStringContainsString('data-template-marker="customized"', $html);
@@ -146,6 +151,7 @@ class TemplateDataTest extends FormTestCase
                 static::assertSame([], $data);
             }
         }
+
         static::assertContains('open', $formParts);
         static::assertContains('close', $formParts);
         static::assertContains('hidden', $formParts);

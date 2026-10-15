@@ -61,6 +61,7 @@ class BlueprintTest extends FormTestCase
     {
         $form = $this->helper()->bind(definition: ProfileForm::class);
         $form->open();
+
         $html = $form->definition(new FormDefinition([
             FieldDefinition::make('email')->label('Local email'),
             FieldDefinition::make('extra'),

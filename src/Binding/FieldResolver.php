@@ -56,6 +56,7 @@ class FieldResolver
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
             throw new InvalidArgumentException('Invalid control type.');
         }
+
         $parts = explode('.', $path);
         $first = array_shift($parts);
         $name = (string)($options['name'] ?? $first . ($parts === [] ? '' : '[' . implode('][', $parts) . ']'));
@@ -63,6 +64,7 @@ class FieldResolver
         if ($id === '' || !preg_match('/^[a-zA-Z0-9_.:-]+(?:\[[a-zA-Z0-9_.:-]*\])*$/D', $name)) {
             throw new InvalidArgumentException('Use a nonempty ID and a valid bracket-notation input name.');
         }
+
         $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $options), [
             'name' => $name,
             'id' => $id,

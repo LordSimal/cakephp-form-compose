@@ -56,6 +56,7 @@ class BlueprintFactory
         if ($class === null) {
             throw new InvalidArgumentException(sprintf('Unknown form blueprint "%s".', $name));
         }
+
         $class = $this->validateClass($class, FormBlueprint::class);
         $blueprint = $this->createInstance($class, FormBlueprint::class);
 
@@ -102,6 +103,7 @@ class BlueprintFactory
             if (isset($aliases[$declaration->name])) {
                 throw new InvalidArgumentException(sprintf('Duplicate discovery alias "%s".', $declaration->name));
             }
+
             $aliases[$declaration->name] = $class;
         }
 
@@ -127,7 +129,7 @@ class BlueprintFactory
     protected function createInstance(string $class, string $expectedClass): object
     {
         if (
-            $this->container === null
+            !$this->container instanceof ContainerInterface
             && (new ReflectionClass($class)->getConstructor()?->getNumberOfRequiredParameters() ?? 0) > 0
         ) {
             throw new LogicException(sprintf(
@@ -135,8 +137,9 @@ class BlueprintFactory
                 $class,
             ));
         }
+
         /** @var mixed $instance */
-        $instance = $this->container !== null
+        $instance = $this->container instanceof ContainerInterface
             ? $this->container->getNew($class)
             : new ReflectionClass($class)->newInstance();
         if (!$instance instanceof $expectedClass) {

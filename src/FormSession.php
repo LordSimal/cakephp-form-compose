@@ -8,7 +8,6 @@ use FormCompose\Binding\FormBinding;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormLifecycle;
-use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
@@ -88,10 +87,11 @@ class FormSession
                     $state->presentation,
                 ),
             );
-        } catch (Throwable $exception) {
+        } catch (Throwable $throwable) {
             $this->lifecycle->cancelClose();
-            throw $exception;
+            throw $throwable;
         }
+
         $this->lifecycle->close();
 
         return $html;

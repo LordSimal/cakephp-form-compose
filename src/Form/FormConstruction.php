@@ -34,6 +34,7 @@ class FormConstruction
         if (!in_array($method, ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'], true)) {
             throw new InvalidArgumentException('Unsupported form method.');
         }
+
         $url = ActionUrl::resolve($binding, $options);
         $presentation = array_intersect_key($options, array_flip(['templates', 'variant', 'templateData']));
         /** @var string $encoding */
@@ -75,6 +76,7 @@ class FormConstruction
         if (!in_array($method, ['get', 'post'], true)) {
             $hidden[] = new Attributes(['type' => 'hidden', 'name' => '_method', 'value' => strtoupper($method)]);
         }
+
         /** @var string|null $csrf */
         $csrf = $binding->request->getAttribute('csrfToken');
         if ($method !== 'get' && $csrf !== null) {

@@ -79,6 +79,7 @@ class SecurityTest extends FormTestCase
         $form = $helper->bind(null, ['url' => '/articles/save']);
         $unused = $form->field('never_rendered');
         $unused->attributes();
+
         $html = $form->open();
         static::assertStringContainsString('value="' . $csrf . '"', $html);
         $html .= $form->control('title', ['template' => 'themes/custom/control']);
@@ -161,9 +162,10 @@ class SecurityTest extends FormTestCase
         try {
             $form->submit('Save', ['name' => 'intent']);
             static::fail('Expected the button template to fail.');
-        } catch (RuntimeException $exception) {
-            static::assertSame('Template failed', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Template failed', $runtimeException->getMessage());
         }
+
         $html .= $form->close();
         $data = ['title' => 'Edited', '_Token' => $this->tokens($html)];
         $protector = new FormProtector();
@@ -181,9 +183,10 @@ class SecurityTest extends FormTestCase
         try {
             $form->close();
             static::fail('Expected the closing template to fail.');
-        } catch (RuntimeException $exception) {
-            static::assertSame('Template failed', $exception->getMessage());
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Template failed', $runtimeException->getMessage());
         }
+
         $html .= $form->close();
         $data = ['id' => '7', '_Token' => $this->tokens($html)];
         static::assertTrue(new FormProtector()->validate(
@@ -239,9 +242,10 @@ class SecurityTest extends FormTestCase
         try {
             $form->submit('Save', ['name' => 'intent', 'templateData' => null]);
             static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $exception) {
-            static::assertSame('The templateData option must be an array.', $exception->getMessage());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
         }
+
         $html .= $form->close();
         $submitted = ['title' => 'Edited', '_Token' => $this->tokens($html)];
         $protector = new FormProtector();

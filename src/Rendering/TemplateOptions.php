@@ -27,16 +27,19 @@ final class TemplateOptions
         if (!array_key_exists('template', $options)) {
             return $options;
         }
+
         /** @var mixed $template */
         $template = $options['template'];
         if (!is_string($template) || $template === '') {
             throw new InvalidArgumentException('The template option must be a nonempty element name.');
         }
+
         /** @var array<string, string> $templates */
         $templates = $options['templates'] ?? [];
         if (array_key_exists('control', $templates) && $templates['control'] !== $template) {
             throw new InvalidArgumentException('The template option conflicts with templates[control].');
         }
+
         $options['templates'] = array_replace($templates, ['control' => $template]);
         unset($options['template']);
 

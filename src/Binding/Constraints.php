@@ -33,9 +33,11 @@ final class Constraints
         ) {
             $constraints['maxlength'] = $maxLength;
         }
+
         if ($type === 'number') {
             $constraints['step'] = in_array($context->type($path), ['decimal', 'float'], true) ? 'any' : '1';
         }
+
         if ($type === 'hidden' || (isset($constraints['disabled']) && $constraints['disabled'] !== false)) {
             $constraints['required'] = false;
         }

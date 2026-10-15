@@ -45,6 +45,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $factory = new BlueprintFactory($container, 'testBlueprints');
         $helper = $this->helper(attributes: ['canManageAccounts' => true]);
         $helper->setConfig('blueprintFactory', $factory);
+
         $first = $helper->bind(new ArrayContext(['data' => ['label' => 'First email']]), definition: 'conditional');
         $second = $helper->bind(new ArrayContext(['data' => [
             'label' => 'Second email',
@@ -62,6 +63,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         static::assertStringNotContainsString('name="internal_note"', $html);
         $unprivileged = $this->helper();
         $unprivileged->setConfig('blueprintFactory', $factory);
+
         $third = $unprivileged->bind(new ArrayContext(['data' => [
             'label' => 'Third email',
         ]]), definition: 'conditional');
@@ -95,6 +97,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         static::assertInstanceOf(BlueprintFactory::class, $factory);
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', $factory);
+
         $form = $helper->bind(definition: ConditionalForm::class);
         static::assertSame(
             ['work' => 'Work <address>', 'home' => 'Home'],
@@ -110,6 +113,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         static::assertSame($override, $factory->types(['date-range' => $override])['date-range']);
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', $factory);
+
         $form = $helper->bind();
         $html = $form->open() . $form->control('period', ['type' => 'date-range']) . $form->close();
         static::assertStringContainsString('name="period[start]"', $html);

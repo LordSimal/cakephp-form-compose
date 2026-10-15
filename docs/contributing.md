@@ -15,9 +15,20 @@ composer check
 composer test-coverage
 ```
 
-`composer check` runs PHPUnit and Mago analysis, linting, and format checks using
-the CakePHP preset. `composer format` applies formatting; `composer lint-fix`
-applies safe lint fixes.
+`composer check` runs PHPUnit, Mago analysis and linting using the CakePHP preset,
+a Rector dry run, and Mago format checks. CI runs the same command and fails when
+Rector proposes changes.
+
+`composer format` applies formatting; `composer lint-fix` applies safe lint fixes.
+`composer rector` previews refactorings without changing files. Run
+`composer rector-fix` to apply refactorings and then format with Mago. Review the
+diff and rerun `composer check` and `composer test-coverage` before submitting it.
+
+Rector targets the PHP version declared in Composer and checks `src/` and `tests/`.
+Mago remains the formatting and linting authority. Rector skips transformations
+that conflict with CakePHP's assertion style, explicit string casts, or Mago's
+mixed-value annotations. It also preserves the existing fluent return contracts
+and normalized paths required by CakePHP's template-path validation.
 
 Coverage requires Xdebug coverage mode or PCOV. All production PHP is included,
 with a gate enforcing **strictly greater than 90% line coverage**. CI uploads the

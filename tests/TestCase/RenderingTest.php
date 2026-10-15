@@ -85,6 +85,7 @@ class RenderingTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open(['url' => '/articles/save']);
+
         $radio = $form->control('status', [
             'type' => 'radio',
             'options' => ['a' => 'Active', 'b' => 'Blocked'],
@@ -141,6 +142,7 @@ class RenderingTest extends FormTestCase
     {
         $form = $this->helper()->bind(new ArrayContext(['errors' => ['id' => ['invalid']]]));
         $form->open(['url' => '/articles/save']);
+
         $html = $form->control('id', ['type' => 'hidden', 'help' => 'Invisible help']);
         static::assertStringNotContainsString('aria-describedby', $html);
         static::assertStringNotContainsString('aria-invalid', $html);

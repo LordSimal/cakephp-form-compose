@@ -30,6 +30,7 @@ final class NativeAttributes
                 'checked' => $attributes->values['checked'] ?? ($selected ? 'checked' : false),
             ]);
         }
+
         if (
             in_array($state->type, ['select', 'multicheckbox', 'file'], true)
             && (
@@ -39,6 +40,7 @@ final class NativeAttributes
         ) {
             $attributes = $attributes->replace(['name' => InputNames::base($state->name) . '[]']);
         }
+
         if (in_array($state->type, ['select', 'textarea', 'radio', 'multicheckbox'], true)) {
             return $attributes;
         }

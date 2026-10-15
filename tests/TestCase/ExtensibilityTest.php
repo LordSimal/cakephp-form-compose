@@ -64,6 +64,7 @@ class ExtensibilityTest extends FormTestCase
         };
         $form = $helper->bind(null, ['types' => ['radio' => $type]]);
         $form->open();
+
         $html = $form->control('status', ['type' => 'radio', 'options' => ['a' => 'Active'], 'value' => 'a']);
         static::assertStringContainsString('data-enhanced-choice', $html);
         static::assertStringContainsString('checked="checked"', $html);
@@ -99,6 +100,7 @@ class ExtensibilityTest extends FormTestCase
         };
         $form = $helper->bind(theme: $theme, renderer: $renderer);
         $form->open();
+
         $html = $form->submit('<Save>');
         static::assertStringContainsString('data-button-shell', $html);
         static::assertStringContainsString('data-custom-renderer', $html);

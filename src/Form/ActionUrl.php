@@ -31,6 +31,7 @@ final class ActionUrl
         if (!is_array($parts)) {
             throw new InvalidArgumentException('Invalid form action URL.');
         }
+
         $signed = ($parts['path'] ?? '/') . (isset($parts['query']) ? '?' . $parts['query'] : '');
 
         return ['attribute' => $url === false ? null : $action, 'signed' => $signed];

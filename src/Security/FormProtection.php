@@ -71,13 +71,15 @@ class FormProtection
      */
     public function fields(FormState $state): array
     {
-        if ($this->protector === null) {
+        if (!$this->protector instanceof FormProtector) {
             return [];
         }
+
         $data = $this->protector->buildTokenData($state->action, $this->request->getSession()->id());
         if (!Configure::read('debug')) {
             unset($data['debug']);
         }
+
         $fields = [];
         /** @var mixed $value */
         foreach ($data as $name => $value) {
