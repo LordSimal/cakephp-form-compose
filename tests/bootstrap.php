@@ -5,13 +5,13 @@ use Cake\Cache\Cache;
 use Cake\Cache\Engine\ArrayEngine;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
-use Cake\Core\Plugin;
 use Cake\Database\Connection;
 use Cake\Database\Driver\Sqlite;
 use Cake\Datasource\ConnectionManager;
 use Cake\Routing\Router;
 use Cake\Utility\Security;
 use FormCompose\FormComposePlugin;
+use FormCompose\Test\Fixture\BlueprintApplication;
 
 require getenv('FORM_COMPOSE_AUTOLOAD') ?: dirname(__DIR__) . '/vendor/autoload.php';
 $reflection = new ReflectionClass(BasePlugin::class);
@@ -34,7 +34,9 @@ Configure::write('App', [
 ]);
 Security::setSalt('form-compose-test-only-salt-never-use-in-production');
 Configure::write('debug', true);
-Plugin::getCollection()->add(new FormComposePlugin(['path' => dirname(__DIR__) . '/']));
+$application = new BlueprintApplication(CONFIG);
+$application->addPlugin(new FormComposePlugin(['path' => dirname(__DIR__) . '/']));
+$application->pluginBootstrap();
 Router::reload();
 Router::fullBaseUrl('https://example.test');
 Router::createRouteBuilder('/')->connect('/{controller}/{action}/*');

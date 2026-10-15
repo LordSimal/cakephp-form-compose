@@ -1,0 +1,46 @@
+<?php
+declare(strict_types=1);
+
+namespace FormCompose\Test\Fixture\Blueprint\Valid;
+
+use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
+use FormCompose\Field\FieldDefinition;
+use FormCompose\FormBlueprint;
+use FormCompose\FormBuilder;
+use FormCompose\FormContext;
+
+/**
+ * Reads injected choices, bound metadata and per-request conditions without retaining state.
+ */
+#[Form('conditional')]
+#[Field('email', type: 'email', label: 'Email')]
+#[Field('internal_note')]
+#[Field('id', type: 'hidden', options: ['value' => '42'])]
+class ConditionalForm extends FormBlueprint
+{
+    protected int $calls = 0;
+
+    /**
+     * Use an ordinary constructor dependency resolved by the application container.
+     */
+    public function __construct(protected readonly ProfileChoices $choices)
+    {
+    }
+
+    /**
+     * Configure an independent collection for each binding.
+     */
+    public function configure(FormBuilder $form, FormContext $context): void
+    {
+        $form->remove('internal_note');
+        $form->with('email', [
+            'label' => $context->context->val('label'),
+            'templateData' => ['calls' => ++$this->calls],
+        ]);
+        $form->add(FieldDefinition::make('kind')->with(['options' => $this->choices->all()]));
+        if ($context->request->getAttribute('canManageAccounts') === true) {
+            $form->add(FieldDefinition::make('active', 'checkbox')->label('Account enabled'));
+        }
+    }
+}

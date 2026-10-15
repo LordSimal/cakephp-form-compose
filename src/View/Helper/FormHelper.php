@@ -7,6 +7,9 @@ use Cake\View\Form\ContextFactory;
 use Cake\View\Form\ContextInterface;
 use Cake\View\Helper;
 use FormCompose\Binding\FormBinding;
+use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\FormContext;
+use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderContext;
@@ -43,6 +46,7 @@ class FormHelper extends Helper
         array $options = [],
         Theme|string|null $theme = null,
         ?RendererInterface $renderer = null,
+        FormDefinition|string|null $definition = null,
     ): FormSession {
         $view = $this->getView();
         /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
@@ -67,11 +71,34 @@ class FormHelper extends Helper
         }
         $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
         unset($options['context'], $options['types']);
+        $factory = $this->createBlueprintFactory();
+        if (is_string($definition)) {
+            $definition = $factory->definition($definition, new FormContext($context, $view->getRequest()));
+        }
+        $types = $factory->types($types);
 
         return $this->createSession(
-            new FormBinding($context, $view->getRequest(), $id, $options),
+            new FormBinding($context, $view->getRequest(), $id, $options, $definition),
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
         );
+    }
+
+    /**
+     * Use the injected application factory or support dependency-free blueprints.
+     *
+     * Set helper option blueprintFactory to the service registered by the plugin
+     * when application constructor dependencies are needed. Subclasses may override
+     * this factory without changing bind() or session construction.
+     */
+    protected function createBlueprintFactory(): BlueprintFactory
+    {
+        /** @var mixed $factory */
+        $factory = $this->getConfig('blueprintFactory');
+        if ($factory !== null && !$factory instanceof BlueprintFactory) {
+            throw new InvalidArgumentException('blueprintFactory must be a BlueprintFactory instance.');
+        }
+
+        return $factory ?? new BlueprintFactory();
     }
 
     /**

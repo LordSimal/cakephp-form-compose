@@ -6,7 +6,7 @@ description: Run the PHP checks, enforce coverage, and work on the VitePress doc
 
 ## PHP checks
 
-Enable PDO SQLite for the association integration tests. They use an in-memory
+Use PHP 8.5+ and the locked CakePHP 6 development build. Enable PDO SQLite for the association integration tests. They use an in-memory
 database to verify choice queries and CakePHP entity marshalling.
 
 ```sh

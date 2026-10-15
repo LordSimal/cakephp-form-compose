@@ -8,7 +8,8 @@ A `FormDefinition` is an ordered collection of field configuration. Use it when
 several screens share fields or when you assemble fields outside a view. Your PHP
 template still determines the form's structure and where the collection appears.
 
-Definitions are optional. They use the same field resolution and PHP control
+Definitions are optional. For class-level attributes and dynamic configuration,
+see [form blueprints](./blueprints.md). They use the same field resolution and PHP control
 templates as ordinary [`control()` calls](./usage.md#complete-controls).
 
 ## Build once, render where needed
@@ -123,9 +124,9 @@ typed values, scope, and escaping.
 
 ::: tip Configuration stays local
 Rendering `$form->definition($contact)` does not install session-wide defaults.
-A later `$form->field('email')` or `$form->control('email')` uses its own options
-and context inference. Pass `$contact->field('email')` explicitly to reuse that
-configuration.
+A later `$form->field('email')` or `$form->control('email')` uses its own options,
+any definition explicitly selected at `bind()`, and context inference. Pass
+`$contact->field('email')` explicitly to reuse that configuration.
 :::
 
 ## Assemble fields conditionally
@@ -188,8 +189,11 @@ session includes rendered inputs in submission protection when closing.
 | `new FormDefinition([$name, $email])` | A collection from an ordered list of `FieldDefinition` objects. |
 | `$definition->add($field)` | A new collection with the field appended. |
 | `$definition->with('email', $options)` | A new collection with that field's options overridden. |
+| `$definition->has('email')` | Whether the collection contains this path. |
+| `$definition->remove('email')` | A new collection without that field. |
 | `$definition->field('email')` | The existing `FieldDefinition` for that exact path. |
 | `$definition->fields` | The ordered list of field definitions, available for iteration. |
+| `$form->definition()` | HTML for the collection selected at `bind()`, or an empty string. |
 | `$form->definition($definition)` | HTML for the collection, rendered in the current open form. |
 
 Field paths must be unique within a collection. Duplicate paths, unknown lookup
@@ -205,13 +209,26 @@ and ordinary controls. Render each field presentation once. If intentionally
 presenting the same path again, provide a distinct explicit ID for each
 presentation through field options. Keep form IDs unique across the page.
 
-::: details Migrating earlier definition calls
-Definitions are now supplied at the rendering location rather than in `bind()`.
-Replace `bind($user, definition: $contact)` with `bind($user)`, and replace the
-session's former `render()` or `render($contact)` call with
-`$form->definition($contact)`.
+## Select defaults for the whole binding
 
-Individual calls no longer inherit settings from a binding-wide definition.
-Use `$form->control($contact->field('email'))` or
-`$form->field($contact->field('email'))` to select shared configuration explicitly.
-:::
+Pass an immutable definition to `bind()` when individual field calls should share
+its configuration:
+
+```php
+$form = $this->Form->bind($user, definition: $contact);
+echo $form->open();
+echo $form->control('email'); // Uses $contact's email configuration.
+echo $form->close();
+```
+
+Alternatively, `$form->definition()` renders the selected collection in order.
+Calling `definition($other)` renders that collection at the call site without
+replacing the selected defaults. Explicit field definitions and per-call options
+override binding defaults, using top-level replacement.
+
+`$definition->has('email')` checks membership. `$definition->remove('email')`
+returns a new collection without that field and preserves the original. Removing
+an unknown path throws `InvalidArgumentException`.
+
+Blueprint classes compile to this same immutable representation. See
+[blueprint configuration and precedence](./blueprints.md#configuration-order).
