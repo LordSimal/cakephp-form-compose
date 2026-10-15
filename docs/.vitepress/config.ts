@@ -30,6 +30,7 @@ export default defineConfig({
         text: 'Build your forms',
         items: [
           { text: 'Fields and form data', link: '/usage' },
+          { text: 'Reusable definitions', link: '/definitions' },
           { text: 'Create a theme', link: '/themes' },
         ],
       },

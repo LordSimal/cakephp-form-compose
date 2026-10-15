@@ -8,6 +8,8 @@ use DOMDocument;
 use DOMElement;
 use DOMNodeList;
 use DOMXPath;
+use FormCompose\Field\FieldDefinition;
+use FormCompose\FormDefinition;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Test\Fixture\FailOnceRenderer;
 use FormCompose\Test\Fixture\RangeType;
@@ -16,6 +18,38 @@ use RuntimeException;
 
 class SecurityTest extends FormTestCase
 {
+    public function testDefinitionsOnlySecureRenderedFieldsAndPreserveLockedValues(): void
+    {
+        $contact = FormDefinition::make()
+            ->add(FieldDefinition::make('email', 'email'))
+            ->add(FieldDefinition::make('unused'));
+        $fields = FormDefinition::make()
+            ->add(FieldDefinition::make('id', 'hidden')->with(['value' => '42']))
+            ->add(FieldDefinition::make('active', 'checkbox'))
+            ->add(FieldDefinition::make('comments.0.body'));
+        $helper = $this->helper(attributes: ['formTokenData' => []]);
+        $form = $helper->bind(null, ['url' => '/articles/save']);
+        $form->field($contact->field('unused'))->attributes();
+        $email = $form->field($contact->field('email'));
+        $html = $form->open() . $form->control('title');
+        $html .= $email->label() . $email->input();
+        $html .= $form->definition($fields) . $form->close();
+        $data = [
+            'title' => 'Edited',
+            'email' => 'user@example.test',
+            'id' => '42',
+            'active' => '0',
+            'comments' => [['body' => 'Changed']],
+            '_Token' => $this->tokens($html),
+        ];
+        $protector = new FormProtector();
+        $sessionId = $helper->getView()->getRequest()->getSession()->id();
+
+        static::assertTrue($protector->validate($data, '/articles/save', $sessionId));
+        static::assertFalse($protector->validate(array_replace($data, ['id' => '43']), '/articles/save', $sessionId));
+        static::assertFalse($protector->validate($data + ['unused' => 'injected'], '/articles/save', $sessionId));
+    }
+
     /**
      * Extract form-protection token values from rendered hidden inputs.
      *

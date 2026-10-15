@@ -38,7 +38,7 @@ class FieldResolver
      */
     public function resolve(string|FieldDefinition $field, array $options, FormLifecycle $lifecycle): BoundField
     {
-        $definition = $field instanceof FieldDefinition ? $field : $this->find($field);
+        $definition = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
         $options = array_replace($definition->options, $options);
         $path = $definition->path;
         $type = (string)($options['type'] ?? $this->inferType($path, $options));
@@ -65,20 +65,6 @@ class FieldResolver
         ]);
 
         return $this->createBoundField($state, $lifecycle);
-    }
-
-    /**
-     * Find the configured definition for a path, or create one with default options.
-     */
-    protected function find(string $path): FieldDefinition
-    {
-        foreach ($this->binding->definition->fields ?? [] as $field) {
-            if ($field->path === $path) {
-                return $field;
-            }
-        }
-
-        return new FieldDefinition($path);
     }
 
     /**

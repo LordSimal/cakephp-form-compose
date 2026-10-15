@@ -12,7 +12,6 @@ use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
-use LogicException;
 use Throwable;
 
 /**
@@ -119,14 +118,14 @@ class FormSession
     }
 
     /**
-     * Render optional reusable field definitions in presentation order.
+     * Render a reusable field collection here, through the normal control templates.
+     *
+     * The form must be open. Configuration stays local to this call; later field()
+     * and control() calls do not inherit options from this definition.
      */
-    public function render(?FormDefinition $definition = null): string
+    public function definition(FormDefinition $definition): string
     {
-        $definition ??= $this->binding->definition;
-        if ($definition === null) {
-            throw new LogicException('Supply a form definition to render a field collection.');
-        }
+        $this->lifecycle->assertOpen();
 
         return implode('', array_map($this->control(...), $definition->fields));
     }

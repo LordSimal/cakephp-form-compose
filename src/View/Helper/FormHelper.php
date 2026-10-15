@@ -7,7 +7,6 @@ use Cake\View\Form\ContextFactory;
 use Cake\View\Form\ContextInterface;
 use Cake\View\Helper;
 use FormCompose\Binding\FormBinding;
-use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderContext;
@@ -43,7 +42,6 @@ class FormHelper extends Helper
         mixed $data = null,
         array $options = [],
         Theme|string|null $theme = null,
-        ?FormDefinition $definition = null,
         ?RendererInterface $renderer = null,
     ): FormSession {
         $view = $this->getView();
@@ -71,7 +69,7 @@ class FormHelper extends Helper
         unset($options['context'], $options['types']);
 
         return $this->createSession(
-            new FormBinding($context, $view->getRequest(), $id, $options, $definition),
+            new FormBinding($context, $view->getRequest(), $id, $options),
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types),
         );
     }

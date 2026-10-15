@@ -98,5 +98,6 @@ For a layout used once, [compose field parts in your view](./usage.md#composing-
 with `$form->field('title')`, then call that field's `label()`, `input()`, `help()`,
 and `errors()` methods where you need them.
 
-Continue with [fields and form data](./usage.md) for values, feedback, and reusable
-definitions, or [create a theme](./themes.md) to write your first control element.
+Continue with [fields and form data](./usage.md) for values and feedback,
+[reuse field definitions](./definitions.md) across screens, or
+[create a theme](./themes.md) to write your first control element.

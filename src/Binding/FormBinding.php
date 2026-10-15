@@ -5,7 +5,6 @@ namespace FormCompose\Binding;
 
 use Cake\Http\ServerRequest;
 use Cake\View\Form\ContextInterface;
-use FormCompose\FormDefinition;
 
 /**
  * Holds the data sources and configuration shared by one form session.
@@ -26,7 +25,6 @@ final readonly class FormBinding
         public ServerRequest $request,
         public string $id,
         public array $options = [],
-        public ?FormDefinition $definition = null,
     ) {
     }
 }

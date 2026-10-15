@@ -1,5 +1,5 @@
 ---
-description: Resolve field values, compose controls, and reuse form definitions.
+description: Resolve field values and compose controls with your own layouts.
 ---
 
 # Fields and form data
@@ -115,20 +115,14 @@ custom field type for a composite control or a non-native value representation.
 
 ## Reusable definitions
 
-```php{4-8}
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
+Share field configuration across screens with an optional `FormDefinition`.
+Render it wherever that collection belongs inside an open form:
 
-$definition = new FormDefinition([
-    FieldDefinition::make('name')->label('Display name'),
-    FieldDefinition::make('email', 'email')->help('Use your work address.'),
-    FieldDefinition::make('newsletter', 'checkbox')->label('Send updates'),
-]);
-
-$form = $this->Form->bind($user, definition: $definition);
-echo $form->open(), $form->render(), $form->submit('Save'), $form->close();
+```php
+echo $form->control('company');
+echo $form->definition($contact);
+echo $form->control('newsletter', ['type' => 'checkbox']);
 ```
 
-Definitions are immutable and reusable. Fields remain individually accessible with
-`field()` and `control()`; per-call options override definition options. Definitions
-describe fields; application services handle validation and persistence.
+The [reusable definitions guide](./definitions.md) covers the builder, per-screen
+overrides, conditional fields, and using individual definitions in custom layouts.

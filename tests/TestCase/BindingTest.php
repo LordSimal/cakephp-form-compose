@@ -8,7 +8,6 @@ use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 
@@ -61,11 +60,11 @@ class BindingTest extends FormTestCase
         $base = FieldDefinition::make('email', 'email')->label('Email')->help('Work email');
         $changed = $base->with(['label' => 'Contact']);
         static::assertSame('Email', $base->options['label']);
-        $form = $this->helper()->bind(definition: new FormDefinition([$changed]));
-        static::assertSame('Contact', $form->field('email')->state->options['label']);
-        static::assertSame('Override', $form->field('email', ['label' => 'Override'])->state->options['label']);
+        $form = $this->helper()->bind();
+        static::assertSame('Contact', $form->field($changed)->state->options['label']);
+        static::assertSame('Override', $form->field($changed, ['label' => 'Override'])->state->options['label']);
         $form->open(['url' => '/articles/save']);
-        static::assertStringContainsString('type="email"', $form->render());
+        static::assertStringContainsString('type="email"', $form->control($changed));
         $form->close();
     }
 
@@ -101,12 +100,6 @@ class BindingTest extends FormTestCase
         $this->helper()
             ->bind(null, ['valueSources' => ['cookies']])
             ->field('name');
-    }
-
-    public function testDuplicateDefinitionsAreRejected(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        new FormDefinition([FieldDefinition::make('name'), FieldDefinition::make('name')]);
     }
 
     public function testInvalidFieldPathsAreRejected(): void

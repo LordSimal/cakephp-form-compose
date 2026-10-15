@@ -73,10 +73,4 @@ class LifecycleTest extends FormTestCase
         ]));
         $form->close();
     }
-
-    public function testRenderingWithoutDefinitionIsRejected(): void
-    {
-        $this->expectException(LogicException::class);
-        $this->helper()->bind()->render();
-    }
 }

@@ -1,0 +1,133 @@
+<?php
+declare(strict_types=1);
+
+namespace FormCompose\Test\TestCase;
+
+use Cake\View\Form\ArrayContext;
+use FormCompose\Field\FieldDefinition;
+use FormCompose\FormDefinition;
+use FormCompose\Rendering\Theme;
+use FormCompose\Test\Fixture\ContactFormHelper;
+use FormCompose\Test\FormTestCase;
+use LogicException;
+
+/**
+ * Exercises reusable configuration through the ordinary form rendering lifecycle.
+ */
+class DefinitionRenderingTest extends FormTestCase
+{
+    public function testCollectionsRenderAtTheirCallSitesAlongsideOrdinaryControls(): void
+    {
+        $contact = FormDefinition::make()
+            ->add(FieldDefinition::make('name'))
+            ->add(FieldDefinition::make('email', 'email'));
+        $details = FormDefinition::make()->add(FieldDefinition::make('notes'));
+        $form = $this->helper()->bind();
+        $html = $form->open() . $form->control('company');
+        $html .= $form->definition($contact);
+        $html .= $form->control('phone');
+        $html .= $form->definition($details);
+        $html .= $form->submit('Save') . $form->close();
+
+        $matches = [];
+        preg_match_all('/<input[^>]* name="([^"]+)"/', $html, $matches);
+        static::assertSame(['company', 'name', 'email', 'phone', 'notes'], $matches[1]);
+        static::assertSame(1, substr_count($html, '<form '));
+        static::assertSame(1, substr_count($html, '</form>'));
+    }
+
+    public function testReuseResolvesEachSessionsDataWithoutLeakingOptions(): void
+    {
+        $contact = FormDefinition::make()->add(FieldDefinition::make('email', 'email')->label('Account email'));
+        $helper = $this->helper();
+        $first = $helper->bind(new ArrayContext(['data' => ['email' => 'first@example.test']]));
+        $second = $helper->bind(new ArrayContext(['data' => ['email' => 'second@example.test']]));
+        $first->open();
+        $firstHtml = $first->definition($contact->with('email', ['label' => 'Work email']));
+        $first->close();
+        $second->open();
+        $secondHtml = $second->definition($contact);
+        $second->close();
+
+        static::assertStringContainsString('Work email', $firstHtml);
+        static::assertStringContainsString('value="first@example.test"', $firstHtml);
+        static::assertStringContainsString('Account email', $secondHtml);
+        static::assertStringContainsString('value="second@example.test"', $secondHtml);
+        static::assertStringNotContainsString('first@example.test', $secondHtml);
+        static::assertNotSame(
+            $first->field($contact->field('email'))->state->id,
+            $second->field($contact->field('email'))->state->id,
+        );
+        static::assertSame('text', $first->field('email')->state->type);
+        static::assertSame([], $first->field('email')->state->options);
+        static::assertSame([], $second->field('email')->state->options);
+    }
+
+    public function testSelectedFieldsSupportManualCompositionAndInlineOverrides(): void
+    {
+        $contact = FormDefinition::make()
+            ->add(FieldDefinition::make('name'))
+            ->add(FieldDefinition::make('email', 'email')->label('Email')->help('<Work address>'));
+        $form = $this->helper(['email' => 'posted@example.test'])->bind();
+        $email = $form->field($contact->field('email'), ['label' => 'Contact address']);
+        $form->open();
+        $html = $form->control($contact->field('name')) . $form->control('phone');
+        $html .= $email->label() . $email->input() . $email->help() . $email->errors();
+        $form->close();
+
+        static::assertStringContainsString('Contact address', $html);
+        static::assertStringContainsString('type="email"', $html);
+        static::assertStringContainsString('value="posted@example.test"', $html);
+        static::assertStringContainsString('&lt;Work address&gt;', $html);
+        static::assertStringContainsString('aria-describedby="' . $email->state->id . '-help"', $html);
+        static::assertStringContainsString('for="' . $email->state->id . '"', $html);
+    }
+
+    public function testDefinitionsUseTheNormalThemeAndResolverExtensionPoints(): void
+    {
+        $helper = new ContactFormHelper($this->helper()->getView());
+        $form = $helper->bind(theme: new Theme(layers: ['themes/application']));
+        $definition = FormDefinition::make()->add(FieldDefinition::make('website')->with(['variant' => 'compact']));
+        $form->open();
+        $html = $form->definition($definition);
+        $form->close();
+
+        static::assertStringContainsString('data-variant="compact"', $html);
+        static::assertStringContainsString('data-contact-label', $html);
+        static::assertStringContainsString('type="url"', $html);
+        static::assertStringContainsString('value="https://example.test"', $html);
+    }
+
+    public function testEmptyDefinitionsRenderNothingInsideAnOpenForm(): void
+    {
+        $form = $this->helper()->bind();
+        $form->open();
+        static::assertSame('', $form->definition(FormDefinition::make()));
+        static::assertStringContainsString('name="name"', $form->control('name'));
+        $form->close();
+    }
+
+    public function testDefinitionsRequireAnOpenFormEvenWhenEmpty(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->helper()->bind()->definition(FormDefinition::make());
+    }
+
+    public function testDefinitionsCannotRenderAfterClosing(): void
+    {
+        $form = $this->helper()->bind();
+        $form->open();
+        $form->close();
+        $this->expectException(LogicException::class);
+        $form->definition(FormDefinition::make()->add(FieldDefinition::make('email')));
+    }
+
+    public function testRepeatedInputsAcrossDefinitionsAreRejected(): void
+    {
+        $form = $this->helper()->bind();
+        $form->open();
+        $form->definition(FormDefinition::make()->add(FieldDefinition::make('email')));
+        $this->expectException(LogicException::class);
+        $form->definition(new FormDefinition([FieldDefinition::make('email', 'email')]));
+    }
+}
