@@ -74,15 +74,19 @@ application classes when placing them in different namespaces.
 
 ```php [AppFormHelper.php]
 use FormCompose\Binding\FormBinding;
+use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormSession;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\View\Helper\FormHelper;
 
 class AppFormHelper extends FormHelper
 {
-    protected function createSession(FormBinding $binding, RenderContext $rendering): FormSession
-    {
-        return new AppFormSession($binding, $rendering);
+    protected function createSession(
+        FormBinding $binding,
+        RenderContext $rendering,
+        BlueprintFactory $blueprints,
+    ): FormSession {
+        return new AppFormSession($binding, $rendering, $blueprints);
     }
 }
 ```
@@ -113,6 +117,13 @@ class AppFieldResolver extends FieldResolver
 ```
 
 :::
+
+When overriding `createSession()`, accept and forward its third `BlueprintFactory`
+argument. This keeps application dependencies and custom discovery configuration
+available to local `$form->definition('profile')` calls in the session subclass.
+Overrides of the earlier two-argument factory must update their signature. Direct
+`new FormSession($binding, $rendering)` construction still supports dependency-free
+blueprints; pass the factory as the optional third constructor argument when needed.
 
 Load `AppFormHelper` using CakePHP's helper `className` option. Explicit field types
 still take priority over type inference. Override `FieldResolver::createFieldConventions()`

@@ -10,7 +10,10 @@ use Dom\Element;
 use Dom\NodeList;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Test\BlueprintTestCase;
+use FormCompose\Test\Fixture\Blueprint\Invalid\FailingForm;
+use FormCompose\Test\Fixture\Blueprint\Valid\BillingAddressForm;
 use FormCompose\Test\Fixture\Blueprint\Valid\ProfileForm;
+use RuntimeException;
 
 /**
  * Ensures declarations and discovery preserve the rendered-input security contract.
@@ -69,6 +72,67 @@ class BlueprintSecurityTest extends BlueprintTestCase
         static::assertTrue(new FormProtector()->validate($data, '/articles/save', $session));
         static::assertStringContainsString('type="hidden" name="active" value="0"', $html);
         static::assertFalse(new FormProtector()->validate($data + ['extra' => 'injected'], '/articles/save', $session));
+    }
+
+    public function testLocalDefinitionsShareProtectionAndKeepRemovedFieldsUnregistered(): void
+    {
+        $csrf = bin2hex(random_bytes(16));
+        $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
+        $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
+
+        $form = $helper->bind(
+            new ArrayContext(['data' => ['label' => 'Contact email']]),
+            ['url' => '/articles/save', 'method' => 'patch'],
+        );
+        $html = $form->open();
+        $html .= $form->definition('conditional');
+        $html .= $form->definition(BillingAddressForm::class);
+        $html .= $form->control('period', ['type' => 'date-range']);
+        static::assertSame('text', $form->field('email')->state->type);
+        $html .= $form->close();
+        $data = [
+            'email' => 'user@example.test',
+            'id' => '42',
+            'kind' => 'work',
+            'billing' => ['street' => 'Main Street', 'city' => 'Brussels'],
+            'period' => ['start' => '2', 'end' => '9'],
+            '_Token' => $this->tokens($html),
+        ];
+        $session = $helper->getView()->getRequest()->getSession()->id();
+        $protector = new FormProtector();
+        static::assertTrue($protector->validate($data, '/articles/save', $session));
+        static::assertFalse($protector->validate(array_replace($data, ['id' => '43']), '/articles/save', $session));
+        static::assertFalse($protector->validate($data + ['active' => '1'], '/articles/save', $session));
+        static::assertFalse($protector->validate($data + ['internal_note' => 'injected'], '/articles/save', $session));
+        unset($data['billing']['city']);
+        static::assertFalse($protector->validate($data, '/articles/save', $session));
+        static::assertSame(1, substr_count($html, 'name="_csrfToken"'));
+        static::assertStringContainsString('name="_method" value="PATCH"', $html);
+        static::assertStringContainsString('value="' . $csrf . '"', $html);
+    }
+
+    public function testFailedLocalHooksDoNotRegisterPartialConfiguration(): void
+    {
+        $helper = $this->helper(attributes: ['formTokenData' => []]);
+        $form = $helper->bind(null, ['url' => '/articles/save']);
+        $html = $form->open();
+        try {
+            $form->definition(FailingForm::class);
+            static::fail('Expected configuration failure.');
+        } catch (RuntimeException $runtimeException) {
+            static::assertSame('Configuration failed.', $runtimeException->getMessage());
+        }
+
+        $html .= $form->control('title') . $form->close();
+        $data = ['title' => 'Edited', '_Token' => $this->tokens($html)];
+        $session = $helper->getView()->getRequest()->getSession()->id();
+        static::assertTrue(new FormProtector()->validate($data, '/articles/save', $session));
+        static::assertFalse(new FormProtector()->validate(
+            $data + ['partial' => 'injected'],
+            '/articles/save',
+            $session,
+        ));
+        static::assertNull($form->binding->definition);
     }
 
     /**

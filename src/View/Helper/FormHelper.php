@@ -82,6 +82,7 @@ class FormHelper extends Helper
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $definition),
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
+            $factory,
         );
     }
 
@@ -105,9 +106,13 @@ class FormHelper extends Helper
 
     /**
      * Create the session used by bind(); override to supply an application session subclass.
+     * Forward the factory so render-time definitions use the same discovery and DI services.
      */
-    protected function createSession(FormBinding $binding, RenderContext $rendering): FormSession
-    {
-        return new FormSession($binding, $rendering);
+    protected function createSession(
+        FormBinding $binding,
+        RenderContext $rendering,
+        BlueprintFactory $blueprints,
+    ): FormSession {
+        return new FormSession($binding, $rendering, $blueprints);
     }
 }

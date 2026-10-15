@@ -38,21 +38,52 @@ class ProfileForm extends FormBlueprint
 configuration, in presentation order. These declarations do not require PHP
 properties or store the bound values.
 
-```php [templates/Users/edit.php]
+There are two ways to select the blueprint. Render it at a particular location,
+or select it during binding so individual field calls inherit its defaults:
+
+::: code-group
+
+```php [Render a collection here]
+<?php
+use App\Form\ProfileForm;
+
+$form = $this->Form->bind($user);
+?>
+<?= $form->open() ?>
+<?= $form->definition(ProfileForm::class) ?>
+<?= $form->submit('Save') ?>
+<?= $form->close() ?>
+```
+
+```php [Set binding defaults]
 <?php
 use App\Form\ProfileForm;
 
 $form = $this->Form->bind($user, definition: ProfileForm::class);
 ?>
 <?= $form->open() ?>
-<?= $form->definition() ?>
+<?= $form->control('name') ?>
+<?= $form->control('email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
 
-After plugin bootstrap, `definition: 'profile'` selects the same blueprint through
-CakePHP's attribute resolver. A class name works outside the discovery paths and
-does not require a `Form` attribute.
+:::
+
+Both entry points accept aliases after plugin bootstrap: use
+`$form->definition('profile')` or `bind($user, definition: 'profile')`. A class name
+works outside the discovery paths and does not require a `Form` attribute.
+
+| Selection | Configuration lifetime | Useful for |
+| --- | --- | --- |
+| `definition('profile')` or `definition(ProfileForm::class)` | Compiled and rendered for this call; no defaults are installed. | Rendering a collection or composing multiple sections. |
+| `bind($user, definition: 'profile')` | Compiled once at binding; defaults apply to subsequent field calls. | Manual layouts that use `field()` and `control()` independently. |
+| `definition()` with no argument | Renders the collection already selected at binding. | Rendering the selected collection without resolving it again. |
+
+Explicit local definitions can be used alongside binding defaults. Their field
+options override matching defaults for that rendering, and the selected defaults
+remain available to later calls. Without a selected definition, a no-argument
+`definition()` renders nothing.
 
 The `Field` shorthand accepts `path`, `type`, `label`, and `help`. Its `options`
 argument accepts the same configuration as a `FieldDefinition`, including choices,
@@ -70,6 +101,35 @@ suppresses the label. Use `options` when an explicit null is needed, such as
 `options: ['value' => null]`. Text is escaped; trusted markup requires an explicit
 `FormCompose\Rendering\Html` object, just as with inline controls. Translate
 request-dependent labels in the PHP hook using CakePHP's translation functions.
+
+## Compose multiple definitions
+
+Use several local definitions inside one form. For example, if
+`BillingAddressForm` declares `billing.street` and `billing.city`:
+
+```php
+use App\Form\BillingAddressForm;
+
+$form = $this->Form->bind($user);
+echo $form->open();
+echo $form->definition('profile');
+echo '<section class="billing">';
+echo $form->definition(BillingAddressForm::class);
+echo '</section>';
+echo $form->control('notes');
+echo $form->submit('Save');
+echo $form->close();
+```
+
+Every collection uses the session's context, request, theme, custom field types,
+and submission protection. Each blueprint runs its configuration hook when its
+`definition()` call is made, without changing later field defaults. Opening and
+closing tags belong to the session, so render them once.
+
+Choose distinct paths, such as `billing.street`, for independent sections; the
+plugin does not add prefixes automatically. Overlapping definitions retain the
+ordinary duplicate-input and ID checks. Merely selecting a definition does not
+register its fields: successful input rendering does.
 
 ## Keep control of the layout
 
@@ -148,11 +208,14 @@ class ProfileForm extends FormBlueprint
 same context and request that the form uses. Field values subsequently follow
 the plugin's ordinary [value-source rules](./usage.md).
 
-Each binding gets a fresh blueprint instance and builder, including when the
+Each blueprint resolution gets a fresh instance and builder, including when the
 blueprint has been registered as a shared service. Compilation clones the
 blueprint seed so an object-valued registration is reusable too; constructor
 dependencies retain their normal shared references. The hook runs once after
-reading attributes. Exceptions propagate; partial configuration is never bound.
+reading attributes: at `bind()` when selecting defaults, or on each explicit
+`definition($aliasOrClass)` call when rendering locally. Rendering the already
+selected collection with `definition()` does not rerun the hook. Exceptions
+propagate; a failed hook renders no fields from its partial configuration.
 Choices, permission decisions, and bound data are never cached by discovery.
 Conditions run on the server; changing visibility immediately in the browser
 requires an application-owned progressive-enhancement integration.
@@ -171,7 +234,7 @@ hidden control instead, use `$form->with('email', ['type' => 'hidden'])`.
 | `build()` | Return an immutable `FormDefinition` snapshot. |
 
 Unknown paths passed to `with()` or `remove()` fail clearly. Removing a field
-excludes it from `$form->definition()`; an explicit `control('email')` still
+excludes it from the rendered collection; an explicit `control('email')` still
 requests an ordinary control. For a manual layout, inspect membership with
 `$form->binding->definition->has('email')` before requesting an optional field.
 Authorize submitted changes in the application independently of presentation.
@@ -196,7 +259,8 @@ $form = $this->Form->bind($context, definition: $definition->remove('email'));
 Blueprints receive ordinary constructor dependencies. The plugin registers
 `FormCompose\Blueprint\BlueprintFactory` with CakePHP's application container;
 configure the helper with that factory when blueprints or discovered field types
-need services. A dependency-free blueprint needs no container wiring.
+need services. The session keeps the same factory for later `definition()` calls.
+A dependency-free blueprint needs no container wiring.
 
 For example, add a factory argument to a controller action and pass it alongside
 your existing view data:
@@ -247,8 +311,8 @@ runtime configuration.
 Nested option arrays are replaced as a whole. Blueprint defaults never override
 explicit null, false, zero, or empty-string values. A plain immutable
 `FormDefinition` can also be supplied to `bind()` and becomes binding defaults.
-An explicit `$form->definition($other)` renders that collection without replacing
-the selected defaults. Without a selected definition, `$form->definition()`
+An explicit `$form->definition($other)` accepts an immutable collection, blueprint
+alias, or class name, and renders it without replacing the selected defaults. Without a selected definition, `$form->definition()`
 returns an empty string inside an open form.
 
 ## Discovery and cache configuration
