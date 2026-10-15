@@ -18,10 +18,10 @@ part of the form-building workflow.
 
 - [Why FormCompose?](https://josbeir.github.io/cakephp-form-compose/why.html)
 - [Install and build your first form](https://josbeir.github.io/cakephp-form-compose/getting-started.html)
+- [Declare reusable form blueprints](https://josbeir.github.io/cakephp-form-compose/blueprints.html)
 - [Create a PHP template theme](https://josbeir.github.io/cakephp-form-compose/themes.html)
 
-Experimental API. Supports PHP 8.4+ with CakePHP 5.4+, and PHP 8.5+ with CakePHP 6
-development builds. See the installation guide for setup and compatibility notes.
+Experimental API. Requires PHP 8.5+ and CakePHP 6 development builds. See the installation guide for setup and compatibility notes.
 
 Contributor commands and documentation-site setup are in the
 [contributing guide](https://josbeir.github.io/cakephp-form-compose/contributing.html).

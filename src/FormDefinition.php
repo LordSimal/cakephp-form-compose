@@ -72,6 +72,29 @@ final readonly class FormDefinition
     }
 
     /**
+     * Check collection membership without binding or rendering a field.
+     */
+    public function has(string $path): bool
+    {
+        return in_array($path, array_column($this->fields, 'path'), true);
+    }
+
+    /**
+     * Remove an existing field while preserving the remaining order and original collection.
+     *
+     * @throws \InvalidArgumentException When the path is not in this collection.
+     */
+    public function remove(string $path): self
+    {
+        $this->field($path);
+
+        return new self(array_values(array_filter(
+            $this->fields,
+            static fn(FieldDefinition $field): bool => $field->path !== $path,
+        )));
+    }
+
+    /**
      * Override an existing field's options while preserving collection order.
      *
      * Options replace matching top-level keys, as with FieldDefinition::with().

@@ -12,7 +12,6 @@ If you want to understand how a control maps to a PHP file first, start with
 
 | CakePHP | PHP |
 | --- | --- |
-| 5.4+ | 8.4+ |
 | 6 development builds | 8.5+ |
 
 ::: info Experimental API
@@ -21,6 +20,11 @@ existing core FormHelper calls and widgets need to be ported.
 :::
 
 ## Install the plugin
+
+Start with a CakePHP 6 application. CakePHP 5.4 is no longer supported. Until
+CakePHP 6 and its dependencies have stable releases, the host application's
+Composer configuration must allow development dependencies with
+`"minimum-stability": "dev"` and `"prefer-stable": true`.
 
 The package is not published to Packagist yet. Add its GitHub repository to your
 application's Composer configuration and install the development branch:
@@ -46,7 +50,7 @@ Choose the name you want to use in your view templates:
 
 ```php [As Form]
 // In AppView::initialize()
-$this->loadHelper('Form', ['className' => 'FormCompose.Form']);
+$this->addHelper('Form', ['className' => 'FormCompose.Form']);
 
 // In a template
 $form = $this->Form->bind($article);
@@ -54,8 +58,8 @@ $form = $this->Form->bind($article);
 
 ```php [Alongside core FormHelper]
 // In AppView::initialize()
-$this->loadHelper('Form');
-$this->loadHelper('Compose', ['className' => 'FormCompose.Form']);
+$this->addHelper('Form');
+$this->addHelper('Compose', ['className' => 'FormCompose.Form']);
 
 // In a template
 $form = $this->Compose->bind($article);
@@ -99,5 +103,6 @@ with `$form->field('title')`, then call that field's `label()`, `input()`, `help
 and `errors()` methods where you need them.
 
 Continue with [fields and form data](./usage.md) for values and feedback,
-[reuse field definitions](./definitions.md) across screens, or
+[reuse field definitions](./definitions.md) across screens,
+[declare attributed blueprints](./blueprints.md), or
 [create a theme](./themes.md) to write your first control element.

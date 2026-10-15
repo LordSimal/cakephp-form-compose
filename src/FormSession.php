@@ -124,12 +124,14 @@ class FormSession
     /**
      * Render a reusable field collection here, through the normal control templates.
      *
-     * The form must be open. Configuration stays local to this call; later field()
-     * and control() calls do not inherit options from this definition.
+     * With no argument, render the definition selected at bind(). An explicitly
+     * supplied collection stays local to this call and does not replace defaults.
+     * The form must be open; a session without a definition renders an empty string.
      */
-    public function definition(FormDefinition $definition): string
+    public function definition(?FormDefinition $definition = null): string
     {
         $this->lifecycle->assertOpen();
+        $definition ??= $this->binding->definition ?? FormDefinition::make();
 
         return implode('', array_map($this->control(...), $definition->fields));
     }

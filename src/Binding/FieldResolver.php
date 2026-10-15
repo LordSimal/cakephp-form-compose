@@ -16,7 +16,8 @@ use InvalidArgumentException;
 /**
  * Builds a BoundField from a context path or reusable FieldDefinition.
  *
- * Combines definition options with per-call overrides, normalizes the template
+ * Combines binding defaults, explicit definition options, and per-call overrides,
+ * normalizes the template
  * shorthand to templates['control'], infers a control type,
  * applies association conventions, resolves its value, and derives its input
  * name, ID, constraints, and errors.
@@ -42,8 +43,12 @@ class FieldResolver
     {
         $definition = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
         $path = $definition->path;
+        $defaults = $this->binding->definition?->has($path)
+            ? $this->binding->definition->field($path)->options
+            : [];
         $conventions = $this->createFieldConventions();
         $options = TemplateOptions::normalize($conventions->resolve($path, array_replace(
+            $defaults,
             $definition->options,
             $options,
         )));

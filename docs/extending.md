@@ -13,7 +13,9 @@ submission behavior, renderer implementations, and service subclasses.
 Implement `FieldTypeInterface` to render a custom control and return its submitted
 names as `Submission` objects. Register it using
 `bind($entity, ['types' => ['date-range' => $rangeType]])`, then request
-`['type' => 'date-range']` on a field.
+`['type' => 'date-range']` on a field. Alternatively, mark the implementation with
+`#[AsFieldType('date-range')]` for [automatic discovery](./blueprints.md#discover-custom-field-types).
+Explicit `types` registrations override discovered types.
 
 ::: info Describe the inputs your control submits
 `render()` must return escaped markup without changing security state.
@@ -55,6 +57,9 @@ to the normal form-building API:
 | `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
 | `FieldResolver` | `inferType()` and factories for bound fields, field types, value resolution, and field conventions |
 | `FieldConventions` | `choices()`, `resolve()`, and `messages()` specialize choice discovery and association defaults |
+| `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
+| `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
+| `BlueprintCompiler` | `createBuilder()` supplies the builder passed to blueprint hooks |
 | `ValueResolver` | `fromSources()` specializes request/context lookup |
 | `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
 | `NativeType` | `choice()` and `createChoices()` specialize standard controls |
