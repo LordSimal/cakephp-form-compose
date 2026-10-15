@@ -1,5 +1,8 @@
 # FormCompose
 
+[![CI](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/josbeir/cakephp-form-compose/branch/main/graph/badge.svg)](https://app.codecov.io/gh/josbeir/cakephp-form-compose)
+
 Composable form binding and native PHP rendering for CakePHP. The plugin provides
 `FormCompose\View\Helper\FormHelper` for building complete controls or composing
 individual field parts in application templates.
