@@ -15,7 +15,7 @@ jobs:
           - php: '8.5'
             cakephp: '6.x-dev'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -23,11 +23,11 @@ jobs:
           coverage: xdebug
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist
+      - run: composer validate --strict
       - if: matrix.cakephp == '6.x-dev'
         run: |
           composer config minimum-stability dev
           composer require cakephp/cakephp:6.x-dev --with-all-dependencies --no-interaction --no-progress
-      - run: composer validate --strict
       - run: composer check
       - run: composer test-coverage
       - name: Upload coverage to Codecov
@@ -37,4 +37,4 @@ jobs:
           files: build/clover.xml
           disable_search: true
           use_oidc: true
-          fail_ci_if_error: true
+          fail_ci_if_error: false

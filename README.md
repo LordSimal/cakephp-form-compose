@@ -346,6 +346,10 @@ Enable Xdebug coverage mode or PCOV before running coverage. Reports include all
 production PHP, including unexecuted files. The CLI gate rejects coverage less than
 or equal to 90%, missing reports, and reports with no executable source.
 
+CI uploads the Clover report to Codecov using GitHub OIDC. Enable the repository
+in Codecov to populate the coverage badge. Upload errors are reported without
+blocking the PHP checks or the local coverage gate.
+
 `composer check` runs PHPUnit, Mago analysis, linting, and format checks using the
 upstream CakePHP Mago preset. `composer format` applies formatting; `composer lint-fix`
 applies safe lint fixes. No analyzer or linter baselines are used.
