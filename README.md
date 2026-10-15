@@ -2,6 +2,7 @@
 
 [![Packagist](https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist)](https://packagist.org/packages/josbeir/cakephp-form-compose)
 [![CI](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml)
+[![Checked with Mago](https://img.shields.io/badge/checked_with-Mago-f97316)](https://mago.carthage.software/)
 [![Coverage](https://codecov.io/gh/josbeir/cakephp-form-compose/branch/main/graph/badge.svg)](https://app.codecov.io/gh/josbeir/cakephp-form-compose)
 
 **A replacement for CakePHP's FormHelper, with PHP element templates.**
