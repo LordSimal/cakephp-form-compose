@@ -71,8 +71,17 @@ middleware and FormProtectionComponent as needed.
 
 ## Build your first form
 
-```php [templates/Articles/edit.php]
-<?php $form = $this->Form->bind($article); ?>
+Start with inline controls, or declare reusable fields in a blueprint. The
+**Blueprint class** and **Blueprint template** tabs show the two files for the
+blueprint approach; both approaches render the same fields.
+
+::: code-group
+
+```php [Inline controls]
+<?php
+// templates/Articles/edit.php
+$form = $this->Form->bind($article);
+?>
 
 <?= $form->open() ?>
 <?= $form->control('title') ?>
@@ -82,17 +91,61 @@ middleware and FormProtectionComponent as needed.
 <?= $form->close() ?>
 ```
 
+```php [Blueprint class]
+<?php
+declare(strict_types=1);
+
+// src/Form/ArticleForm.php
+namespace App\Form;
+
+use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
+use FormCompose\FormBlueprint;
+
+#[Form('article')]
+#[Field('title')]
+#[Field('body', type: 'textarea')]
+#[Field('published', type: 'checkbox')]
+class ArticleForm extends FormBlueprint
+{
+}
+```
+
+```php [Blueprint template]
+<?php
+// templates/Articles/edit.php
+use App\Form\ArticleForm;
+
+$form = $this->Form->bind($article);
+?>
+<?= $form->open() ?>
+<?= $form->definition(ArticleForm::class) ?>
+<?= $form->submit('Save') ?>
+<?= $form->close() ?>
+```
+
+:::
+
 1. `bind()` selects the data context and creates a form session.
 2. `open()` renders the opening form tag and initial method/CSRF fields.
-3. `control()` resolves each field and renders its `control.php` element, which
-   arranges the label, input, help, and errors.
+3. `control()` renders an individual field; `definition()` renders the blueprint's
+   fields in declaration order. Both use the same control elements for labels,
+   inputs, help, and errors.
 4. `close()` renders the final protection fields and closing tag.
+
+This static blueprint needs no extra container configuration. See
+[form blueprints](./blueprints.md) for conditional fields, application services,
+and selecting blueprint defaults for individual `control()` calls.
 
 An existing record defaults to PUT; a new record defaults to POST. Pass a route
 through `bind($article, ['url' => ['action' => 'edit', $article->id]])` to choose the
 action explicitly.
 
 ## Choose how to customize the layout
+
+To arrange a blueprint's fields in wrappers or grids, select a
+[PHP definition layout](./composition.md#select-a-layout) with
+`#[Form('article', template: 'forms/article')]`.
 
 For a reusable layout, [create a theme](./themes.md). Its elements determine what
 `control()` renders across your forms.
