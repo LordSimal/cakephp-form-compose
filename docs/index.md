@@ -18,57 +18,72 @@ hero:
 
 ## See it in code
 
-A `control()` call renders a PHP element with a bound field object. These examples
-show a form, its email-control template, and an alternative using individual parts.
+Bind your data and render fields, reuse a blueprint, or arrange field parts in
+your own markup. The blueprint tabs show its class and the view that renders it.
 
 ::: code-group
 
 ```php [Build a form]
 <?php
-use FormCompose\Rendering\Theme;
-
-$form = $this->Form->bind(
-    $user,
-    theme: new Theme(layers: ['forms/application']),
-);
+$form = $this->Form->bind($user);
 ?>
 <?= $form->open() ?>
+<?= $form->control('name', ['label' => 'Full name']) ?>
 <?= $form->control('email', ['type' => 'email']) ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
 
-```php [PHP control template]
+```php [Blueprint class]
 <?php
-// templates/element/forms/application/email/control.php
-/** @var \FormCompose\Field\BoundField $field */
+declare(strict_types=1);
+
+// src/Form/ProfileForm.php
+namespace App\Form;
+
+use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
+use FormCompose\FormBlueprint;
+
+#[Form('profile')]
+#[Field('name', label: 'Full name')]
+#[Field('email', type: 'email')]
+class ProfileForm extends FormBlueprint
+{
+}
+```
+
+```php [Render a blueprint]
+<?php
+use App\Form\ProfileForm;
+
+$form = $this->Form->bind($user);
 ?>
-<div class="contact-field">
-    <?= $field->label() ?>
-    <div class="input-with-icon">
-        <span aria-hidden="true">@</span>
-        <?= $field->input() ?>
-    </div>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
-</div>
+<?= $form->open() ?>
+<?= $form->definition(ProfileForm::class) ?>
+<?= $form->submit('Save') ?>
+<?= $form->close() ?>
 ```
 
 ```php [Compose field parts]
 <?php
-// Inside an open form, instead of the email control() call.
+$form = $this->Form->bind($user);
 $email = $form->field('email', ['type' => 'email']);
 ?>
+<?= $form->open() ?>
+<?= $form->control('name', ['label' => 'Full name']) ?>
 <div class="checkout-contact">
     <?= $email->label() ?>
     <div class="checkout-input"><?= $email->input() ?></div>
     <?= $email->help() ?>
     <?= $email->errors() ?>
 </div>
+<?= $form->submit('Save') ?>
+<?= $form->close() ?>
 ```
 
 :::
 
-[Compare with core FormHelper](./why.md) ·
-[Follow the rendering flow](./rendering.md) ·
-[Create a theme](./themes.md)
+[Explore form blueprints](./blueprints.md) ·
+[See how rendering works](./rendering.md) ·
+[Compare with core FormHelper](./why.md)

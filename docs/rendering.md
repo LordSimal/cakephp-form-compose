@@ -15,47 +15,47 @@ and exposes methods that render the field's parts.
 | --- | --- |
 | **Control** | The complete field presentation: label, input, help, and errors. |
 | **Input** | The actual browser control, such as a text input, select, or checkbox. |
-| **Theme** | PHP element locations and default attributes shared by a form. |
+| **Bound field** | Resolved field data and methods for rendering its parts. |
 
 ## From a method call to a file
 
-Suppose a form uses this theme:
+Forms work with the bundled templates immediately:
 
 ```php
-use FormCompose\Rendering\Theme;
-
-$form = $this->Form->bind(
-    $user,
-    theme: new Theme(layers: ['forms/application']),
-);
+$form = $this->Form->bind($user);
+echo $form->open();
+echo $form->control('email', ['type' => 'email']);
+echo $form->submit('Save');
+echo $form->close();
 ```
 
-Inside the open form, calling:
+To use your own markup for that control, select a PHP element directly. Inside
+the open form, replace the `control()` call with:
 
 ```php
-$form->control('email', ['type' => 'email']);
+echo $form->control('email', [
+    'type' => 'email',
+    'template' => 'forms/email',
+]);
 ```
 
-performs these steps:
+This selects `templates/element/forms/email.php`. The call performs these steps:
 
 1. **Resolve the field.** Combine field options, request values, and the CakePHP
    context into a state containing the value, name, ID, constraints, and errors.
-2. **Find the control element.** For an email field, look for
-   `templates/element/forms/application/email/control.php`, then the layer's
-   generic `control.php`. Bundled base elements provide the fallback.
+2. **Find the control element.** The `template` option names the application
+   element to render. Without an override, use the bundled or selected theme's
+   control element.
 3. **Render the element.** Supply a `$field` object, prepared `$attributes`, and a
    `$parent()` callback. The element decides how to arrange its field parts.
 4. **Render the parts it calls.** `$field->label()`, `$field->input()`,
    `$field->help()`, and `$field->errors()` each render their own element.
 
-A selected variant is checked before the type-specific file. The
-[lookup reference](./template-reference.md#lookup-order) describes the full order.
-
 ## What a control element receives
 
 A control element is an ordinary CakePHP PHP element:
 
-```php [templates/element/forms/application/email/control.php]
+```php [templates/element/forms/email.php]
 <?php
 /**
  * @var \FormCompose\Field\BoundField $field
@@ -96,7 +96,7 @@ These are alternative ways to present the same field inside an open form:
 
 ::: code-group
 
-```php [Use the theme's control.php]
+```php [Render a complete control]
 echo $form->control('email', ['type' => 'email']);
 ```
 
@@ -114,6 +114,23 @@ echo $email->errors();
 Calling its part methods renders those parts. Use one presentation per input ID;
 rendering both alternatives would duplicate the input.
 
+## Blueprints follow the same rendering flow
+
+A [blueprint](./blueprints.md) supplies reusable field configuration. Inside an
+open form, render one with:
+
+```php
+use App\Form\ProfileForm;
+
+echo $form->definition(ProfileForm::class);
+```
+
+The bundled definition layout renders its fields in order through the same
+`control()` pipeline. A [custom definition layout](./composition.md#select-a-layout)
+can arrange those fields in wrappers or grids and position embedded definitions.
+Bound values, validation feedback, and submission bookkeeping use the same form
+session in either case.
+
 ## Forms and buttons use PHP elements too
 
 | Call | Element in a theme layer |
@@ -126,5 +143,13 @@ Form opening and closing elements receive prepared method, CSRF, and protection
 fields. Retain those fields when customizing the form structure. The form session
 coordinates submission state; elements render the prepared markup.
 
+## Share presentation across forms
+
+Once a control element works, a [theme](./themes.md) can apply it to matching
+fields across forms. Themes provide shared element directories and default
+attributes, with bundled elements as the fallback. The
+[lookup reference](./template-reference.md#lookup-order) explains layers, types,
+and variants.
+
 [Install and build a form](./getting-started.md), or
-[create your first theme](./themes.md).
+[reuse field configuration with blueprints](./blueprints.md).
