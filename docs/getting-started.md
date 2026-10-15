@@ -26,11 +26,10 @@ CakePHP 6 and its dependencies have stable releases, the host application's
 Composer configuration must allow development dependencies with
 `"minimum-stability": "dev"` and `"prefer-stable": true`.
 
-The package is not published to Packagist yet. Add its GitHub repository to your
-application's Composer configuration and install the development branch:
+Install from [Packagist](https://packagist.org/packages/josbeir/cakephp-form-compose)
+using the development branch until a release is tagged:
 
 ```sh
-composer config repositories.form-compose vcs https://github.com/josbeir/cakephp-form-compose
 composer require josbeir/cakephp-form-compose:dev-main
 ```
 

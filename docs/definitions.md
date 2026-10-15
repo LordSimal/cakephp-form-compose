@@ -194,7 +194,8 @@ session includes rendered inputs in submission protection when closing.
 | `$definition->field('email')` | The existing `FieldDefinition` for that exact path. |
 | `$definition->fields` | The ordered list of field definitions, available for iteration. |
 | `$form->definition()` | HTML for the collection selected at `bind()`, or an empty string. |
-| `$form->definition($definition)` | HTML for the collection, rendered in the current open form. |
+| `$form->definition($definition)` | HTML for the immutable collection, rendered in the current open form. |
+| `$form->definition('profile')` / `$form->definition(ProfileForm::class)` | Resolve and render a blueprint locally using this session’s context. |
 
 Field paths must be unique within a collection. Duplicate paths, unknown lookup
 paths, and unknown override targets throw `InvalidArgumentException`. Dot-separated
@@ -223,8 +224,11 @@ echo $form->close();
 
 Alternatively, `$form->definition()` renders the selected collection in order.
 Calling `definition($other)` renders that collection at the call site without
-replacing the selected defaults. Explicit field definitions and per-call options
-override binding defaults, using top-level replacement.
+replacing the selected defaults. This also accepts a blueprint alias or class:
+`$form->definition('profile')` or `$form->definition(ProfileForm::class)`. You can
+render several definitions inside the same open form; see
+[the two blueprint entry points](./blueprints.md#declare-and-use-a-blueprint).
+Explicit field definitions and per-call options override binding defaults, using top-level replacement.
 
 `$definition->has('email')` checks membership. `$definition->remove('email')`
 returns a new collection without that field and preserves the original. Removing

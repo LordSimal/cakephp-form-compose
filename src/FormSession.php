@@ -5,6 +5,7 @@ namespace FormCompose;
 
 use FormCompose\Binding\FieldResolver;
 use FormCompose\Binding\FormBinding;
+use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormLifecycle;
@@ -32,10 +33,13 @@ class FormSession
     protected readonly FormLifecycle $lifecycle;
 
     /**
-     * Create a form session with its binding and rendering configuration.
+     * Create a session with binding, rendering, and blueprint construction dependencies.
      */
-    public function __construct(public readonly FormBinding $binding, protected readonly RenderContext $rendering)
-    {
+    public function __construct(
+        public readonly FormBinding $binding,
+        protected readonly RenderContext $rendering,
+        protected readonly BlueprintFactory $blueprints = new BlueprintFactory(),
+    ) {
         $this->lifecycle = $this->createLifecycle();
     }
 
@@ -125,12 +129,20 @@ class FormSession
      * Render a reusable field collection here, through the normal control templates.
      *
      * With no argument, render the definition selected at bind(). An explicitly
-     * supplied collection stays local to this call and does not replace defaults.
+     * supplied collection, blueprint alias, or class stays local to this call and
+     * does not replace defaults. Blueprints use this session's factory and context.
      * The form must be open; a session without a definition renders an empty string.
      */
-    public function definition(?FormDefinition $definition = null): string
+    public function definition(FormDefinition|string|null $definition = null): string
     {
         $this->lifecycle->assertOpen();
+        if (is_string($definition)) {
+            $definition = $this->blueprints->definition(
+                $definition,
+                new FormContext($this->binding->context, $this->binding->request),
+            );
+        }
+
         $definition ??= $this->binding->definition ?? FormDefinition::make();
 
         return implode('', array_map($this->control(...), $definition->fields));
