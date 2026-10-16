@@ -14,6 +14,8 @@ test('native validity, successful controls, and theme associations', async ({ pa
   expect(state.checkboxRequired).toEqual([false, false]);
   expect(state.ids.length).toBe(new Set(state.ids).size);
   expect(state.descriptions).toBe(true);
+  await expect(page.locator('[name="author_id"]')).toHaveValue('');
+  await expect(page.locator('[name="author_id"] option:checked')).toHaveText('Unassigned');
   expect(state.entries).toEqual([
     ['id', '42'], ['author_id', ''], ['topics', ''], ['topics[]', 'a'],
     ['active', '0'], ['visibility', ''], ['tags[_ids]', ''], ['email', 'reader@example.test'],

@@ -32,8 +32,13 @@ final class SelectPlaceholder
             throw new InvalidArgumentException('The empty option must be a boolean or a string.');
         }
 
-        if ($empty === false || self::containsEmpty($choices)) {
+        if ($empty === false) {
             return $choices;
+        }
+
+        $retained = self::retainEmpty($choices, $state, $attributes);
+        if ($retained !== null) {
+            return $retained;
         }
 
         $placeholder = new Choice('item', $empty === true ? '' : $empty, new Attributes([
@@ -45,22 +50,44 @@ final class SelectPlaceholder
     }
 
     /**
-     * Recognize explicit empty options even inside optgroups.
+     * Retain an existing blank option, selecting it for a null single-select value.
      *
      * @param list<\FormCompose\Field\Choice> $choices Prepared options.
+     * @return list<\FormCompose\Field\Choice>|null Null when no blank option exists.
      */
-    private static function containsEmpty(array $choices): bool
+    private static function retainEmpty(array $choices, FieldState $state, Attributes $attributes): ?array
     {
-        foreach ($choices as $choice) {
-            if (
-                $choice->kind === 'group'
-                    ? self::containsEmpty($choice->children)
-                    : $choice->attributes->values['value'] === ''
-            ) {
-                return true;
+        foreach ($choices as $index => $choice) {
+            if ($choice->kind === 'group') {
+                $children = self::retainEmpty($choice->children, $state, $attributes);
+                if ($children === null) {
+                    continue;
+                }
+
+                $choices[$index] = new Choice(
+                    $choice->kind,
+                    $choice->label,
+                    $choice->attributes,
+                    $children,
+                    $choice->presentation,
+                );
+            } elseif ($choice->attributes->values['value'] === '') {
+                $choices[$index] = new Choice(
+                    $choice->kind,
+                    $choice->label,
+                    $state->value === null && !$attributes->has('multiple')
+                        ? $choice->attributes->replace(['selected' => 'selected'])
+                        : $choice->attributes,
+                    $choice->children,
+                    $choice->presentation,
+                );
+            } else {
+                continue;
             }
+
+            return $choices;
         }
 
-        return false;
+        return null;
     }
 }
