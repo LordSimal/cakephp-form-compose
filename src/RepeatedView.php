@@ -36,7 +36,6 @@ class RepeatedView
         $this->messages = RepeatedErrors::messages(
             FormContext::fromBinding($binding),
             $definition->path,
-            $definition->keys ?? [],
         );
     }
 
