@@ -18,7 +18,7 @@ final readonly class NativeInput
      *
      * @param list<string> $ids Emitted choice IDs beyond the bound field's main ID.
      */
-    public function __construct(public bool $submittable, public array $ids)
+    public function __construct(public bool $submittable, public array $ids, public ?string $target = null)
     {
     }
 
@@ -46,6 +46,7 @@ final readonly class NativeInput
         return new self(
             $state->type !== 'select' || $fallback instanceof Attributes || self::hasEnabledChoice($choices),
             $ids,
+            NativeErrorTarget::resolve($state, $choices),
         );
     }
 

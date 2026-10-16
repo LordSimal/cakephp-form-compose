@@ -37,8 +37,8 @@ class FormsController extends Controller
             $this->createContext(),
             theme: $this->createTheme(),
         );
-        $html = $form->open(['url' => '/forms/save', 'type' => 'file']);
-        $html .= $form->control('id', ['type' => 'hidden', 'value' => 42]);
+        $opening = $form->open(['url' => '/forms/save', 'type' => 'file']);
+        $html = $form->control('id', ['type' => 'hidden', 'value' => 42]);
         $html .= $form->control('empty_select', ['type' => 'select', 'options' => [], 'empty' => false]);
         $html .= $form->control('author_id', ['options' => [1 => 'Ada', 2 => 'Grace'], 'value' => null]);
         $html .= $form->control('topics', [
@@ -68,7 +68,7 @@ class FormsController extends Controller
             'textarea',
         ));
         $html .= $form->embedMany('comments', $row, options: ['template' => 'repeat/comments']);
-        $html .= $form->submit('Save') . $form->close();
+        $html = $opening . $form->errorSummary() . $html . $form->submit('Save') . $form->close();
 
         return $this->getResponse()
             ->withType('html')
@@ -85,7 +85,15 @@ class FormsController extends Controller
     protected function createContext(): ArrayContext
     {
         return new ArrayContext([
-            'errors' => ['email' => ['invalid' => 'Check your email']],
+            'errors' => [
+                'email' => ['invalid' => 'Check your email'],
+                'topics' => ['invalid' => 'Choose topics'],
+                'visibility' => ['invalid' => 'Choose visibility'],
+                'comments' => [
+                    'count' => 'Add another comment',
+                    2 => ['body' => ['invalid' => 'Fix the third comment']],
+                ],
+            ],
             'defaults' => [
                 'comments' => [0 => ['id' => 10, 'body' => 'First'], 2 => ['id' => 12, 'body' => 'Third']],
             ],

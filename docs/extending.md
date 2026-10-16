@@ -206,3 +206,32 @@ own mutable state. Immutable configuration and data objects, including `Theme`,
 value and escaping contracts stay consistent. Small stateless utilities such as
 `InputNames` and `NativeValue` are also final.
 :::
+
+## Custom summary targets
+
+Implement `Field\ErrorTargetProviderInterface` alongside `FieldTypeInterface`
+when a composite control needs a summary link to an input other than its main ID:
+
+```php
+public function errorTarget(BoundField $field, Attributes $attributes): ?string
+{
+    return $field->state->id . '-end';
+}
+```
+
+Return an actual emitted control ID without `#`, or null to show an unlinked
+message. An empty string is rejected. The method must not render, register, or
+consume choice iterators. Existing types without this interface use their main
+field ID; hidden and disabled controls remain unlinked. Discovered lazy types
+forward the contract through the same resolved instance.
+
+Native choice types retain prepared targets after rendering, so summaries do not
+consume single-pass option iterators again. Use `InputIdentityProviderInterface`
+to report additional emitted IDs for duplicate checks too.
+
+`FormSession` accepts an optional fifth `ErrorSummaryRenderer` dependency. Its
+protected `attributes()` prepares the summary/heading bags; inject a subclass
+through the helper's `createSession()` to specialize this behavior. The
+`InputRegistry` constructor accepts an optional second `FeedbackRegistry`, which
+shares its existing snapshot/rollback transaction. Preserve that coordination in
+application subclasses. Summary metadata stays separate from Cake form protection.

@@ -84,6 +84,7 @@ export default defineConfig({
           { text: 'Choice controls', link: '/choices' },
           { text: 'Association fields', link: '/associations' },
           { text: 'Compose field parts', link: '/field-parts' },
+          { text: 'Error summaries', link: '/error-summaries' },
           { text: 'Create a theme', link: '/themes' },
         ],
       },

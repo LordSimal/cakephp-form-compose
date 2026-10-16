@@ -95,7 +95,7 @@ formats; false becomes `'0'` when rendered as a native scalar.
 | --- | --- | --- |
 | `label` | `string`, `Html`, or `false` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
 | `help` | `string`, `Html`, or `false` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
-| `errors` | `bool` | `true`. Renders available context messages. `false` suppresses error markup and its generated ARIA references. |
+| `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
 
 `Html` means `FormCompose\Rendering\Html`, the explicit
 [trusted-markup wrapper](./template-reference.md#trusted-markup). Ordinary strings

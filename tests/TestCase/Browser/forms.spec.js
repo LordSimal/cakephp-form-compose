@@ -54,3 +54,25 @@ for (const attack of ['unexpected field', 'locked hidden value', 'missing CSRF',
     expect(status).toBe(attack === 'missing CSRF' ? 403 : 400);
   });
 }
+
+test('summary links navigate to actual inputs, including grouped choices and repeated rows', async ({ page }) => {
+  await page.goto('/forms');
+  const summary = page.locator('section[aria-labelledby$="error-summary-title"]');
+  await expect(summary.getByRole('heading')).toHaveText('Please correct the following errors.');
+  await expect(summary.locator('li')).toHaveCount(5);
+  const associations = await summary.evaluate(element => ({
+    beforeControls: Boolean(element.compareDocumentPosition(document.querySelector('[name="email"]')) & Node.DOCUMENT_POSITION_FOLLOWING),
+    heading: Boolean(document.getElementById(element.getAttribute('aria-labelledby'))),
+    targets: [...element.querySelectorAll('a')].every(link => {
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      return target && target.matches('input:not([type="hidden"]), select, textarea') && !target.disabled;
+    }),
+  }));
+  expect(associations).toEqual({ beforeControls: true, heading: true, targets: true });
+  await summary.getByRole('link', { name: 'Email: Check your email' }).click();
+  await expect(page.locator('[name="email"]')).toBeFocused();
+  await summary.getByRole('link', { name: 'Topics: Choose topics' }).click();
+  await expect(page.locator('[name="topics[]"]').first()).toBeFocused();
+  await summary.getByRole('link', { name: 'Body: Fix the third comment' }).click();
+  await expect(page.locator('[name="comments[2][body]"]')).toBeFocused();
+});

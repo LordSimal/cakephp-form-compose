@@ -6,6 +6,7 @@ namespace FormCompose;
 use FormCompose\Binding\FieldPath;
 use FormCompose\Binding\RepeatedErrors;
 use FormCompose\Form\InputRegistry;
+use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
 
@@ -88,8 +89,11 @@ class RepeatedView
     /**
      * Read an explicit or conventional collection label for feedback.
      */
-    public function label(): string
+    public function label(): string|Html
     {
-        return (string)($this->definition->options['label'] ?? FieldPath::label($this->definition->path));
+        /** @var mixed $label */
+        $label = $this->definition->options['label'] ?? FieldPath::label($this->definition->path);
+
+        return $label instanceof Html ? $label : (string)$label;
     }
 }

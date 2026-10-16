@@ -29,8 +29,10 @@ class InputRegistry
     /**
      * Share the owning lifecycle's protection service.
      */
-    public function __construct(protected readonly FormProtection $protection)
-    {
+    public function __construct(
+        protected readonly FormProtection $protection,
+        public readonly FeedbackRegistry $feedback = new FeedbackRegistry(),
+    ) {
     }
 
     /**
@@ -94,6 +96,7 @@ class InputRegistry
     {
         $rendered = $this->rendered;
         $pending = $this->pending;
+        $feedback = $this->feedback->entries();
         $this->depth++;
         try {
             $html = $render();
@@ -103,6 +106,7 @@ class InputRegistry
         } catch (Throwable $throwable) {
             $this->rendered = $rendered;
             $this->pending = $pending;
+            $this->feedback->restore($feedback);
             throw $throwable;
         } finally {
             $this->depth--;

@@ -49,7 +49,7 @@ npm run test:browser
 
 On Linux CI, use `npx playwright install --with-deps chromium` to install the
 browser's system libraries too. The suite starts a local PHP server on port 8765
-and tests native constraint validation, actual `FormData`, ID associations, and
+and tests native constraint validation, actual `FormData`, ID associations, native summary-link navigation, and
 multipart submissions through CakePHP's CSRF middleware and FormProtectionComponent.
 It also checks rejection of extra fields, altered locked values, and missing CSRF
 tokens. CI runs this as a separate test job. Browser tooling is not a

@@ -260,6 +260,17 @@ Use a normal `foreach` for row wrappers and `$row->render()` for each child's ow
 layout. There is no `row` template part. See the
 [complete repeated layout example](./repeated-embeds.md#arrange-rows-with-a-php-element).
 
+## Error-summary elements
+
+The `error-summary` scope renders `control`. Its element receives `$form`,
+`$entries` (`list<FeedbackEntry>`), `$title`, `$attributes`, `$titleAttributes`,
+and `$templateData`. An entry exposes `label` (text or trusted `Html`), `messages`
+(escaped strings), and `target` (an emitted DOM ID or null for an unlinked message).
+
+The default section and heading IDs are associated with `aria-labelledby` and
+checked for collisions. Preserve those supplied attributes in custom markup.
+See the [complete summary element](./error-summaries.md#customize-the-summary-element).
+
 ## Attributes
 
 Theme defaults use part keys, with optional type prefixes:

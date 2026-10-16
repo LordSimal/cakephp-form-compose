@@ -12,7 +12,7 @@ use FormCompose\Rendering\Attributes;
  * BlueprintFactory supplies a fresh proxy per form binding. A resolved instance
  * is reused by that form's fields, while explicit instances bypass this proxy.
  */
-class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterface
+class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterface, ErrorTargetProviderInterface
 {
     protected ?FieldTypeInterface $instance = null;
 
@@ -53,6 +53,18 @@ class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterfac
         $type = $this->resolve();
 
         return $type instanceof InputIdentityProviderInterface ? $type->inputIds($field, $attributes) : [];
+    }
+
+    /**
+     * Forward an optional custom summary target through the same resolved instance.
+     */
+    public function errorTarget(BoundField $field, Attributes $attributes): ?string
+    {
+        $type = $this->resolve();
+
+        return $type instanceof ErrorTargetProviderInterface
+            ? $type->errorTarget($field, $attributes)
+            : $field->state->id;
     }
 
     /**

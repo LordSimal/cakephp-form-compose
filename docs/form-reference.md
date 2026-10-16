@@ -48,6 +48,7 @@ discovered alias. It installs field defaults without rendering a collection.
 | `context` | `array` | `[]`. Additional options passed to CakePHP's context factory; not used when `$data` is already a context. |
 | `valueSources` | Nonempty list of `data`, `context`, `query` | `['data', 'context']`. Field value lookup order. |
 | `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
+| `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
 | Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
 
 The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
@@ -312,6 +313,30 @@ echo $form->render(submit: 'Save article');
 The session's explicit definition stays local and does not replace defaults.
 Without an explicit or selected definition, the body is empty. Use a fresh
 binding to retry a failed complete-form rendering.
+
+## errorSummary() {#error-summary}
+
+```php
+public function errorSummary(array $options = []): string;
+```
+
+Summarize eligible controls and repeated sections successfully rendered in this
+open session. Returns `''` when none have errors. Render or buffer the body first;
+field inspection does not register feedback. Summary rendering registers no inputs.
+
+| Option | Default and behavior |
+| --- | --- |
+| `title` | Translated “Please correct the following errors.” Text or trusted `Html`. |
+| `attributes` | Summary element attributes; default ID is the binding ID plus `-error-summary`. |
+| `partAttributes['title']` | Heading attributes; default ID is the summary ID plus `-title`. |
+| `template` / `templates['control']` | Explicit summary element; otherwise normal `error-summary/control` theme lookup. |
+| `variant` | Named theme variant. |
+| `templateData` | Custom data bag for the summary element. |
+
+Complete-form `render()` supports `options: ['errorSummary' => true]` or an
+options array in place of true. It renders the buffered controls after the summary.
+Local false overrides binding opt-in. See [Error summaries](./error-summaries.md)
+for scope, target selection, custom elements, and manual placement.
 
 ## hiddenFields() {#hidden-fields}
 

@@ -21,7 +21,7 @@ use WeakMap;
  * For example, control('active', ['type' => 'checkbox']) uses this class to prepare
  * the checkbox and its unchecked fallback; the theme determines their markup.
  */
-class NativeType implements FieldTypeInterface, InputIdentityProviderInterface
+class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, ErrorTargetProviderInterface
 {
     /** @var \WeakMap<\FormCompose\Field\BoundField, \FormCompose\Field\NativeInput> Successful render metadata. */
     protected WeakMap $inputs;
@@ -87,6 +87,7 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface
             $this->prepareChoices($field, NativeAttributes::resolve($field->state, $attributes)),
             ControlFallback::resolve($field->state, $attributes),
         );
+        $this->inputs[$field] = $input;
         if (!$input->submittable) {
             return [];
         }
@@ -106,6 +107,14 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface
     public function inputIds(BoundField $field, Attributes $attributes): array
     {
         return $this->inputs->offsetExists($field) ? $this->inputs->offsetGet($field)->ids : [];
+    }
+
+    /**
+     * Read the rendered native target without rebuilding single-pass choices.
+     */
+    public function errorTarget(BoundField $field, Attributes $attributes): ?string
+    {
+        return $this->inputs->offsetExists($field) ? $this->inputs->offsetGet($field)->target : null;
     }
 
     /**

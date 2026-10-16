@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Field;
 
+use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\FieldAttributes;
@@ -81,6 +82,10 @@ class BoundField
                 ? $this->fieldType->inputIds($this, $bag)
                 : [];
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag), $ids);
+            $this->lifecycle->inputs->feedback->record(
+                $this->state->id,
+                FeedbackEntry::field($this, $this->fieldType, $bag),
+            );
 
             return $html;
         });
@@ -101,10 +106,16 @@ class BoundField
      */
     public function register(array $attributes = []): void
     {
-        $this->lifecycle->register($this, $this->fieldType->submissions($this, $this->attributes(
-            'input',
-            $attributes,
-        )));
+        $bag = $this->attributes('input', $attributes);
+        $this->lifecycle->inputs->render(function () use ($bag): string {
+            $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
+            $this->lifecycle->inputs->feedback->record(
+                $this->state->id,
+                FeedbackEntry::field($this, $this->fieldType, $bag),
+            );
+
+            return '';
+        });
     }
 
     /**

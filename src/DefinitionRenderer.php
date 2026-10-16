@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose;
 
+use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\InputRegistry;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
@@ -90,12 +91,22 @@ class DefinitionRenderer
         $configured = $options['attributes'] ?? [];
         $attributes = $this->rendering->theme->attributes('embed-many.control', 'default')->merge($configured);
 
-        return $inputs->render(fn(): string => $this->rendering->renderer->render('control', new RenderNode(
-            'embed-many',
-            'default',
-            ['embed' => $embed, 'rows' => $rows, 'attributes' => $attributes],
-            $options,
-        )), $attributes);
+        return $inputs->render(function () use ($embed, $rows, $attributes, $options, $inputs, $repeat): string {
+            $html = $this->rendering->renderer->render('control', new RenderNode(
+                'embed-many',
+                'default',
+                ['embed' => $embed, 'rows' => $rows, 'attributes' => $attributes],
+                $options,
+            ));
+            $inputs->feedback->record(
+                'embed-many:' . $repeat->path,
+                $embed->hasErrors()
+                    ? new FeedbackEntry($embed->label(), $embed->messages)
+                    : null,
+            );
+
+            return $html;
+        }, $attributes);
     }
 
     /**

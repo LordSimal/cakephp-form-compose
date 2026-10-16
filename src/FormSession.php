@@ -10,6 +10,7 @@ use FormCompose\Field\BoundField;
 use FormCompose\Field\ControlList;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormLifecycle;
+use FormCompose\Rendering\ErrorSummaryRenderer;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
@@ -40,6 +41,8 @@ class FormSession
 
     protected readonly DefinitionRenderer $definitions;
 
+    protected readonly ErrorSummaryRenderer $summaries;
+
     /**
      * Create a session with binding, rendering, and blueprint construction dependencies.
      */
@@ -48,9 +51,11 @@ class FormSession
         protected readonly RenderContext $rendering,
         protected readonly BlueprintFactory $blueprints = new BlueprintFactory(),
         ?DefinitionRenderer $definitions = null,
+        ?ErrorSummaryRenderer $summaries = null,
     ) {
         $this->lifecycle = $this->createLifecycle();
         $this->definitions = $definitions ?? new DefinitionRenderer($rendering);
+        $this->summaries = $summaries ?? new ErrorSummaryRenderer($rendering);
     }
 
     /**
@@ -70,8 +75,12 @@ class FormSession
         string|Html|false|null $submit = null,
         array $submitOptions = [],
     ): string {
+        $summary = $this->summaries->options($options, $this->binding->options);
+        unset($options['errorSummary']);
         $html = $this->open($options);
-        $html .= $this->definition($definition);
+        $body = $this->definition($definition);
+        $html .= $summary === null ? '' : $this->errorSummary($summary);
+        $html .= $body;
         if ($submit !== false) {
             $html .= $this->submit($submit ?? __('Submit'), $submitOptions);
         }
@@ -252,6 +261,19 @@ class FormSession
             $options,
             $this->lifecycle->inputs,
         ));
+    }
+
+    /**
+     * Summarize successfully rendered controls and repeated sections in this open form.
+     *
+     * Render or buffer the body first; inspecting fields never contributes entries.
+     * @param array<string, mixed> $options Title and template/attribute presentation.
+     */
+    public function errorSummary(array $options = []): string
+    {
+        $this->lifecycle->assertOpen();
+
+        return $this->summaries->render($this, $this->lifecycle->inputs, $options);
     }
 
     /**
