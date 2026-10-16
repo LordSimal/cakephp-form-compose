@@ -47,6 +47,7 @@ class PostActionTest extends FormTestCase
             'empty nested array' => [['data' => ['empty' => []]]],
             'scalar list' => [['data' => ['ids' => [1, 2]]]],
             'numeric root' => [['data' => [0 => 'first']]],
+            'negative numeric root' => [['data' => [-1 => 'first']]],
             'button type' => [['type' => 'button']],
             'href override' => [['href' => '/get-delete']],
             'action override' => [['formaction' => '/other']],

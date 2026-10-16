@@ -53,7 +53,7 @@ final class PostActionSubmission
         foreach (Hash::flatten($data) as $path => $value) {
             $path = (string)$path;
             new FieldDefinition($path);
-            if (preg_match('/(?:^|\.)[0-9]+$/D', $path)) {
+            if (preg_match('/(?:^|\.)-?[0-9]+$/D', $path)) {
                 throw new InvalidArgumentException(
                     'Locked action data must end in a named field, not a numeric index.',
                 );
