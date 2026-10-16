@@ -327,6 +327,11 @@ defaults, check `$form->binding->definition->has('published')` first.
 
 ## Translate a blueprint
 
+::: info Future core integration
+`FormCompose\Translated` will likely be replaced by a CakePHP-owned equivalent
+if this functionality is added to core.
+:::
+
 Explicit strings in `Field` attributes are used as supplied. Use a `Translated`
 value for declarative label/help translations. CakePHP resolves the message when
 the field is resolved, using the current locale:
