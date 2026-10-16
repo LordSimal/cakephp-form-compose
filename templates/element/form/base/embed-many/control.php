@@ -6,14 +6,11 @@ declare(strict_types=1);
  * @var array<int|string, \FormCompose\DefinitionView> $rows
  * @var \FormCompose\Rendering\Attributes $attributes
  */
-$wrapped = (string)$attributes !== '';
-if ($wrapped) { ?>
-<div<?= (string)$attributes ?>>
-<?php }
+if ((string)$attributes !== '') {
+    throw new InvalidArgumentException('Repeated embed wrapper attributes require a custom control template.');
+}
+
 foreach ($rows as $row) {
     echo $row->render();
 }
 echo $embed->errors();
-if ($wrapped) { ?>
-</div>
-<?php }

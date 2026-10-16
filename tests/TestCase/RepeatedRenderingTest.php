@@ -13,7 +13,6 @@ use FormCompose\Test\Fixture\Composition\CustomCompositionHelper;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
-use LogicException;
 
 /**
  * Verifies row layouts, nested repetition, and normal service extension boundaries.
@@ -107,19 +106,5 @@ class RepeatedRenderingTest extends FormTestCase
 
         static::assertStringContainsString('name="comments"', $form->control('comments', ['value' => 'Retry']));
         $form->close();
-    }
-
-    public function testRepeatWrapperIdentitiesParticipateInDuplicateChecks(): void
-    {
-        $form = $this->helper()->bind();
-        $form->open();
-        $form->embedMany(
-            'comments',
-            CommentForm::class,
-            keys: [],
-            options: ['attributes' => ['id' => 'comments-wrapper']],
-        );
-        $this->expectException(LogicException::class);
-        $form->control('other', ['id' => 'comments-wrapper']);
     }
 }
