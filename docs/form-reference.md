@@ -58,7 +58,10 @@ An explicit `Theme` replaces the configured theme; `'Base'` forces the bundled
 base theme for this binding. Other strings fail. `$renderer` accepts a
 `RendererInterface`; omitted, it uses `PhpRenderer`. `$definition` accepts a
 blueprint class name or discovered alias. It installs field defaults without
-rendering a collection.
+rendering fields or their collection layout. After opening, call `definition()`
+to render the selected blueprint, or call `control()` for each field you want to
+arrange manually. Session `render()` renders the complete selected form.
+See [blueprint defaults and manual layouts](./definitions.md#select-defaults-for-the-whole-binding).
 
 ### Binding options
 

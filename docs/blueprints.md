@@ -100,7 +100,9 @@ Selecting a blueprint at `bind()` compiles it once and installs its field defaul
 `$form->render()` uses that selected collection; inside an open session,
 `$form->definition()` does too, without rerunning the hook. Passing a blueprint
 explicitly to `definition()` compiles and renders it locally, preserving any
-existing binding defaults.
+existing binding defaults. Binding alone emits no markup. Individual `control()`
+calls render only their requested fields; `definition()` renders the selected
+blueprint through its collection layout.
 
 You can also [use selected defaults for individual fields](./definitions.md#select-defaults-for-the-whole-binding).
 For a reusable blueprint's field arrangement, prefer its own PHP layout below.
