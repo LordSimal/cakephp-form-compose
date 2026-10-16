@@ -1,11 +1,15 @@
-<h1>
-  <img src="docs/public/branding/formcompose-mark.svg" alt="FormCompose" width="144" height="144">
-</h1>
+<p align="center">
+  <img src="docs/public/branding/formcompose-mark.svg" width="160" height="160" alt="FormCompose logo" />
+  <br />
+  <big><big><strong>FormCompose</strong></big></big>
+</p>
 
-[![Packagist](https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist)](https://packagist.org/packages/josbeir/cakephp-form-compose)
-[![CI](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml)
-[![Checked with Mago](https://img.shields.io/badge/checked_with-Mago-f97316)](https://mago.carthage.software/)
-[![Coverage](https://codecov.io/gh/josbeir/cakephp-form-compose/branch/main/graph/badge.svg)](https://app.codecov.io/gh/josbeir/cakephp-form-compose)
+<p align="center">
+  <a href="https://packagist.org/packages/josbeir/cakephp-form-compose"><img src="https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist" alt="Packagist" /></a>
+  <a href="https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml"><img src="https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
+  <a href="https://mago.carthage.software/"><img src="https://img.shields.io/badge/checked_with-Mago-f97316" alt="Checked with Mago" /></a>
+  <a href="https://app.codecov.io/gh/josbeir/cakephp-form-compose"><img src="https://codecov.io/gh/josbeir/cakephp-form-compose/branch/main/graph/badge.svg" alt="Coverage" /></a>
+</p>
 
 **A replacement for CakePHP's FormHelper, with PHP element templates.**
 
