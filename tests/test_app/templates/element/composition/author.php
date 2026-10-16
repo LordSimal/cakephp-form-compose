@@ -11,12 +11,10 @@ use FormCompose\Rendering\Html;
 <section<?= (string)$attributes->merge(['data-author' => true]) ?>>
     <h2><?= Html::text((string)$templateData['heading']) ?></h2>
     <div class="grid grid-cols-2 gap-4">
-        <?= $form->control('first_name') ?>
-        <?= $form->control('last_name') ?>
+        <?= $form->controls(['first_name', 'last_name']) ?>
     </div>
     <?php if ($form->has('email')): ?>
         <section data-email><?= $form->control('email') ?></section>
     <?php endif; ?>
-    <?= $form->control('internal') ?>
-    <?= $form->control('id') ?>
+    <?= $form->controls(['internal', 'id']) ?>
 </section>

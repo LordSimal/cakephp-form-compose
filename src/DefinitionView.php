@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose;
 
 use FormCompose\Field\BoundField;
+use FormCompose\Field\ControlList;
 use FormCompose\Field\FieldDefinition;
 
 /**
@@ -74,6 +75,26 @@ class DefinitionView
         }
 
         return $this->session->control($this->configured($field), $options);
+    }
+
+    /**
+     * Render ordered relative controls inside this definition's layout transaction.
+     *
+     * Like control(), removed fields produce nothing and unknown fields fail.
+     * Calls this view's control() so subclasses retain their layout behavior.
+     *
+     * @param array<array-key, mixed> $fields Indexed paths/definitions or paths mapped to options.
+     * @throws \InvalidArgumentException For invalid entries or unknown fields.
+     */
+    public function controls(array $fields): string
+    {
+        $definitions = ControlList::normalize($fields);
+        $html = '';
+        foreach ($definitions as $definition) {
+            $html .= $this->control($definition);
+        }
+
+        return $html;
     }
 
     /**
