@@ -31,7 +31,22 @@ key in `options` also works and takes precedence over `empty`.
 
 ## Backed enums
 
-Pass a backed enum class to use all its cases in declaration order:
+Pass a backed enum class directly as `options` to use all its cases:
+
+```php
+use App\Enum\Status;
+
+echo $form->control('status', ['options' => Status::class]);
+```
+
+This renders a select with one option per case, in declaration order. There is
+no need to call `Status::cases()`. Each option submits the case's backing value;
+labels default to humanized case names (`InReview` becomes `In Review`).
+
+### Custom enum labels
+
+Implement CakePHP's `EnumLabelInterface` when cases need application-owned labels
+or translations:
 
 ```php
 use Cake\Database\Type\EnumLabelInterface;
@@ -62,8 +77,11 @@ CakePHP's `EnumLabelInterface::label()` when implemented; otherwise the case nam
 is humanized (`InReview` becomes `In Review`). Labels are escaped. Translate labels
 in the application, for example through the interface as shown above.
 
-Use `Status::cases()` or an iterable of individual cases to select a subset or
-change the order. Iterable keys do not replace enum backing values. The same
+### Subsets and multiple selections
+
+`Status::cases()` also supplies all cases. Pass an iterable of individual cases
+to select a subset or change the order. Iterable keys do not replace enum backing
+values. The same
 options work with `type => 'radio'` and `type => 'multicheckbox'`:
 
 ```php
