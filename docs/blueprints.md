@@ -464,28 +464,16 @@ For enum choices, implement CakePHP's `EnumLabelInterface` and translate in
 are resolved only for field `label` and `help`, not as ordinary choice labels.
 Validation messages stay in CakePHP's validation and application layers.
 
-### Extract messages for translation catalogs
+### Translation catalog extraction
 
-Use the plugin's extension of CakePHP's extractor when blueprints contain
-`Translated` attribute values:
+CakePHP's standard `i18n extract` command does not currently recognize
+`new Translated(...)` values. Maintain their source messages, domains, and contexts
+in your translation catalogs manually. FormCompose does not provide an extraction
+command.
 
-```sh
-bin/cake form_compose.i18n extract --paths src,templates --output resources/locales --merge no --extract-core no
-```
-
-This retains CakePHP's normal translation-function and enum-label extraction,
-and adds `Translated` values in field attribute labels/help, including values
-inside the attribute's `options` array. Message domains and contexts are written
-to the corresponding POT catalogs. Blueprint classes must be autoloadable.
-Extraction reads declarations without executing `configure()`, text closures, or
-translations.
-
-The extension inspects `Field` attributes; it does not scan arbitrary
-`new Translated(...)` calls in runtime code or evaluate computed message IDs.
-For translated strings in runtime configuration and templates, use literal
-messages with CakePHP's translation functions so its normal extractor can find
-them. The standard `i18n extract` command remains available and does not discover
-FormCompose's message objects.
+When automatic extraction is needed, use literal messages with CakePHP's
+translation functions in `configure()`, templates, or attribute closures. Those
+calls remain discoverable by CakePHP's normal extractor.
 
 ## Configuration order
 

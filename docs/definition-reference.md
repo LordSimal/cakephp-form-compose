@@ -126,7 +126,7 @@ Construction stores metadata without translating. Field resolution calls
 locale. Formatting arguments use CakePHP's message formatting. Results remain
 ordinary text and are escaped when rendered. The object does not cache translated
 results or implement implicit string conversion. See
-[translation and catalog extraction](./blueprints.md#translate-a-blueprint).
+[translation behavior and extraction limitations](./blueprints.md#translate-a-blueprint).
 
 ## configure() and FormBuilder
 
