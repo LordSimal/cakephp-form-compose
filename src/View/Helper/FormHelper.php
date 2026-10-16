@@ -36,6 +36,13 @@ use InvalidArgumentException;
  */
 class FormHelper extends Helper
 {
+    /**
+     * Default presentation for bindings and standalone action helpers.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $defaultConfig = ['theme' => 'Base'];
+
     protected int $sequence = 0;
 
     protected ?PostActionRenderer $postActions = null;
@@ -187,19 +194,22 @@ class FormHelper extends Helper
     }
 
     /**
-     * Share theme selection between ordinary bindings and standalone action triggers.
+     * Select a per-call override, helper default, or the bundled base theme.
+     *
+     * Null inherits helper configuration; Base explicitly selects the base theme.
+     * Each binding retains the selected immutable theme independently of later config changes.
      */
     protected function resolveTheme(Theme|string|null $theme): Theme
     {
-        $theme = match ($theme) {
-            null, 'Base' => Theme::base(),
-            default => $theme,
-        };
-        if (!$theme instanceof Theme) {
-            throw new InvalidArgumentException('Use Base or a Theme instance.');
-        }
+        /** @var mixed $selected */
+        $selected = $theme ?? $this->getConfig('theme');
 
-        return $theme;
+        return match ($selected) {
+            null, 'Base' => Theme::base(),
+            default => $selected instanceof Theme
+                ? $selected
+                : throw new InvalidArgumentException('Use Base or a Theme instance.'),
+        };
     }
 
     /**

@@ -53,7 +53,10 @@ $form = $this->Form->bind($article, [
 ```
 
 `$theme` accepts null, `'Base'`, or a `FormCompose\Rendering\Theme` instance.
-Other strings fail. `$renderer` accepts a `RendererInterface`; omitted, it uses
+Null uses the helper's configured `theme`, which defaults to the base theme.
+An explicit `Theme` replaces the configured theme; `'Base'` forces the bundled
+base theme for this binding. Other strings fail. `$renderer` accepts a
+`RendererInterface`; omitted, it uses
 `PhpRenderer`. `$definition` accepts a `FormDefinition`, blueprint class name, or
 discovered alias. It installs field defaults without rendering a collection.
 
@@ -78,6 +81,7 @@ Set these with `addHelper()` or the helper's `setConfig()` before binding:
 
 | Setting | Value and default |
 | --- | --- |
+| `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
 | `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
 | `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
 
@@ -91,6 +95,11 @@ $this->addHelper('Form', [
 
 See [blueprint services](./blueprint-configuration.md#inject-application-services)
 for supplying this view variable from the application container.
+
+See [Create a theme](./themes.md#select-theme) for configuring
+an application theme in `AppView`. Helper configuration is local to that instance;
+changing `theme` affects future bindings and action calls, while existing sessions
+retain their selected theme. Per-call overrides never modify the configured default.
 
 ## open() {#open}
 

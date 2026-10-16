@@ -21,6 +21,10 @@ This renders a form containing a native submit button. It works without
 JavaScript. The default method is POST; use `method` for PUT, PATCH, or DELETE.
 Controllers still enforce allowed methods, authorization, and persistence.
 
+Both shortcuts inherit the helper's configured `theme`. Pass a `Theme` instance
+to override it for one call, or `theme: 'Base'` to force the bundled markup.
+See [theme configuration](./themes.md#select-theme).
+
 ## Render a link or request confirmation
 
 ```php
