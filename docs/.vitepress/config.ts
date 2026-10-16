@@ -1,12 +1,16 @@
 import { defineConfig } from 'vitepress';
 
 const repository = 'https://github.com/josbeir/cakephp-form-compose';
+const base = '/cakephp-form-compose/';
 
 export default defineConfig({
   title: 'FormCompose',
   description: 'A CakePHP FormHelper replacement with PHP element templates and composable fields.',
   lang: 'en-US',
-  base: '/cakephp-form-compose/',
+  base,
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}branding/formcompose-mark.svg` }],
+  ],
   lastUpdated: true,
   markdown: {
     lineNumbers: true,

@@ -1,7 +1,7 @@
 # FormCompose logo assets
 
 `formcompose-mark.svg` is the icon-only logo used in the README, documentation
-navigation, and homepage. One wide module and two smaller modules form a geometric
+navigation, favicon, and homepage. One wide module and two smaller modules form a geometric
 isometric composition.
 
 Flat face colors give the blocks depth: `#818cf8` on top, `#6366f1` on the left,
