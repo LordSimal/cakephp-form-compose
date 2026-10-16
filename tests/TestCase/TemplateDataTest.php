@@ -96,7 +96,7 @@ class TemplateDataTest extends FormTestCase
 
     public function testDefinitionsAndInlineOverridesReplaceTheBagWithoutMutatingSharedData(): void
     {
-        $contact = FormDefinition::make()->add(FieldDefinition::make('email')->with([
+        $contact = new FormDefinition([])->add(new FieldDefinition('email', [
             'template' => 'themes/data/control',
             'templateData' => ['marker' => 'original', 'content' => 'Original'],
         ]));
@@ -104,7 +104,7 @@ class TemplateDataTest extends FormTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $html = $form->definition($customized);
+        $html = $form->renderDefinition($customized);
         $form->close();
         static::assertStringContainsString('data-template-marker="customized"', $html);
         static::assertStringNotContainsString('Original', $html);
@@ -112,7 +112,10 @@ class TemplateDataTest extends FormTestCase
             ['marker' => 'original', 'content' => 'Original'],
             $contact->field('email')->options['templateData'],
         );
-        $inline = $form->field($contact->field('email'), ['templateData' => []]);
+        $inline = $form->field($contact->field('email')->path, array_replace(
+            $contact->field('email')->options,
+            ['templateData' => []],
+        ));
         static::assertSame([], $inline->state->options['templateData']);
     }
 

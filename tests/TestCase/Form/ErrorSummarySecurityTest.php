@@ -7,8 +7,7 @@ use Cake\Form\FormProtector;
 use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
+use FormCompose\Test\Fixture\Authoring\TitleIdForm;
 use FormCompose\Test\FormTestCase;
 
 /**
@@ -19,15 +18,12 @@ class ErrorSummarySecurityTest extends FormTestCase
     public function testSummaryAndOrdinaryRenderingAcceptTheSamePayload(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $definition = FormDefinition::make()->add(FieldDefinition::make('id', 'hidden'))->add(FieldDefinition::make(
-            'title',
-        ));
         $context = new ArrayContext([
             'defaults' => ['id' => 42, 'title' => 'Value'],
             'errors' => ['title' => ['invalid' => 'Fix title']],
         ]);
         foreach ([false, true] as $summary) {
-            $form = $helper->bind($context, ['url' => '/articles/save'], definition: $definition);
+            $form = $helper->bind($context, ['url' => '/articles/save'], definition: TitleIdForm::class);
             $html = $form->render(options: ['errorSummary' => $summary]);
             $tokens = [];
             /** @var NodeList<Element>|false $nodes */

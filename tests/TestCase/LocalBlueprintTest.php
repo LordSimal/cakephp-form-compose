@@ -6,9 +6,8 @@ namespace FormCompose\Test\TestCase;
 use Cake\Container\Container;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\BlueprintTestCase;
+use FormCompose\Test\Fixture\Authoring\SessionEmailForm;
 use FormCompose\Test\Fixture\Blueprint\BlueprintFormHelper;
 use FormCompose\Test\Fixture\Blueprint\Invalid\FailingForm;
 use FormCompose\Test\Fixture\Blueprint\Valid\BillingAddressForm;
@@ -74,11 +73,8 @@ class LocalBlueprintTest extends BlueprintTestCase
 
     public function testLocalBlueprintsOverrideAndPreserveSelectedDefaults(): void
     {
-        $defaults = new FormDefinition([
-            FieldDefinition::make('email', 'text')->label('Session email')->help('Session help'),
-            FieldDefinition::make('unrendered'),
-        ]);
-        $form = $this->helper()->bind(definition: $defaults);
+        $form = $this->helper()->bind(definition: SessionEmailForm::class);
+        $defaults = $form->binding->definition;
         $html = $form->open() . $form->definition(ProfileForm::class);
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);

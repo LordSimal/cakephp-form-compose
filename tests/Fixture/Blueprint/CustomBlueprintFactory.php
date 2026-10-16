@@ -16,6 +16,6 @@ class CustomBlueprintFactory extends BlueprintFactory
      */
     protected function createCompiler(): BlueprintCompiler
     {
-        return new CustomBlueprintCompiler();
+        return new CustomBlueprintCompiler($this->definition(...));
     }
 }

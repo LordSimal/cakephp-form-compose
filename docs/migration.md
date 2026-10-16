@@ -37,7 +37,7 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 | String templates and widgets | Application-owned PHP elements through a `Theme`; custom submission semantics through `FieldTypeInterface` |
 | `empty` select option | `empty` accepts a label, true, or false. Optional single selects automatically get a blank choice. |
 | Validation feedback | The existing CakePHP context supplies errors and constraints; `help` and `errors` parts associate with the input |
-| Reusable form configuration | Optional definitions or attributed blueprints; templates still own layout |
+| Reusable form configuration | Optional blueprints; templates still own layout |
 | CSRF, method overrides, tamper protection | Keep CakePHP middleware and FormProtectionComponent enabled; input rendering registers submitted names |
 | `postButton()` / `postLink()` | Helper shortcuts create independent protected forms; use `block` inside another form. See [POST actions](./post-actions.md). |
 

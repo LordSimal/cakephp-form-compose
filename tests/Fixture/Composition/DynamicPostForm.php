@@ -5,10 +5,10 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\FormBlueprint;
 use FormCompose\FormBuilder;
 use FormCompose\FormContext;
+use FormCompose\Test\Fixture\Authoring\DetailsForm;
 
 /**
  * Creates independent author mounts dynamically, including an indexed child.
@@ -18,14 +18,17 @@ use FormCompose\FormContext;
 class DynamicPostForm extends FormBlueprint
 {
     /**
-     * Exercise scoped string resolution and prebuilt collection composition.
+     * Exercise scoped blueprint resolution and runtime field construction.
      */
     public function configure(FormBuilder $form, FormContext $context): void
     {
         $form->embed('author', AuthorForm::class);
         $form->embed('comments.0.author', 'composed-author');
-        $form->embed('details', new FormBuilder()->add(FieldDefinition::make('summary'))->build());
-        $form->add(FieldDefinition::make('body', 'textarea'));
+        $form->embed('details', DetailsForm::class);
+        $form->add(
+            'body',
+            ['type' => 'textarea'],
+        );
         $form->presentation(['templateData' => ['source' => 'builder']]);
     }
 }

@@ -72,7 +72,7 @@ parts. Supplying different values for `template` and `templates['control']` thro
 The shorthand must be a nonempty string. Conflict checking uses the merged
 definition and per-call options.
 
-Both spellings work through `field()` and reusable field definitions too. During
+Both spellings work through `field()` and blueprint field declarations too. During
 resolution, `template` is normalized to `templates['control']`, so custom renderers
 receive the same canonical options.
 
@@ -118,10 +118,9 @@ The same applies to `$attributes`, `$parent`, and other prepared variables.
 | Supplied through | Available to |
 | --- | --- |
 | `control()` or `field()` options | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
-| `FieldDefinition::with(['templateData' => ...])` | The same field elements, including when rendering a reusable collection. |
 | `bind()` options or `open()` options | That form's opening, closing, and infrastructure hidden-input elements. |
 | `submit()` options | That button's element. |
-| `Form` attribute, `FormDefinition::presentation()`, or `definition()` options | That definition's layout, independently of child field or embedded layout data. |
+| `Form` attribute, builder `presentation()`, or `definition()` options | That definition's layout, independently of child field or embedded layout data. |
 
 Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
 their field, form, or button. Form data does not become a default for its fields
@@ -238,7 +237,7 @@ The bundled default renders ordered fields and embeds without a wrapper.
 | Variable | Meaning |
 | --- | --- |
 | `$form` | A scoped `DefinitionView` with `has()`, `field()`, `control()`, and `embedded()`. |
-| `$definition` | The final compiled `FormDefinition`, relative to this mount. |
+| `$definition` | Internal compiled layout metadata, relative to this mount; use `$form` for field access. |
 | `$attributes` | Escaped attribute bag from theme defaults and local definition options. |
 | `$templateData` | This definition's application-owned presentation data. |
 | `$parent` | The standard callback to resume theme lookup. |

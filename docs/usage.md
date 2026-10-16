@@ -41,7 +41,7 @@ echo $form->controls([
 ]);
 ```
 
-Entries can also be `FieldDefinition` objects. Use application HTML around
+Use application HTML around
 separate calls when you need sections or grids.
 
 ### Opening and closing
@@ -205,9 +205,8 @@ Use `$form->field()` when arranging a label, input, help, and errors independent
 Follow [Compose field parts](./field-parts.md) for a complete example and handwritten
 input registration.
 
-## Reusable definitions
+## Reusable forms
 
-When field configuration repeats, move it into a
-[field definition or collection](./definitions.md). To declare that configuration
-in an attributed PHP class, use a [blueprint](./blueprints.md). Both render through
-the same controls and templates shown here.
+When form configuration repeats, extract a [blueprint](./blueprints.md).
+[Reusable forms](./definitions.md) explains when to keep configuration inline and
+when to introduce a class. Both render through the controls and templates shown here.

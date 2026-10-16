@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase;
 
-use FormCompose\Field\FieldDefinition;
+use Cake\View\Form\ArrayContext;
+use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormBlueprint;
 use FormCompose\FormBuilder;
+use FormCompose\FormContext;
 use FormCompose\FormDefinition;
+use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\UnknownRemovalForm;
 use FormCompose\Test\Fixture\Blueprint\Invalid\AbstractForm;
 use FormCompose\Test\Fixture\Blueprint\Invalid\DuplicateFields;
 use FormCompose\Test\Fixture\Blueprint\Invalid\FailingForm;
@@ -26,8 +30,17 @@ class BlueprintFailureTest extends FormTestCase
 {
     public function testBuilderSnapshotsAreIndependentAndPreserveOrder(): void
     {
-        $builder = new FormBuilder();
-        $builder->add(FieldDefinition::make('name'))->add(FieldDefinition::make('email', 'email'));
+        $factory = new BlueprintFactory();
+        $context = new FormContext(new ArrayContext([]), $this->helper()->getView()->getRequest());
+        $builder = new FormBuilder(
+            new FormDefinition([]),
+            static fn(string $path, string $identifier): FormDefinition => $factory->definition(
+                $identifier,
+                $context->at($path),
+            ),
+            static fn(RepeatedDefinition $entry): RepeatedDefinition => $factory->repeated($entry, $context),
+        );
+        $builder->add('name', [])->add('email', ['type' => 'email']);
         $original = $builder->build();
         $builder->with('email', ['label' => false, 'value' => null])->remove('name');
         static::assertSame(['name', 'email'], array_column($original->fields, 'path'));
@@ -42,7 +55,7 @@ class BlueprintFailureTest extends FormTestCase
     public function testRemovingUnknownFieldsFailsClearly(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new FormBuilder()->remove('typo');
+        $this->helper()->bind(definition: UnknownRemovalForm::class);
     }
 
     public function testDuplicateDeclarationsAreRejectedBeforeRendering(): void

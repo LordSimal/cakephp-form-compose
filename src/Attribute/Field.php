@@ -11,7 +11,7 @@ use FormCompose\Rendering\Html;
  * Declares one ordered field on a form blueprint, independently of bound values.
  *
  * Repeat on the class for additional fields. options accepts the same options as
- * FieldDefinition; explicitly supplied type, label, and help override those keys.
+ * inline controls; explicitly supplied type, label, and help override those keys.
  * Use options for explicit nulls and configuration outside the common shorthand.
  * Template arguments use the same normalization as ordinary control options.
  */
@@ -41,7 +41,9 @@ final readonly class Field
     }
 
     /**
-     * Convert the declaration to the same configuration used by ordinary PHP builders.
+     * Convert the declaration to the compiler's field configuration.
+     *
+     * @internal Used during blueprint declaration collection.
      */
     public function definition(): FieldDefinition
     {

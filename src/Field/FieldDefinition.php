@@ -3,23 +3,15 @@ declare(strict_types=1);
 
 namespace FormCompose\Field;
 
-use FormCompose\Rendering\Html;
 use InvalidArgumentException;
 
 /**
- * Stores a reusable field path and its behavior and presentation options.
+ * Holds one field's unbound configuration in the compiled form tree.
  *
- * Definitions contain configuration; FieldResolver combines them with a form's
- * context to produce BoundField instances. Fluent methods return new definitions,
- * so a definition can be shared across forms and customized per use. Custom
- * presentation values can be stored in the templateData option; rendering exposes
- * that array to the field's templates without turning its keys into HTML attributes.
+ * Blueprint declarations and builders create these records; binding combines
+ * their options with per-call options before resolving field state.
  *
- * ```php
- * $email = FieldDefinition::make('email', 'email')
- *     ->label('Work email')
- *     ->help('Use your work address.');
- * ```
+ * @internal Application code declares fields through controls or blueprints.
  */
 final readonly class FieldDefinition
 {
@@ -36,14 +28,6 @@ final readonly class FieldDefinition
     }
 
     /**
-     * Start a fluent field definition, with optional control type inference.
-     */
-    public static function make(string $path, ?string $type = null): self
-    {
-        return new self($path, $type === null ? [] : ['type' => $type]);
-    }
-
-    /**
      * Return a definition with explicit option overrides.
      *
      * @param array<string, mixed> $options Field options.
@@ -51,21 +35,5 @@ final readonly class FieldDefinition
     public function with(array $options): self
     {
         return new self($this->path, array_replace($this->options, $options));
-    }
-
-    /**
-     * Set label content or suppress the label.
-     */
-    public function label(string|Html|false $text): self
-    {
-        return $this->with(['label' => $text]);
-    }
-
-    /**
-     * Set help content, escaped unless explicitly trusted.
-     */
-    public function help(string|Html $text): self
-    {
-        return $this->with(['help' => $text]);
     }
 }

@@ -16,16 +16,16 @@ class ControlListTest extends TestCase
 {
     public function testMixedDeclarationsPreserveOrderAndExplicitValues(): void
     {
-        $email = FieldDefinition::make('email', 'email')->label('Work email');
+        $email = new FieldDefinition('email', ['type' => 'email', 'label' => 'Work email']);
         $fields = ControlList::normalize([
             'first_name',
-            $email,
+            'email' => ['type' => 'email', 'label' => 'Work email'],
             'author.name' => ['label' => false, 'value' => null, 'required' => false],
             'count' => ['value' => 0],
             'empty' => ['value' => ''],
         ]);
         static::assertSame(['first_name', 'email', 'author.name', 'count', 'empty'], array_column($fields, 'path'));
-        static::assertSame($email, $fields[1]);
+        static::assertSame($email->options, $fields[1]->options);
         static::assertSame([], $fields[0]->options);
         static::assertSame(['label' => false, 'value' => null, 'required' => false], $fields[2]->options);
         static::assertSame(['value' => 0], $fields[3]->options);
@@ -54,7 +54,8 @@ class ControlListTest extends TestCase
             'boolean' => [[false]],
             'indexed options' => [[['label' => 'Name']]],
             'named string' => [['email' => 'email']],
-            'named definition' => [['email' => FieldDefinition::make('email')]],
+            'indexed definition' => [[new FieldDefinition('email')]],
+            'named definition' => [['email' => new FieldDefinition('email')]],
             'invalid path' => [['name', 'invalid path' => []]],
             'invalid indexed path' => [['name', '']],
             'numeric option' => [['email' => [0 => 'label']]],

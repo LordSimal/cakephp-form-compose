@@ -4,9 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Rendering\Theme;
+use FormCompose\Test\Fixture\Authoring\BodyForm;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
@@ -33,7 +32,6 @@ class RepeatedLayoutTest extends FormTestCase
 
     public function testDefaultLayoutRendersRowsAndErrorsWithoutAWrapper(): void
     {
-        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
         $context = new ArrayContext([
             'defaults' => ['comments' => [2 => ['body' => 'First'], 'new' => ['body' => 'Second']]],
             'errors' => ['comments' => ['count' => 'Add another comment']],
@@ -41,7 +39,7 @@ class RepeatedLayoutTest extends FormTestCase
         $form = $this->helper()->bind($context);
         $form->open();
 
-        $html = $form->embedMany('comments', $row);
+        $html = $form->embedMany('comments', BodyForm::class);
         $xpath = $this->xpath($html);
         static::assertSame(2, $xpath->query('/html/body/div/input')->length);
         static::assertSame(1, $xpath->query('/html/body/ul/li')->length);

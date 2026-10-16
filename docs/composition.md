@@ -189,37 +189,22 @@ public function configure(FormBuilder $form, FormContext $context): void
 ```
 
 This is an alternative to declaring those same mounts with attributes, so do not
-declare them twice. String resolution is available on builders supplied by
-`BlueprintFactory`; a standalone builder can embed an already built definition.
+declare them twice. The factory-supplied builder resolves blueprint references
+in the current scope before returning, so parent overrides can apply immediately.
 Use `$form->presentation(['template' => 'forms/post'])` when the hook should select
-a layout; that element must arrange the fields and embeds in the resulting definition.
+a layout; that element must arrange the fields and embeds in the resulting blueprint.
 
-Ordinary immutable definitions support the same composition and presentation:
+Add runtime fields with paths and option arrays:
 
 ```php
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
-
-$author = FormDefinition::make()
-    ->add(FieldDefinition::make('first_name'))
-    ->add(FieldDefinition::make('last_name'))
-    ->add(FieldDefinition::make('email', 'email'))
-    ->presentation(['template' => 'forms/author']);
-
-$post = FormDefinition::make()
-    ->add(FieldDefinition::make('title'))
-    ->embed('author', $author)
-    ->add(FieldDefinition::make('body', 'textarea'))
-    ->presentation(['template' => 'forms/post']);
-
-echo $form->definition($post);
+public function configure(FormBuilder $form, FormContext $context): void
+{
+    $form->add('summary', ['type' => 'textarea', 'label' => 'Summary']);
+    $form->embed('author', AuthorForm::class);
+}
 ```
 
-`$post->fields` remains the flattened, ordered list of fully qualified fields.
-`$post->entries` retains fields and embeds for rendering.
-`$post->embedded('author')` retrieves the relative compiled child.
-`with('author.email', ...)` and `remove('author.email')` return new definitions
-and update both representations.
+This replaces the corresponding declarations; do not add the same path twice.
 
 ## Isolation and failures
 

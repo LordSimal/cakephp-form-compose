@@ -167,21 +167,8 @@ use App\Form\CommentForm;
 echo $form->embedMany('comments', CommentForm::class);
 ```
 
-Ordinary immutable definitions work too:
-
-```php
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
-
-$comment = FormDefinition::make()->add(FieldDefinition::make('body', 'textarea'));
-$post = FormDefinition::make()->add(new RepeatedDefinition('comments', $comment));
-$form = $this->Form->bind($postEntity, definition: $post);
-echo $form->render(submit: 'Save');
-```
-
-Binding expands declarations into independent snapshots. Before binding, an
-unresolved declaration has no indexed row fields. Rendered inputs, IDs, and
+Each blueprint occurrence compiles into an independent configuration snapshot.
+Rendered inputs, IDs, and
 feedback IDs are committed only when the enclosing repeated layout succeeds;
 a failed row or wrapper rolls back its pending registrations. Dynamic browser
 add/remove controls and a repeater submission protocol are outside this API.

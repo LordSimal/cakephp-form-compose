@@ -6,12 +6,12 @@ namespace FormCompose\Test\TestCase\View\Helper;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\NameForm;
+use FormCompose\Test\Fixture\Authoring\WebsiteForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use FormCompose\Test\Fixture\ContactFormHelper;
 use FormCompose\View\Helper\FormHelper;
@@ -58,11 +58,13 @@ class FormHelperTest extends CompositionTestCase
         static::assertSame(['author', 'post', 'author', 'post'], array_column($this->probe->calls, 'name'));
     }
 
-    public function testOrdinaryDefinitionsUseTheSessionReturnedByHelperExtensions(): void
+    public function testBlueprintsUseTheSessionReturnedByHelperExtensions(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $definition = FormDefinition::make()->add(FieldDefinition::make('website'));
-        $html = $helper->render($definition, submit: new Html('<strong>Save</strong>'));
+        $html = $helper->render(
+            WebsiteForm::class,
+            submit: new Html('<strong>Save</strong>'),
+        );
         static::assertStringContainsString('type="url"', $html);
         static::assertStringContainsString('value="https://example.test"', $html);
         static::assertStringContainsString('data-contact-label', $html);
@@ -102,7 +104,7 @@ class FormHelperTest extends CompositionTestCase
                      * @param array<string, mixed> $submitOptions Button options.
                      */
                     public function render(
-                        FormDefinition|string|null $definition = null,
+                        ?string $definition = null,
                         array $options = [],
                         string|Html|false|null $submit = null,
                         array $submitOptions = [],
@@ -116,7 +118,7 @@ class FormHelperTest extends CompositionTestCase
                 };
             }
         };
-        $html = $helper->render(FormDefinition::make()->add(FieldDefinition::make('name')), submit: 'Save');
+        $html = $helper->render(NameForm::class, submit: 'Save');
         static::assertStringContainsString('data-session-render', $html);
         static::assertStringContainsString('name="name"', $html);
         static::assertStringContainsString('>Save</button>', $html);

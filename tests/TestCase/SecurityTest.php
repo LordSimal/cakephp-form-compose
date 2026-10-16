@@ -19,20 +19,18 @@ class SecurityTest extends FormTestCase
 {
     public function testDefinitionsOnlySecureRenderedFieldsAndPreserveLockedValues(): void
     {
-        $contact = FormDefinition::make()
-            ->add(FieldDefinition::make('email', 'email'))
-            ->add(FieldDefinition::make('unused'));
-        $fields = FormDefinition::make()
-            ->add(FieldDefinition::make('id', 'hidden')->with(['value' => '42']))
-            ->add(FieldDefinition::make('active', 'checkbox'))
-            ->add(FieldDefinition::make('comments.0.body'));
+        $contact = new FormDefinition([])->add(new FieldDefinition('email', ['type' => 'email']))
+            ->add(new FieldDefinition('unused'));
+        $fields = new FormDefinition([])->add(new FieldDefinition('id', ['type' => 'hidden', 'value' => '42']))
+            ->add(new FieldDefinition('active', ['type' => 'checkbox']))
+            ->add(new FieldDefinition('comments.0.body'));
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $form = $helper->bind(null, ['url' => '/articles/save']);
-        $form->field($contact->field('unused'))->attributes();
-        $email = $form->field($contact->field('email'));
+        $form->field($contact->field('unused')->path, $contact->field('unused')->options)->attributes();
+        $email = $form->field($contact->field('email')->path, $contact->field('email')->options);
         $html = $form->open() . $form->control('title');
         $html .= $email->label() . $email->input();
-        $html .= $form->definition($fields) . $form->close();
+        $html .= $form->renderDefinition($fields) . $form->close();
         $data = [
             'title' => 'Edited',
             'email' => 'user@example.test',

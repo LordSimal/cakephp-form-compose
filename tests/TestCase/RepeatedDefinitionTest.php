@@ -5,29 +5,27 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Attribute\EmbedMany;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormBuilder;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\CommentsForm;
+use FormCompose\Test\Fixture\Authoring\SuppressedCommentsForm;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 
 /**
- * Covers reusable ordinary declarations, row selection, and atomic rendering failures.
+ * Covers blueprint row selection, collection feedback, and atomic rendering failures.
  */
 class RepeatedDefinitionTest extends FormTestCase
 {
-    public function testAReusableOrdinaryDefinitionExpandsIndependentlyPerBinding(): void
+    public function testRepeatedBlueprintsCompileIndependentlyPerBinding(): void
     {
-        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', $row));
-        $first = $this->helper(['comments' => [2 => ['body' => 'First']]])->bind(definition: $definition);
-        $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])->bind(definition: $definition);
-        static::assertNull($definition->index->repeats['comments']->rows);
+        $first = $this->helper(['comments' => [2 => ['body' => 'First']]])->bind(
+            definition: CommentsForm::class,
+        );
+        $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])->bind(
+            definition: CommentsForm::class,
+        );
         static::assertTrue($first->binding->definition?->has('comments.2.body'));
         static::assertFalse($second->binding->definition?->has('comments.2.body'));
         static::assertStringContainsString('comments[new][body]', $second->render());
@@ -95,12 +93,9 @@ class RepeatedDefinitionTest extends FormTestCase
 
     public function testSuppressedCollectionErrorsAndWholeCollectionRemoval(): void
     {
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', FormDefinition::make(), options: [
-            'errors' => false,
-        ]));
         $form = $this->helper()->bind(new ArrayContext([
             'errors' => ['comments' => ['count' => 'Required']],
-        ]), definition: $definition);
+        ]), definition: SuppressedCommentsForm::class);
         $form->open();
         static::assertSame('', trim($form->definition()));
         static::assertFalse($form->binding->definition?->remove('comments')->has('comments'));
@@ -120,12 +115,6 @@ class RepeatedDefinitionTest extends FormTestCase
 
         static::assertStringContainsString('First', $form->embedMany('comments', CommentForm::class));
         $form->close();
-    }
-
-    public function testStandaloneBuilderExplainsItsRequiredCompilationContext(): void
-    {
-        $this->expectException(LogicException::class);
-        new FormBuilder()->embedMany('comments', CommentForm::class);
     }
 
     /** @param list<int|string>|null $keys Invalid declaration keys. */

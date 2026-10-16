@@ -8,6 +8,7 @@ use FormCompose\Field\FieldDefinition;
 use FormCompose\FormDefinition;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\OrderedAuthorForm;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use FormCompose\Test\Fixture\Composition\DynamicPostForm;
 use FormCompose\Test\Fixture\Composition\EnvelopeForm;
@@ -44,11 +45,7 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testDefaultLayoutPreservesOrderingAndHonorsChildLayouts(): void
     {
-        $definition = FormDefinition::make()
-            ->add(FieldDefinition::make('before'))
-            ->embed('author', $this->factory->definition(AuthorForm::class, $this->context()))
-            ->add(FieldDefinition::make('after'));
-        $form = $this->helper()->bind(definition: $definition);
+        $form = $this->helper()->bind(definition: OrderedAuthorForm::class);
         $html = $form->open() . $form->definition() . $form->close();
         static::assertLessThan(strpos($html, 'data-author'), strpos($html, 'name="before"'));
         static::assertLessThan(strpos($html, 'name="after"'), strpos($html, 'name="author[id]"'));
@@ -135,9 +132,9 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testDefinitionThemeFallbackAndPerCallOverrides(): void
     {
-        $definition = FormDefinition::make()->add(FieldDefinition::make('title'));
+        $definition = new FormDefinition([])->add(new FieldDefinition('title'));
         $form = $this->helper()->bind(theme: new Theme(['themes/definition']));
-        $html = $form->open() . $form->definition($definition) . $form->close();
+        $html = $form->open() . $form->renderDefinition($definition) . $form->close();
         static::assertStringContainsString('data-default-definition', $html);
         static::assertStringContainsString('name="title"', $html);
 
@@ -160,11 +157,11 @@ class FormSessionCompositionTest extends CompositionTestCase
         $helper->setConfig('blueprintFactory', $this->factory);
 
         $form = $helper->bind();
-        $definition = FormDefinition::make()->embed(
+        $definition = new FormDefinition([])->embed(
             'author',
-            FormDefinition::make()->add(FieldDefinition::make('name')),
+            new FormDefinition([])->add(new FieldDefinition('name')),
         );
-        $html = $form->open() . $form->definition($definition) . $form->close();
+        $html = $form->open() . $form->renderDefinition($definition) . $form->close();
         static::assertStringContainsString('data-contact-label', $html);
         static::assertStringContainsString('name="author[name]"', $html);
     }

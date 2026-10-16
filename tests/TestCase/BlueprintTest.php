@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
+use FormCompose\Test\Fixture\Authoring\LocalEmailForm;
 use FormCompose\Test\Fixture\Blueprint\ChildForm;
 use FormCompose\Test\Fixture\Blueprint\Valid\ProfileForm;
 use FormCompose\Test\FormTestCase;
@@ -38,15 +37,15 @@ class BlueprintTest extends FormTestCase
         static::assertLessThan(strpos($html, 'name="email"'), strpos($html, 'name="name"'));
     }
 
-    public function testDefinitionsAndPerCallOptionsOverrideDefaultsWithoutLeaking(): void
+    public function testPerCallOptionsOverrideDefaultsWithoutLeaking(): void
     {
         $form = $this->helper()->bind(definition: ProfileForm::class);
-        $explicit = FieldDefinition::make('email')
-            ->label('Definition label')
-            ->with([
-                'attributes' => ['data-explicit' => 'yes'],
-            ]);
-        $field = $form->field($explicit, ['label' => false, 'value' => '', 'type' => 'text']);
+        $field = $form->field('email', [
+            'label' => false,
+            'value' => '',
+            'type' => 'text',
+            'attributes' => ['data-explicit' => 'yes'],
+        ]);
         static::assertFalse($field->state->options['label']);
         static::assertSame('', $field->state->value);
         static::assertSame('text', $field->state->type);
@@ -57,36 +56,18 @@ class BlueprintTest extends FormTestCase
         static::assertSame([], $form->field('ad_hoc')->state->options);
     }
 
-    public function testExplicitCollectionDoesNotReplaceBoundDefaults(): void
+    public function testLocalBlueprintDoesNotReplaceBoundDefaults(): void
     {
         $form = $this->helper()->bind(definition: ProfileForm::class);
         $form->open();
 
-        $html = $form->definition(new FormDefinition([
-            FieldDefinition::make('email')->label('Local email'),
-            FieldDefinition::make('extra'),
-        ]));
+        $html = $form->definition(LocalEmailForm::class);
         $form->close();
         static::assertStringContainsString('Local email', $html);
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('name="extra"', $html);
         static::assertSame('Email', $form->field('email')->state->options['label']);
         static::assertFalse($form->binding->definition?->has('extra'));
-    }
-
-    public function testImmutableDefinitionsCanAlsoSupplySessionDefaults(): void
-    {
-        $original = new FormDefinition([
-            FieldDefinition::make('email', 'email')->label('Email'),
-            FieldDefinition::make('internal_note'),
-        ]);
-        $selected = $original->remove('internal_note');
-        $form = $this->helper()->bind(definition: $selected);
-        static::assertTrue($original->has('internal_note'));
-        static::assertFalse($selected->has('internal_note'));
-        static::assertSame('email', $form->field('email')->state->type);
-        $html = $form->open() . $form->definition() . $form->close();
-        static::assertStringNotContainsString('name="internal_note"', $html);
     }
 
     public function testParentDeclarationsAreOverriddenInPlaceAndRemainReusable(): void

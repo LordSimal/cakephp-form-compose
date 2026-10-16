@@ -15,10 +15,10 @@ class FormDefinitionTest extends TestCase
 {
     public function testAddingFieldsPreservesOrderAndEarlierCollections(): void
     {
-        $empty = FormDefinition::make();
-        $name = FieldDefinition::make('name')->label('Full name');
+        $empty = new FormDefinition([]);
+        $name = new FieldDefinition('name', ['label' => 'Full name']);
         $contact = $empty->add($name);
-        $extended = $contact->add(FieldDefinition::make('email', 'email'));
+        $extended = $contact->add(new FieldDefinition('email', ['type' => 'email']));
 
         static::assertSame([], $empty->fields);
         static::assertSame([$name], $contact->fields);
@@ -28,11 +28,13 @@ class FormDefinitionTest extends TestCase
 
     public function testOverridesPreserveOrderAndUnchangedConfiguration(): void
     {
-        $email = FieldDefinition::make('email', 'email')
-            ->label('Email')
-            ->help('Work address')
-            ->with(['attributes' => ['class' => 'original', 'data-original' => true]]);
-        $contact = new FormDefinition([FieldDefinition::make('name'), $email]);
+        $email = new FieldDefinition('email', [
+            'type' => 'email',
+            'label' => 'Email',
+            'help' => 'Work address',
+            'attributes' => ['class' => 'original', 'data-original' => true],
+        ]);
+        $contact = new FormDefinition([new FieldDefinition('name'), $email]);
         $customized = $contact->with('email', [
             'label' => false,
             'value' => null,
@@ -59,25 +61,25 @@ class FormDefinitionTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Field "missing" is not in this definition.');
-        FormDefinition::make()->add(FieldDefinition::make('name'))->field('missing');
+        new FormDefinition([])->add(new FieldDefinition('name'))->field('missing');
     }
 
     public function testOverridingMissingFieldsIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        FormDefinition::make()->with('missing', ['label' => 'Typo']);
+        new FormDefinition([])->with('missing', ['label' => 'Typo']);
     }
 
     public function testAddingDuplicatePathsIsRejected(): void
     {
-        $contact = FormDefinition::make()->add(FieldDefinition::make('email', 'email'));
+        $contact = new FormDefinition([])->add(new FieldDefinition('email', ['type' => 'email']));
         $this->expectException(InvalidArgumentException::class);
-        $contact->add(FieldDefinition::make('email')->label('Duplicate'));
+        $contact->add(new FieldDefinition('email', ['label' => 'Duplicate']));
     }
 
     public function testConstructorRejectsDuplicatePaths(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new FormDefinition([FieldDefinition::make('name'), FieldDefinition::make('name')]);
+        new FormDefinition([new FieldDefinition('name'), new FieldDefinition('name')]);
     }
 }

@@ -5,12 +5,12 @@ description: Declare reusable form fields in a PHP class, render them, and confi
 
 # Form blueprints
 
-A blueprint is a PHP class that compiles into a `FormDefinition`. Attributes
+A blueprint is a PHP class that declares reusable form configuration. Attributes
 supply static field configuration; an optional `configure()` hook changes it for
 the current binding. Values, validation, and saving stay in their existing layers.
 
-Read [Field definitions](./definitions.md#choose-the-right-layer) for the distinction
-between a field definition, collection, blueprint, and layout. Use blueprints when
+Read [Reusable forms](./definitions.md#choose-the-right-layer) to choose between
+inline controls, a blueprint, and a layout. Use blueprints when
 a reusable named class helps; inline controls remain a complete form-building API.
 
 ## Declare and use a blueprint
@@ -326,7 +326,7 @@ defaults, check `$form->binding->definition->has('published')` first.
 ## Configuration order
 
 Inherited declarations establish defaults, then the concrete `configure()` hook
-runs. Explicit field definitions and per-call options override those defaults.
+runs. Per-call field options override those defaults.
 Nested option arrays are replaced as whole values. See
 [configuration precedence](./definition-reference.md#configuration-order) for
 inheritance, hook lifetime, and failure contracts.

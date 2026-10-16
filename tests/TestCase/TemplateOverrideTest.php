@@ -92,16 +92,18 @@ class TemplateOverrideTest extends FormTestCase
 
     public function testDefinitionsKeepTheirShorthandWhileBoundFieldsUseCanonicalOptions(): void
     {
-        $contact = FormDefinition::make()->add(
-            FieldDefinition::make('email', 'email')->with(['template' => 'themes/custom/control']),
+        $contact = new FormDefinition([])->add(
+            new FieldDefinition('email', ['type' => 'email', 'template' => 'themes/custom/control']),
         );
         $form = $this->helper()->bind();
-        $selected = $form->field($contact->field('email'), ['template' => 'themes/library/control']);
+        $selected = $form->field($contact->field('email')->path, array_replace($contact->field('email')->options, [
+            'template' => 'themes/library/control',
+        ]));
         static::assertSame(['control' => 'themes/library/control'], $selected->state->options['templates']);
         static::assertArrayNotHasKey('template', $selected->state->options);
         static::assertSame('themes/custom/control', $contact->field('email')->options['template']);
         $form->open();
-        static::assertStringContainsString('data-control="custom"', $form->definition($contact));
+        static::assertStringContainsString('data-control="custom"', $form->renderDefinition($contact));
         $form->close();
     }
 

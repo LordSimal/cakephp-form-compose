@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Rendering\Html;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\CommentsForm;
+use FormCompose\Test\Fixture\Authoring\EmptyForm;
+use FormCompose\Test\Fixture\Authoring\TitleForm;
 use FormCompose\Test\Fixture\Summary\CustomHelper;
 use FormCompose\Test\FormTestCase;
 
@@ -79,15 +79,13 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testRepeatedRowsAndCollectionErrorsAreIncludedWithoutDuplicatingChildErrors(): void
     {
-        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', $row));
         $context = new ArrayContext([
             'defaults' => ['comments' => [2 => ['body' => 'Value']]],
             'errors' => [
                 'comments' => ['count' => 'Add another', 2 => ['body' => ['invalid' => 'Fix row two']]],
             ],
         ]);
-        $form = $this->helper()->bind($context, definition: $definition);
+        $form = $this->helper()->bind($context, definition: CommentsForm::class);
         $form->open();
         $form->definition();
 
@@ -103,7 +101,7 @@ class ErrorSummaryTest extends FormTestCase
     {
         $form = $this->helper()->bind(new ArrayContext(['errors' => ['comments' => ['count' => 'At least one']]]));
         $form->open();
-        $form->embedMany('comments', FormDefinition::make(), options: [
+        $form->embedMany('comments', EmptyForm::class, options: [
             'label' => new Html('<strong>Comments</strong>'),
         ]);
         static::assertStringContainsString('<strong>Comments</strong>: At least one', $form->errorSummary());
@@ -112,12 +110,13 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testCompleteFormSummaryIsOptInAndAppearsBeforeControls(): void
     {
-        $definition = FormDefinition::make()->add(FieldDefinition::make('title'));
         $context = new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]);
         $helper = $this->helper();
-        $ordinary = $helper->render($definition, $context);
+        $ordinary = $helper->render(TitleForm::class, $context);
         static::assertStringNotContainsString('<section', $ordinary);
-        $html = $helper->render($definition, $context, ['errorSummary' => true]);
+        $html = $helper->render(TitleForm::class, $context, [
+            'errorSummary' => true,
+        ]);
         static::assertLessThan(strpos($html, 'name="title"'), strpos($html, '<section'));
         static::assertStringNotContainsString('errorSummary=', $html);
         static::assertStringContainsString('aria-labelledby="form-compose-2-error-summary-title"', $html);
@@ -125,9 +124,8 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testSummaryOptionsSelectCustomTemplatesAndAttributeDefaults(): void
     {
-        $definition = FormDefinition::make()->add(FieldDefinition::make('title'));
         $html = $this->helper()->render(
-            $definition,
+            TitleForm::class,
             new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
             [
                 'errorSummary' => [
@@ -151,7 +149,7 @@ class ErrorSummaryTest extends FormTestCase
     {
         $helper = new CustomHelper($this->helper()->getView());
         $html = $helper->render(
-            FormDefinition::make()->add(FieldDefinition::make('title')),
+            TitleForm::class,
             new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
             ['errorSummary' => true],
         );
@@ -178,7 +176,9 @@ class ErrorSummaryTest extends FormTestCase
     {
         $form = $this->helper()->bind(new ArrayContext(['errors' => ['comments' => ['count' => 'Suppressed']]]));
         $form->open();
-        $form->embedMany('comments', FormDefinition::make(), options: ['errors' => false]);
+        $form->embedMany('comments', EmptyForm::class, options: [
+            'errors' => false,
+        ]);
         static::assertSame('', $form->errorSummary());
         $form->close();
     }

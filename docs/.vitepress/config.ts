@@ -92,7 +92,7 @@ export default defineConfig({
       {
         text: 'Reusable forms',
         items: [
-          { text: 'Field definitions', link: '/definitions' },
+          { text: 'Reusable forms', link: '/definitions' },
           { text: 'Form blueprints', link: '/blueprints' },
           { text: 'Nested definitions', link: '/composition' },
           { text: 'Repeated embeds', link: '/repeated-embeds' },
@@ -104,7 +104,7 @@ export default defineConfig({
           { text: 'Helper and form session', link: '/form-reference' },
           { text: 'Field options', link: '/field-options' },
           { text: 'Bound fields', link: '/field-reference' },
-          { text: 'Definitions and blueprints', link: '/definition-reference' },
+          { text: 'Blueprint reference', link: '/definition-reference' },
           { text: 'Template reference', link: '/template-reference' },
         ],
       },

@@ -8,7 +8,7 @@ use InvalidArgumentException;
 /**
  * Normalizes batch control declarations before a session or layout renders them.
  *
- * Indexed paths and definitions can be mixed with path-to-options entries. The
+ * Indexed paths can be mixed with path-to-options entries. The
  * complete batch is validated first, preserving order and explicit option values.
  */
 final class ControlList
@@ -16,7 +16,7 @@ final class ControlList
     /**
      * Convert the supported batch syntax into ordered field definitions.
      *
-     * @param array<array-key, mixed> $fields Indexed paths/definitions or paths mapped to options.
+     * @param array<array-key, mixed> $fields Indexed paths or paths mapped to options.
      * @return list<\FormCompose\Field\FieldDefinition>
      * @throws \InvalidArgumentException For invalid entries or field paths.
      */
@@ -25,8 +25,8 @@ final class ControlList
         $definitions = [];
         /** @var mixed $field */
         foreach ($fields as $path => $field) {
-            if (is_int($path) && ($field instanceof FieldDefinition || is_string($field))) {
-                $definitions[] = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
+            if (is_int($path) && is_string($field)) {
+                $definitions[] = new FieldDefinition($field);
             } elseif (is_string($path) && is_array($field)) {
                 foreach (array_keys($field) as $option) {
                     if (!is_string($option)) {
@@ -38,7 +38,7 @@ final class ControlList
                 $definitions[] = new FieldDefinition($path, $field);
             } else {
                 throw new InvalidArgumentException(
-                    'Use indexed field paths or definitions, or paths mapped to options.',
+                    'Use indexed field paths or paths mapped to options.',
                 );
             }
         }

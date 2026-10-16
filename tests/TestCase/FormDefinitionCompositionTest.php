@@ -3,25 +3,45 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase;
 
+use Cake\View\Form\ArrayContext;
+use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\DefinitionView;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\FormBuilder;
+use FormCompose\FormContext;
 use FormCompose\FormDefinition;
+use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\EmailForm;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
-use LogicException;
 
 /**
  * Verifies immutable tree edits and conditional layout membership.
  */
 class FormDefinitionCompositionTest extends FormTestCase
 {
+    public function testCompiledSnapshotsKeepRemovalAndBindingDefaultsIsolated(): void
+    {
+        $original = new FormDefinition([
+            new FieldDefinition('email', ['type' => 'email', 'label' => 'Email']),
+            new FieldDefinition('internal_note'),
+        ]);
+        $selected = $original->remove('internal_note');
+        $form = $this->helper()->bind();
+        $view = new DefinitionView($form, $selected);
+        static::assertTrue($original->has('internal_note'));
+        static::assertFalse($selected->has('internal_note'));
+        static::assertSame('email', $view->field('email')->state->type);
+        $html = $form->open() . $view->render() . $form->close();
+        static::assertStringNotContainsString('name="internal_note"', $html);
+    }
+
     public function testNestedOverridesAndRemovalPreserveBothViewsOfTheDefinition(): void
     {
-        $child = FormDefinition::make()->add(FieldDefinition::make('email', 'email'))->add(FieldDefinition::make(
-            'internal',
-        ));
-        $original = FormDefinition::make()->embed('post', FormDefinition::make()->embed('author', $child));
+        $child = new FormDefinition([])->add(new FieldDefinition('email', [
+            'type' => 'email',
+        ]))->add(new FieldDefinition('internal'));
+        $original = new FormDefinition([])->embed('post', new FormDefinition([])->embed('author', $child));
         $edited = $original->with('post.author.email', ['label' => 'Contact'])->remove('post.author.internal');
         static::assertSame(['post.author.email'], array_column($edited->fields, 'path'));
         static::assertSame('Contact', $edited->embedded('post.author')->field('email')->options['label']);
@@ -34,11 +54,10 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testWholeEmbedRemovalRetainsDeepRemovalHistory(): void
     {
-        $child = FormDefinition::make()
-            ->add(FieldDefinition::make('email'))
-            ->add(FieldDefinition::make('internal'))
+        $child = new FormDefinition([])->add(new FieldDefinition('email'))
+            ->add(new FieldDefinition('internal'))
             ->remove('internal');
-        $original = FormDefinition::make()->embed('post', FormDefinition::make()->embed('author', $child));
+        $original = new FormDefinition([])->embed('post', new FormDefinition([])->embed('author', $child));
         $removed = $original->remove('post');
         $view = new DefinitionView($this->helper()->bind(), $removed);
         static::assertSame([], $removed->fields);
@@ -52,10 +71,9 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testReaddingAFieldMakesItAvailableAgain(): void
     {
-        $definition = FormDefinition::make()
-            ->add(FieldDefinition::make('email'))
+        $definition = new FormDefinition([])->add(new FieldDefinition('email'))
             ->remove('email')
-            ->add(FieldDefinition::make('email', 'email'));
+            ->add(new FieldDefinition('email', ['type' => 'email']));
         $form = $this->helper()->bind();
         $view = new DefinitionView($form, $definition);
         static::assertTrue($view->has('email'));
@@ -65,7 +83,7 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testConditionalPartsRequireAvailableFields(): void
     {
-        $definition = FormDefinition::make()->add(FieldDefinition::make('email'))->remove('email');
+        $definition = new FormDefinition([])->add(new FieldDefinition('email'))->remove('email');
         $view = new DefinitionView($this->helper()->bind(), $definition);
         static::assertFalse($view->has('email'));
         static::assertFalse($view->has('typo'));
@@ -76,52 +94,55 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testUnknownControlsAreNotSilentlyHidden(): void
     {
-        $view = new DefinitionView($this->helper()->bind(), FormDefinition::make());
+        $view = new DefinitionView($this->helper()->bind(), new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->control('typo');
     }
 
     public function testUnknownEmbedsFailClearly(): void
     {
-        $view = new DefinitionView($this->helper()->bind(), FormDefinition::make());
+        $view = new DefinitionView($this->helper()->bind(), new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->embedded('typo');
     }
 
     public function testTreeEditsAllowNonOverlappingExplicitDotPaths(): void
     {
-        $child = FormDefinition::make()->add(FieldDefinition::make('email'));
-        $definition = FormDefinition::make()->embed('author', $child)->add(FieldDefinition::make('author.nickname'));
+        $child = new FormDefinition([])->add(new FieldDefinition('email'));
+        $definition = new FormDefinition([])->embed('author', $child)->add(new FieldDefinition('author.nickname'));
         $edited = $definition->with('author.nickname', ['label' => 'Nickname'])->remove('author.email');
         static::assertSame('Nickname', $edited->field('author.nickname')->options['label']);
         static::assertTrue($edited->embedded('author')->index->wasRemoved('email'));
         static::assertSame(['author.nickname'], array_column($edited->fields, 'path'));
     }
 
-    public function testBuilderSnapshotsPreservePresentationAndPrebuiltEmbeds(): void
+    public function testBuilderSnapshotsPreservePresentationAndResolvedEmbeds(): void
     {
-        $builder = new FormBuilder();
+        $factory = new BlueprintFactory();
+        $context = new FormContext(new ArrayContext([]), $this->helper()->getView()->getRequest());
+        $builder = new FormBuilder(
+            new FormDefinition([]),
+            static fn(string $path, string $identifier): FormDefinition => $factory->definition(
+                $identifier,
+                $context->at($path),
+            ),
+            static fn(RepeatedDefinition $entry): RepeatedDefinition => $factory->repeated($entry, $context),
+        );
         $original = $builder->build();
-        $builder->embed('author', FormDefinition::make()->add(FieldDefinition::make('email')));
+        $builder->embed('author', EmailForm::class);
         $builder->presentation(['template' => 'composition/parts', 'templateData' => ['marker' => 'local']]);
 
         $snapshot = $builder->build();
         $builder->with('author.email', ['label' => 'Changed']);
         static::assertFalse($original->has('author'));
-        static::assertSame([], $snapshot->field('author.email')->options);
+        static::assertSame('Default email', $snapshot->field('author.email')->options['label']);
         static::assertSame('composition/parts', $snapshot->options['template']);
         static::assertSame(['marker' => 'local'], $snapshot->options['templateData']);
-    }
-
-    public function testStandaloneBuilderExplainsMissingBlueprintResolver(): void
-    {
-        $this->expectException(LogicException::class);
-        new FormBuilder()->embed('author', 'profile');
     }
 
     public function testRemovingUnknownPathsFails(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        FormDefinition::make()->remove('typo');
+        new FormDefinition([])->remove('typo');
     }
 }

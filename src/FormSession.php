@@ -8,7 +8,6 @@ use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\ControlList;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\ErrorSummaryRenderer;
 use FormCompose\Rendering\Html;
@@ -70,7 +69,7 @@ class FormSession
      * @param array<string, mixed> $submitOptions Button attributes and presentation options.
      */
     public function render(
-        FormDefinition|string|null $definition = null,
+        ?string $definition = null,
         array $options = [],
         string|Html|false|null $submit = null,
         array $submitOptions = [],
@@ -151,7 +150,7 @@ class FormSession
      *
      * @param array<string, mixed> $options Per-field overrides.
      */
-    public function field(string|FieldDefinition $field, array $options = []): BoundField
+    public function field(string $field, array $options = []): BoundField
     {
         return $this->createFieldResolver()->resolve($field, $options, $this->lifecycle);
     }
@@ -165,7 +164,7 @@ class FormSession
      *
      * @param array<string, mixed> $options Field options.
      */
-    public function control(string|FieldDefinition $field, array $options = []): string
+    public function control(string $field, array $options = []): string
     {
         return $this->field($field, $options)->control();
     }
@@ -173,7 +172,7 @@ class FormSession
     /**
      * Render ordered controls without a wrapper, committing inputs as one batch.
      *
-     * Entries are indexed paths or FieldDefinition objects, or path => options.
+     * Entries are indexed paths or path => options.
      * Failed batches roll back their input registrations, like definition layouts.
      * Each control uses this session's existing defaults and extension points.
      *
@@ -187,7 +186,7 @@ class FormSession
         return $this->lifecycle->inputs->render(function () use ($definitions): string {
             $html = '';
             foreach ($definitions as $definition) {
-                $html .= $this->control($definition);
+                $html .= $this->control($definition->path, $definition->options);
             }
 
             return $html;
@@ -198,16 +197,16 @@ class FormSession
      * Render a reusable field collection here, through the normal control templates.
      *
      * With no argument, render the definition selected at bind(). An explicitly
-     * supplied collection, blueprint alias, or class stays local to this call and
+     * supplied blueprint alias or class stays local to this call and
      * does not replace defaults. Blueprints use this session's factory and context.
      * The form must be open; a session without a definition renders an empty string.
      * at mounts relative fields at a root context path. Definition layout options
-     * stay local, including when a compiled child is passed by DefinitionView.
+     * stay local.
      *
      * @param array<string, mixed> $options Definition presentation overrides.
      */
     public function definition(
-        FormDefinition|string|null $definition = null,
+        ?string $definition = null,
         ?string $at = null,
         array $options = [],
     ): string {
@@ -221,8 +220,20 @@ class FormSession
             $definition = $this->blueprints->definition($definition, $context);
         }
 
-        $definition ??= $this->binding->definition ?? FormDefinition::make();
-        $definition = $this->blueprints->expand($definition, $context);
+        $definition ??= $this->binding->definition ?? new FormDefinition([]);
+
+        return $this->renderDefinition($definition, $at, $options);
+    }
+
+    /**
+     * Render compiled layout state without resolving its blueprint again.
+     *
+     * @param array<string, mixed> $options Local presentation overrides.
+     * @internal Used by scoped definition views.
+     */
+    public function renderDefinition(FormDefinition $definition, ?string $at = null, array $options = []): string
+    {
+        $this->lifecycle->assertOpen();
 
         return $this->lifecycle->inputs->render(
             fn(): string => $this->definitions->render($this, $definition, $at ?? '', $options),
@@ -237,16 +248,27 @@ class FormSession
      */
     public function embedMany(
         string $path,
-        FormDefinition|string|RepeatedDefinition $definition,
+        string $definition,
         ?array $keys = null,
         array $options = [],
     ): string {
         $this->lifecycle->assertOpen();
-        $repeat = $definition instanceof RepeatedDefinition
-            ? $definition
-            : new RepeatedDefinition($path, $definition, $keys);
+        $repeat = new RepeatedDefinition($path, $definition, $keys);
         $context = FormContext::fromBinding($this->binding);
-        $compiled = $this->blueprints->expand(new FormDefinition([$repeat]), $context)->index->repeats[$repeat->path];
+        $compiled = $this->blueprints->repeated($repeat, $context);
+
+        return $this->renderRepeated($path, $compiled, $options);
+    }
+
+    /**
+     * Render compiled rows at their existing absolute mount.
+     *
+     * @param array<string, mixed> $options Occurrence overrides.
+     * @internal Used by scoped definition views without re-running hooks.
+     */
+    public function renderRepeated(string $path, RepeatedDefinition $compiled, array $options = []): string
+    {
+        $this->lifecycle->assertOpen();
         $compiled = new RepeatedDefinition(
             $path,
             $compiled->definition,

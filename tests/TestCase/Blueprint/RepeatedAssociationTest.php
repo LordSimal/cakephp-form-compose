@@ -7,10 +7,8 @@ use Cake\Form\FormProtector;
 use Cake\ORM\Entity;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
 use FormCompose\Test\AssociationTestCase;
+use FormCompose\Test\Fixture\Authoring\CommentsWithIdForm;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
 use RuntimeException;
 
@@ -26,11 +24,10 @@ class RepeatedAssociationTest extends AssociationTestCase
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['required' => 'Comment required']);
         $article->setError('comments', ['count' => 'Add another comment']);
-        $row = FormDefinition::make()->add(FieldDefinition::make('id'))->add(FieldDefinition::make('body'));
         $form = $this->helper()->bind(
             $article,
             ['context' => ['table' => $this->articles]],
-            definition: FormDefinition::make()->add(new RepeatedDefinition('comments', $row)),
+            definition: CommentsWithIdForm::class,
         );
         $html = $form->render();
         static::assertStringContainsString('type="hidden"', $html);

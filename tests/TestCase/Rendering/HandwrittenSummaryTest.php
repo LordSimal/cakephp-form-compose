@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
+use FormCompose\Test\Fixture\Authoring\BodyForm;
 use FormCompose\Test\FormTestCase;
 use Generator;
 use LogicException;
@@ -90,7 +89,7 @@ class HandwrittenSummaryTest extends FormTestCase
             ],
         ]));
         $form->open();
-        $form->embedMany('comments', FormDefinition::make()->add(FieldDefinition::make('body')));
+        $form->embedMany('comments', BodyForm::class);
 
         $summary = $form->errorSummary();
         static::assertStringContainsString('Comments: Add a comment', $summary);

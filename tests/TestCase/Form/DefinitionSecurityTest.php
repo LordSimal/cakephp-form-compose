@@ -8,10 +8,8 @@ use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
 use FormCompose\DefinitionView;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\CompositionTestCase;
-use FormCompose\Test\Fixture\Blueprint\Valid\InputForm;
+use FormCompose\Test\Fixture\Authoring\BillingInputsForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use LogicException;
 use RuntimeException;
@@ -108,14 +106,12 @@ class DefinitionSecurityTest extends CompositionTestCase
     public function testMountedNativeInputsKeepFallbacksFilesAndDisabledProtection(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $child = $this->factory->definition(InputForm::class, $this->context())
-            ->add(FieldDefinition::make('active', 'checkbox'));
         $form = $helper->bind(
             new ArrayContext([
                 'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
             ]),
             ['type' => 'file', 'url' => '/articles/save'],
-            definition: FormDefinition::make()->embed('billing', $child),
+            definition: BillingInputsForm::class,
         );
         $html = $form->open() . $form->definition() . $form->close();
         $xpath = $this->xpath($html);
@@ -143,11 +139,7 @@ class DefinitionSecurityTest extends CompositionTestCase
 
     public function testMultipartFailureRollsBackEarlierControlsInTheDefinition(): void
     {
-        $definition = FormDefinition::make()->embed('billing', $this->factory->definition(
-            InputForm::class,
-            $this->context(),
-        ));
-        $form = $this->helper()->bind(definition: $definition);
+        $form = $this->helper()->bind(definition: BillingInputsForm::class);
         $form->open();
         try {
             $form->definition();

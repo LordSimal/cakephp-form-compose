@@ -7,9 +7,8 @@ use Cake\Controller\Controller;
 use Cake\Http\Response;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Rendering\Theme;
+use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
 use FormCompose\View\Helper\FormHelper;
 
 /**
@@ -66,11 +65,9 @@ class FormsController extends Controller
         $html .= $form->control('bio', ['type' => 'textarea', 'value' => 'Hello <world>']);
         $html .= $form->control('attachment', ['type' => 'file']);
         $html .= $form->control('disabled', ['disabled' => true]);
-        $row = FormDefinition::make()->add(FieldDefinition::make('id', 'hidden'))->add(FieldDefinition::make(
-            'body',
-            'textarea',
-        ));
-        $html .= $form->embedMany('comments', $row, options: ['template' => 'repeat/comments']);
+        $html .= $form->embedMany('comments', HttpCommentForm::class, options: [
+            'template' => 'repeat/comments',
+        ]);
         $html = $opening . $form->errorSummary() . $html . $form->submit('Save') . $form->close();
 
         return $this->getResponse()

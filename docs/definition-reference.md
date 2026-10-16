@@ -1,84 +1,16 @@
 ---
-title: Definitions and blueprints
-description: Look up field definitions, collections, blueprint declarations and hooks, builder methods, and scoped layout methods.
+title: Blueprint reference
+description: Blueprint declarations, runtime builder operations, configuration order, and scoped layouts.
 ---
 
-# Definitions and blueprints
+# Blueprint reference
 
-Use [Field definitions](./definitions.md) to learn reusable configuration and
-[Form blueprints](./blueprints.md) for attributed classes. Follow
-[blueprint layouts](./blueprints.md#keep-control-of-the-layout) for field arrangement
-and [Nested definitions](./composition.md) for embedding.
-These APIs configure or render fields; validation and persistence stay in CakePHP.
+Author local forms with inline controls and reusable forms with
+[blueprints](./blueprints.md). Use [Reusable forms](./definitions.md) to choose a
+starting point and [Nested definitions](./composition.md) for embedded sections.
+Validation and persistence stay in CakePHP.
 
-## FieldDefinition
-
-`FormCompose\Field\FieldDefinition` is immutable configuration for one path.
-
-```php
-use FormCompose\Field\FieldDefinition;
-
-$title = FieldDefinition::make('title', 'text')
-    ->label('Article title')
-    ->help('Displayed above the article.')
-    ->with(['attributes' => ['maxlength' => 160]]);
-```
-
-| Signature | Result |
-| --- | --- |
-| `new FieldDefinition(string $path, array $options = [])` | Configuration with a validated nonempty dot path. |
-| `FieldDefinition::make(string $path, ?string $type = null): self` | Configuration with optional explicit type. |
-| `with(array $options): self` | New configuration with matching top-level keys replaced. |
-| `label(string\|Html\|false $text): self` | New configuration with label content or suppression. |
-| `help(string\|Html $text): self` | New configuration with help content. Use `with(['help' => false])` to suppress it. |
-
-Public readonly `path` and `options` expose configuration. See
-[Field options](./field-options.md) for the complete option contract. A
-`FieldDefinition` contains no value snapshot, HTML, or input registration.
-
-## FormDefinition
-
-`FormCompose\FormDefinition` is an immutable ordered collection of fields and
-resolved embedded definitions. Save the return value of every change.
-
-```php
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
-
-$shared = FormDefinition::make()->add(FieldDefinition::make('title'));
-$editing = $shared->with('title', ['help' => 'Displayed above the article.']);
-// $shared is unchanged.
-```
-
-| Signature | Result |
-| --- | --- |
-| `new FormDefinition(array $fields, array $options = [], array $removed = [])` | Collection of ordered `FieldDefinition`/`EmbeddedDefinition`/`RepeatedDefinition` entries; normally prefer the fluent API. |
-| `FormDefinition::make(): self` | Empty collection. |
-| `add(FieldDefinition $field): self` | New collection with appended field. |
-| `with(string $path, array $options): self` | New collection with that field's top-level options replaced; order is unchanged. Qualified embedded paths are supported. |
-| `remove(string $path): self` | New collection without that field or embedded subtree. |
-| `has(string $path): bool` | Final membership check for a field or embed. |
-| `field(string $path): FieldDefinition` | Existing field configuration; no binding or rendering. |
-| `embed(string $path, FormDefinition $definition, array $options = []): self` | New collection with a relative child mounted at this path. |
-| `embedded(string $path): FormDefinition` | Already compiled child, retaining its relative paths. |
-| `presentation(array $options): self` | New collection with top-level definition presentation options replaced. |
-
-Duplicate paths, invalid paths, and unknown lookup/override/removal targets throw
-`InvalidArgumentException`. `with()` targets fields; use a child's `presentation()`
-when constructing its layout configuration.
-
-| Readonly property | Meaning |
-| --- | --- |
-| `fields` | Flattened ordered field definitions with qualified paths. |
-| `entries` | Ordered field/embed rendering tree. |
-| `options` | Definition layout presentation. |
-| `removed` | Explicit removal paths, used to omit removed controls in layouts. |
-| `index` | Derived lookup index; use `has()`, `field()`, and `embedded()` for application lookups. |
-
-`EmbeddedDefinition` stores a mount `path` and child `definition`; normal
-application construction uses `embed()`.
-
-### Presentation options
+## Presentation options
 
 These options apply to `presentation()` and local
 `$form->definition(..., options: [...])` or layout `embedded(..., options: [...])`:
@@ -164,9 +96,8 @@ needed for fields. `Form` is optional when resolving by class name; it supplies
 an alias for discovery. Use `options` for explicit nulls, such as
 `['value' => null]`, and for options without shorthand arguments.
 
-`Field::definition(): FieldDefinition` exports the declaration;
-`Form::options(): array` exports non-null layout defaults. Most application code
-lets the blueprint factory handle these conversions.
+The factory converts attributes into internal configuration records. Application
+code supplies blueprint class names or discovered aliases to binding and rendering.
 
 ## configure() and FormBuilder
 
@@ -180,12 +111,11 @@ the parent's hook. The compiler-supplied `FormBuilder` is mutable:
 
 | Signature | Effect |
 | --- | --- |
-| `add(FieldDefinition $field): static` | Append a field. |
+| `add(string $path, array $options = []): static` | Append a field. |
 | `with(string $path, array $options): static` | Replace an existing field's matching top-level options. |
 | `remove(string $path): static` | Remove an existing field or embed. |
-| `embed(string $path, FormDefinition\|string $definition, array $options = []): static` | Append a resolved collection or resolve a blueprint class/alias in this scope. |
+| `embed(string $path, string $definition, array $options = []): static` | Resolve and append a blueprint class/alias in this scope. |
 | `presentation(array $options): static` | Set definition layout options. |
-| `build(): FormDefinition` | Immutable snapshot unaffected by subsequent builder changes. |
 
 ```php
 // In a blueprint class; import FormCompose\FormBuilder and FormCompose\FormContext.
@@ -198,11 +128,10 @@ public function configure(FormBuilder $form, FormContext $context): void
 }
 ```
 
-Unknown targets and duplicates fail. A standalone `new FormBuilder()` supports
-already built child definitions; string embedding requires a compiler-supplied
-resolver. `withResolver(Closure $resolver): static` returns a clone with a scoped
-`(string $mount, string $identifier): FormDefinition` resolver; this is an advanced
-factory extension point.
+Unknown targets and duplicates fail. Use the builder supplied to `configure()` so
+embeds resolve through the application factory with the correct scoped context.
+The builder's required collaborators and `build()` snapshot belong to
+[compiler integration](./extending.md#subclassing-services).
 
 ## FormContext
 
@@ -226,8 +155,7 @@ Later options win, replacing matching top-level keys:
 
 1. Parent attribute declarations, then child declarations.
 2. The concrete blueprint's `configure()` hook.
-3. Explicit `FieldDefinition` configuration at the field call.
-4. Per-call field options.
+3. Per-call field options.
 
 Child redeclarations retain the original field position. Duplicate declarations
 within one class fail. Hook inheritance follows PHP: call `parent::configure()`
@@ -248,8 +176,8 @@ not the outer `FormSession`. It cannot open or close a form.
 | Signature | Behavior |
 | --- | --- |
 | `has(string $path): bool` | Inspect final field/embed membership without rendering. |
-| `field(string\|FieldDefinition $field, array $options = []): BoundField` | Resolve an available relative field for manual parts. |
-| `control(string\|FieldDefinition $field, array $options = []): string` | Render a configured relative field; explicitly removed fields return `''`. |
+| `field(string $field, array $options = []): BoundField` | Resolve an available relative field for manual parts. |
+| `control(string $field, array $options = []): string` | Render a configured relative field; explicitly removed fields return `''`. |
 | `controls(array $fields): string` | Batch syntax from session `controls()`, using relative paths and no wrapper. |
 | `embedded(string $path, array $options = []): string` | Render an already compiled child with optional presentation overrides; removed children return `''`. |
 
@@ -285,16 +213,9 @@ factory overrides.
 Both support `template`, `templates`, `templateData`, and `variant` in `options`.
 A child blueprint's own layout is retained for `DefinitionView::render()`.
 
-`RepeatedDefinition($path, $definition, $keys = null, $options = [], $rows = null)`
-is the immutable ordinary-PHP declaration accepted by `FormDefinition::add()`.
-The fifth argument is compiled metadata: leave it null when declaring reusable
-configuration. Binding returns a snapshot whose `rows` is a `FormDefinition` of
-keyed row embeds. Unresolved declarations index their mount but no row fields.
-
-`FormBuilder::embedMany(string $path, FormDefinition|string $definition,
+`FormBuilder::embedMany(string $path, string $definition,
 ?array $keys = null, array $options = []): static` compiles rows immediately using
 the factory's scoped resolver, allowing parent `with()` and `remove()` calls.
-A standalone builder without that resolver rejects repeated embedding.
 
 `DefinitionView::embeddedMany(string $path, array $options = []): string` renders
 compiled rows; removed mounts return `''` and unknown mounts throw.
@@ -304,9 +225,19 @@ layout at its existing path without re-running hooks or opening another form.
 `FormContext::value(string $path): mixed` reads relative values using the binding's
 source ordering. `path` is the absolute mount; `valueSources` retains that ordering.
 `context` keeps Cake's metadata provider and `request` remains the original request.
-`BlueprintFactory::expand(FormDefinition $definition, FormContext $context)` expands
-ordinary declarations with the same DI and cycle handling as blueprint compilation.
-
 `DefinitionRenderer::createView()` remains the factory for every repeated row;
 `createRepeatedView()` supplies the collection feedback facade. Override those
 protected factories through the injected definition renderer to specialize behavior.
+
+## Internal compiled configuration
+
+`FieldDefinition`, `FormDefinition`, `EmbeddedDefinition`, and `RepeatedDefinition`
+are internal configuration records. They contain no rendering or submission state.
+They are not accepted by application-facing field, binding, or embedding calls.
+Use inline option arrays or blueprint declarations and hooks to author forms.
+
+Compiler and renderer subclasses may encounter these records through service
+extension points. `FormBuilder::build()` returns an immutable snapshot for the
+compiler; scoped layouts should use `has()`, `field()`, `embedded()`, and
+`embeddedMany()` instead of manipulating the compiled tree. Session
+`renderDefinition()` and `renderRepeated()` are internal bridges for those layouts.

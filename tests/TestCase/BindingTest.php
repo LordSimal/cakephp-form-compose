@@ -7,7 +7,6 @@ use Cake\Database\Schema\TableSchema;
 use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 
@@ -55,16 +54,19 @@ class BindingTest extends FormTestCase
         static::assertFalse($form->field('title', ['disabled' => true])->state->constraints['required']);
     }
 
-    public function testDefinitionsAreReusableAndInlineOverridesWin(): void
+    public function testInlineOptionsCanBeReusedAndExplicitOverridesWin(): void
     {
-        $base = FieldDefinition::make('email', 'email')->label('Email')->help('Work email');
-        $changed = $base->with(['label' => 'Contact']);
-        static::assertSame('Email', $base->options['label']);
+        $options = ['type' => 'email', 'label' => 'Email', 'help' => 'Work email'];
+        $changed = array_replace($options, ['label' => 'Contact']);
         $form = $this->helper()->bind();
-        static::assertSame('Contact', $form->field($changed)->state->options['label']);
-        static::assertSame('Override', $form->field($changed, ['label' => 'Override'])->state->options['label']);
+        static::assertSame('Contact', $form->field('email', $changed)->state->options['label']);
+        static::assertSame(
+            'Override',
+            $form->field('email', array_replace($changed, ['label' => 'Override']))->state->options['label'],
+        );
+        static::assertSame('Email', $options['label']);
         $form->open(['url' => '/articles/save']);
-        static::assertStringContainsString('type="email"', $form->control($changed));
+        static::assertStringContainsString('type="email"', $form->control('email', $changed));
         $form->close();
     }
 
@@ -106,7 +108,7 @@ class BindingTest extends FormTestCase
     public function testInvalidFieldPathsAreRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        FieldDefinition::make('../name');
+        $this->helper()->bind()->field('../name');
     }
 
     public function testArrayContextsApplyAssociationAndChoiceConventions(): void
