@@ -28,6 +28,25 @@ Core's [template and widget APIs](https://book.cakephp.org/6.x/views/helpers/for
 already support custom markup. FormCompose makes PHP elements and field objects
 the starting point for that work.
 
+## How the pieces fit together
+
+<figure class="formcompose-architecture">
+  <div class="formcompose-architecture-scroll" tabindex="0" role="region" aria-label="FormCompose architecture diagram; scroll horizontally on small screens">
+    <img src="/diagrams/formcompose-architecture.svg" width="960" height="610" alt="CakePHP data and request feed a form session, which resolves bound fields. Optional definitions and blueprints supply field configuration. Bound fields render through PHP elements to HTML. The session owns submission tracking; successful input rendering registers submitted fields, and closing adds protection fields to the HTML." />
+  </div>
+  <figcaption>Data becomes field state, then markup. Submission tracking shares the same form session.</figcaption>
+</figure>
+
+`field()` resolves values, names, IDs, constraints, and errors without rendering
+or registering inputs. PHP elements render the parts you call; successful input
+rendering registers submitted fields. Form opening and closing prepare method,
+CSRF, and form-protection fields when needed.
+
+[Blueprints](./blueprints.md) supply optional configuration, and
+[definition layouts](./composition.md) arrange groups or nested relations. They
+use this same rendering flow. Validation and persistence stay in your existing
+CakePHP application layers.
+
 ## One call, your markup
 
 The call selects an ordinary CakePHP element. That element controls the layout:
@@ -60,25 +79,6 @@ echo $form->control('email', [
 Move the hint, add another wrapper, or include an icon element here. Every call
 using this element gets the change. A [theme](./themes.md) can apply it across
 forms without repeating the `template` option.
-
-## How the pieces fit together
-
-<figure class="formcompose-architecture">
-  <div class="formcompose-architecture-scroll" tabindex="0" role="region" aria-label="FormCompose architecture diagram; scroll horizontally on small screens">
-    <img src="/diagrams/formcompose-architecture.svg" width="960" height="610" alt="CakePHP data and request feed a form session, which resolves bound fields. Optional definitions and blueprints supply field configuration. Bound fields render through PHP elements to HTML. The session owns submission tracking; successful input rendering registers submitted fields, and closing adds protection fields to the HTML." />
-  </div>
-  <figcaption>Data becomes field state, then markup. Submission tracking shares the same form session.</figcaption>
-</figure>
-
-`field()` resolves values, names, IDs, constraints, and errors without rendering
-or registering inputs. PHP elements render the parts you call; successful input
-rendering registers submitted fields. Form opening and closing prepare method,
-CSRF, and form-protection fields when needed.
-
-[Blueprints](./blueprints.md) supply optional configuration, and
-[definition layouts](./composition.md) arrange groups or nested relations. They
-use this same rendering flow. Validation and persistence stay in your existing
-CakePHP application layers.
 
 ::: info Adopting FormCompose
 This is a separate form-building API for CakePHP 6. Existing FormHelper calls and
