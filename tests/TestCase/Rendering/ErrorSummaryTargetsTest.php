@@ -129,4 +129,24 @@ class ErrorSummaryTargetsTest extends BlueprintTestCase
         static::assertStringContainsString('name="period"', $form->control('period'));
         $form->close();
     }
+
+    public function testEmptyAndAllDisabledNestedGroupsAreSkippedBeforeAnEnabledTarget(): void
+    {
+        $form = $this->helper()->bind(new ArrayContext(['errors' => ['status' => ['invalid' => 'Choose one']]]));
+        $form->open();
+
+        $body = $form->control('status', [
+            'type' => 'radio',
+            'options' => [
+                'Empty' => [],
+                'Unavailable' => [['value' => 'off', 'text' => 'Off', 'disabled' => true]],
+                'Available' => ['on' => 'On'],
+            ],
+        ]);
+        $summary = $form->errorSummary();
+        static::assertStringContainsString('href="#form-compose-1-status-on"', $summary);
+        static::assertStringContainsString('id="form-compose-1-status-on"', $body);
+        static::assertStringNotContainsString('href="#form-compose-1-status-off"', $summary);
+        $form->close();
+    }
 }

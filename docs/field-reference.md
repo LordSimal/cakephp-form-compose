@@ -136,6 +136,8 @@ Registers a handwritten input through the same submission contract as `input()`.
 Requires an open form and unused input ID. Pass the same local input attributes
 used by the handwritten markup, especially `disabled`. It does not render markup,
 add fallback inputs, or infer extra submitted names from HTML.
+If the field has errors, registration adds an unlinked entry to an optional error
+summary; it does not infer focus targets from configured choices or custom types.
 
 Use it once, after emitting the input. The
 [handwritten input example](./field-parts.md#write-a-native-input-by-hand) shows

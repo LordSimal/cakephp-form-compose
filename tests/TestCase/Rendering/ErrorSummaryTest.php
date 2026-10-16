@@ -170,6 +170,7 @@ class ErrorSummaryTest extends FormTestCase
         $summary = $form->errorSummary();
         static::assertStringContainsString('id="form-compose-1-title"', $input);
         static::assertSame(1, substr_count($summary, 'Fix handwritten title'));
+        static::assertStringNotContainsString('<a ', $summary);
         $form->close();
     }
 

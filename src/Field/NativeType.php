@@ -87,7 +87,6 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, 
             $this->prepareChoices($field, NativeAttributes::resolve($field->state, $attributes)),
             ControlFallback::resolve($field->state, $attributes),
         );
-        $this->inputs[$field] = $input;
         if (!$input->submittable) {
             return [];
         }

@@ -30,8 +30,10 @@ final readonly class FeedbackEntry
 
     /**
      * Describe eligible rendered fields without changing their inline feedback behavior.
+     *
+     * Pass null for handwritten registration, whose markup has no renderer-reported target.
      */
-    public static function field(BoundField $field, FieldTypeInterface $type, Attributes $attributes): ?self
+    public static function field(BoundField $field, ?FieldTypeInterface $type, Attributes $attributes): ?self
     {
         if (!$field->state->hasErrors()) {
             return null;
@@ -40,7 +42,8 @@ final readonly class FeedbackEntry
         /** @var string|Html|false $label */
         $label = $field->state->options['label'] ?? FieldPath::label($field->state->path);
         $target = match (true) {
-            $attributes->has('disabled') || $field->state->type === 'hidden' => null,
+            !$type instanceof FieldTypeInterface || $attributes->has('disabled') || $field->state->type === 'hidden'
+                => null,
             $type instanceof ErrorTargetProviderInterface => $type->errorTarget($field, $attributes),
             default => $field->state->id,
         };

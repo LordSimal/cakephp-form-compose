@@ -64,6 +64,8 @@ echo $form->close();
 An early call sees only controls rendered so far. Merely calling `field()` or
 inspecting attributes does not add feedback. A successfully registered handwritten
 input also contributes its errors through the normal `register()` contract.
+Handwritten registrations contribute unlinked messages: configured types and
+choices do not prove which focusable input IDs the handwritten markup emitted.
 Call `errorSummary()` inside the open session.
 
 ## Which errors appear?

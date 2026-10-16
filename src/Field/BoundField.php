@@ -111,7 +111,7 @@ class BoundField
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
             $this->lifecycle->inputs->feedback->record(
                 $this->state->id,
-                FeedbackEntry::field($this, $this->fieldType, $bag),
+                FeedbackEntry::field($this, null, $bag),
             );
 
             return '';
