@@ -327,14 +327,9 @@ defaults, check `$form->binding->definition->has('published')` first.
 
 ## Translate a blueprint
 
-Explicit strings in `Field` attributes are used as supplied. Translate them with
-CakePHP's I18n functions through deferred text closures or `configure()`. Choose
-the approach according to when the text needs to be resolved.
-
-### Deferred labels and help in attributes
-
-PHP 8.5 allows static closures in attribute arguments. Use a zero-argument closure
-for a translated label or help text:
+Explicit strings in `Field` attributes are used as supplied. Use a `Translated`
+value for declarative label/help translations. CakePHP resolves the message when
+the field is resolved, using the current locale:
 
 ```php [src/Form/ArticleForm.php]
 <?php
@@ -344,96 +339,153 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\FormBlueprint;
-use function Cake\I18n\__;
+use FormCompose\Translated;
 
 #[Field(
     'title',
-    label: static function (): string {
-        return __('Article title');
-    },
-    help: static function (): string {
-        return __('Displayed above the article.');
-    },
+    label: new Translated('Article title'),
+    help: new Translated('Displayed above the article.'),
 )]
 class ArticleForm extends FormBlueprint
 {
 }
 ```
 
-The closure runs once each time that field is resolved with `field()` or through
-a rendering call such as `control()` or `definition()`. `bind()` alone keeps the
-closures as configuration. The resolved field stores the returned text using the
-locale active at resolution; reading state or rendering its parts does not run
-the closure again. Resolve a new field to obtain text for a different locale.
+`Translated` stores the source message and optional CakePHP formatting arguments,
+domain, and translation context. It does not translate during construction:
 
-Per-call options replace blueprint defaults before closures run, so an overridden
-closure is never evaluated. Resolving text renders no markup and registers no
-submitted inputs. Keep callbacks focused on producing text.
+```php
+new Translated(
+    'Title for {name}',
+    arguments: ['name' => 'Articles'],
+    domain: 'forms',
+    context: 'heading',
+);
+```
 
-A text closure takes no arguments and must return `string`, trusted `Html`,
-`false`, or `null`. Strings are escaped normally. `false` suppresses the label or
-help; an empty string renders a blank label or omits help; `null` restores the
-inferred label or omits help. Returning another type raises
-`InvalidArgumentException`; exceptions thrown by the closure propagate.
+The default domain is `default` and the default context is an empty string.
+Arguments use CakePHP's message formatting, including numbered or named
+placeholders. Translated text and replacement values are escaped when rendered;
+a translated message never marks HTML as trusted.
 
-PHP attribute closures must use `static function`, without captured variables.
-Arrow functions and direct calls such as `label: __('Article title')` are invalid
-in attribute arguments. Domain/context translation functions such as `__d()` and
-`__x()` can be called inside the closure body. Use `configure()` when translation
-needs request data or injected services.
+### Resolution timing and overrides
 
-### Translate during configure()
+`bind()` keeps message objects and closures as configuration. Each `field()`
+resolution, including those performed by `control()` or `definition()`, merges
+blueprint defaults with per-call options before resolving label/help text.
+Overridden messages and closures are never evaluated. Resolving text emits no
+markup and registers no submitted inputs.
 
-The runtime hook supports ordinary PHP expressions, including translated choice
-maps and labels with request-dependent arguments:
+The resolved field stores a text snapshot. Reading its state, rendering parts,
+and recording an error-summary label all use that result. Changing the locale
+after resolution does not change an existing field; resolve a new field to get
+text for the new locale. A `Translated` value can be reused across resolutions
+because it does not cache a locale-specific result.
+
+### Computed text with PHP
+
+Use ordinary PHP expressions in `configure()` when text depends on the current
+request, entity context, or injected services:
 
 ```php
 // In a blueprint class; import FormBuilder, FormContext, and Cake\I18n\__.
 public function configure(FormBuilder $form, FormContext $context): void
 {
     $form->with('title', [
-        'label' => __('Article title'),
-        'help' => __('Displayed above the article.'),
+        'label' => $context->request->getAttribute('isAdmin')
+            ? __('Internal title')
+            : __('Article title'),
     ]);
-    $form->add('status', ['options' => [
-        'draft' => __('Draft'),
-        'published' => __('Published'),
-    ]]);
 }
 ```
 
-These translations run when the blueprint is compiled, using the locale active
-at that time. Set the request's locale before binding or rendering the blueprint.
-When text deliberately needs the locale at field resolution rather than at
-blueprint compilation, the hook also accepts label/help closures. Prefer arrow
-functions for simple runtime callbacks:
+Label/help closures remain available for computed text. They take **no arguments**
+and run once per field resolution. Return `string`, trusted `Html`, `Translated`,
+`false`, or `null`. A returned `Translated` value is translated in the same
+resolution. Strings are escaped normally; false suppresses the part; an empty
+string renders a blank label or omits help; null restores the inferred label or
+omits help. Other results raise `InvalidArgumentException`; callback exceptions
+propagate. Other option bags retain their own contracts.
+
+Prefer arrow functions for simple runtime callbacks. For example, when `$count`
+is supplied by application configuration, a deferred pluralized help message can
+use CakePHP's normal plural helper:
+
+```php
+// In configure(); import Cake\I18n\__n.
+$form->with('title', [
+    'help' => static fn(): string => __n('One attachment', '{0} attachments', $count, $count),
+]);
+```
+
+PHP 8.5 also permits closures directly in attributes, using the full
+`static function` syntax without captured variables:
+
+```php
+// Import Cake\I18n\__.
+#[Field(
+    'title',
+    label: static function (): string {
+        return __('Article title');
+    },
+)]
+```
+
+Use `new Translated('Article title')` for a static translated message. Attribute
+closures are available when the text needs executable PHP. Arrow functions and
+direct function calls such as `label: __('Article title')` are invalid in PHP
+attribute arguments. Runtime configuration can use ordinary PHP expressions.
+
+### Translate in runtime configuration and templates
+
+Call CakePHP translation functions directly in `configure()` when text should be
+translated during blueprint compilation:
 
 ```php
 // In configure(); import Cake\I18n\__.
 $form->with('title', [
-    'label' => static fn(): string => __('Article title'),
-    'help' => static fn(): string => __('Displayed above the article.'),
+    'label' => __('Article title'),
+    'help' => __('Displayed above the article.'),
 ]);
+$form->add('status', ['options' => [
+    'draft' => __('Draft'),
+    'published' => __('Published'),
+]]);
 ```
 
-These callbacks defer translation until field resolution, following the same
-snapshot rules as attribute closures. For ordinary template calls such as
-`control()`, call `__()` directly in the options. Keep the full `static function`
-syntax for callbacks declared in PHP attribute arguments.
+These translations use the locale active when the blueprint is compiled. Set the
+request's locale before binding or rendering it. For ordinary template calls such
+as `control()`, call `__()` directly in the options too; a closure is unnecessary
+for an immediate control call.
 
-### Translate enum choices
+For enum choices, implement CakePHP's `EnumLabelInterface` and translate in
+`label()`, or use `EnumLabelTrait` with CakePHP's `Label` attributes. See
+[backed enum choices](./choices.md#backed-enums). `Translated` and text closures
+are resolved only for field `label` and `help`, not as ordinary choice labels.
+Validation messages stay in CakePHP's validation and application layers.
 
-For enum-backed choices, implement CakePHP's `EnumLabelInterface` and call
-translation functions in each case's `label()` method, or use CakePHP's
-`EnumLabelTrait` with its `Label` attributes. Then a field can use
-`options: ['options' => Status::class]` and obtain translated labels through that
-interface. See [backed enum choices](./choices.md#backed-enums) for the complete
-example.
+### Extract messages for translation catalogs
 
-Only field `label` and `help` support deferred text closures. Use `configure()`
-for ordinary translated choice maps; closures inside `options` are not evaluated
-as choice labels. Validation-message translations remain in CakePHP's validation
-and application layers.
+Use the plugin's extension of CakePHP's extractor when blueprints contain
+`Translated` attribute values:
+
+```sh
+bin/cake form_compose.i18n extract --paths src,templates --output resources/locales --merge no --extract-core no
+```
+
+This retains CakePHP's normal translation-function and enum-label extraction,
+and adds `Translated` values in field attribute labels/help, including values
+inside the attribute's `options` array. Message domains and contexts are written
+to the corresponding POT catalogs. Blueprint classes must be autoloadable.
+Extraction reads declarations without executing `configure()`, text closures, or
+translations.
+
+The extension inspects `Field` attributes; it does not scan arbitrary
+`new Translated(...)` calls in runtime code or evaluate computed message IDs.
+For translated strings in runtime configuration and templates, use literal
+messages with CakePHP's translation functions so its normal extractor can find
+them. The standard `i18n extract` command remains available and does not discover
+FormCompose's message objects.
 
 ## Configuration order
 

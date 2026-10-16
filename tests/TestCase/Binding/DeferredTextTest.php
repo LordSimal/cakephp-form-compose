@@ -158,7 +158,9 @@ class DeferredTextTest extends FormTestCase
     public function testUnsupportedCallbackResultsFailDuringResolution(string $key, mixed $result): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The ' . $key . ' closure must return a string, Html, false, or null.');
+        $this->expectExceptionMessage(
+            'The ' . $key . ' closure must return a string, Html, Translated, false, or null.',
+        );
         $this->helper()
             ->bind()
             ->field('title', [$key => static fn(): mixed => $result]);

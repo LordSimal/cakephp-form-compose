@@ -5,13 +5,15 @@ namespace FormCompose\Binding;
 
 use Closure;
 use FormCompose\Rendering\Html;
+use FormCompose\Translated;
 use InvalidArgumentException;
 
 /**
  * Resolves deferred label/help options before FieldResolver creates immutable state.
  *
  * Keeps application text callbacks separate from field binding and rendering.
- * Only label and help accept callbacks; other options retain their own contracts.
+ * Only label and help resolve Translated values or callbacks; other options
+ * retain their own contracts.
  *
  * @internal Used after blueprint defaults and per-call options merge.
  */
@@ -20,7 +22,7 @@ final class FieldText
     /**
      * Evaluate deferred label/help text once for this field's immutable state.
      *
-     * Runs after option merging so overridden closures never execute. Other
+     * Runs after option merging so overridden messages and closures never execute. Other
      * configuration bags remain untouched. Exceptions from application closures
      * propagate before rendering or submission registration can occur.
      *
@@ -31,16 +33,30 @@ final class FieldText
     public static function resolve(array $options): array
     {
         foreach (['label', 'help'] as $key) {
-            if (!($options[$key] ?? null) instanceof Closure) {
+            if (!array_key_exists($key, $options)) {
                 continue;
             }
 
             /** @var mixed $text */
-            $text = $options[$key]();
-            if ($text !== null && $text !== false && !is_string($text) && !$text instanceof Html) {
-                throw new InvalidArgumentException(
-                    'The ' . $key . ' closure must return a string, Html, false, or null.',
-                );
+            $text = $options[$key];
+            if ($text instanceof Closure) {
+                /** @var mixed $text */
+                $text = $text();
+                if (
+                    $text !== null
+                    && $text !== false
+                    && !is_string($text)
+                    && !$text instanceof Html
+                    && !$text instanceof Translated
+                ) {
+                    throw new InvalidArgumentException(
+                        'The ' . $key . ' closure must return a string, Html, Translated, false, or null.',
+                    );
+                }
+            }
+
+            if ($text instanceof Translated) {
+                $text = $text->translate();
             }
 
             $options[$key] = $text;
