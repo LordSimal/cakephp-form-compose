@@ -4,9 +4,10 @@ description: Look up field definitions, collections, blueprint declarations and 
 
 # Definitions and blueprints
 
-Use [Field definitions](./definitions.md) to learn reusable configuration,
-[Form blueprints](./blueprints.md) for attributed classes, and
-[Nested definitions and layouts](./composition.md) for PHP layouts and embedding.
+Use [Field definitions](./definitions.md) to learn reusable configuration and
+[Form blueprints](./blueprints.md) for attributed classes. Follow
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout) for field arrangement
+and [Nested definitions](./composition.md) for embedding.
 These APIs configure or render fields; validation and persistence stay in CakePHP.
 
 ## FieldDefinition
@@ -99,13 +100,13 @@ All attributes below are in `FormCompose\Attribute`.
 
 ### Form
 
-```text
-Form(
+```php
+public function __construct(
     string $name,
     ?string $template = null,
     ?array $templates = null,
     ?array $templateData = null,
-)
+);
 ```
 
 Class discovery alias and optional layout defaults. The alias must be nonempty
@@ -114,8 +115,8 @@ with no surrounding whitespace. Arrays use the
 
 ### Field
 
-```text
-Field(
+```php
+public function __construct(
     string $path,
     ?string $type = null,
     string|Html|false|null $label = null,
@@ -124,7 +125,7 @@ Field(
     ?string $template = null,
     ?array $templates = null,
     ?array $templateData = null,
-)
+);
 ```
 
 Repeatable class attribute for ordered field configuration. Non-null shorthand
@@ -133,8 +134,8 @@ arguments override matching `options` keys. The options array accepts every
 
 ### Embed
 
-```text
-Embed(string $path, string $definition)
+```php
+public function __construct(string $path, string $definition);
 ```
 
 Repeatable class attribute mounting a child blueprint class or discovered alias
@@ -142,8 +143,8 @@ at a relative path. See [embedding an association](./composition.md#compose-an-a
 
 ### AsFieldType
 
-```text
-AsFieldType(string $name)
+```php
+public function __construct(string $name);
 ```
 
 Registers a custom `FieldTypeInterface` class under a discovered alias. See the
@@ -168,8 +169,8 @@ lets the blueprint factory handle these conversions.
 
 ## configure() and FormBuilder
 
-```text
-public function configure(FormBuilder $form, FormContext $context): void
+```php
+public function configure(FormBuilder $form, FormContext $context): void;
 ```
 
 Override this hook on `FormCompose\FormBlueprint` for dynamic configuration.
@@ -262,9 +263,9 @@ not authorization. See [conditional layouts](./composition.md#conditional-fields
 `FormCompose\Blueprint\BlueprintFactory` normally comes from the plugin's application
 service registration. Its principal application methods are:
 
-```text
-$factory->definition(string $name, FormContext $context): FormDefinition
-$factory->types(array $overrides = []): array
+```php
+public function definition(string $name, FormContext $context): FormDefinition;
+public function types(array $overrides = []): array;
 ```
 
 The first compiles a class/alias without rendering; the second resolves custom

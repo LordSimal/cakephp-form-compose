@@ -156,6 +156,7 @@ themes, and omitting the button.
 
 Move recurring declarations into a [form blueprint](./blueprints.md) when a named
 PHP class and request-aware configuration are useful. Use
-[nested definitions and layouts](./composition.md) to select a PHP layout or embed
-a relative child collection. The [definitions reference](./definition-reference.md)
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout) to arrange fields
+in a PHP element, or [nested definitions](./composition.md) to embed a relative
+child collection. The [definitions reference](./definition-reference.md)
 contains all collection methods and declaration options.

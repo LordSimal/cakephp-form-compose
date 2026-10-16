@@ -246,7 +246,8 @@ The bundled default renders ordered fields and embeds without a wrapper.
 Use theme defaults keyed by `definition.control` for layout attributes. The default
 layout adds no element, so a custom wrapper must emit `$attributes` when needed.
 Selecting a layout does not forward its data to individual controls or children.
-See [nested definitions and layouts](./composition.md) for complete PHP examples.
+See [blueprint layouts](./blueprints.md#keep-control-of-the-layout) for a complete
+class/element example, and [nested definitions](./composition.md) for child layouts.
 
 ## Attributes
 

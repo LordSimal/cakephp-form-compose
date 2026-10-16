@@ -52,38 +52,59 @@ bootstrap you can pass `'article'` instead of `ArticleForm::class`. Resolving by
 class works outside discovery directories and does not require a `Form` attribute.
 A dependency-free class needs no additional container wiring.
 
-## Definition selection
+## Render a blueprint {#definition-selection}
 
-Choose the entry point according to what should happen:
+Render the complete blueprint form with the helper's `render()` method. Bind
+first when you need to configure a session, or use `definition()` when the
+blueprint is one section of a larger form:
 
-| Call | Effect |
-| --- | --- |
-| `$this->Form->render(ArticleForm::class, $article)` | Render a complete form with its default submit button. |
-| `$form->definition(ArticleForm::class)` | Compile and render this collection inside an open session. No binding defaults are installed. |
-| `$this->Form->bind($article, definition: ArticleForm::class)` | Compile once and install field defaults; render individual fields or the collection later. |
-| `$form->definition()` | Render the already selected collection without running its hook again. |
+::: code-group
 
-For example, use binding defaults while keeping the view's structure:
+```php [Complete form]
+<?php
+use App\Form\ArticleForm;
+?>
+<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save article') ?>
+```
 
-```php
+```php [From a bound session]
+<?php
 use App\Form\ArticleForm;
 
 $form = $this->Form->bind($article, definition: ArticleForm::class);
-echo $form->open();
-echo $form->control('title');
-echo '<section class="article-content">';
-echo $form->control('body');
-echo '</section>';
-echo $form->control('published');
-echo $form->submit('Save article');
-echo $form->close();
+?>
+<?= $form->render(submit: 'Save article') ?>
 ```
 
-Individual calls can override options, such as
-`control('title', ['label' => 'Working title'])`. A selected blueprint supplies
-defaults, not a restriction on which fields the outer session may request.
+```php [Inside a larger form]
+<?php
+use App\Form\ArticleForm;
 
-## Complete-form shortcut
+$form = $this->Form->bind($article);
+?>
+<?= $form->open() ?>
+<?= $form->definition(ArticleForm::class) ?>
+<?= $form->control('editor_notes', ['type' => 'textarea']) ?>
+<?= $form->submit('Save article') ?>
+<?= $form->close() ?>
+```
+
+:::
+
+The first two approaches render the blueprint's entire collection and selected
+layout, plus the opening tag, button, and closing protection fields. The third
+renders the blueprint inside an already open form and adds a separate notes field.
+
+Selecting a blueprint at `bind()` compiles it once and installs its field defaults.
+`$form->render()` uses that selected collection; inside an open session,
+`$form->definition()` does too, without rerunning the hook. Passing a blueprint
+explicitly to `definition()` compiles and renders it locally, preserving any
+existing binding defaults.
+
+You can also [use selected defaults for individual fields](./definitions.md#select-defaults-for-the-whole-binding).
+For a reusable blueprint's field arrangement, prefer its own PHP layout below.
+
+### Form and button options {#complete-form-shortcut}
 
 Separate form options from button options:
 
@@ -104,11 +125,81 @@ button. For a custom theme or renderer, bind first, then call `$form->render()`.
 File controls still require a multipart form. Both signatures and retry behavior
 are in the [complete-form reference](./form-reference.md#render).
 
+## Keep control of the layout {#keep-control-of-the-layout}
+
+Select a PHP element with the `Form` attribute's `template` argument. Rendering
+the blueprint now uses that element to arrange its fields:
+
+::: code-group
+
+```php [src/Form/ArticleForm.php]
+<?php
+declare(strict_types=1);
+
+namespace App\Form;
+
+use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
+use FormCompose\FormBlueprint;
+
+#[Form('article', template: 'forms/article')]
+#[Field('title', label: 'Article title', help: 'Displayed above the article.')]
+#[Field('body', type: 'textarea')]
+#[Field('published', type: 'checkbox')]
+class ArticleForm extends FormBlueprint
+{
+}
+```
+
+```php [templates/element/forms/article.php]
+<?php
+/**
+ * @var \FormCompose\DefinitionView $form
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+?>
+<section<?= (string)$attributes ?>>
+    <div class="article-content">
+        <?= $form->controls(['title', 'body']) ?>
+    </div>
+    <?php if ($form->has('published')): ?>
+        <section class="publication-settings">
+            <?= $form->control('published') ?>
+        </section>
+    <?php endif; ?>
+</section>
+```
+
+```php [templates/Articles/edit.php]
+<?php
+use App\Form\ArticleForm;
+?>
+<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save article') ?>
+```
+
+:::
+
+Inside the layout, `$form` is a scoped `DefinitionView`. `control()` and `controls()`
+render the blueprint's configured fields using relative paths. `has()` guards
+optional fields and their wrappers if a hook removes them. It does not open or
+close the form: the outer `render()` call handles that lifecycle.
+
+This is a layout for the collection. Each `control()` still uses its own field
+control template for the label, input, help, and errors. Without a selected
+layout, the bundled element renders fields in declaration order without a wrapper.
+
+The [scoped layout API](./definition-reference.md#definitionview) lists available
+methods. The [presentation reference](./definition-reference.md#presentation-options)
+covers per-render overrides, wrapper attributes, variants, and template data.
+To embed another blueprint and position its layout, continue with
+[Nested definitions](./composition.md).
+
 ## Configure choices and conditional fields
 
-Replace the earlier class with this variant when configuration depends on the
-binding. Assume application middleware supplies a boolean `canPublish` request
-attribute after checking the current user's permissions:
+This variant uses the default sequential layout and adds a status field. If you
+keep the custom layout above, add a `control('status')` call there too. Assume
+application middleware supplies a boolean `canPublish` request attribute after
+checking the current user's permissions:
 
 ```php [src/Form/ArticleForm.php]
 <?php
@@ -155,18 +246,10 @@ server when a blueprint is resolved. They do not create browser-side conditions.
 hidden field instead, use `with('published', ['type' => 'hidden'])`. Hidden values
 remain user-submitted values; their presentation does not authorize changes.
 
-Inside a [definition layout](./composition.md#conditional-fields-and-parent-overrides),
+Inside a [blueprint layout](#keep-control-of-the-layout),
 use `$form->has('published')` to guard optional wrappers or manual parts. The outer
 session can explicitly request an omitted field; when manually rendering binding
 defaults, check `$form->binding->definition->has('published')` first.
-
-## Keep control of the layout
-
-Use `#[Form('article', template: 'forms/article')]` to select a PHP element that
-arranges the collection. Blueprints describe configuration; the element places
-fields, wrappers, and embedded children. Continue with
-[Nested definitions and layouts](./composition.md) for connected class/element
-examples and composition of associated forms.
 
 ## Configuration order
 

@@ -13,14 +13,14 @@ All rendering methods return HTML strings; they do not echo automatically.
 
 ## bind() {#bind}
 
-```text
-$this->Form->bind(
+```php
+public function bind(
     mixed $data = null,
     array $options = [],
     Theme|string|null $theme = null,
     ?RendererInterface $renderer = null,
     FormDefinition|string|null $definition = null,
-): FormSession
+): FormSession;
 ```
 
 Creates an isolated session. `$data` accepts an entity, CakePHP `Form`, array
@@ -75,8 +75,8 @@ for supplying this view variable from the application container.
 
 ## open() {#open}
 
-```text
-$form->open(array $attributes = []): string
+```php
+public function open(array $attributes = []): string;
 ```
 
 Renders the opening form tag and initial hidden inputs. Options replace matching
@@ -111,8 +111,8 @@ when customizing infrastructure markup.
 
 ## control() {#control}
 
-```text
-$form->control(string|FieldDefinition $field, array $options = []): string
+```php
+public function control(string|FieldDefinition $field, array $options = []): string;
 ```
 
 Resolves a field and renders its complete presentation using its control element.
@@ -132,8 +132,8 @@ Explicit field definitions and per-call options override selected binding defaul
 
 ## controls() {#controls}
 
-```text
-$form->controls(array $fields): string
+```php
+public function controls(array $fields): string;
 ```
 
 Renders a batch in order, adding no wrapper. Accepted entries are indexed path
@@ -155,8 +155,8 @@ roll back their input registrations, preserving previously rendered inputs.
 
 ## field() {#field}
 
-```text
-$form->field(string|FieldDefinition $field, array $options = []): BoundField
+```php
+public function field(string|FieldDefinition $field, array $options = []): BoundField;
 ```
 
 Returns a resolved snapshot without HTML or input-registration side effects.
@@ -173,12 +173,12 @@ See [Bound fields](./field-reference.md) for state and part methods.
 
 ## definition() {#definition}
 
-```text
-$form->definition(
+```php
+public function definition(
     FormDefinition|string|null $definition = null,
     ?string $at = null,
     array $options = [],
-): string
+): string;
 ```
 
 Renders a collection inside the current open session, without opening/closing tags
@@ -200,8 +200,8 @@ See [layouts and composition](./composition.md) for examples.
 
 ## submit() {#submit}
 
-```text
-$form->submit(string|Html $label, array $attributes = []): string
+```php
+public function submit(string|Html $label, array $attributes = []): string;
 ```
 
 Renders a themed button inside an open form. Ordinary labels are escaped; `Html`
@@ -228,8 +228,8 @@ succeeds. Use `templates['control']`, not the field-only `template` shorthand.
 
 ## close() {#close}
 
-```text
-$form->close(): string
+```php
+public function close(): string;
 ```
 
 Generates final tamper-protection inputs and the closing form markup. Takes no
@@ -240,22 +240,28 @@ after every input and button. The session cannot reopen after closing.
 
 The helper creates a session; the session version uses an existing fresh binding:
 
-```text
-$this->Form->render(
+::: code-group
+
+```php [FormHelper::render()]
+public function render(
     FormDefinition|string $definition,
     mixed $data = null,
     array $options = [],
     string|Html|false|null $submit = null,
     array $submitOptions = [],
-): string
+): string;
+```
 
-$form->render(
+```php [FormSession::render()]
+public function render(
     FormDefinition|string|null $definition = null,
     array $options = [],
     string|Html|false|null $submit = null,
     array $submitOptions = [],
-): string
+): string;
 ```
+
+:::
 
 Both open, render the definition, optionally render a button, and close. Null
 `submit` uses the translated **Submit** label; false omits the button.
@@ -291,8 +297,8 @@ binding to retry a failed complete-form rendering.
 
 ## hiddenFields() {#hidden-fields}
 
-```text
-$form->hiddenFields(array $fields, array $presentation = []): string
+```php
+public function hiddenFields(array $fields, array $presentation = []): string;
 ```
 
 Template-facing utility for the prepared `list<Attributes>` of infrastructure

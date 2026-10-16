@@ -126,7 +126,7 @@ echo $form->definition(ProfileForm::class);
 ```
 
 The bundled definition layout renders its fields in order through the same
-`control()` pipeline. A [custom definition layout](./composition.md#select-a-layout)
+`control()` pipeline. A [custom definition layout](./blueprints.md#keep-control-of-the-layout)
 can arrange those fields in wrappers or grids and position embedded definitions.
 Bound values, validation feedback, and submission bookkeeping use the same form
 session in either case.

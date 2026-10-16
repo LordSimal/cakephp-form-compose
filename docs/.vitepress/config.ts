@@ -47,7 +47,7 @@ export default defineConfig({
         items: [
           { text: 'Field definitions', link: '/definitions' },
           { text: 'Form blueprints', link: '/blueprints' },
-          { text: 'Nested definitions and layouts', link: '/composition' },
+          { text: 'Nested definitions', link: '/composition' },
         ],
       },
       {

@@ -43,7 +43,8 @@ rendering registers submitted fields. Form opening and closing prepare method,
 CSRF, and form-protection fields when needed.
 
 [Blueprints](./blueprints.md) supply optional configuration, and
-[definition layouts](./composition.md) arrange groups or nested relations. They
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout) arrange fields;
+[nested definitions](./composition.md) compose related sections. They
 use this same rendering flow. Validation and persistence stay in your existing
 CakePHP application layers.
 

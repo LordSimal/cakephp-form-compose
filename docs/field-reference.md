@@ -42,8 +42,8 @@ bound field when you need a new snapshot.
 
 ## control() {#control}
 
-```text
-$field->control(): string
+```php
+public function control(): string;
 ```
 
 Renders the complete field through its control template, or only `input()` for a
@@ -58,8 +58,8 @@ echo $title->control();
 
 ## input() {#input}
 
-```text
-$field->input(array $attributes = []): string
+```php
+public function input(array $attributes = []): string;
 ```
 
 Renders the input element, then registers the field type's actual submitted inputs.
@@ -76,10 +76,10 @@ a rendered presentation.
 
 ## label(), help(), errors() {#parts}
 
-```text
-$field->label(array $attributes = []): string
-$field->help(array $attributes = []): string
-$field->errors(array $attributes = []): string
+```php
+public function label(array $attributes = []): string;
+public function help(array $attributes = []): string;
+public function errors(array $attributes = []): string;
 ```
 
 Each method renders its own element and accepts attributes for that part. These
@@ -98,8 +98,8 @@ Render enabled feedback to preserve the input's generated ARIA relationships.
 
 ## attributes() {#attributes}
 
-```text
-$field->attributes(string $part = 'input', array $extra = []): Attributes
+```php
+public function attributes(string $part = 'input', array $extra = []): Attributes;
 ```
 
 Returns a `FormCompose\Rendering\Attributes` bag without rendering or registration.
@@ -120,8 +120,8 @@ for merging and serialization.
 
 ## register() {#register}
 
-```text
-$field->register(array $attributes = []): void
+```php
+public function register(array $attributes = []): void;
 ```
 
 Registers a handwritten input through the same submission contract as `input()`.
@@ -136,8 +136,8 @@ names needs a custom field type with matching `submissions()`.
 
 ## renderInput() {#render-input}
 
-```text
-$field->renderInput(Attributes $attributes): string
+```php
+public function renderInput(Attributes $attributes): string;
 ```
 
 Template-facing hook that delegates to the selected field type. Used inside an

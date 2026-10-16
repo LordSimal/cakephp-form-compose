@@ -1,20 +1,22 @@
 ---
-description: Compose associated form definitions and arrange blueprint fields with ordinary PHP layout elements.
+title: Nested definitions
+description: Embed reusable child blueprints at association paths and compose their layouts within one form.
 ---
 
-# Nested definitions and layouts
+# Nested definitions
 
-Use a definition layout when a reusable collection needs sections, grids, or
-embedded child forms. This is different from a control template, which arranges
-the label, input, help, and errors for one field.
+Use embedded definitions when a form includes a reusable child section, such as
+an author inside a post. Each child keeps relative field paths and its own layout,
+while sharing the enclosing form's session and submission protection.
 
-Start with [field definitions](./definitions.md) and [blueprints](./blueprints.md).
-The examples below build an author section, then embed it in a post form. An
-ordinary immutable definition supports the same layout and composition features.
+For arranging the fields of one blueprint, start with
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout). This page focuses
+on mounting child definitions and rendering their layouts together.
 
-## Select a layout
+## Define a reusable child {#select-a-layout}
 
-Declare the fields and select an ordinary CakePHP element:
+This child declares paths relative to an author. It can render on its own or be
+embedded under a parent association:
 
 ```php [src/Form/AuthorForm.php]
 <?php
@@ -35,7 +37,7 @@ class AuthorForm extends FormBlueprint
 }
 ```
 
-The element owns the wrapper and field placement:
+Its layout only arranges the child fields:
 
 ```php [templates/element/forms/author.php]
 <?php
@@ -45,9 +47,7 @@ The element owns the wrapper and field placement:
  */
 ?>
 <section<?= (string)$attributes ?>>
-    <div class="grid grid-cols-2 gap-4">
-        <?= $form->controls(['first_name', 'last_name']) ?>
-    </div>
+    <?= $form->controls(['first_name', 'last_name']) ?>
     <?php if ($form->has('email')): ?>
         <section class="contact-details">
             <?= $form->control('email') ?>
@@ -55,54 +55,6 @@ The element owns the wrapper and field placement:
     <?php endif; ?>
 </section>
 ```
-
-These classes are an optional Tailwind example. The plugin requires no CSS or
-JavaScript framework. A semantic group can use an application-owned `<fieldset>`
-and `<legend>` in the same way.
-
-Render the definition inside one ordinary form session:
-
-```php
-use App\Form\AuthorForm;
-
-$form = $this->Form->bind($author);
-echo $form->open();
-echo $form->definition(AuthorForm::class);
-echo $form->submit('Save');
-echo $form->close();
-```
-
-The layout renders the definition's contents. The calling view owns the form
-lifecycle, either explicitly as above or through the complete-form shortcut:
-
-```php
-echo $this->Form->render(AuthorForm::class, $author, submit: 'Save');
-```
-
-Layout `controls()` accepts the same batch syntax as
-[session controls](./usage.md#render-several-controls), including per-field option
-arrays and `FieldDefinition` objects. Paths stay relative to the layout's mount;
-removed fields are omitted. It adds no wrapper and participates in the enclosing
-definition's input-registration transaction.
-
-Without an explicit layout, a bundled default element renders fields and embeds
-in declaration order, with no extra wrapper. Themes can override
-`definition/control.php`; variants use
-`definition/variants/{variant}/control.php`. Explicit layouts retain the usual
-`$parent()` fallback to the theme. Render each input once: calling `$parent()`
-after manually rendering the same controls triggers ordinary duplicate-ID checks.
-
-A local override can add wrapper attributes for this rendering:
-
-```php
-echo $form->definition(AuthorForm::class, options: [
-    'attributes' => ['class' => 'author-panel', 'data-section' => 'author'],
-]);
-```
-
-Select another existing element with the local `template` option when needed.
-The [presentation reference](./definition-reference.md#presentation-options) owns
-the complete option list, replacement behavior, and layout-data scope.
 
 ## Compose an association
 
@@ -135,6 +87,16 @@ The parent layout chooses where to render its compiled child:
 <?= $form->control('title') ?>
 <?= $form->embedded('author') ?>
 <?= $form->control('body') ?>
+```
+
+Render the parent as one complete form, with `$post` supplied by your controller
+and its author association loaded:
+
+```php [templates/Posts/edit.php]
+<?php
+use App\Form\PostForm;
+?>
+<?= $this->Form->render(PostForm::class, $post, submit: 'Save post') ?>
 ```
 
 `embedded('author')` renders the already configured child using its selected
