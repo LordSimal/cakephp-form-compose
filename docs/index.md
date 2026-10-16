@@ -7,6 +7,11 @@ hero:
   name: FormCompose
   text: A replacement for FormHelper.
   tagline: Build CakePHP forms with bound fields and ordinary PHP element templates.
+  image:
+    src: /branding/formcompose-mark.svg
+    alt: FormCompose logo
+    width: 320
+    height: 320
   actions:
     - theme: brand
       text: Get started

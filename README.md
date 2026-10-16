@@ -1,4 +1,9 @@
-# FormCompose
+<h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/public/branding/formcompose-logo-dark.svg">
+    <img src="docs/public/branding/formcompose-logo-light.svg" alt="FormCompose" width="420">
+  </picture>
+</h1>
 
 [![Packagist](https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist)](https://packagist.org/packages/josbeir/cakephp-form-compose)
 [![CI](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/josbeir/cakephp-form-compose/actions/workflows/ci.yml)

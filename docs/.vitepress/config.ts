@@ -12,6 +12,12 @@ export default defineConfig({
     lineNumbers: true,
   },
   themeConfig: {
+    logo: {
+      src: '/branding/formcompose-mark.svg',
+      alt: '',
+      width: 24,
+      height: 24,
+    },
     nav: [
       { text: 'Why FormCompose?', link: '/why' },
       { text: 'How it works', link: '/rendering' },
