@@ -257,6 +257,9 @@ Unknown names throw `InvalidArgumentException`. `field()` also throws for remove
 fields, so guard optional manual parts with `has()`. Outer session `control()` can
 still explicitly request fields omitted from a blueprint: removal is presentation,
 not authorization. See [conditional layouts](./composition.md#conditional-fields-and-parent-overrides).
+For value checks and request access, see
+[blueprint layout inspection](./blueprints.md#inspect-values-and-field-configuration)
+and [request lookups](./blueprints.md#read-request-data-in-a-layout).
 
 ## BlueprintFactory
 

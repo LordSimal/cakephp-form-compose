@@ -194,6 +194,77 @@ covers per-render overrides, wrapper attributes, variants, and template data.
 To embed another blueprint and position its layout, continue with
 [Nested definitions](./composition.md).
 
+### Inspect values and field configuration
+
+`has()` checks membership. Resolve the field with `field()` to inspect its current
+value, configured options, or effective input attributes. For example, replace the
+title declaration in `ArticleForm` with this version to enable an empty-title hint:
+
+```php
+#[Field('title', label: 'Article title', templateData: ['showHint' => true])]
+```
+
+In the layout above, replace `controls(['title', 'body'])` with this fragment:
+
+```php [templates/element/forms/article.php — title and body block]
+<?php if ($form->has('title')): ?>
+    <?php
+    $title = $form->field('title');
+    $value = $title->state->value;
+    $isEmpty = $value === null || $value === '';
+    $showHint = $title->state->options['templateData']['showHint'] ?? false;
+    $disabled = $title->attributes()->has('disabled');
+
+    if ($showHint && $isEmpty && !$disabled) {
+        $title = $form->field('title', [
+            'help' => 'Give this article a title before publishing.',
+        ]);
+    }
+    ?>
+    <?= $title->control() ?>
+<?php endif; ?>
+<?= $form->control('body') ?>
+```
+
+The value follows the form's configured [value-source rules](./usage.md#data-and-value-sources).
+The explicit empty check preserves valid values such as zero. `state->options`
+contains merged field configuration; `attributes()` includes theme defaults and
+resolved input metadata too. Read a custom attribute with, for example,
+`$title->attributes()->values['data-editor'] ?? null`.
+
+Resolving the field and inspecting its state or attributes renders nothing and
+registers no submitted inputs. Here `control()` renders the title once, after
+inspection. Using the `help` option keeps the conditional hint associated with
+its input through the normal feedback markup and ARIA attributes.
+See [bound-field state](./field-reference.md#state) and
+[attribute inspection](./field-reference.md#attributes) for the full APIs.
+
+### Read request data in a layout
+
+A layout is a CakePHP element, so `$this` is the view and provides `getRequest()`:
+
+```php [Inside the layout element]
+<?php
+$request = $this->getRequest();
+$submittedTitle = $request->getData('title');
+$preview = $request->getQuery('preview') === '1';
+$canPublish = $request->getAttribute('canPublish', false);
+?>
+<?php if ($preview): ?>
+    <p>Preview mode</p>
+<?php endif; ?>
+```
+
+`getData()` reads submitted request data directly, `getQuery()` reads query parameters, and
+`getAttribute()` reads request attributes supplied by your application or
+middleware. Use `state->value` when checking the value the form actually presents;
+it also accounts for context values, explicit overrides, and defaults.
+
+In an embedded layout, field paths are relative to that definition, while request
+lookups still use the original request's full paths, such as `author.email`.
+For conditions that add or remove fields, use the blueprint's `configure()` hook
+below, where the same request is available as `$context->request`.
+
 ## Configure choices and conditional fields
 
 This variant uses the default sequential layout and adds a status field. If you

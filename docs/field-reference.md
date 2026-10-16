@@ -40,6 +40,9 @@ $hasErrors = $title->state->hasErrors();
 The snapshot does not track subsequent entity or request changes. Resolve a new
 bound field when you need a new snapshot.
 
+For a practical condition combining values, field options, and attributes, see
+[inspection inside a blueprint layout](./blueprints.md#inspect-values-and-field-configuration).
+
 ## control() {#control}
 
 ```php
