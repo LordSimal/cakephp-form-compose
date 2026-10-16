@@ -234,8 +234,7 @@ protected factories through the injected definition renderer to specialize behav
 `FieldDefinition`, `FormDefinition`, `EmbeddedDefinition`, and `RepeatedDefinition`
 are internal configuration records. They contain no rendering or submission state.
 They are not accepted by application-facing field, binding, or embedding calls.
-The former `make()`, `label()`, and `help()` definition construction methods have
-been removed. Use inline option arrays or blueprint declarations and hooks.
+Use inline option arrays or blueprint declarations and hooks to author forms.
 
 Compiler and renderer subclasses may encounter these records through service
 extension points. `FormBuilder::build()` returns an immutable snapshot for the

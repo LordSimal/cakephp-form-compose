@@ -51,26 +51,3 @@ retain submission registration, or follow the explicit
 [handwritten input contract](./field-reference.md#register). Hiding a field in a
 blueprint or layout controls presentation; authorize and validate submitted data
 in the application as usual.
-
-## Earlier development definition API
-
-The standalone fluent definition authoring API has been removed. Application
-entry points accept field paths and options, or blueprint class names/aliases.
-
-| Earlier API | Current API |
-| --- | --- |
-| `FieldDefinition::make('email', 'email')->label('Work email')` | `control('email', ['type' => 'email', 'label' => 'Work email'])` or `#[Field('email', type: 'email', label: 'Work email')]` |
-| `FormDefinition::make()->add(...)` passed to binding or rendering | A `FormBlueprint` class passed by class name or discovered alias |
-| Builder `add($fieldDefinition)` | `add('email', ['type' => 'email'])` |
-| Builder `embed()` / `embedMany()` with a definition object | Pass a child blueprint class name or alias |
-| `field($fieldDefinition)` or `control($fieldDefinition)` | Pass the field path and its options separately |
-| `controls([$fieldDefinition])` | `controls(['email' => ['type' => 'email']])` |
-
-Definition records remain internal to compilation and rendering. For compiled
-children in a layout, continue using `embedded()` and `embeddedMany()`; these
-preserve parent adjustments and do not run the child hook again.
-
-Update field/control overrides on session, resolver, and layout subclasses to
-accept `string $field`. Builder overrides now accept
-`add(string $path, array $options = []): static`. Compiler and renderer factories
-continue to receive internal configuration records through their extension points.
