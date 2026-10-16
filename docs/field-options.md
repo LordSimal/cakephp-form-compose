@@ -93,8 +93,8 @@ formats; false becomes `'0'` when rendered as a native scalar.
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |
-| `label` | `string`, `Html`, `false`, `null`, or `Closure` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
-| `help` | `string`, `Html`, `false`, `null`, or `Closure` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
+| `label` | `string`, `Html`, `Translated`, `false`, `null`, or `Closure` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
+| `help` | `string`, `Html`, `Translated`, `false`, `null`, or `Closure` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
 | `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
 
 `Html` means `FormCompose\Rendering\Html`, the explicit
@@ -102,9 +102,24 @@ formats; false becomes `'0'` when rendered as a native scalar.
 are escaped. `errors` toggles presentation; it does not replace validation messages.
 For radios and multi-checkboxes, the label is a group legend.
 
-Label/help closures take no arguments and return `string`, `Html`, `false`, or
-`null`. They run once per resolved field after blueprint defaults and per-call
-options merge. Returned strings are escaped; false suppresses the part; null uses
+`FormCompose\Translated` stores a source message, formatting arguments, domain,
+and context, then translates through CakePHP when the field is resolved. Use it
+for translated text in attributes:
+
+```php
+#[Field(
+    'title',
+    label: new Translated('Article title'),
+    help: new Translated('Displayed above the article.'),
+)]
+```
+
+Import `FormCompose\Attribute\Field` and `FormCompose\Translated` for this example.
+Translated text is escaped normally. Plain strings are used as supplied.
+
+Label/help closures take no arguments and return `string`, `Html`, `Translated`,
+`false`, or `null`. They run once per resolved field after blueprint defaults
+and per-call options merge; a returned message is translated in that resolution. Returned strings are escaped; false suppresses the part; null uses
 the inferred label or omits help. Other return types throw
 `InvalidArgumentException`. Reading or rendering an already resolved field reuses
 its text. See [translating blueprints](./blueprints.md#translate-a-blueprint) for
