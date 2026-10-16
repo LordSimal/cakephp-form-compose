@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="610" viewBox="0 0 960 610" role="img" aria-labelledby="title description">
+  <title id="title">FormCompose: from CakePHP data to your HTML</title>
+  <desc id="description">CakePHP data and request feed a form session. Optional definitions and blueprints configure its bound fields. Bound fields render through PHP elements to HTML. A separate submission tracker belongs to the session: successful input rendering registers submitted fields, and closing adds protection fields to the HTML. Resolving a field alone has no rendering or registration side effects.</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#a5b4fc" stroke-opacity=".045"/>
+    </pattern>
+    <linearGradient id="surface" x2="1" y2="1">
+      <stop stop-color="#191c32"/>
+      <stop offset="1" stop-color="#111321"/>
+    </linearGradient>
+    <linearGradient id="template" x2="1" y2="1">
+      <stop stop-color="#323269"/>
+      <stop offset="1" stop-color="#252747"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="m1 1 5 3-5 3" fill="none" stroke="#a5b4fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="optional-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="m1 1 5 3-5 3" fill="none" stroke="#b8a9ed" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="tracking-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="m1 1 5 3-5 3" fill="none" stroke="#83d5be" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .eyebrow { fill: #b1b8d5; font-size: 14px; font-weight: 600; letter-spacing: 1.2px; }
+      .title { fill: #f0f1ff; font-size: 23px; font-weight: 650; letter-spacing: -.5px; }
+      .detail { fill: #bec4de; font-size: 18px; }
+      .label { fill: #c2c8e3; font-size: 14px; }
+      .flow { fill: none; stroke: #a5b4fc; stroke-width: 2; marker-end: url(#arrow); }
+      .tracking { fill: none; stroke: #83d5be; stroke-width: 1.8; marker-end: url(#tracking-arrow); }
+    </style>
+  </defs>
+
+  <rect x="1" y="1" width="958" height="608" rx="22" fill="url(#surface)" stroke="#35394f"/>
+  <rect x="2" y="2" width="956" height="606" rx="21" fill="url(#grid)"/>
+  <text x="32" y="37" class="eyebrow">FORMCOMPOSE / ARCHITECTURE</text>
+
+  <!-- Sources: the framework owns data; definitions supply optional configuration. -->
+  <rect x="32" y="64" width="260" height="116" rx="14" fill="#222639" stroke="#424a65"/>
+  <text x="52" y="92" class="eyebrow">CAKEPHP</text>
+  <text x="52" y="122" class="title">Data + request</text>
+  <text x="52" y="148" class="detail">Values, schema, errors,</text>
+  <text x="52" y="168" class="detail">submitted data</text>
+
+  <rect x="348" y="64" width="260" height="116" rx="14" fill="#252237" stroke="#8777b5" stroke-dasharray="5 5"/>
+  <text x="368" y="92" class="eyebrow" style="fill:#c2b3ed">OPTIONAL</text>
+  <text x="368" y="122" class="title" style="font-size:20px">Definitions / blueprints</text>
+  <text x="368" y="148" class="detail">Fields, choices,</text>
+  <text x="368" y="168" class="detail">and layout selection</text>
+
+  <path d="M162 180V250" class="flow"/>
+  <path d="M478 180V250" fill="none" stroke="#b8a9ed" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#optional-arrow)"/>
+  <text x="178" y="219" class="label">bind()</text>
+  <text x="494" y="219" class="label">configure</text>
+
+  <!-- The rendering path keeps resolved state separate from application markup. -->
+  <rect x="32" y="252" width="260" height="116" rx="14" fill="#24283f" stroke="#6975bd"/>
+  <text x="52" y="281" class="eyebrow" style="fill:#a5b4fc">01 / BIND</text>
+  <text x="52" y="313" class="title">Form session</text>
+  <text x="52" y="340" class="detail">One context and lifecycle</text>
+
+  <path d="M292 310H346" class="flow"/>
+
+  <rect x="348" y="252" width="260" height="116" rx="14" fill="#282c49" stroke="#818cf8"/>
+  <text x="368" y="281" class="eyebrow" style="fill:#b9c1ff">02 / RESOLVE</text>
+  <text x="368" y="313" class="title">Bound field</text>
+  <text x="368" y="340" class="detail">Value, name, ID,</text>
+  <text x="368" y="360" class="detail">constraints, errors</text>
+
+  <path d="M608 310H662" class="flow"/>
+
+  <rect x="664" y="252" width="264" height="116" rx="14" fill="url(#template)" stroke="#a099fa"/>
+  <text x="684" y="281" class="eyebrow" style="fill:#c5beff">03 / RENDER</text>
+  <text x="684" y="313" class="title">Your PHP elements</text>
+  <text x="684" y="340" class="detail">Label, input, help, errors</text>
+  <text x="684" y="360" class="detail">Theme + base fallback</text>
+
+  <!-- Successful input rendering registers submissions; closing emits protection fields. -->
+  <path d="M162 368V502H346" class="tracking"/>
+  <text x="180" y="486" class="label" style="fill:#a7dccc">owns lifecycle</text>
+
+  <path d="M796 368V456" class="flow"/>
+  <circle cx="796" cy="406" r="3.5" fill="#a5b4fc"/>
+  <path d="M790 406H478V456" class="tracking"/>
+  <text x="490" y="430" class="label" style="fill:#a7dccc">after input renders</text>
+
+  <rect x="348" y="458" width="260" height="102" rx="14" fill="#1c302f" stroke="#538f80"/>
+  <text x="368" y="487" class="eyebrow" style="fill:#a7dccc">SUBMISSION TRACKING</text>
+  <text x="368" y="515" class="title" style="font-size:20px">Rendered inputs only</text>
+  <text x="368" y="541" class="detail">Names + locked values</text>
+
+  <path d="M608 509H662" class="tracking"/>
+  <text x="632" y="496" text-anchor="middle" class="label" style="fill:#a7dccc;font-size:12px">close()</text>
+
+  <rect x="664" y="458" width="264" height="102" rx="14" fill="#222639" stroke="#707b9f"/>
+  <text x="684" y="487" class="eyebrow">OUTPUT</text>
+  <text x="684" y="515" class="title">HTML form</text>
+  <text x="684" y="541" class="detail">Controls + security inputs</text>
+
+  <text x="32" y="589" class="label" style="fill:#969fbe">Inspecting a field renders nothing and registers no submitted inputs.</text>
+</svg>
