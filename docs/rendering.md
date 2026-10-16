@@ -151,5 +151,6 @@ attributes, with bundled elements as the fallback. The
 [lookup reference](./template-reference.md#lookup-order) explains layers, types,
 and variants.
 
-[Install and build a form](./getting-started.md), or
-[reuse field configuration with blueprints](./blueprints.md).
+Continue with [field options](./field-options.md),
+[compose field parts](./field-parts.md), or [create a theme](./themes.md).
+For configuration reused across screens, start with [field definitions](./definitions.md).

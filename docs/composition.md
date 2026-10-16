@@ -4,9 +4,13 @@ description: Compose associated form definitions and arrange blueprint fields wi
 
 # Nested definitions and layouts
 
-Blueprints describe field configuration. PHP elements arrange the fields. A
-blueprint can select a default layout without putting wrappers or grids into its
-field declarations.
+Use a definition layout when a reusable collection needs sections, grids, or
+embedded child forms. This is different from a control template, which arranges
+the label, input, help, and errors for one field.
+
+Start with [field definitions](./definitions.md) and [blueprints](./blueprints.md).
+The examples below build an author section, then embed it in a post form. An
+ordinary immutable definition supports the same layout and composition features.
 
 ## Select a layout
 
@@ -88,21 +92,17 @@ in declaration order, with no extra wrapper. Themes can override
 `$parent()` fallback to the theme. Render each input once: calling `$parent()`
 after manually rendering the same controls triggers ordinary duplicate-ID checks.
 
-A local override can select a different layout for a screen:
+A local override can add wrapper attributes for this rendering:
 
 ```php
 echo $form->definition(AuthorForm::class, options: [
-    'template' => 'forms/author-compact',
     'attributes' => ['class' => 'author-panel', 'data-section' => 'author'],
-    'templateData' => ['heading' => 'Contact'],
 ]);
 ```
 
-`Form` also accepts `templates: ['control' => 'forms/author']` and
-`templateData: [...]`. Non-null attribute arguments supply presentation defaults;
-per-call options replace matching top-level options. Different values for
-`template` and `templates['control']` are rejected after merging. Layout data does
-not become field template data.
+Select another existing element with the local `template` option when needed.
+The [presentation reference](./definition-reference.md#presentation-options) owns
+the complete option list, replacement behavior, and layout-data scope.
 
 ## Compose an association
 
@@ -176,16 +176,24 @@ public function configure(FormBuilder $form, FormContext $context): void
 Import `FormCompose\FormBuilder` and `FormCompose\FormContext` in that class.
 `remove('author')` removes the entire embedded subtree.
 
-The element receives a scoped `DefinitionView` as `$form`:
+The element receives a scoped `DefinitionView` as `$form`. Its paths are relative
+to this collection, and it can only render configured fields or embedded children:
 
-| Call | Behavior |
-| --- | --- |
-| `has('email')` | Checks final field or embed availability without rendering. |
-| `control('email')` | Renders the configured field; explicitly removed fields produce nothing. |
-| `controls(['first_name', 'last_name'])` | Renders ordered relative controls without a wrapper; explicitly removed fields produce nothing. |
-| `field('email')` | Returns a bound field for manual parts; requires an available field. |
-| `embedded('address')` | Renders an existing compiled child with its own layout. |
-| `embedded('address', options: [...])` | Overrides that child's presentation for this rendering. |
+```php
+<!-- In templates/element/forms/author.php, replacing the email block: -->
+<?php if ($form->has('email')): ?>
+    <?php $email = $form->field('email'); ?>
+    <section class="contact-details">
+        <?= $email->label() ?>
+        <?= $email->input() ?>
+        <?= $email->help() ?>
+        <?= $email->errors() ?>
+    </section>
+<?php endif; ?>
+```
+
+See the [scoped layout API](./definition-reference.md#definitionview) for all
+methods and how removed fields differ from unknown paths.
 
 Unknown names raise `InvalidArgumentException`, so typos are visible. Guard
 optional field parts and static wrappers with `has()`. Removing a field does not
@@ -253,22 +261,15 @@ and update both representations.
 
 ## Isolation and failures
 
-Each blueprint occurrence is configured once per resolution, using constructor
-injection and a cloned blueprint seed. Inheritance preserves declaration positions:
-inherited field options merge, and redeclaring an embed replaces its reference
-before any child is resolved. The concrete hook runs using normal PHP method
-inheritance. Layout selection inherits unless overridden.
+A child is compiled once for each occurrence and keeps its own relative layout.
+Children resolve before the parent's hook, allowing parent overrides such as
+`with('author.email', ...)`. Circular embeddings, duplicate paths, unknown
+references, and incompatible field/embed declarations are errors.
 
-Duplicate paths in one class, duplicate resolved field paths, incompatible
-field/embed replacements, unknown references, and circular embeddings are errors.
-The same blueprint can be used at independent mounts without sharing mutable
-hook state. Request-dependent configuration is never stored in discovery caches.
+All layouts share the enclosing form's lifecycle and submission registry.
+Membership checks and configuration register nothing. If a layout fails, its
+staged input registrations are rolled back; previously rendered controls remain
+registered. See [lifecycle and failures](./form-reference.md#lifecycle-and-failures).
 
-Every layout shares one form session, field resolver, theme, and submission
-protection lifecycle. Configuration and membership inspection register nothing.
-Successful definition rendering commits its rendered inputs; if an enclosing
-layout fails, its staged registrations are discarded so the compiled definition
-can be retried. Existing rendered controls remain registered.
-
-CakePHP continues to own association marshalling, validation, and persistence.
-Authorize submitted changes in the application regardless of which fields render.
+CakePHP owns association marshalling, validation, and persistence. Embedding a
+form does not load associations or authorize submitted changes.

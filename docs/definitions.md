@@ -1,249 +1,161 @@
 ---
-description: Build reusable field collections, customize them per screen, and render them wherever they belong in a CakePHP form.
+title: Field definitions
+description: Understand reusable field configuration, share collections across forms, and choose when a blueprint helps.
 ---
 
-# Reusable field definitions
+# Field definitions
 
-A `FormDefinition` is an ordered collection of field configuration. Use it when
-several screens share fields or when you assemble fields outside a view. Your PHP
-template still determines the form's structure and where the collection appears.
+Start with inline `control()` calls. When the same labels, choices, or help text
+repeat across screens, extract that configuration. Values and validation still
+come from whichever entity or context you bind.
 
-Definitions are optional. For class-level attributes and dynamic configuration,
-see [form blueprints](./blueprints.md). They use the same field resolution and PHP control
-templates as ordinary [`control()` calls](./usage.md#complete-controls).
+## Choose the right layer
+
+| Object | Responsibility | Example use |
+| --- | --- | --- |
+| `FieldDefinition` | Immutable configuration for one field | Reuse the title's label and help text. |
+| `FormDefinition` | Immutable ordered collection of fields and embeds | Share an article's editable fields across screens. |
+| `FormBlueprint` | PHP class compiled into a `FormDefinition` | Declare fields with attributes and configure them for the current request. |
+| PHP definition layout | Markup that arranges a collection's contents | Put title and summary in a grid, then render an author section. |
+
+A blueprint and an ordinary definition use the same field options and rendering
+pipeline. Neither is required for ordinary forms. A definition layout arranges
+several fields; a control template arranges the parts of **one** field.
+
+## Reuse one field
+
+This definition stores the options you would otherwise pass to `control()`:
+
+```php
+use FormCompose\Field\FieldDefinition;
+
+$title = FieldDefinition::make('title')
+    ->label('Article title')
+    ->help('Displayed above the article.');
+
+// Inside an open form bound to $article:
+echo $form->control($title);
+```
+
+For manual parts, use `$form->field($title)` to obtain a bound field. The
+`FieldDefinition` itself contains no bound value, HTML, or submission state.
 
 ## Build once, render where needed
+
+Group related fields into an immutable collection:
 
 ```php
 use FormCompose\Field\FieldDefinition;
 use FormCompose\FormDefinition;
 
-$contact = FormDefinition::make()
-    ->add(FieldDefinition::make('name')->label('Full name'))
-    ->add(FieldDefinition::make('email', 'email')->help('Use your work address.'));
+$articleFields = FormDefinition::make()
+    ->add(FieldDefinition::make('title')->label('Article title'))
+    ->add(FieldDefinition::make('body', 'textarea'));
 
-$form = $this->Form->bind($user);
-
+$form = $this->Form->bind($article);
 echo $form->open();
-echo $form->control('company');
-echo $form->definition($contact);
-echo $form->control('newsletter', ['type' => 'checkbox']);
-echo $form->submit('Save');
+echo $form->definition($articleFields);
+echo $form->control('published', ['type' => 'checkbox']);
+echo $form->submit('Save article');
 echo $form->close();
 ```
 
-`add()` appends in call order. `$form->definition($contact)` immediately returns
-the rendered controls as HTML. It adds no wrapper, opening tag, closing tag, or
-button; the existing form session handles those separately. You can render several
-definitions with ordinary controls or application markup between them.
+The collection renders where `definition()` is called. The bundled layout adds
+no wrapper, opening/closing tags, or button. You can place application HTML and
+additional controls before or after it. Each rendering uses the current form's
+context, theme, and protection lifecycle.
 
-A definition stores configuration only. Values, validation errors, constraints,
-input IDs, and names resolve from the current form when each field is used. The
-same definition can therefore serve different records and separate form sessions.
-An explicit field `value` still overrides bound data as usual.
-
-## When definitions help
-
-- **Create and edit screens:** share the common fields while adding screen-specific
-  controls in each template.
-- **Recurring sections:** use the same contact details in registration, profile,
-  and administration forms.
-- **Conditional fields:** assemble configuration according to permissions or
-  application settings before passing it to the view.
-- **Plugin defaults:** expose reusable field configuration that a host application
-  can customize.
-- **Different layouts:** reuse configuration while placing individual field parts
-  differently on each screen.
-
-For fields used in only one template, direct `control()` calls need less setup.
-Definitions configure fields; validation, authorization, and persistence remain
-application responsibilities.
+Construct reusable configuration in application code and pass it to the view as
+you would other view data. No particular service or controller lifecycle is required.
 
 ## Customize without changing the shared definition
 
-Every builder operation returns a new definition. Keep the return value when
-extending a collection or applying overrides:
+Every change returns a new collection. Keep that return value:
 
 ```php
-$administrationContact = $contact->with('email', [
-    'label' => 'Account email',
-    'help' => 'Changing this address affects sign-in.',
+$editingFields = $articleFields->with('title', [
+    'help' => 'Changing the title also changes how this article appears in lists.',
 ]);
 ```
 
-The original `$contact` keeps its label and help text. On their respective screens:
+`$articleFields` remains unchanged. `with()` preserves field order and replaces
+matching top-level option keys. Nested arrays such as `attributes` and
+`templateData` are replaced as whole values. The full
+[configuration contract](./definition-reference.md#formdefinition) lives in the reference.
 
-::: code-group
-
-```php [Registration]
-// Inside the registration form.
-echo $form->definition($contact);
-```
-
-```php [Administration]
-// Inside the administration form.
-echo $form->definition($administrationContact);
-```
-
-:::
-
-`with($path, $options)` replaces matching top-level option keys and keeps the
-field's position. Other keys remain unchanged. Nested arrays such as `attributes`
-are replaced as a whole; this follows `FieldDefinition::with()`.
-
-Choose a different control element for one use in the same way:
+For optional fields, assemble a collection before rendering:
 
 ```php
-echo $form->definition(
-    $contact->with('email', ['template' => 'forms/special-email']),
-);
-```
+use FormCompose\Field\FieldDefinition;
 
-This selects `templates/element/forms/special-email.php`. See
-[choosing a template](./usage.md#choose-a-template-for-one-control) for the element
-and the `templates` option for individual parts.
-
-### Share template data
-
-Use the same option when a reusable field needs custom presentation metadata:
-
-```php
-$contact = $contact->with('email', [
-    'template' => 'forms/special-email',
-    'templateData' => ['prefix' => '@', 'account' => $account],
-]);
-
-echo $form->definition($contact);
-```
-
-The element and that field's parts receive a `$templateData` array. A later
-`with()` or per-call override replaces the entire bag, like other nested field
-options; pass `[]` to clear it. The original shared definition remains unchanged.
-The [template data reference](./template-reference.md#template-data) explains
-typed values, scope, and escaping.
-
-::: tip Configuration stays local
-Rendering `$form->definition($contact)` does not install session-wide defaults.
-A later `$form->field('email')` or `$form->control('email')` uses its own options,
-any definition explicitly selected at `bind()`, and context inference. Pass
-`$contact->field('email')` explicitly to reuse that configuration.
-:::
-
-## Assemble fields conditionally
-
-Build a definition in an application service or controller and pass it to the
-view like any other value:
-
-```php
-$account = $contact;
-
-if ($canManageAccounts) {
-    $account = $account->add(
-        FieldDefinition::make('active', 'checkbox')->label('Account enabled'),
+// $canPublish is an application permission decision.
+$editingFields = $articleFields;
+if ($canPublish) {
+    $editingFields = $editingFields->add(
+        FieldDefinition::make('published', 'checkbox')->label('Publish article'),
     );
 }
 ```
 
-`$contact` is unchanged. `$account` contains the additional field only when the
-condition is met. Omitting a control is a presentation decision; authorize changes
-to submitted fields in the application too.
-
-## Reuse configuration in a custom layout
-
-`$contact->field('email')` returns a `FieldDefinition`: configuration without bound
-data or rendered markup. Pass it to the existing form API to get a `BoundField`:
-
-```php
-$email = $form->field($contact->field('email'), ['label' => 'Contact address']);
-```
-
-The optional second argument provides per-call overrides. You can now arrange
-the parts using the normal [field composition API](./usage.md#composing-field-parts).
-For example, this replaces rendering the whole collection inside an open form:
-
-```php
-echo $form->control($contact->field('name'));
-echo $form->control('phone');
-
-echo '<section class="contact-email">';
-echo $email->label();
-echo $email->input(['class' => 'contact-input']);
-echo $email->help();
-echo $email->errors();
-echo '</section>';
-```
-
-The extra phone field appears between the shared name and email fields. Layout
-stays in PHP; no collection insertion methods are needed. Recurring markup belongs
-in a [theme element](./themes.md).
-
-Creating or looking up configuration, or resolving a bound field, registers no
-submitted input. As usual, `input()` registers after rendering succeeds, and the
-session includes rendered inputs in submission protection when closing.
-
-## API and constraints
-
-| Call | Result |
-| --- | --- |
-| `FormDefinition::make()` | An empty, immutable collection. |
-| `new FormDefinition([$name, $email])` | A collection from ordered field or resolved embed entries. |
-| `$definition->add($field)` | A new collection with the field appended. |
-| `$definition->with('email', $options)` | A new collection with that field's options overridden. |
-| `$definition->has('email')` | Whether an active field or embed has this path. |
-| `$definition->remove('email')` | A new collection without that field. |
-| `$definition->field('email')` | The existing `FieldDefinition` for that exact path. |
-| `$definition->fields` | The flattened, ordered list of qualified field definitions. |
-| `$definition->entries` | Ordered fields and embedded definitions, retaining the rendering tree. |
-| `$definition->embed('author', $child)` | A new collection with a relative child mounted at this path. |
-| `$definition->embedded('author')` | The compiled child with paths relative to its own root. |
-| `$definition->presentation($options)` | A new collection with definition layout options. |
-| `$form->definition()` | HTML for the collection selected at `bind()`, or an empty string. |
-| `$form->definition($definition)` | HTML for the immutable collection, rendered in the current open form. |
-| `$form->definition('profile')` / `$form->definition(ProfileForm::class)` | Resolve and render a blueprint locally using this session’s context. |
-| `$this->Form->render($definition, $user, submit: 'Save')` | Bind data and render a complete form, including its submit button and protection fields. |
-| `$form->render(submit: 'Save')` | Open, render selected binding defaults, add a button, and close a fresh session. |
-
-Field paths must be unique within a collection. Duplicate paths, unknown lookup
-paths, and unknown override targets throw `InvalidArgumentException`. Dot-separated
-paths such as `comments.0.body` work as they do in ordinary controls.
-
-The form must be open when calling `definition()`, including for an empty
-collection. The bundled default layout renders an empty collection as an empty string; a
-custom layout can supply its own static markup. File controls still
-require a multipart form, and themes and custom field types work as usual.
-
-Input IDs must remain unique across the entire form, including across collections
-and ordinary controls. Render each field presentation once. If intentionally
-presenting the same path again, provide a distinct explicit ID for each
-presentation through field options. Keep form IDs unique across the page.
+Removing or omitting a field controls presentation. Authorize submitted changes
+in the application independently.
 
 ## Select defaults for the whole binding
 
-Pass an immutable definition to `bind()` when individual field calls should share
-its configuration:
+There are two ways to use a collection. They have different effects:
 
-```php
-$form = $this->Form->bind($user, definition: $contact);
+::: code-group
+
+```php [Render here]
+$form = $this->Form->bind($article);
 echo $form->open();
-echo $form->control('email'); // Uses $contact's email configuration.
+echo $form->definition($articleFields);
+echo $form->submit('Save article');
 echo $form->close();
 ```
 
-Alternatively, `$form->definition()` renders the selected collection in order.
-Calling `definition($other)` renders that collection at the call site without
-replacing the selected defaults. This also accepts a blueprint alias or class:
-`$form->definition('profile')` or `$form->definition(ProfileForm::class)`. You can
-render several definitions inside the same open form; see
-[the two blueprint entry points](./blueprints.md#declare-and-use-a-blueprint).
-Explicit field definitions and per-call options override binding defaults, using top-level replacement.
+```php [Use as field defaults]
+$form = $this->Form->bind($article, definition: $articleFields);
+echo $form->open();
+echo $form->control('title'); // Inherits Article title.
+echo $form->control('body');  // Inherits textarea.
+echo $form->submit('Save article');
+echo $form->close();
+```
 
-`$definition->has('email')` checks membership. `$definition->remove('email')`
-returns a new collection without that field and preserves the original. Removing
-an unknown path throws `InvalidArgumentException`.
+:::
 
-Blueprint classes compile to this same immutable representation. See
-[blueprint configuration and precedence](./blueprints.md#configuration-order).
+`definition($articleFields)` renders locally; it does not install defaults for
+later independent field calls. `bind(..., definition: $articleFields)` selects
+defaults without rendering. A subsequent `$form->definition()` renders that
+already selected collection.
 
-Definitions can select a PHP layout and embed reusable child definitions at association
-paths. See [nested definitions and layouts](./composition.md) for examples and the
-scoped layout API.
+To reuse just one field from a collection without selecting binding defaults,
+pass its configuration explicitly:
+
+```php
+// Inside an open form; render this instead of the collection's title control.
+echo $form->control($articleFields->field('title'), ['label' => 'Working title']);
+```
+
+Per-call options override collection defaults. Avoid rendering the same input twice.
+
+## Render a complete form
+
+When the sequential layout is sufficient, use the helper shortcut:
+
+```php
+echo $this->Form->render($articleFields, $article, submit: 'Save article');
+```
+
+This binds, opens, renders the collection, adds a button, and closes. See
+[render()](./form-reference.md#render) for form options, button options, custom
+themes, and omitting the button.
+
+## Add a class or a reusable layout
+
+Move recurring declarations into a [form blueprint](./blueprints.md) when a named
+PHP class and request-aware configuration are useful. Use
+[nested definitions and layouts](./composition.md) to select a PHP layout or embed
+a relative child collection. The [definitions reference](./definition-reference.md)
+contains all collection methods and declaration options.

@@ -58,10 +58,28 @@ dependencies out of commits.
 
 ## Documentation structure
 
-Keep the homepage brief, with a short introduction and a few tabbed code examples.
-The learning pages explain the problem and rendering model; recipes show how to
-build forms and themes; reference pages hold the detailed contracts.
+The site teaches CakePHP developers who are new to FormCompose. Keep the homepage
+short and connect a control call to its PHP element before detailed setup.
 
-Keep examples connected: show how a theme prefix, a field type, and an element
-path relate to each other. Use built-in VitePress features where they make the
-content easier to follow. Keep the README short and link readers to this site.
+- **Start here** explains the problem, walks through a minimal article form, and
+  introduces the rendering model. Keep optional configuration out of the first form.
+- **Build forms** contains focused recipes for values, choices, associations,
+  field parts, and themes.
+- **Reusable forms** explains field definitions, attributed blueprints, and nested
+  layouts together. Keep reuse optional and explain each object's responsibility.
+- **API reference** owns complete signatures, return values, options, defaults,
+  precedence, and failure contracts. Guides link to this material rather than
+  repeating full tables.
+- **Advanced and project** contains custom controls, service extensions, blueprint
+  injection/discovery, and contributor setup.
+
+Use an article form for the introductory walkthrough and focused examples for
+other tasks. Label files, identify assumed application variables, and include
+imports. Prefer minimal working examples, introducing options only when needed for
+the task. Show the corresponding PHP element whenever selecting a new template.
+Keep existing page URLs stable and update navigation, local links, and README
+entry points together. Check examples against implementation and behavior tests.
+
+Use VitePress code groups, callouts, and local search. Keep generated output out
+of commits. Documentation-only changes require content/example review and
+`npm ci` plus `npm run docs:build`; they do not require the PHP quality workflow.

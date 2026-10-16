@@ -1,83 +1,162 @@
 ---
-description: Resolve field values and compose controls with your own layouts.
+title: Fields and values
+description: Configure controls, resolve values, render validation feedback, and build upload and search forms.
 ---
 
-# Fields and form data
+# Fields and values
 
-This guide assumes the [helper is loaded](./getting-started.md#load-the-helper).
-Use `control()` for your theme's complete field layout, or `field()` to resolve an
-object whose parts you can arrange yourself. Both follow the
-[same rendering model](./rendering.md).
+Continue from [your first form](./getting-started.md). Examples that use `$form`
+assume an open session unless they show the complete lifecycle. For the complete
+option list, keep [Field options](./field-options.md) alongside this guide.
 
 ## Complete controls
 
-```php
-<?php $form = $this->Form->bind($article, ['url' => ['action' => 'edit', $article->id]]); ?>
+A control includes the input and its surrounding presentation. Use `type` when
+you want to override context inference:
 
-<?= $form->open() ?>
-<?= $form->control('title') ?>
-<?= $form->control('body', ['type' => 'textarea']) ?>
-<?= $form->control('published', ['type' => 'checkbox']) ?>
-<?= $form->submit('Save') ?>
-<?= $form->close() ?>
+```php
+// Inside the article form.
+echo $form->control('title', ['label' => 'Article title']);
+echo $form->control('body', [
+    'type' => 'textarea',
+    'attributes' => ['rows' => 12],
+]);
+echo $form->control('published', ['type' => 'checkbox']);
 ```
 
-`control('title')` renders a `control.php` element with a bound field object.
-The base element arranges its label, input, help, and errors. A
-[theme](./themes.md) can replace that element to reuse your own layout.
-
-Each binding creates a form session with its own inputs and submission state.
-The session prepares form markup, method overrides, and security fields. It uses
-CakePHP routing, request CSRF metadata, and CakePHP's form-protection mechanism.
-Configure Cake's normal CSRF middleware and FormProtectionComponent in the host
-application as needed; the plugin does not enable them itself.
+Otherwise schema metadata supplies types: booleans become checkboxes, text becomes
+a textarea, numbers become numeric inputs, and date/time columns get native date
+or time inputs. Primary keys default to hidden fields. Explicit choice lists
+infer a select. See [type inference](./field-options.md#type-inference) for the full mapping.
 
 ### Render several controls
 
-Use `controls()` for an ordered batch without an extra wrapper:
+`controls()` renders an ordered batch without an extra wrapper:
 
 ```php
 echo $form->controls([
-    'first_name',
-    'last_name',
-    'email' => ['type' => 'email', 'label' => 'Work email'],
+    'title',
+    'body' => ['type' => 'textarea', 'attributes' => ['rows' => 12]],
+    'published' => ['type' => 'checkbox'],
 ]);
 ```
 
-Indexed `FieldDefinition` objects are accepted alongside field names. Each entry
-uses the same defaults, escaping, templates, and field extensions as `control()`.
-The form must be open for nonempty batches. An empty batch returns an empty string.
-The entire batch syntax is validated first; malformed entries throw
-`InvalidArgumentException`. If rendering fails, input registrations from the batch
-are rolled back so it can be retried. Previously rendered inputs remain registered.
-
-For a complete form from a blueprint or definition, use the
-[complete-form shortcut](./blueprints.md#complete-form-shortcut).
+Entries can also be `FieldDefinition` objects. Use application HTML around
+separate calls when you need sections or grids.
 
 ### Opening and closing
 
-::: info Render inputs before closing
-All inputs must be rendered before `close()`. Once final tokens are prepared,
-additional input registration is rejected. Failed opening, closing, or button
-templates leave the lifecycle and submission registry available for a safe retry.
-:::
+Each binding owns its form lifecycle and input registry. Open once, render all
+inputs, then close once. Rendered input IDs must be unique; explicit form IDs
+must also be unique across the page. You can inspect a field before opening,
+but inputs require an open form. See the [session reference](./form-reference.md#lifecycle-and-failures)
+for invalid calls and retry behavior.
 
-### Choose a template for one control
+## Data and value sources
 
-Set `template` to render a different PHP element for this call. For example, give
-one email field its own layout without changing the form's theme:
+`bind()` accepts ORM entities, CakePHP `Form` objects, array contexts,
+`ContextInterface` implementations, or `null`. It does not change those objects.
+The default value lookup is:
 
-::: code-group
+1. An explicit field `value`, including explicit null.
+2. Submitted request data.
+3. The CakePHP context, including its schema defaults where enabled.
+4. The field's `default` if no source supplies a value.
 
-```php [Control call]
-echo $form->control('email', [
-    'type' => 'email',
-    'template' => 'forms/special-email',
-    'templateData' => ['prefix' => '@'],
+```php
+// An explicit value overrides both the request and entity.
+echo $form->control('title', ['value' => 'Preview title']);
+```
+
+This is useful for deliberate overrides; ordinary edit fields usually should use
+the bound value. Request lookup distinguishes missing keys from null, false, zero,
+and empty strings. A context's null result falls through to the next source or
+default, following CakePHP context semantics. See the
+[value options](./field-options.md#values) for `default` and `schemaDefault`.
+
+### Search forms
+
+Use query parameters before context values, and choose GET:
+
+```php [templates/Articles/index.php]
+<?php
+$form = $this->Form->bind(null, [
+    'type' => 'get',
+    'valueSources' => ['query', 'context'],
+    'url' => ['action' => 'index'],
+]);
+?>
+<?= $form->open() ?>
+<?= $form->control('q', ['type' => 'search', 'label' => 'Search articles']) ?>
+<?= $form->submit('Search') ?>
+<?= $form->close() ?>
+```
+
+The query parameter `q` repopulates the search input. `valueSources` belongs to
+`bind()`; changing it in `open()` does not change field binding.
+
+### Upload files
+
+Enable multipart encoding on the **form**, then select a file **field**:
+
+```php [templates/Articles/edit.php — upload variant]
+<?php $form = $this->Form->bind($article, ['type' => 'file']); ?>
+<?= $form->open() ?>
+<?= $form->control('title') ?>
+<?= $form->control('attachment', [
+    'type' => 'file',
+    'attributes' => ['accept' => 'application/pdf'],
+]) ?>
+<?= $form->submit('Save article') ?>
+<?= $form->close() ?>
+```
+
+Form `type => 'file'` selects multipart encoding and retains the context's default
+POST/PUT method. You can instead set `enctype => 'multipart/form-data'` at binding
+or opening. A file input in a non-multipart form throws `LogicException`.
+For several files, add field `multiple => true`; the submitted name gains `[]`.
+File and password controls never prefill their value.
+
+## Labels, feedback, and escaping
+
+Labels are generated from paths unless overridden. Help renders when configured;
+errors come from the context and render when present. Ordinary text and attribute
+values are escaped.
+
+```php
+echo $form->control('title', [
+    'label' => 'Article title',
+    'help' => 'Visible in article lists.',
+    'partAttributes' => [
+        'container' => ['class' => 'article-field'],
+        'label' => ['class' => 'article-label'],
+    ],
 ]);
 ```
 
-```php [templates/element/forms/special-email.php]
+Use `label => false`, `help => false`, or `errors => false` to suppress a part.
+When suppressing labels, provide another accessible name through input attributes.
+Disabling help or errors also removes their generated ARIA references. With a
+custom layout, render the enabled feedback parts so those references have targets.
+
+Trusted label, help, and button markup requires an explicit
+[`Html` object](./template-reference.md#trusted-markup). Validation, authorization,
+and saving remain in the application.
+
+## Choose a template for one control
+
+An explicit `template` selects an ordinary CakePHP element without `.php`:
+
+::: code-group
+
+```php [Control call inside an open form]
+echo $form->control('title', [
+    'template' => 'forms/article-title',
+    'templateData' => ['prefix' => 'Article'],
+]);
+```
+
+```php [templates/element/forms/article-title.php]
 <?php
 declare(strict_types=1);
 
@@ -86,15 +165,13 @@ use FormCompose\Rendering\Html;
 /**
  * @var \FormCompose\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var array{prefix?: string} $templateData
+ * @var array{prefix: string} $templateData
  */
 ?>
 <div<?= (string)$attributes ?>>
     <?= $field->label() ?>
-    <div class="email-input">
-        <span aria-hidden="true"><?= Html::text($templateData['prefix'] ?? '') ?></span>
-        <?= $field->input() ?>
-    </div>
+    <span aria-hidden="true"><?= Html::text($templateData['prefix']) ?></span>
+    <?= $field->input() ?>
     <?= $field->help() ?>
     <?= $field->errors() ?>
 </div>
@@ -102,144 +179,35 @@ use FormCompose\Rendering\Html;
 
 :::
 
-Use a CakePHP element name without the `.php` extension. The explicit element
-takes priority over variants and theme layers. Its field parts still use the
-normal templates, data binding, escaping, and submission protection.
-
-Use plural `templates` when selecting individual parts. Both options can be
-combined:
-
-```php
-echo $form->control('email', [
-    'type' => 'email',
-    'template' => 'forms/special-email',
-    'templates' => ['input' => 'forms/email-input'],
-]);
-```
-
-This also requires a `templates/element/forms/email-input.php` element for the
-input part. `template` is shorthand for `templates['control']`; supplying different
-values for both throws `InvalidArgumentException`. Matching values are accepted.
-
-To customize every email field in a theme, use its `email/control.php` element
-instead. See [creating a theme](./themes.md) and the
-[template reference](./template-reference.md#explicit-overrides) for all part names
-and parent-template behavior.
+Use `templates` to select individual parts, such as
+`['templates' => ['input' => 'forms/title-input']]`. The singular shorthand selects
+`templates['control']`; conflicting selections fail. Hidden controls render the
+input part directly. See [template lookup](./template-reference.md#lookup-order).
 
 ### Pass data to a template
 
-`templateData` supplies a named array to the selected control element and all of
-that field's parts, including parent templates. Every template receives the bag;
-it defaults to `[]`. It works with theme elements as well as explicit overrides.
-
-```php
-echo $form->control('email', [
-    'type' => 'email',
-    'template' => 'forms/special-email',
-    'templateData' => ['prefix' => '@', 'account' => $account],
-]);
-```
-
-The element can read `$templateData['prefix']` or use the original account object
-through `$templateData['account']`. Data keys stay inside the array and do not
-replace prepared variables such as `$field` or become HTML attributes. Escape
-text when outputting it, as the element above does with `Html::text()`.
-
-Form and button elements accept their own `templateData`. See the
-[template data reference](./template-reference.md#template-data) for scope,
-replacement behavior, and supported values.
-
-## Data and value sources
-
-Bind ORM entities, Cake `Form` objects, array contexts, existing `ContextInterface`
-implementations, or `null`. Pass ORM context options through `['context' => [...]]`.
-Configure a custom `ContextFactory` with the helper's `contextFactory` setting.
-
-Native control inference uses context schema metadata and validation constraints.
-Explicit `value` wins, including null. The default source order is submitted data,
-then context. Use `['valueSources' => ['query', 'context']]` when binding search
-forms. Request lookup distinguishes missing keys from explicit null, false, zero,
-and empty strings. Context values follow the existing Cake context's semantics.
-
-File controls require `['type' => 'file']` or multipart `enctype` when opening the
-form.
+`templateData` is a separate array available to that field's control and all its
+parts. Keys stay inside `$templateData`; they do not become HTML attributes or
+replace prepared variables. Escape values when outputting them. Later metadata
+replaces the entire bag. The [template data reference](./template-reference.md#template-data)
+explains scope and supported values.
 
 ## Association fields
 
-Use CakePHP's usual paths such as `author_id`, `tags._ids`, `details.summary`, and
-`comments.0.body`. FormCompose discovers conventional choice lists, resolves
-associated values and validation metadata, and keeps nested submission names.
-See [association fields](./associations.md) for selects, checkbox groups, nested
-records, junction data, and validation feedback.
+Use CakePHP paths such as `author_id`, `tags._ids`, and `comments.0.body`.
+[Association fields](./associations.md) explains choice discovery, nested records,
+and validation feedback. For ordinary select and checkbox options, see
+[Choice controls](./choices.md).
 
 ## Composing field parts
 
-The following replaces an email `control()` call inside an open form. This is
-useful for a layout used only in this view; recurring layouts belong in a theme
-element. The part methods still render their own PHP templates:
-
-```php [templates/Users/edit.php]
-<?php
-$email = $form->field('email', [
-    'type' => 'email',
-    'help' => 'Use your work address.',
-]);
-?>
-
-<section class="contact-field">
-    <?= $email->label(['class' => 'contact-label']) ?>
-    <div class="input-with-adornment">
-        <span aria-hidden="true">@</span>
-        <?= $email->input(['class' => 'contact-input', 'x-model' => 'email']) ?>
-    </div>
-    <?= $email->help() ?>
-    <?= $email->errors() ?>
-</section>
-```
-
-### Inspecting a field
-
-`$email->state` is an immutable snapshot exposing `path`, `name`, `id`, `type`,
-`value`, `messages`, `constraints`, and `options`. Inspecting it, or calling
-`attributes()`, never registers a submission. `input()` registers after successful
-rendering. Render each input ID once; give repeated field presentations distinct
-explicit IDs. Keep explicit form IDs unique across the page.
-
-### Labels, feedback, and escaping
-
-Set `help => false` or `errors => false` when omitting those parts so generated
-ARIA references describe the intended presentation. Custom templates must preserve
-these relationships. Radio and multi-checkbox controls use fieldsets and legends.
-
-::: tip Escaping
-Text and attribute values are escaped. Use `new FormCompose\Rendering\Html(...)`
-only for developer-controlled trusted label, help, or button markup.
-:::
-
-### Writing an input by hand
-
-For a completely handwritten native input, emit its resolved attributes and value,
-then call `register()` once:
-
-```php
-<?php use FormCompose\Rendering\Html; ?>
-<input type="email"<?= (string)$email->attributes() ?> value="<?= Html::text((string)$email->state->value) ?>">
-<?php $email->register(); ?>
-```
-
-Handwritten markup must implement the field's native submission semantics. Use a
-custom field type for a composite control or a non-native value representation.
+Use `$form->field()` when arranging a label, input, help, and errors independently.
+Follow [Compose field parts](./field-parts.md) for a complete example and handwritten
+input registration.
 
 ## Reusable definitions
 
-Share field configuration across screens with an optional `FormDefinition`.
-Render it wherever that collection belongs inside an open form:
-
-```php
-echo $form->control('company');
-echo $form->definition($contact);
-echo $form->control('newsletter', ['type' => 'checkbox']);
-```
-
-The [reusable definitions guide](./definitions.md) covers the builder, per-screen
-overrides, conditional fields, and using individual definitions in custom layouts.
+When field configuration repeats, move it into a
+[field definition or collection](./definitions.md). To declare that configuration
+in an attributed PHP class, use a [blueprint](./blueprints.md). Both render through
+the same controls and templates shown here.

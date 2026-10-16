@@ -1,12 +1,12 @@
 ---
 layout: home
 
-description: A replacement for CakePHP's FormHelper, with PHP element templates and composable bound fields.
+description: A CakePHP form API with bound fields and application-owned PHP elements.
 
 hero:
   name: FormCompose
-  text: Composable CakePHP forms.
-  tagline: Build CakePHP forms with bound fields and ordinary PHP element templates.
+  text: Your forms. Your markup.
+  tagline: Bind CakePHP data, render controls with PHP elements, and keep your application in charge of the HTML.
   image:
     src: /branding/formcompose-mark.svg
     alt: FormCompose logo
@@ -14,76 +14,66 @@ hero:
     height: 320
   actions:
     - theme: brand
-      text: Get started
+      text: Build your first form
       link: /getting-started
     - theme: alt
-      text: How it works
-      link: /rendering
+      text: API reference
+      link: /form-reference
 ---
 
-## See it in code
+## A control call connected to your markup
 
-Bind your data and render fields, reuse a blueprint, or arrange field parts in
-your own markup. The blueprint tabs show its class and the view that renders it.
+When a field needs its own wrappers, icons, or feedback placement, put that markup
+in a PHP element. `control()` binds the data; the element arranges its parts.
 
 ::: code-group
 
-```php [Build a form]
-<?php
-$form = $this->Form->bind($user);
-?>
+```php [templates/Articles/edit.php]
+<?php $form = $this->Form->bind($article); ?>
 <?= $form->open() ?>
-<?= $form->control('name', ['label' => 'Full name']) ?>
-<?= $form->control('email', ['type' => 'email']) ?>
-<?= $form->submit('Save') ?>
+<?= $form->control('title', ['template' => 'forms/article-title']) ?>
+<?= $form->control('body') ?>
+<?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
-```php [Blueprint class]
+```php [templates/element/forms/article-title.php]
 <?php
-declare(strict_types=1);
-
-// src/Form/ProfileForm.php
-namespace App\Form;
-
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
-
-#[Form('profile')]
-#[Field('name', label: 'Full name')]
-#[Field('email', type: 'email')]
-class ProfileForm extends FormBlueprint
-{
-}
-```
-
-```php [Render a blueprint]
-<?php
-use App\Form\ProfileForm;
+/**
+ * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
 ?>
-<?= $this->Form->render(ProfileForm::class, $user, submit: 'Save') ?>
+<div<?= (string)$attributes ?>>
+    <?= $field->label() ?>
+    <div class="title-input-shell"><?= $field->input() ?></div>
+    <?= $field->help() ?>
+    <?= $field->errors() ?>
+</div>
 ```
 
-```php [Compose field parts]
+```php [Arrange parts directly in the view]
 <?php
-$form = $this->Form->bind($user);
-$email = $form->field('email', ['type' => 'email']);
+$form = $this->Form->bind($article);
+$title = $form->field('title');
 ?>
 <?= $form->open() ?>
-<?= $form->control('name', ['label' => 'Full name']) ?>
-<div class="checkout-contact">
-    <?= $email->label() ?>
-    <div class="checkout-input"><?= $email->input() ?></div>
-    <?= $email->help() ?>
-    <?= $email->errors() ?>
-</div>
-<?= $form->submit('Save') ?>
+<section class="article-title">
+    <?= $title->label() ?>
+    <?= $title->input() ?>
+    <?= $title->help() ?>
+    <?= $title->errors() ?>
+</section>
+<?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
 :::
 
-[Explore form blueprints](./blueprints.md) ·
-[See how rendering works](./rendering.md) ·
-[Compare with core FormHelper](./why.md)
+Use a [theme](./themes.md) to share markup or optional
+[definitions and blueprints](./definitions.md) to share field configuration.
+CakePHP continues to supply values, validation metadata, routing, and submission
+protection. No CSS framework or JavaScript runtime is required.
+
+[Why FormCompose?](./why.md) · [Your first form](./getting-started.md) ·
+[All control options](./field-options.md)

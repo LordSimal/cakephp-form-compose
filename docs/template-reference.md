@@ -5,7 +5,8 @@ description: Look up field, form, and button elements, their variables, layer pr
 
 # Template reference
 
-Use this page after [creating a theme](./themes.md). All paths below are relative
+Use this page to look up element contracts after [creating a theme](./themes.md).
+For control configuration, see [Field options](./field-options.md). All paths below are relative
 to a theme layer, such as `templates/element/forms/application/`.
 
 ## Lookup order
@@ -277,3 +278,78 @@ the bag is serialized.
 
 Configure input identity and behavior, such as `name`, `id`, `type`, `value`, and
 `secure`, as field options rather than through input attribute bags.
+
+
+## Theme API
+
+`FormCompose\Rendering\Theme` is immutable. Pass it through `bind(..., theme: $theme)`:
+
+```php
+use FormCompose\Rendering\Theme;
+
+$theme = new Theme(
+    layers: ['forms/application'],
+    defaults: [
+        'input' => ['class' => 'field-input'],
+        'email.input' => ['class' => 'email-input'],
+        'definition.control' => ['class' => 'form-section'],
+    ],
+);
+$form = $this->Form->bind($article, theme: $theme);
+```
+
+`new Theme(array $layers = [], array $defaults = [])` stores readonly `layers`
+and `defaults`. Layers are element prefixes in priority order. Empty prefixes or
+prefixes containing `..` throw `InvalidArgumentException`. `Theme::base(): self`
+returns a theme with no custom layers or defaults; bundled elements remain available.
+
+`attributes(string $part, string $type): Attributes` starts with generic defaults,
+then replaces matching keys with type-specific defaults. An email class default
+replaces the generic input class; subsequent field/local attributes merge on top.
+This distinction matters when using CSS utility classes.
+
+## Attribute bag API
+
+`FormCompose\Rendering\Attributes` stores readonly `values` and escapes them when
+cast to a string. It includes a leading space when attributes are present, so
+`<div<?= (string)$attributes ?>>` is valid.
+
+| Signature | Behavior |
+| --- | --- |
+| `new Attributes(array $values = [])` | Validates attribute names and normalizes class tokens. |
+| `merge(array $values): self` | New bag; combines class and ARIA ID-reference tokens, replaces other keys. |
+| `replace(array $values): self` | New bag; replaces matching keys without token merging. |
+| `has(string $name): bool` | Whether the attribute would be emitted; null/false count as absent. |
+| `__toString(): string` | Escaped attributes; false/null omitted, true emitted as a bare name. |
+
+```php
+use FormCompose\Rendering\Attributes;
+
+$attributes = new Attributes(['class' => 'field', 'required' => true]);
+$wide = $attributes->merge(['class' => ['wide' => true, 'hidden' => false]]);
+// (string)$wide: ' class="field wide" required'
+$replacement = $wide->replace(['class' => 'compact', 'required' => null]);
+// (string)$replacement: ' class="compact"'
+```
+
+Arbitrary integration attributes such as `data-*`, `x-model`, `@click`, and
+`:class` retain their names. Class values support strings, arrays of tokens, and
+conditional class maps. Invalid attribute names throw `InvalidArgumentException`.
+The bag does not resolve conflicting CSS utilities.
+
+## Trusted markup
+
+`FormCompose\Rendering\Html` explicitly marks developer-controlled markup for
+labels, help, or button content. It does not sanitize HTML.
+
+```php
+use FormCompose\Rendering\Html;
+
+// Inside an open form.
+echo $form->submit(new Html('<strong>Save article</strong>'));
+```
+
+`new Html(string $value)` exposes readonly `value`.
+`Html::text(string|Html $text): string` escapes ordinary strings and preserves an
+explicit `Html` value. Custom templates should use this method when outputting
+text. Attribute values always go through the attribute bag's escaping.

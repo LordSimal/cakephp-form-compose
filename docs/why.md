@@ -62,8 +62,13 @@ echo $form->control('email', [
 ```
 
 ```php [templates/element/forms/email.php]
-<?php /** @var \FormCompose\Field\BoundField $field */ ?>
-<div class="contact-field">
+<?php
+/**
+ * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+?>
+<div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
     <?= $field->label() ?>
     <div class="input-with-icon">
         <span aria-hidden="true">@</span>
@@ -87,7 +92,7 @@ custom widgets need to be ported. The API is still evolving.
 
 [Build your first form](./getting-started.md) ·
 [Follow a control from data to HTML](./rendering.md) ·
-[Create a reusable theme](./themes.md)
+[Look up control options](./field-options.md)
 
 <style>
 .formcompose-architecture {

@@ -14,8 +14,10 @@ Implement `FieldTypeInterface` to render a custom control and return its submitt
 names as `Submission` objects. Register it using
 `bind($entity, ['types' => ['date-range' => $rangeType]])`, then request
 `['type' => 'date-range']` on a field. Alternatively, mark the implementation with
-`#[AsFieldType('date-range')]` for [automatic discovery](./blueprints.md#discover-custom-field-types).
-Explicit `types` registrations override discovered types.
+`#[AsFieldType('date-range')]` for [automatic discovery](./blueprint-configuration.md#discover-custom-field-types).
+Explicit `types` registrations override discovered types. A complete
+[date-range implementation](./blueprint-configuration.md#discover-custom-field-types)
+shows rendering, disabled state, accessible names, and both submitted inputs.
 
 ::: info Describe the inputs your control submits
 `render()` must return escaped markup without changing security state.
@@ -67,14 +69,18 @@ to the normal form-building API:
 | `NativeType` | `choice()` and `createChoices()` specialize standard controls |
 | `PhpRenderer` | `layered()` and `element()` customize template lookup and execution |
 
-For example, an application helper can select a session that uses a custom resolver:
-
-The following files use the same application namespace; import the corresponding
-application classes when placing them in different namespaces.
+For example, an application helper can select a session that uses a custom resolver.
+These three files connect a website-field convention to the public `bind()` API:
 
 ::: code-group
 
-```php [AppFormHelper.php]
+```php [src/View/Helper/AppFormHelper.php]
+<?php
+declare(strict_types=1);
+
+namespace App\View\Helper;
+
+use App\Form\AppFormSession;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormSession;
@@ -93,7 +99,12 @@ class AppFormHelper extends FormHelper
 }
 ```
 
-```php [AppFormSession.php]
+```php [src/Form/AppFormSession.php]
+<?php
+declare(strict_types=1);
+
+namespace App\Form;
+
 use FormCompose\Binding\FieldResolver;
 use FormCompose\FormSession;
 
@@ -106,7 +117,12 @@ class AppFormSession extends FormSession
 }
 ```
 
-```php [AppFieldResolver.php]
+```php [src/Form/AppFieldResolver.php]
+<?php
+declare(strict_types=1);
+
+namespace App\Form;
+
 use FormCompose\Binding\FieldResolver;
 
 class AppFieldResolver extends FieldResolver
@@ -127,7 +143,15 @@ Overrides of the earlier two-argument factory must update their signature. Direc
 `new FormSession($binding, $rendering)` construction still supports dependency-free
 blueprints; pass the factory as the optional third constructor argument when needed.
 
-Load `AppFormHelper` using CakePHP's helper `className` option. Explicit field types
+Load the helper in `AppView::initialize()`:
+
+```php
+use App\View\Helper\AppFormHelper;
+
+$this->addHelper('Form', ['className' => AppFormHelper::class]);
+```
+
+Now `$this->Form->bind($entity)->field('website')` infers `url`. Explicit field types
 still take priority over type inference. Override `FieldResolver::createFieldConventions()`
 to supply application-specific association or choice-list conventions. The default
 `FieldConventions` uses the binding and the rendering context's optional live
