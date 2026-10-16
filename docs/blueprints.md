@@ -325,6 +325,116 @@ use `$form->has('published')` to guard optional wrappers or manual parts. The ou
 session can explicitly request an omitted field; when manually rendering binding
 defaults, check `$form->binding->definition->has('published')` first.
 
+## Translate a blueprint
+
+Explicit strings in `Field` attributes are used as supplied. Translate them with
+CakePHP's I18n functions through deferred text closures or `configure()`. Choose
+the approach according to when the text needs to be resolved.
+
+### Deferred labels and help in attributes
+
+PHP 8.5 allows static closures in attribute arguments. Use a zero-argument closure
+for a translated label or help text:
+
+```php [src/Form/ArticleForm.php]
+<?php
+declare(strict_types=1);
+
+namespace App\Form;
+
+use FormCompose\Attribute\Field;
+use FormCompose\FormBlueprint;
+use function Cake\I18n\__;
+
+#[Field(
+    'title',
+    label: static function (): string {
+        return __('Article title');
+    },
+    help: static function (): string {
+        return __('Displayed above the article.');
+    },
+)]
+class ArticleForm extends FormBlueprint
+{
+}
+```
+
+The closure runs once each time that field is resolved with `field()` or through
+a rendering call such as `control()` or `definition()`. `bind()` alone keeps the
+closures as configuration. The resolved field stores the returned text using the
+locale active at resolution; reading state or rendering its parts does not run
+the closure again. Resolve a new field to obtain text for a different locale.
+
+Per-call options replace blueprint defaults before closures run, so an overridden
+closure is never evaluated. Resolving text renders no markup and registers no
+submitted inputs. Keep callbacks focused on producing text.
+
+A text closure takes no arguments and must return `string`, trusted `Html`,
+`false`, or `null`. Strings are escaped normally. `false` suppresses the label or
+help; an empty string renders a blank label or omits help; `null` restores the
+inferred label or omits help. Returning another type raises
+`InvalidArgumentException`; exceptions thrown by the closure propagate.
+
+PHP attribute closures must use `static function`, without captured variables.
+Arrow functions and direct calls such as `label: __('Article title')` are invalid
+in attribute arguments. Domain/context translation functions such as `__d()` and
+`__x()` can be called inside the closure body. Use `configure()` when translation
+needs request data or injected services.
+
+### Translate during configure()
+
+The runtime hook supports ordinary PHP expressions, including translated choice
+maps and labels with request-dependent arguments:
+
+```php
+// In a blueprint class; import FormBuilder, FormContext, and Cake\I18n\__.
+public function configure(FormBuilder $form, FormContext $context): void
+{
+    $form->with('title', [
+        'label' => __('Article title'),
+        'help' => __('Displayed above the article.'),
+    ]);
+    $form->add('status', ['options' => [
+        'draft' => __('Draft'),
+        'published' => __('Published'),
+    ]]);
+}
+```
+
+These translations run when the blueprint is compiled, using the locale active
+at that time. Set the request's locale before binding or rendering the blueprint.
+When text deliberately needs the locale at field resolution rather than at
+blueprint compilation, the hook also accepts label/help closures. Prefer arrow
+functions for simple runtime callbacks:
+
+```php
+// In configure(); import Cake\I18n\__.
+$form->with('title', [
+    'label' => static fn(): string => __('Article title'),
+    'help' => static fn(): string => __('Displayed above the article.'),
+]);
+```
+
+These callbacks defer translation until field resolution, following the same
+snapshot rules as attribute closures. For ordinary template calls such as
+`control()`, call `__()` directly in the options. Keep the full `static function`
+syntax for callbacks declared in PHP attribute arguments.
+
+### Translate enum choices
+
+For enum-backed choices, implement CakePHP's `EnumLabelInterface` and call
+translation functions in each case's `label()` method, or use CakePHP's
+`EnumLabelTrait` with its `Label` attributes. Then a field can use
+`options: ['options' => Status::class]` and obtain translated labels through that
+interface. See [backed enum choices](./choices.md#backed-enums) for the complete
+example.
+
+Only field `label` and `help` support deferred text closures. Use `configure()`
+for ordinary translated choice maps; closures inside `options` are not evaluated
+as choice labels. Validation-message translations remain in CakePHP's validation
+and application layers.
+
 ## Configuration order
 
 Inherited declarations establish defaults, then the concrete `configure()` hook

@@ -93,14 +93,35 @@ formats; false becomes `'0'` when rendered as a native scalar.
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |
-| `label` | `string`, `Html`, or `false` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
-| `help` | `string`, `Html`, or `false` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
+| `label` | `string`, `Html`, `false`, `null`, or `Closure` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
+| `help` | `string`, `Html`, `false`, `null`, or `Closure` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
 | `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
 
 `Html` means `FormCompose\Rendering\Html`, the explicit
 [trusted-markup wrapper](./template-reference.md#trusted-markup). Ordinary strings
 are escaped. `errors` toggles presentation; it does not replace validation messages.
 For radios and multi-checkboxes, the label is a group legend.
+
+Label/help closures take no arguments and return `string`, `Html`, `false`, or
+`null`. They run once per resolved field after blueprint defaults and per-call
+options merge. Returned strings are escaped; false suppresses the part; null uses
+the inferred label or omits help. Other return types throw
+`InvalidArgumentException`. Reading or rendering an already resolved field reuses
+its text. See [translating blueprints](./blueprints.md#translate-a-blueprint) for
+attribute syntax, locale timing, and runtime configuration examples.
+
+In a template, call translation functions directly:
+
+```php
+// Inside an open form; import Cake\I18n\__.
+echo $form->control('title', [
+    'label' => __('Article title'),
+    'help' => __('Displayed above the article.'),
+]);
+```
+
+Use deferred text when declaring translations in PHP attributes or when storing
+configuration whose text should be evaluated at field resolution.
 
 ## Constraints and state
 

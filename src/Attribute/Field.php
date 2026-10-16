@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Attribute;
 
 use Attribute;
+use Closure;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Rendering\Html;
 
@@ -14,6 +15,9 @@ use FormCompose\Rendering\Html;
  * inline controls; explicitly supplied type, label, and help override those keys.
  * Use options for explicit nulls and configuration outside the common shorthand.
  * Template arguments use the same normalization as ordinary control options.
+ * Label/help closures take no arguments and run once per resolved field, after
+ * blueprint and per-call options merge. For example, use a PHP 8.5 attribute
+ * label: static function (): string { return __('Article title'); }.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Field
@@ -23,6 +27,8 @@ final readonly class Field
      *
      * Keep existing positional arguments while exposing named presentation shorthand.
      *
+     * @param string|\FormCompose\Rendering\Html|false|null|\Closure():(string|\FormCompose\Rendering\Html|false|null) $label Label or deferred text.
+     * @param string|\FormCompose\Rendering\Html|false|null|\Closure():(string|\FormCompose\Rendering\Html|false|null) $help Help or deferred text.
      * @param array<string, mixed> $options Additional field options.
      * @param array<string, string>|null $templates Field part overrides.
      * @param array<string, mixed>|null $templateData Application-owned template variables.
@@ -31,8 +37,8 @@ final readonly class Field
     public function __construct(
         public string $path,
         public ?string $type = null,
-        public string|Html|false|null $label = null,
-        public string|Html|null $help = null,
+        public string|Html|Closure|false|null $label = null,
+        public string|Html|Closure|false|null $help = null,
         public array $options = [],
         public ?string $template = null,
         public ?array $templates = null,

@@ -12,9 +12,13 @@ use FormCompose\FormBlueprint;
  */
 #[Form('profile')]
 #[Field('name', label: 'Full <name>')]
-#[Field('email', type: 'email', label: 'Email', help: 'Use <work> email.', options: ['attributes' => [
-    'class' => 'original',
-]])]
+#[Field(
+    'email',
+    type: 'email',
+    label: 'Email',
+    help: 'Use <work> email.',
+    options: ['attributes' => ['class' => 'original']],
+)]
 #[Field('comments.0.body', options: ['value' => null])]
 #[Field('active', type: 'checkbox', label: false, options: ['value' => false])]
 #[Field('count', options: ['value' => 0])]

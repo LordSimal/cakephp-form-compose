@@ -17,7 +17,8 @@ use InvalidArgumentException;
  * Builds a BoundField from a context path and merged configuration.
  *
  * Combines compiled blueprint defaults and per-call overrides, normalizes the
- * template shorthand to templates['control'], infers a control type,
+ * template shorthand to templates['control'], evaluates deferred label/help text,
+ * infers a control type,
  * applies association conventions, resolves its value, and derives its input
  * name, ID, constraints, and errors.
  * The resulting field uses a registered custom type or the standard NativeType.
@@ -51,7 +52,7 @@ class FieldResolver
             $options,
         );
         FieldOptions::validate($options);
-        $options = TemplateOptions::normalize($conventions->resolve($path, $options));
+        $options = FieldText::resolve(TemplateOptions::normalize($conventions->resolve($path, $options)));
         $type = (string)($options['type'] ?? $this->inferType($path, $options));
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
             throw new InvalidArgumentException('Invalid control type.');

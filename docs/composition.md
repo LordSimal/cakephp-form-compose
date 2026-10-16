@@ -226,10 +226,14 @@ form does not load associations or authorize submitted changes.
 The normal `Embed` attribute accepts occurrence presentation options too:
 
 ```php
-#[Embed('author', AuthorForm::class, options: [
-    'template' => 'forms/post-author',
-    'templateData' => ['heading' => 'Written by'],
-])]
+#[Embed(
+    'author',
+    AuthorForm::class,
+    options: [
+        'template' => 'forms/post-author',
+        'templateData' => ['heading' => 'Written by'],
+    ],
+)]
 ```
 
 The selected element receives the scoped child as `$form`. It can call
