@@ -85,6 +85,7 @@ export default defineConfig({
           { text: 'Association fields', link: '/associations' },
           { text: 'Compose field parts', link: '/field-parts' },
           { text: 'Error summaries', link: '/error-summaries' },
+          { text: 'POST buttons and links', link: '/post-actions' },
           { text: 'Create a theme', link: '/themes' },
         ],
       },

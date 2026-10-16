@@ -39,6 +39,7 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 | Validation feedback | The existing CakePHP context supplies errors and constraints; `help` and `errors` parts associate with the input |
 | Reusable form configuration | Optional blueprints; templates still own layout |
 | CSRF, method overrides, tamper protection | Keep CakePHP middleware and FormProtectionComponent enabled; input rendering registers submitted names |
+| `postButton()` / `postLink()` | Helper shortcuts create independent protected forms; use `block` inside another form. See [POST actions](./post-actions.md). |
 
 FormCompose does not forward arbitrary top-level field options as HTML attributes
 or implement every core helper convenience method. Check the

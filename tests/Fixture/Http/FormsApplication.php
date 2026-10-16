@@ -8,6 +8,7 @@ use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
 use Cake\Http\Middleware\CsrfProtectionMiddleware;
 use Cake\Http\MiddlewareQueue;
+use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
 use Cake\Routing\RouteBuilder;
 use Cake\Routing\Router;
@@ -33,7 +34,8 @@ class FormsApplication extends BaseApplication
      */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
-        return $middlewareQueue->add(new BodyParserMiddleware())
+        return $middlewareQueue->add(new AssetMiddleware())
+            ->add(new BodyParserMiddleware())
             ->add(new RoutingMiddleware($this))
             ->add(new CsrfProtectionMiddleware());
     }
@@ -45,5 +47,7 @@ class FormsApplication extends BaseApplication
     {
         $routes->connect('/forms', ['controller' => 'Forms', 'action' => 'index']);
         $routes->connect('/forms/save', ['controller' => 'Forms', 'action' => 'save']);
+        $routes->connect('/actions', ['controller' => 'Actions', 'action' => 'index']);
+        $routes->connect('/actions/save', ['controller' => 'Actions', 'action' => 'save']);
     }
 }

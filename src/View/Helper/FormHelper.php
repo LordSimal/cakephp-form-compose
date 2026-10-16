@@ -12,6 +12,7 @@ use FormCompose\FormContext;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
+use FormCompose\Rendering\PostActionRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RendererInterface;
 use FormCompose\Rendering\Theme;
@@ -34,7 +35,60 @@ use InvalidArgumentException;
  */
 class FormHelper extends Helper
 {
+    /**
+     * Default presentation for bindings and standalone action helpers.
+     *
+     * @var array<string, mixed>
+     */
+    protected array $defaultConfig = ['theme' => 'Base'];
+
     protected int $sequence = 0;
+
+    protected ?PostActionRenderer $postActions = null;
+
+    /**
+     * Render a standalone protected action using a native submit button.
+     *
+     * @param array|string $url Cake route or URL.
+     * @param array<string, mixed> $options Method, locked data, form, block, confirm, and button presentation.
+     */
+    public function postButton(
+        string|Html $label,
+        array|string $url,
+        array $options = [],
+        Theme|string|null $theme = null,
+        ?RendererInterface $renderer = null,
+    ): string {
+        return ($this->postActions ??= $this->createPostActionRenderer())->render(
+            $label,
+            $url,
+            $options,
+            'button',
+            $this->actionRendering($theme, $renderer),
+        );
+    }
+
+    /**
+     * Render a protected action link, loading the external JavaScript enhancement once.
+     *
+     * @param array|string|null $url Cake route or URL; null uses the current request target.
+     * @param array<string, mixed> $options Method, locked data, form, block, confirm, and link presentation.
+     */
+    public function postLink(
+        string|Html $label,
+        array|string|null $url = null,
+        array $options = [],
+        Theme|string|null $theme = null,
+        ?RendererInterface $renderer = null,
+    ): string {
+        return ($this->postActions ??= $this->createPostActionRenderer())->render(
+            $label,
+            $url,
+            $options,
+            'link',
+            $this->actionRendering($theme, $renderer),
+        );
+    }
 
     /**
      * Bind and render a complete form using a blueprint class or alias.
@@ -83,13 +137,7 @@ class FormHelper extends Helper
             ? $data
             : $contextFactory
                 ->get($view->getRequest(), ['entity' => $data] + $contextOptions);
-        $theme = match ($theme) {
-            null, 'Base' => Theme::base(),
-            default => $theme,
-        };
-        if (!$theme instanceof Theme) {
-            throw new InvalidArgumentException('Use Base or a Theme instance.');
-        }
+        $theme = $this->resolveTheme($theme);
 
         $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
         unset($options['context'], $options['types']);
@@ -136,5 +184,50 @@ class FormHelper extends Helper
         BlueprintFactory $blueprints,
     ): FormSession {
         return new FormSession($binding, $rendering, $blueprints);
+    }
+
+    /**
+     * Select a per-call override, helper default, or the bundled base theme.
+     *
+     * Null inherits helper configuration; Base explicitly selects the base theme.
+     * Each binding retains the selected immutable theme independently of later config changes.
+     */
+    protected function resolveTheme(Theme|string|null $theme): Theme
+    {
+        /** @var mixed $selected */
+        $selected = $theme ?? $this->getConfig('theme');
+
+        return match ($selected) {
+            null, 'Base' => Theme::base(),
+            default => $selected instanceof Theme
+                ? $selected
+                : throw new InvalidArgumentException('Use Base or a Theme instance.'),
+        };
+    }
+
+    /**
+     * Supply action presentation without constructing a second helper or form lifecycle.
+     */
+    protected function actionRendering(Theme|string|null $theme, ?RendererInterface $renderer): RenderContext
+    {
+        $theme = $this->resolveTheme($theme);
+
+        return new RenderContext($renderer ?? new PhpRenderer($this->getView(), $theme), $theme);
+    }
+
+    /**
+     * Replace action placement or script behavior through the helper's normal extension point.
+     */
+    protected function createPostActionRenderer(): PostActionRenderer
+    {
+        return new PostActionRenderer(
+            $this->getView(),
+            fn(array $options, RenderContext $rendering): FormSession => $this->bind(
+                null,
+                $options,
+                $rendering->theme,
+                $rendering->renderer,
+            ),
+        );
     }
 }
