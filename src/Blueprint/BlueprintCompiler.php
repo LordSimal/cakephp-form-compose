@@ -80,7 +80,7 @@ class BlueprintCompiler
     }
 
     /**
-     * Expand ordinary definitions through the same scoped resolver used by blueprints.
+     * Expand internal composition records through the blueprint's scoped resolver.
      */
     public function expand(FormDefinition $definition, FormContext $context): FormDefinition
     {

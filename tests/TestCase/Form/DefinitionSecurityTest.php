@@ -109,13 +109,14 @@ class DefinitionSecurityTest extends CompositionTestCase
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $child = $this->factory->definition(InputForm::class, $this->context())
-            ->add(FieldDefinition::make('active', 'checkbox'));
-        $form = $helper->bind(
-            new ArrayContext([
+            ->add(new FieldDefinition('active', ['type' => 'checkbox']));
+        $form = $this->bindCompiled(
+            new FormDefinition([])->embed('billing', $child),
+            helper: $helper,
+            data: new ArrayContext([
                 'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
             ]),
-            ['type' => 'file', 'url' => '/articles/save'],
-            definition: FormDefinition::make()->embed('billing', $child),
+            options: ['type' => 'file', 'url' => '/articles/save'],
         );
         $html = $form->open() . $form->definition() . $form->close();
         $xpath = $this->xpath($html);
@@ -143,11 +144,11 @@ class DefinitionSecurityTest extends CompositionTestCase
 
     public function testMultipartFailureRollsBackEarlierControlsInTheDefinition(): void
     {
-        $definition = FormDefinition::make()->embed('billing', $this->factory->definition(
+        $definition = new FormDefinition([])->embed('billing', $this->factory->definition(
             InputForm::class,
             $this->context(),
         ));
-        $form = $this->helper()->bind(definition: $definition);
+        $form = $this->bindCompiled($definition, helper: $this->helper());
         $form->open();
         try {
             $form->definition();

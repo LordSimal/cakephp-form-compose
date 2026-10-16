@@ -4,9 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\Container\Container;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\AuthorNameForm;
 use FormCompose\Test\Fixture\Blueprint\CustomBlueprintFactory;
 use FormCompose\Test\Fixture\Composition\CustomCompositionHelper;
 use FormCompose\Test\Fixture\Composition\DynamicPostForm;
@@ -19,11 +18,7 @@ class DefinitionExtensionTest extends CompositionTestCase
     public function testApplicationDefinitionRendererWorksThroughOrdinaryBinding(): void
     {
         $helper = new CustomCompositionHelper($this->helper()->getView());
-        $definition = FormDefinition::make()->embed(
-            'author',
-            FormDefinition::make()->add(FieldDefinition::make('name')),
-        );
-        $form = $helper->bind(definition: $definition);
+        $form = $helper->bind(definition: AuthorNameForm::class);
         $html = $form->open() . $form->definition() . $form->close();
         static::assertStringContainsString('name="author[name]"', $html);
         static::assertStringContainsString('Application layout field', $html);
@@ -38,6 +33,9 @@ class DefinitionExtensionTest extends CompositionTestCase
         );
         $form = $helper->bind(definition: DynamicPostForm::class);
         $html = $form->open() . $form->definition() . $form->close();
+        static::assertStringContainsString('Runtime &lt;field&gt;', $html);
+        static::assertStringContainsString('id="form-compose-1-body-help"', $html);
+        static::assertStringContainsString('aria-describedby="form-compose-1-body-help"', $html);
         static::assertStringContainsString('name="custom"', $html);
         static::assertStringContainsString('name="author[first_name]"', $html);
         static::assertNotNull($form->binding->definition);

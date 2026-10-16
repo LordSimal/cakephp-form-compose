@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase;
 
-use FormCompose\Field\FieldDefinition;
 use FormCompose\FormBlueprint;
 use FormCompose\FormBuilder;
 use FormCompose\FormDefinition;
@@ -27,7 +26,7 @@ class BlueprintFailureTest extends FormTestCase
     public function testBuilderSnapshotsAreIndependentAndPreserveOrder(): void
     {
         $builder = new FormBuilder();
-        $builder->add(FieldDefinition::make('name'))->add(FieldDefinition::make('email', 'email'));
+        $builder->add('name', [])->add('email', ['type' => 'email']);
         $original = $builder->build();
         $builder->with('email', ['label' => false, 'value' => null])->remove('name');
         static::assertSame(['name', 'email'], array_column($original->fields, 'path'));

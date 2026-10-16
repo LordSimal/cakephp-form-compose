@@ -9,7 +9,6 @@ use Cake\View\Helper;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormContext;
-use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
@@ -38,7 +37,7 @@ class FormHelper extends Helper
     protected int $sequence = 0;
 
     /**
-     * Bind and render a complete form using a blueprint or ordinary definition.
+     * Bind and render a complete form using a blueprint class or alias.
      *
      * Includes a translated Submit button unless a label or false is supplied.
      * Uses bind() and the returned session's render(), preserving application overrides.
@@ -48,7 +47,7 @@ class FormHelper extends Helper
      * @param array<string, mixed> $submitOptions Button attributes and presentation options.
      */
     public function render(
-        FormDefinition|string $definition,
+        string $definition,
         mixed $data = null,
         array $options = [],
         string|Html|false|null $submit = null,
@@ -68,7 +67,7 @@ class FormHelper extends Helper
         array $options = [],
         Theme|string|null $theme = null,
         ?RendererInterface $renderer = null,
-        FormDefinition|string|null $definition = null,
+        ?string $definition = null,
     ): FormSession {
         $view = $this->getView();
         /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
@@ -98,18 +97,12 @@ class FormHelper extends Helper
         /** @var list<string> $valueSources */
         $valueSources = $options['valueSources'] ?? ['data', 'context'];
         $formContext = new FormContext($context, $view->getRequest(), valueSources: $valueSources);
-        if (is_string($definition)) {
-            $definition = $factory->definition($definition, $formContext);
-        }
-
-        if ($definition instanceof FormDefinition) {
-            $definition = $factory->expand($definition, $formContext);
-        }
+        $compiled = $definition === null ? null : $factory->definition($definition, $formContext);
 
         $types = $factory->lazyTypes($types);
 
         return $this->createSession(
-            new FormBinding($context, $view->getRequest(), $id, $options, $definition),
+            new FormBinding($context, $view->getRequest(), $id, $options, $compiled),
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
             $factory,
         );

@@ -23,7 +23,7 @@ class DefinitionViewTest extends CompositionTestCase
 
         $view = new DefinitionView($form, $definition, 'author');
         $html = $view->controls([
-            FieldDefinition::make('first_name')->label('Given <name>'),
+            'first_name' => ['label' => 'Given <name>'],
             'last_name' => ['label' => 'Family name'],
             'internal',
         ]);
@@ -45,14 +45,14 @@ class DefinitionViewTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new DefinitionView($form, FormDefinition::make());
+        $view = new DefinitionView($form, new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->controls(['typo']);
     }
 
     public function testLayoutBatchesValidateAllSyntaxBeforeRendering(): void
     {
-        $definition = FormDefinition::make()->add(FieldDefinition::make('name'));
+        $definition = new FormDefinition([])->add(new FieldDefinition('name'));
         $form = $this->helper()->bind();
         $form->open();
 
@@ -72,13 +72,13 @@ class DefinitionViewTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new class($form, FormDefinition::make()->add(FieldDefinition::make('name'))) extends DefinitionView {
+        $view = new class($form, new FormDefinition([])->add(new FieldDefinition('name'))) extends DefinitionView {
             /**
              * Decorate controls through the public extension point.
              *
              * @param array<string, mixed> $options Field options.
              */
-            public function control(string|FieldDefinition $field, array $options = []): string
+            public function control(string $field, array $options = []): string
             {
                 return '<section data-layout-batch>' . parent::control($field, $options) . '</section>';
             }

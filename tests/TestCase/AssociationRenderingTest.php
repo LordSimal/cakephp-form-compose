@@ -83,9 +83,9 @@ class AssociationRenderingTest extends AssociationTestCase
         $helper = $this->helper();
         $helper->getView()->set('tags', ['php' => 'PHP', 'css' => 'CSS', 'cake' => 'CakePHP']);
         $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        $definition = FormDefinition::make()->add(FieldDefinition::make('tags._ids', 'multicheckbox'));
+        $definition = new FormDefinition([])->add(new FieldDefinition('tags._ids', ['type' => 'multicheckbox']));
         $form->open();
-        $html = $form->definition($definition);
+        $html = $form->renderDefinition($definition);
         $form->close();
         $xpath = $this->xpath($html);
 

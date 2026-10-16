@@ -19,15 +19,17 @@ class ErrorSummarySecurityTest extends FormTestCase
     public function testSummaryAndOrdinaryRenderingAcceptTheSamePayload(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $definition = FormDefinition::make()->add(FieldDefinition::make('id', 'hidden'))->add(FieldDefinition::make(
-            'title',
-        ));
+        $definition = new FormDefinition([])->add(new FieldDefinition('id', [
+            'type' => 'hidden',
+        ]))->add(new FieldDefinition('title'));
         $context = new ArrayContext([
             'defaults' => ['id' => 42, 'title' => 'Value'],
             'errors' => ['title' => ['invalid' => 'Fix title']],
         ]);
         foreach ([false, true] as $summary) {
-            $form = $helper->bind($context, ['url' => '/articles/save'], definition: $definition);
+            $form = $this->bindCompiled($definition, helper: $helper, data: $context, options: [
+                'url' => '/articles/save',
+            ]);
             $html = $form->render(options: ['errorSummary' => $summary]);
             $tokens = [];
             /** @var NodeList<Element>|false $nodes */

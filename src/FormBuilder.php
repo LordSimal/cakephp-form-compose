@@ -44,28 +44,28 @@ class FormBuilder
 
     /**
      * Append a field; duplicate paths are rejected.
+     *
+     * @param array<string, mixed> $options Field configuration.
      */
-    public function add(FieldDefinition $field): static
+    public function add(string $path, array $options = []): static
     {
-        $this->definition = $this->definition->add($field);
+        $this->definition = $this->definition->add(new FieldDefinition($path, $options));
 
         return $this;
     }
 
     /**
-     * Append an association definition, resolving strings in the current hook's context.
+     * Append a child blueprint in the current hook's scoped context.
      *
      * @param array<string, mixed> $options Occurrence presentation.
      */
-    public function embed(string $path, FormDefinition|string $definition, array $options = []): static
+    public function embed(string $path, string $definition, array $options = []): static
     {
-        if (is_string($definition)) {
-            if (!$this->resolver instanceof Closure) {
-                throw new LogicException('Blueprint embedding requires a builder supplied by BlueprintFactory.');
-            }
-
-            $definition = ($this->resolver)($path, $definition);
+        if (!$this->resolver instanceof Closure) {
+            throw new LogicException('Blueprint embedding requires a builder supplied by BlueprintFactory.');
         }
+
+        $definition = ($this->resolver)($path, $definition);
 
         $this->definition = $this->definition->embed($path, $definition, $options);
         if ($this->expansion instanceof Closure) {
@@ -96,7 +96,7 @@ class FormBuilder
      */
     public function embedMany(
         string $path,
-        FormDefinition|string $definition,
+        string $definition,
         ?array $keys = null,
         array $options = [],
     ): static {
@@ -147,6 +147,8 @@ class FormBuilder
 
     /**
      * Return the current immutable configuration, independently of further changes.
+     *
+     * @internal Compiler snapshot; applications configure the supplied builder.
      */
     public function build(): FormDefinition
     {

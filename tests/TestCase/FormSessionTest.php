@@ -9,14 +9,14 @@ use Cake\I18n\Package;
 use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\CompositionTestCase;
-use FormCompose\Test\Fixture\Blueprint\Valid\InputForm;
+use FormCompose\Test\Fixture\Authoring\EmailForm;
+use FormCompose\Test\Fixture\Authoring\LocalEmailForm;
+use FormCompose\Test\Fixture\Authoring\SecureForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use LogicException;
 use RuntimeException;
@@ -49,9 +49,9 @@ class FormSessionTest extends CompositionTestCase
 
     public function testAnExplicitDefinitionRendersLocallyWithoutReplacingBindingDefaults(): void
     {
-        $defaults = FormDefinition::make()->add(FieldDefinition::make('email', 'email')->label('Default email'));
-        $form = $this->helper()->bind(definition: $defaults);
-        $html = $form->render(FormDefinition::make()->add(FieldDefinition::make('email')->label('Local email')));
+        $form = $this->helper()->bind(definition: EmailForm::class);
+        $defaults = $form->binding->definition;
+        $html = $form->render(LocalEmailForm::class);
         static::assertStringContainsString('Local email', $html);
         static::assertStringContainsString('type="email"', $html);
         static::assertSame($defaults, $form->binding->definition);
@@ -107,14 +107,8 @@ class FormSessionTest extends CompositionTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['csrfToken' => $csrf, 'formTokenData' => []]);
-        $definition = FormDefinition::make()
-            ->embed(
-                'author',
-                FormDefinition::make()->add(FieldDefinition::make('id', 'hidden')->with(['value' => '7'])),
-            )
-            ->embed('inputs', $this->factory->definition(InputForm::class, $this->context()));
         $html = $helper->render(
-            $definition,
+            SecureForm::class,
             new ArrayContext(['data' => ['inputs' => ['tags' => ['b'], 'status' => 'a']]]),
             ['type' => 'file', 'method' => 'patch', 'url' => '/articles/save'],
             submitOptions: ['name' => 'save', 'value' => 'yes'],
@@ -159,7 +153,7 @@ class FormSessionTest extends CompositionTestCase
             ->definition(PostForm::class, $this->context())
             ->presentation(['template' => 'composition/failure']);
         $helper = $this->helper();
-        $form = $helper->bind(definition: $definition);
+        $form = $this->bindCompiled($definition, helper: $helper);
         ob_start();
         try {
             $form->render();

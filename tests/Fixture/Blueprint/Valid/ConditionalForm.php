@@ -5,7 +5,6 @@ namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\FormBlueprint;
 use FormCompose\FormBuilder;
 use FormCompose\FormContext;
@@ -38,9 +37,15 @@ class ConditionalForm extends FormBlueprint
             'label' => $context->context->val('label'),
             'templateData' => ['calls' => ++$this->calls],
         ]);
-        $form->add(FieldDefinition::make('kind')->with(['options' => $this->choices->all()]));
+        $form->add(
+            'kind',
+            ['options' => $this->choices->all()],
+        );
         if ($context->request->getAttribute('canManageAccounts') === true) {
-            $form->add(FieldDefinition::make('active', 'checkbox')->label('Account enabled'));
+            $form->add(
+                'active',
+                ['type' => 'checkbox', 'label' => 'Account enabled'],
+            );
         }
     }
 }

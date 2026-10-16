@@ -20,7 +20,7 @@ public function bind(
     array $options = [],
     Theme|string|null $theme = null,
     ?RendererInterface $renderer = null,
-    FormDefinition|string|null $definition = null,
+    ?string $definition = null,
 ): FormSession;
 ```
 
@@ -37,8 +37,7 @@ $form = $this->Form->bind($article, [
 
 `$theme` accepts null, `'Base'`, or a `FormCompose\Rendering\Theme` instance.
 Other strings fail. `$renderer` accepts a `RendererInterface`; omitted, it uses
-`PhpRenderer`. `$definition` accepts a `FormDefinition`, blueprint class name, or
-discovered alias. It installs field defaults without rendering a collection.
+`PhpRenderer`. `$definition` accepts a blueprint class name or discovered alias. It installs field defaults without rendering a collection.
 
 ### Binding options
 
@@ -114,7 +113,7 @@ when customizing infrastructure markup.
 ## control() {#control}
 
 ```php
-public function control(string|FieldDefinition $field, array $options = []): string;
+public function control(string $field, array $options = []): string;
 ```
 
 Resolves a field and renders its complete presentation using its control element.
@@ -130,7 +129,7 @@ echo $form->control('title', [
 
 A string is a context path, not a submitted bracket name. For example,
 `comments.0.body` resolves nested metadata and submits `comments[0][body]`.
-Explicit field definitions and per-call options override selected binding defaults.
+Per-call options override selected blueprint defaults.
 
 ## controls() {#controls}
 
@@ -139,15 +138,13 @@ public function controls(array $fields): string;
 ```
 
 Renders a batch in order, adding no wrapper. Accepted entries are indexed path
-strings, indexed `FieldDefinition` objects, or `path => options` pairs.
+strings or `path => options` pairs.
 
 ```php
-use FormCompose\Field\FieldDefinition;
-
 echo $form->controls([
     'title',
     'body' => ['type' => 'textarea'],
-    FieldDefinition::make('published', 'checkbox'),
+    'published' => ['type' => 'checkbox'],
 ]);
 ```
 
@@ -158,7 +155,7 @@ roll back their input registrations, preserving previously rendered inputs.
 ## field() {#field}
 
 ```php
-public function field(string|FieldDefinition $field, array $options = []): BoundField;
+public function field(string $field, array $options = []): BoundField;
 ```
 
 Returns a resolved snapshot without HTML or input-registration side effects.
@@ -177,7 +174,7 @@ See [Bound fields](./field-reference.md) for state and part methods.
 
 ```php
 public function definition(
-    FormDefinition|string|null $definition = null,
+    ?string $definition = null,
     ?string $at = null,
     array $options = [],
 ): string;
@@ -205,7 +202,7 @@ See [layouts and composition](./composition.md) for examples.
 ```php
 public function embedMany(
     string $path,
-    FormDefinition|string|RepeatedDefinition $definition,
+    string $definition,
     ?array $keys = null,
     array $options = [],
 ): string;
@@ -213,8 +210,8 @@ public function embedMany(
 
 Render rows at an association path inside the open session. Null `keys` infers
 original keys using binding value sources; `[]` renders no rows. Options select
-the repeated wrapper and collection-owned error presentation. Passing an already
-compiled `RepeatedDefinition` preserves its row hooks and parent adjustments.
+the repeated wrapper and collection-owned error presentation. Use layout `embeddedMany()` to render already compiled rows while preserving
+their hook results and parent adjustments.
 See [Repeated embeds](./repeated-embeds.md) for layouts and blank-row selection.
 
 ## submit() {#submit}
@@ -263,7 +260,7 @@ The helper creates a session; the session version uses an existing fresh binding
 
 ```php [FormHelper::render()]
 public function render(
-    FormDefinition|string $definition,
+    string $definition,
     mixed $data = null,
     array $options = [],
     string|Html|false|null $submit = null,
@@ -273,7 +270,7 @@ public function render(
 
 ```php [FormSession::render()]
 public function render(
-    FormDefinition|string|null $definition = null,
+    ?string $definition = null,
     array $options = [],
     string|Html|false|null $submit = null,
     array $submitOptions = [],

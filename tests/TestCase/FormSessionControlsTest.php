@@ -6,14 +6,13 @@ namespace FormCompose\Test\TestCase;
 use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormPhase;
-use FormCompose\FormDefinition;
 use FormCompose\FormSession;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\EmailForm;
 use FormCompose\Test\Fixture\ContactFormHelper;
 use InvalidArgumentException;
 use LogicException;
@@ -27,13 +26,12 @@ class FormSessionControlsTest extends CompositionTestCase
     public function testMixedBatchControlsPreserveDefaultsOverridesAndExtensions(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $defaults = FormDefinition::make()->add(FieldDefinition::make('email', 'email')->label('Default email'));
-        $form = $helper->bind(definition: $defaults);
+        $form = $helper->bind(definition: EmailForm::class);
         $form->open();
 
         $html = $form->controls([
             'website',
-            FieldDefinition::make('email')->label('Work <email>'),
+            'email' => ['label' => 'Work <email>'],
             'author.name' => ['value' => 'Ada', 'label' => false],
         ]);
         static::assertStringContainsString('type="url"', $html);
@@ -58,7 +56,7 @@ class FormSessionControlsTest extends CompositionTestCase
              *
              * @param array<string, mixed> $options Field options.
              */
-            public function control(string|FieldDefinition $field, array $options = []): string
+            public function control(string $field, array $options = []): string
             {
                 return '<section data-custom-control>' . parent::control($field, $options) . '</section>';
             }

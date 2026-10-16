@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+namespace FormCompose\Test\Fixture\Authoring;
+
+use FormCompose\Attribute\Field;
+use FormCompose\FormBlueprint;
+
+/**
+ * Supplies a minimal blueprint for application authoring integration tests.
+ */
+#[Field('email', label: 'Local email')]
+#[Field('extra')]
+class LocalEmailForm extends FormBlueprint
+{
+}

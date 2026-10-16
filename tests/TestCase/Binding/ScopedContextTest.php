@@ -21,11 +21,17 @@ class ScopedContextTest extends AssociationTestCase
         /** @var list<Entity> $comments */
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['invalid' => '<Invalid comment>']);
-        $definition = FormDefinition::make()
-            ->embed('details', new FormDefinition([FieldDefinition::make('id'), FieldDefinition::make('summary')]))
-            ->embed('comments.0', new FormDefinition([FieldDefinition::make('id'), FieldDefinition::make('body')]));
-        $form = $this->helper(['comments' => [['body' => 'Submitted <comment>']]])
-            ->bind($article, ['context' => ['table' => $this->articles]], definition: $definition);
+        $definition = new FormDefinition([])->embed('details', new FormDefinition([
+            new FieldDefinition('id'),
+            new FieldDefinition('summary'),
+        ]))
+            ->embed('comments.0', new FormDefinition([new FieldDefinition('id'), new FieldDefinition('body')]));
+        $form = $this->bindCompiled(
+            $definition,
+            helper: $this->helper(['comments' => [['body' => 'Submitted <comment>']]]),
+            data: $article,
+            options: ['context' => ['table' => $this->articles]],
+        );
         $html = $form->open() . $form->definition() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//input[@name="comments[0][id]"][@type="hidden"][@value="10"])'));

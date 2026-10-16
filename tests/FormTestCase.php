@@ -7,6 +7,14 @@ use Cake\Http\ServerRequest;
 use Cake\View\View;
 use Dom\HTMLDocument;
 use Dom\XPath;
+use FormCompose\Binding\FormBinding;
+use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\FormContext;
+use FormCompose\FormDefinition;
+use FormCompose\FormSession;
+use FormCompose\Rendering\PhpRenderer;
+use FormCompose\Rendering\RenderContext;
+use FormCompose\Rendering\Theme;
 use FormCompose\View\Helper\FormHelper;
 use PHPUnit\Framework\TestCase;
 use const Dom\HTML_NO_DEFAULT_NS;
@@ -32,6 +40,50 @@ abstract class FormTestCase extends TestCase
         }
 
         return new FormHelper(new View($request));
+    }
+
+    /**
+     * Bind an internal compiled snapshot for configuration and renderer unit tests.
+     *
+     * Application-facing tests use blueprint class names through FormHelper::bind().
+     * @param array<string, mixed> $options Binding options.
+     */
+    protected function bindCompiled(
+        FormDefinition $definition,
+        ?FormHelper $helper = null,
+        mixed $data = null,
+        array $options = [],
+    ): FormSession {
+        $helper ??= $this->helper();
+        $base = $helper->bind($data, $options);
+        $binding = $base->binding;
+        /** @var mixed $factory */
+        $factory = $helper->getConfig('blueprintFactory');
+        $factory = $factory instanceof BlueprintFactory
+            ? $factory
+            : new BlueprintFactory();
+        $definition = $factory->expand($definition, FormContext::fromBinding($binding));
+        $theme = Theme::base();
+
+        /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
+        $types = $options['types'] ?? [];
+
+        return new FormSession(
+            new FormBinding(
+                $binding->context,
+                $binding->request,
+                $binding->id,
+                $binding->options,
+                $definition,
+            ),
+            new RenderContext(
+                new PhpRenderer($helper->getView(), $theme),
+                $theme,
+                $factory->lazyTypes($types),
+                $helper->getView()->get(...),
+            ),
+            $factory,
+        );
     }
 
     /**

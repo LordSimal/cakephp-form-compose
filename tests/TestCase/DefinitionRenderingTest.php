@@ -12,21 +12,20 @@ use FormCompose\Test\FormTestCase;
 use LogicException;
 
 /**
- * Exercises reusable configuration through the ordinary form rendering lifecycle.
+ * Exercises internal compiled configuration through the shared rendering lifecycle.
  */
 class DefinitionRenderingTest extends FormTestCase
 {
     public function testCollectionsRenderAtTheirCallSitesAlongsideOrdinaryControls(): void
     {
-        $contact = FormDefinition::make()
-            ->add(FieldDefinition::make('name'))
-            ->add(FieldDefinition::make('email', 'email'));
-        $details = FormDefinition::make()->add(FieldDefinition::make('notes'));
+        $contact = new FormDefinition([])->add(new FieldDefinition('name'))
+            ->add(new FieldDefinition('email', ['type' => 'email']));
+        $details = new FormDefinition([])->add(new FieldDefinition('notes'));
         $form = $this->helper()->bind();
         $html = $form->open() . $form->control('company');
-        $html .= $form->definition($contact);
+        $html .= $form->renderDefinition($contact);
         $html .= $form->control('phone');
-        $html .= $form->definition($details);
+        $html .= $form->renderDefinition($details);
         $html .= $form->submit('Save') . $form->close();
 
         $matches = [];
@@ -38,15 +37,18 @@ class DefinitionRenderingTest extends FormTestCase
 
     public function testReuseResolvesEachSessionsDataWithoutLeakingOptions(): void
     {
-        $contact = FormDefinition::make()->add(FieldDefinition::make('email', 'email')->label('Account email'));
+        $contact = new FormDefinition([])->add(new FieldDefinition('email', [
+            'type' => 'email',
+            'label' => 'Account email',
+        ]));
         $helper = $this->helper();
         $first = $helper->bind(new ArrayContext(['data' => ['email' => 'first@example.test']]));
         $second = $helper->bind(new ArrayContext(['data' => ['email' => 'second@example.test']]));
         $first->open();
-        $firstHtml = $first->definition($contact->with('email', ['label' => 'Work email']));
+        $firstHtml = $first->renderDefinition($contact->with('email', ['label' => 'Work email']));
         $first->close();
         $second->open();
-        $secondHtml = $second->definition($contact);
+        $secondHtml = $second->renderDefinition($contact);
         $second->close();
 
         static::assertStringContainsString('Work email', $firstHtml);
@@ -55,8 +57,8 @@ class DefinitionRenderingTest extends FormTestCase
         static::assertStringContainsString('value="second@example.test"', $secondHtml);
         static::assertStringNotContainsString('first@example.test', $secondHtml);
         static::assertNotSame(
-            $first->field($contact->field('email'))->state->id,
-            $second->field($contact->field('email'))->state->id,
+            $first->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
+            $second->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
         );
         static::assertSame('text', $first->field('email')->state->type);
         static::assertSame([], $first->field('email')->state->options);
@@ -65,13 +67,15 @@ class DefinitionRenderingTest extends FormTestCase
 
     public function testSelectedFieldsSupportManualCompositionAndInlineOverrides(): void
     {
-        $contact = FormDefinition::make()
-            ->add(FieldDefinition::make('name'))
-            ->add(FieldDefinition::make('email', 'email')->label('Email')->help('<Work address>'));
+        $contact = new FormDefinition([])->add(new FieldDefinition('name'))
+            ->add(new FieldDefinition('email', ['type' => 'email', 'label' => 'Email', 'help' => '<Work address>']));
         $form = $this->helper(['email' => 'posted@example.test'])->bind();
-        $email = $form->field($contact->field('email'), ['label' => 'Contact address']);
+        $email = $form->field($contact->field('email')->path, array_replace($contact->field('email')->options, [
+            'label' => 'Contact address',
+        ]));
         $form->open();
-        $html = $form->control($contact->field('name')) . $form->control('phone');
+        $html =
+            $form->control($contact->field('name')->path, $contact->field('name')->options) . $form->control('phone');
         $html .= $email->label() . $email->input() . $email->help() . $email->errors();
         $form->close();
 
@@ -87,9 +91,9 @@ class DefinitionRenderingTest extends FormTestCase
     {
         $helper = new ContactFormHelper($this->helper()->getView());
         $form = $helper->bind(theme: new Theme(layers: ['themes/application']));
-        $definition = FormDefinition::make()->add(FieldDefinition::make('website')->with(['variant' => 'compact']));
+        $definition = new FormDefinition([])->add(new FieldDefinition('website', ['variant' => 'compact']));
         $form->open();
-        $html = $form->definition($definition);
+        $html = $form->renderDefinition($definition);
         $form->close();
 
         static::assertStringContainsString('data-variant="compact"', $html);
@@ -102,7 +106,7 @@ class DefinitionRenderingTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
-        static::assertSame('', $form->definition(FormDefinition::make()));
+        static::assertSame('', $form->renderDefinition(new FormDefinition([])));
         static::assertStringContainsString('name="name"', $form->control('name'));
         $form->close();
     }
@@ -110,7 +114,7 @@ class DefinitionRenderingTest extends FormTestCase
     public function testDefinitionsRequireAnOpenFormEvenWhenEmpty(): void
     {
         $this->expectException(LogicException::class);
-        $this->helper()->bind()->definition(FormDefinition::make());
+        $this->helper()->bind()->renderDefinition(new FormDefinition([]));
     }
 
     public function testDefinitionsCannotRenderAfterClosing(): void
@@ -119,15 +123,15 @@ class DefinitionRenderingTest extends FormTestCase
         $form->open();
         $form->close();
         $this->expectException(LogicException::class);
-        $form->definition(FormDefinition::make()->add(FieldDefinition::make('email')));
+        $form->renderDefinition(new FormDefinition([])->add(new FieldDefinition('email')));
     }
 
     public function testRepeatedInputsAcrossDefinitionsAreRejected(): void
     {
         $form = $this->helper()->bind();
         $form->open();
-        $form->definition(FormDefinition::make()->add(FieldDefinition::make('email')));
+        $form->renderDefinition(new FormDefinition([])->add(new FieldDefinition('email')));
         $this->expectException(LogicException::class);
-        $form->definition(new FormDefinition([FieldDefinition::make('email', 'email')]));
+        $form->renderDefinition(new FormDefinition([new FieldDefinition('email', ['type' => 'email'])]));
     }
 }

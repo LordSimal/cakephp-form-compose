@@ -18,6 +18,6 @@ class CustomBlueprintCompiler extends BlueprintCompiler
      */
     protected function createBuilder(FormDefinition $definition): FormBuilder
     {
-        return new FormBuilder($definition->add(FieldDefinition::make('custom')->label('Custom builder')));
+        return new CustomFormBuilder($definition->add(new FieldDefinition('custom', ['label' => 'Custom builder'])));
     }
 }

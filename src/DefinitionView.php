@@ -5,7 +5,6 @@ namespace FormCompose;
 
 use FormCompose\Field\BoundField;
 use FormCompose\Field\ControlList;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
@@ -42,26 +41,11 @@ class DefinitionView
      * @param array<string, mixed> $options Per-call field overrides.
      * @throws \InvalidArgumentException For removed or unknown fields; guard optional parts with has().
      */
-    public function field(string|FieldDefinition $field, array $options = []): BoundField
+    public function field(string $field, array $options = []): BoundField
     {
-        return $this->session->field($this->configured($field), $options);
-    }
+        $configured = $this->definition->field($field);
 
-    /**
-     * Combine relative configuration with explicit definition overrides.
-     */
-    protected function configured(string|FieldDefinition $field): FieldDefinition
-    {
-        $path = $field instanceof FieldDefinition ? $field->path : $field;
-        $configured = $this->definition->field($path);
-
-        return new FieldDefinition(
-            $this->qualify($path),
-            array_replace(
-                $configured->options,
-                $field instanceof FieldDefinition ? $field->options : [],
-            ),
-        );
+        return $this->session->field($this->qualify($field), array_replace($configured->options, $options));
     }
 
     /**
@@ -69,14 +53,15 @@ class DefinitionView
      *
      * @param array<string, mixed> $options Per-call field overrides.
      */
-    public function control(string|FieldDefinition $field, array $options = []): string
+    public function control(string $field, array $options = []): string
     {
-        $path = $field instanceof FieldDefinition ? $field->path : $field;
-        if ($this->definition->index->wasRemoved($path)) {
+        if ($this->definition->index->wasRemoved($field)) {
             return '';
         }
 
-        return $this->session->control($this->configured($field), $options);
+        $configured = $this->definition->field($field);
+
+        return $this->session->control($this->qualify($field), array_replace($configured->options, $options));
     }
 
     /**
@@ -85,7 +70,7 @@ class DefinitionView
      * Like control(), removed fields produce nothing and unknown fields fail.
      * Calls this view's control() so subclasses retain their layout behavior.
      *
-     * @param array<array-key, mixed> $fields Indexed paths/definitions or paths mapped to options.
+     * @param array<array-key, mixed> $fields Indexed paths or paths mapped to options.
      * @throws \InvalidArgumentException For invalid entries or unknown fields.
      */
     public function controls(array $fields): string
@@ -93,7 +78,7 @@ class DefinitionView
         $definitions = ControlList::normalize($fields);
         $html = '';
         foreach ($definitions as $definition) {
-            $html .= $this->control($definition);
+            $html .= $this->control($definition->path, $definition->options);
         }
 
         return $html;
@@ -110,7 +95,7 @@ class DefinitionView
             return '';
         }
 
-        return $this->session->definition(
+        return $this->session->renderDefinition(
             $this->definition->embedded($path),
             at: $this->qualify($path),
             options: array_replace(
@@ -127,7 +112,7 @@ class DefinitionView
      */
     public function render(array $options = []): string
     {
-        return $this->session->definition(
+        return $this->session->renderDefinition(
             $this->definition,
             at: $this->path === '' ? null : $this->path,
             options: $options,
@@ -149,7 +134,7 @@ class DefinitionView
             $this->definition->index->repeats[$path] ?? throw new InvalidArgumentException('Unknown repeated embed: '
                 . $path);
 
-        return $this->session->embedMany($this->qualify($path), $repeat, options: $options);
+        return $this->session->renderRepeated($this->qualify($path), $repeat, $options);
     }
 
     /**

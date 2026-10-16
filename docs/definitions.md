@@ -1,162 +1,99 @@
 ---
-title: Field definitions
-description: Understand reusable field configuration, share collections across forms, and choose when a blueprint helps.
+title: Reusable forms
+description: Choose inline controls for local configuration and blueprints for reusable forms.
 ---
 
-# Field definitions
+# Reusable forms
 
-Start with inline `control()` calls. When the same labels, choices, or help text
-repeat across screens, extract that configuration. Values and validation still
-come from whichever entity or context you bind.
+Start with inline controls. Move recurring form configuration into a blueprint
+when a named form, injected services, conditional fields, or embedded sections help.
+Both use the same field options, PHP templates, binding, and submission protection.
 
 ## Choose the right layer
 
-| Object | Responsibility | Example use |
-| --- | --- | --- |
-| `FieldDefinition` | Immutable configuration for one field | Reuse the title's label and help text. |
-| `FormDefinition` | Immutable ordered collection of fields and embeds | Share an article's editable fields across screens. |
-| `FormBlueprint` | PHP class compiled into a `FormDefinition` | Declare fields with attributes and configure them for the current request. |
-| PHP definition layout | Markup that arranges a collection's contents | Put title and summary in a grid, then render an author section. |
+| Need | API |
+| --- | --- |
+| Configure a field where its markup belongs | `control('email', $options)` |
+| Arrange a field's label, input, help, and errors | `field('email', $options)` and bound-field parts |
+| Render several local controls | `controls(['title', 'body' => ['type' => 'textarea']])` |
+| Package reusable form configuration | A `FormBlueprint` class |
+| Add fields or choices for the current request | The blueprint's `configure()` hook |
+| Arrange a reusable form or child section | A PHP blueprint layout |
 
-A blueprint and an ordinary definition use the same field options and rendering
-pipeline. Neither is required for ordinary forms. A definition layout arranges
-several fields; a control template arranges the parts of **one** field.
-
-## Reuse one field
-
-This definition stores the options you would otherwise pass to `control()`:
+## Keep local configuration inline
 
 ```php
-use FormCompose\Field\FieldDefinition;
-
-$title = FieldDefinition::make('title')
-    ->label('Article title')
-    ->help('Displayed above the article.');
-
-// Inside an open form bound to $article:
-echo $form->control($title);
-```
-
-For manual parts, use `$form->field($title)` to obtain a bound field. The
-`FieldDefinition` itself contains no bound value, HTML, or submission state.
-
-## Build once, render where needed
-
-Group related fields into an immutable collection:
-
-```php
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
-
-$articleFields = FormDefinition::make()
-    ->add(FieldDefinition::make('title')->label('Article title'))
-    ->add(FieldDefinition::make('body', 'textarea'));
-
 $form = $this->Form->bind($article);
 echo $form->open();
-echo $form->definition($articleFields);
-echo $form->control('published', ['type' => 'checkbox']);
+echo $form->control('title', [
+    'label' => 'Article title',
+    'help' => 'Displayed above the article.',
+]);
+echo $form->control('body', ['type' => 'textarea']);
 echo $form->submit('Save article');
 echo $form->close();
 ```
 
-The collection renders where `definition()` is called. The bundled layout adds
-no wrapper, opening/closing tags, or button. You can place application HTML and
-additional controls before or after it. Each rendering uses the current form's
-context, theme, and protection lifecycle.
+Use ordinary CakePHP elements to share markup, and ordinary PHP arrays or
+application functions to share option values. A blueprint is optional.
 
-Construct reusable configuration in application code and pass it to the view as
-you would other view data. No particular service or controller lifecycle is required.
+## Extract a reusable form
 
-## Customize without changing the shared definition
+```php [src/Form/ArticleForm.php]
+<?php
+declare(strict_types=1);
 
-Every change returns a new collection. Keep that return value:
+namespace App\Form;
 
-```php
-$editingFields = $articleFields->with('title', [
-    'help' => 'Changing the title also changes how this article appears in lists.',
-]);
-```
+use FormCompose\Attribute\Field;
+use FormCompose\FormBlueprint;
 
-`$articleFields` remains unchanged. `with()` preserves field order and replaces
-matching top-level option keys. Nested arrays such as `attributes` and
-`templateData` are replaced as whole values. The full
-[configuration contract](./definition-reference.md#formdefinition) lives in the reference.
-
-For optional fields, assemble a collection before rendering:
-
-```php
-use FormCompose\Field\FieldDefinition;
-
-// $canPublish is an application permission decision.
-$editingFields = $articleFields;
-if ($canPublish) {
-    $editingFields = $editingFields->add(
-        FieldDefinition::make('published', 'checkbox')->label('Publish article'),
-    );
+#[Field('title', label: 'Article title', help: 'Displayed above the article.')]
+#[Field('body', type: 'textarea')]
+class ArticleForm extends FormBlueprint
+{
 }
 ```
 
-Removing or omitting a field controls presentation. Authorize submitted changes
-in the application independently.
+Render it inside an existing open session:
 
-## Select defaults for the whole binding
+```php
+use App\Form\ArticleForm;
 
-There are two ways to use a collection. They have different effects:
+echo $form->definition(ArticleForm::class);
+```
 
-::: code-group
+Or bind and render the complete form:
 
-```php [Render here]
-$form = $this->Form->bind($article);
+```php
+use App\Form\ArticleForm;
+
+echo $this->Form->render(ArticleForm::class, $article, submit: 'Save article');
+```
+
+## Select defaults without selecting a layout
+
+Selecting a blueprint at `bind()` supplies defaults without rendering:
+
+```php
+use App\Form\ArticleForm;
+
+$form = $this->Form->bind($article, definition: ArticleForm::class);
 echo $form->open();
-echo $form->definition($articleFields);
+echo $form->control('title', ['label' => 'Working title']);
+echo $form->control('body');
 echo $form->submit('Save article');
 echo $form->close();
 ```
 
-```php [Use as field defaults]
-$form = $this->Form->bind($article, definition: $articleFields);
-echo $form->open();
-echo $form->control('title'); // Inherits Article title.
-echo $form->control('body');  // Inherits textarea.
-echo $form->submit('Save article');
-echo $form->close();
-```
+Per-call options override blueprint defaults for that field call. Each resolution
+uses the current form's values and validation metadata. No input is registered
+until it renders.
 
-:::
+`definition(ArticleForm::class)` renders locally without installing defaults for
+later controls. With a blueprint selected at binding, `definition()` reuses its
+compiled configuration without running its hook again.
 
-`definition($articleFields)` renders locally; it does not install defaults for
-later independent field calls. `bind(..., definition: $articleFields)` selects
-defaults without rendering. A subsequent `$form->definition()` renders that
-already selected collection.
-
-To reuse just one field from a collection without selecting binding defaults,
-pass its configuration explicitly:
-
-```php
-// Inside an open form; render this instead of the collection's title control.
-echo $form->control($articleFields->field('title'), ['label' => 'Working title']);
-```
-
-Per-call options override collection defaults. Avoid rendering the same input twice.
-
-## Render a complete form
-
-When the sequential layout is sufficient, use the helper shortcut:
-
-```php
-echo $this->Form->render($articleFields, $article, submit: 'Save article');
-```
-
-This binds, opens, renders the collection, adds a button, and closes. See
-[render()](./form-reference.md#render) for form options, button options, custom
-themes, and omitting the button.
-
-## Add a class or a reusable layout
-
-Move recurring declarations into a [form blueprint](./blueprints.md) when a named
-PHP class and request-aware configuration are useful. Use
-[blueprint layouts](./blueprints.md#keep-control-of-the-layout) to arrange fields
-in a PHP element, or [nested definitions](./composition.md) to embed a relative
-child collection. The [definitions reference](./definition-reference.md)
-contains all collection methods and declaration options.
+Continue with [Form blueprints](./blueprints.md) for runtime fields, choices, and
+layouts, [Nested definitions](./composition.md) for child sections, and
+[Repeated embeds](./repeated-embeds.md) for associated rows.

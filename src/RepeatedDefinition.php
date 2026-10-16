@@ -9,9 +9,11 @@ use InvalidArgumentException;
 /**
  * Declares one row prototype and retains its independently compiled row tree.
  *
- * Add this immutable declaration to a FormDefinition or use FormBuilder::embedMany().
+ * Blueprint compilation creates these records from EmbedMany or builder calls.
  * Unbound declarations have null rows; compilation returns a new snapshot with
  * rows mounted at their original keys. Request-dependent snapshots are never cached.
+ *
+ * @internal Compiled blueprint composition metadata.
  */
 final readonly class RepeatedDefinition
 {

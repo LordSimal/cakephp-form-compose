@@ -105,7 +105,9 @@ class BlueprintFactory
     }
 
     /**
-     * Expand reusable ordinary definitions using this factory's discovery and DI boundary.
+     * Expand internal composition records using this factory's discovery and DI boundary.
+     *
+     * @internal Used by the compiler and session repeated-layout bridge.
      */
     public function expand(FormDefinition $definition, FormContext $context): FormDefinition
     {

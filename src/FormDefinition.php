@@ -12,6 +12,8 @@ use InvalidArgumentException;
  * entries preserves the rendering tree; fields exposes flattened, qualified
  * leaves for existing binding defaults and field lookup. Presentation selects
  * an optional PHP layout, without storing bound values or submission state.
+ *
+ * @internal Compiled configuration; author reusable forms with FormBlueprint.
  */
 final readonly class FormDefinition
 {
@@ -35,14 +37,6 @@ final readonly class FormDefinition
         $this->entries = array_values($fields);
         $this->index = new DefinitionIndex($this->entries, $removed);
         $this->fields = $this->index->fields;
-    }
-
-    /**
-     * Start an empty collection for fluent construction.
-     */
-    public static function make(): self
-    {
-        return new self([]);
     }
 
     /**

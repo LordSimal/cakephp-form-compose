@@ -1,12 +1,12 @@
 ---
 title: Field options
-description: All built-in field options for control(), field(), FieldDefinition, and blueprint Field declarations.
+description: All built-in field options for control(), field(), and blueprint Field declarations.
 ---
 
 # Field options
 
 These options apply to `$form->control($field, $options)` and
-`$form->field($field, $options)`. They also apply to `FieldDefinition::with()` and
+`$form->field($field, $options)`. They also apply to `FormBuilder::add()` / `with()` and
 the `options` argument of a blueprint's `Field` attribute. Custom field types may
 define additional options.
 
@@ -218,8 +218,7 @@ registration. Handwritten inputs must use [`register()`](./field-reference.md#re
 For each field, later configuration wins:
 
 1. Field defaults selected at `bind(..., definition: ...)`.
-2. The explicit `FieldDefinition` passed as the field argument.
-3. Per-call options.
+2. Per-call options.
 
 Matching top-level option keys are replaced. Nested arrays such as `attributes`,
 `templates`, and `templateData` are replaced as whole values at this stage. This

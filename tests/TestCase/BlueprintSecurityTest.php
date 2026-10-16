@@ -55,6 +55,43 @@ class BlueprintSecurityTest extends BlueprintTestCase
         static::assertFalse($protector->validate($data, '/articles/save', $session));
     }
 
+    public function testRuntimeAddedFieldsRenderAndRetainSubmissionProtection(): void
+    {
+        $helper = $this->helper(attributes: ['formTokenData' => [], 'canManageAccounts' => true]);
+        $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
+
+        $form = $helper->bind(
+            new ArrayContext(['data' => ['label' => 'Work <email>']]),
+            ['url' => '/articles/save'],
+            definition: 'conditional',
+        );
+        $html = $form->render();
+        static::assertStringContainsString('Work &lt;email&gt;', $html);
+        static::assertStringContainsString('name="kind"', $html);
+        static::assertStringContainsString('type="hidden" name="active" value="0"', $html);
+        static::assertStringContainsString('Account enabled', $html);
+        static::assertStringNotContainsString('name="internal_note"', $html);
+        $data = [
+            'email' => 'user@example.test',
+            'id' => '42',
+            'kind' => 'work',
+            'active' => '0',
+            '_Token' => $this->tokens($html),
+        ];
+        $session = $helper->getView()->getRequest()->getSession()->id();
+        static::assertTrue(new FormProtector()->validate($data, '/articles/save', $session));
+        static::assertFalse(new FormProtector()->validate(
+            $data + ['internal_note' => 'injected'],
+            '/articles/save',
+            $session,
+        ));
+        static::assertFalse(new FormProtector()->validate(
+            array_replace($data, ['id' => '43']),
+            '/articles/save',
+            $session,
+        ));
+    }
+
     public function testCollectionRenderingProtectsNestedFieldsAndCheckboxFallbacks(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);

@@ -14,11 +14,10 @@ use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
 /**
- * Builds a BoundField from a context path or reusable FieldDefinition.
+ * Builds a BoundField from a context path and merged configuration.
  *
- * Combines binding defaults, explicit definition options, and per-call overrides,
- * normalizes the template
- * shorthand to templates['control'], infers a control type,
+ * Combines compiled blueprint defaults and per-call overrides, normalizes the
+ * template shorthand to templates['control'], infers a control type,
  * applies association conventions, resolves its value, and derives its input
  * name, ID, constraints, and errors.
  * The resulting field uses a registered custom type or the standard NativeType.
@@ -35,13 +34,13 @@ class FieldResolver
     }
 
     /**
-     * Bind reusable or inline configuration to a field state snapshot.
+     * Bind blueprint defaults and inline options to a field state snapshot.
      *
      * @param array<string, mixed> $options Explicit field overrides.
      */
-    public function resolve(string|FieldDefinition $field, array $options, FormLifecycle $lifecycle): BoundField
+    public function resolve(string $field, array $options, FormLifecycle $lifecycle): BoundField
     {
-        $definition = $field instanceof FieldDefinition ? $field : new FieldDefinition($field);
+        $definition = new FieldDefinition($field);
         $path = $definition->path;
         $defaults = in_array($path, array_column($this->binding->definition->fields ?? [], 'path'), true)
             ? $this->binding->definition?->field($path)->options ?? []
@@ -49,7 +48,6 @@ class FieldResolver
         $conventions = $this->createFieldConventions();
         $options = array_replace(
             $defaults,
-            $definition->options,
             $options,
         );
         FieldOptions::validate($options);

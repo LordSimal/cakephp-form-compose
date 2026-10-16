@@ -49,7 +49,7 @@ class DefinitionRendererTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
         $this->expectException(InvalidArgumentException::class);
-        $form->definition(FormDefinition::make(), options: [
+        $form->renderDefinition(new FormDefinition([]), options: [
             'template' => 'composition/author',
             'templates' => ['control' => 'composition/post'],
         ]);
@@ -63,7 +63,7 @@ class DefinitionRendererTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
         $this->expectException(InvalidArgumentException::class);
-        $form->definition($definition);
+        $form->renderDefinition($definition);
     }
 
     public function testDefinitionTemplateDataMustBeAnArray(): void
@@ -71,7 +71,7 @@ class DefinitionRendererTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
         $this->expectException(InvalidArgumentException::class);
-        $form->definition(FormDefinition::make(), options: ['templateData' => 'invalid']);
+        $form->renderDefinition(new FormDefinition([]), options: ['templateData' => 'invalid']);
     }
 
     public function testRepeatedRenderingRequiresCompiledRows(): void
@@ -82,17 +82,17 @@ class DefinitionRendererTest extends CompositionTestCase
         $inputs = new InputRegistry(new FormProtection($form->binding->request));
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Repeated embeds must be compiled before rendering.');
-        $renderer->renderMany($form, new RepeatedDefinition('comments', FormDefinition::make()), [], $inputs);
+        $renderer->renderMany($form, new RepeatedDefinition('comments', new FormDefinition([])), [], $inputs);
     }
 
     public function testRepeatedRenderingOnlyRendersMountedRowsFromCompiledDefinitions(): void
     {
-        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $rows = FormDefinition::make()->add(FieldDefinition::make('unmounted'))->embed('2', $row);
+        $row = new FormDefinition([])->add(new FieldDefinition('body'));
+        $rows = new FormDefinition([])->add(new FieldDefinition('unmounted'))->embed('2', $row);
         $form = $this->helper(['comments' => [2 => ['body' => 'Mounted']]])->bind();
         $form->open();
 
-        $html = $form->embedMany('comments', new RepeatedDefinition('comments', $row, keys: [2], rows: $rows));
+        $html = $form->renderRepeated('comments', new RepeatedDefinition('comments', $row, keys: [2], rows: $rows));
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('unmounted', $html);
         static::assertStringContainsString('name="comments[unmounted]"', $form->control('comments.unmounted'));

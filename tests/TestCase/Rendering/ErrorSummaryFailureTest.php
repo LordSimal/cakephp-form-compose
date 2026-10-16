@@ -109,9 +109,13 @@ class ErrorSummaryFailureTest extends FormTestCase
 
     public function testInvalidCompleteFormOptionsFailBeforeOpening(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => ['title' => ['invalid' => 'Fix title']],
-        ]), definition: FormDefinition::make()->add(FieldDefinition::make('title')));
+        $form = $this->bindCompiled(
+            new FormDefinition([])->add(new FieldDefinition('title')),
+            helper: $this->helper(),
+            data: new ArrayContext([
+                'errors' => ['title' => ['invalid' => 'Fix title']],
+            ]),
+        );
         try {
             $form->render(options: ['errorSummary' => 'enabled']);
             static::fail('Expected invalid summary configuration.');
@@ -140,10 +144,11 @@ class ErrorSummaryFailureTest extends FormTestCase
 
     public function testLocalFalseOverridesBindingOptInWithoutLeakingFormAttributes(): void
     {
-        $form = $this->helper()->bind(
-            new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
-            ['errorSummary' => true],
-            definition: FormDefinition::make()->add(FieldDefinition::make('title')),
+        $form = $this->bindCompiled(
+            new FormDefinition([])->add(new FieldDefinition('title')),
+            helper: $this->helper(),
+            data: new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
+            options: ['errorSummary' => true],
         );
         $html = $form->render(options: ['errorSummary' => false]);
         static::assertStringNotContainsString('<section', $html);

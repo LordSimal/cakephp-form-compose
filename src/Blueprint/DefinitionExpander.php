@@ -59,7 +59,7 @@ class DefinitionExpander
         }
 
         $keys = $entry->keys ?? $this->keys($entry->path, $context);
-        $rows = FormDefinition::make();
+        $rows = new FormDefinition([]);
         foreach ($keys as $key) {
             $rowContext = $context->at($entry->path . '.' . $key);
             $row = is_string($entry->definition)
@@ -88,7 +88,7 @@ class DefinitionExpander
         $rows = $value;
         $keys = array_keys(is_array($rows) ? $rows : iterator_to_array($rows));
         // Reuse the declaration's key validation before running any row hooks.
-        new RepeatedDefinition($path, FormDefinition::make(), $keys);
+        new RepeatedDefinition($path, new FormDefinition([]), $keys);
 
         return $keys;
     }

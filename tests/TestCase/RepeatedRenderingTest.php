@@ -21,12 +21,12 @@ class RepeatedRenderingTest extends FormTestCase
 {
     public function testNestedRepeatedDefinitionsKeepAbsoluteNamesAndRelativeViews(): void
     {
-        $child = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $parent = FormDefinition::make()->add(new RepeatedDefinition('comments', $child));
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('posts', $parent));
-        $form = $this->helper(['posts' => ['draft' => ['comments' => [3 => ['body' => 'Nested']]]]])->bind(
-            definition: $definition,
-        );
+        $child = new FormDefinition([])->add(new FieldDefinition('body'));
+        $parent = new FormDefinition([])->add(new RepeatedDefinition('comments', $child));
+        $definition = new FormDefinition([])->add(new RepeatedDefinition('posts', $parent));
+        $form = $this->bindCompiled($definition, helper: $this->helper([
+            'posts' => ['draft' => ['comments' => [3 => ['body' => 'Nested']]]],
+        ]));
         static::assertTrue($form->binding->definition?->has('posts.draft.comments.3.body'));
         static::assertStringContainsString('name="posts[draft][comments][3][body]"', $form->render());
     }
@@ -63,9 +63,9 @@ class RepeatedRenderingTest extends FormTestCase
 
     public function testConfiguredOccurrenceTemplateCanBeOverriddenWithoutChangingChildLayout(): void
     {
-        $child = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $definition = FormDefinition::make()->embed('author', $child, ['template' => 'composition/layout']);
-        $form = $this->helper()->bind(definition: $definition);
+        $child = new FormDefinition([])->add(new FieldDefinition('body'));
+        $definition = new FormDefinition([])->embed('author', $child, ['template' => 'composition/layout']);
+        $form = $this->bindCompiled($definition, helper: $this->helper());
         static::assertNotNull($form->binding->definition);
         $view = new DefinitionView($form, $form->binding->definition);
         $form->open();
@@ -79,7 +79,7 @@ class RepeatedRenderingTest extends FormTestCase
     public function testUnknownRepeatedMountIsRejected(): void
     {
         $form = $this->helper()->bind();
-        $view = new DefinitionView($form, FormDefinition::make());
+        $view = new DefinitionView($form, new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->embeddedMany('missing');
     }
@@ -87,7 +87,7 @@ class RepeatedRenderingTest extends FormTestCase
     public function testAnExplicitlyRemovedRepeatProducesNoMarkup(): void
     {
         $form = $this->helper()->bind();
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', FormDefinition::make()))->remove(
+        $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', new FormDefinition([])))->remove(
             'comments',
         );
         static::assertSame('', new DefinitionView($form, $definition)->embeddedMany('comments'));

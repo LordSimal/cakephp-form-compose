@@ -23,10 +23,12 @@ class RepeatedDefinitionTest extends FormTestCase
 {
     public function testAReusableOrdinaryDefinitionExpandsIndependentlyPerBinding(): void
     {
-        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', $row));
-        $first = $this->helper(['comments' => [2 => ['body' => 'First']]])->bind(definition: $definition);
-        $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])->bind(definition: $definition);
+        $row = new FormDefinition([])->add(new FieldDefinition('body'));
+        $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', $row));
+        $first = $this->bindCompiled($definition, helper: $this->helper(['comments' => [2 => ['body' => 'First']]]));
+        $second = $this->bindCompiled($definition, helper: $this->helper([
+            'comments' => ['new' => ['body' => 'Second']],
+        ]));
         static::assertNull($definition->index->repeats['comments']->rows);
         static::assertTrue($first->binding->definition?->has('comments.2.body'));
         static::assertFalse($second->binding->definition?->has('comments.2.body'));
@@ -95,12 +97,12 @@ class RepeatedDefinitionTest extends FormTestCase
 
     public function testSuppressedCollectionErrorsAndWholeCollectionRemoval(): void
     {
-        $definition = FormDefinition::make()->add(new RepeatedDefinition('comments', FormDefinition::make(), options: [
+        $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', new FormDefinition([]), options: [
             'errors' => false,
         ]));
-        $form = $this->helper()->bind(new ArrayContext([
+        $form = $this->bindCompiled($definition, helper: $this->helper(), data: new ArrayContext([
             'errors' => ['comments' => ['count' => 'Required']],
-        ]), definition: $definition);
+        ]));
         $form->open();
         static::assertSame('', trim($form->definition()));
         static::assertFalse($form->binding->definition?->remove('comments')->has('comments'));

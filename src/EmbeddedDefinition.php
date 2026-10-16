@@ -10,6 +10,8 @@ use FormCompose\Field\FieldDefinition;
  *
  * The parent owns ordering; the child retains its layout and removed fields.
  * Rendering qualifies paths without creating another session.
+ *
+ * @internal Compiled blueprint composition metadata.
  */
 final readonly class EmbeddedDefinition
 {

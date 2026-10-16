@@ -75,10 +75,10 @@ class LocalBlueprintTest extends BlueprintTestCase
     public function testLocalBlueprintsOverrideAndPreserveSelectedDefaults(): void
     {
         $defaults = new FormDefinition([
-            FieldDefinition::make('email', 'text')->label('Session email')->help('Session help'),
-            FieldDefinition::make('unrendered'),
+            new FieldDefinition('email', ['type' => 'text', 'label' => 'Session email', 'help' => 'Session help']),
+            new FieldDefinition('unrendered'),
         ]);
-        $form = $this->helper()->bind(definition: $defaults);
+        $form = $this->bindCompiled($defaults, helper: $this->helper());
         $html = $form->open() . $form->definition(ProfileForm::class);
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);

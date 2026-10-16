@@ -26,11 +26,12 @@ class RepeatedAssociationTest extends AssociationTestCase
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['required' => 'Comment required']);
         $article->setError('comments', ['count' => 'Add another comment']);
-        $row = FormDefinition::make()->add(FieldDefinition::make('id'))->add(FieldDefinition::make('body'));
-        $form = $this->helper()->bind(
-            $article,
-            ['context' => ['table' => $this->articles]],
-            definition: FormDefinition::make()->add(new RepeatedDefinition('comments', $row)),
+        $row = new FormDefinition([])->add(new FieldDefinition('id'))->add(new FieldDefinition('body'));
+        $form = $this->bindCompiled(
+            new FormDefinition([])->add(new RepeatedDefinition('comments', $row)),
+            helper: $this->helper(),
+            data: $article,
+            options: ['context' => ['table' => $this->articles]],
         );
         $html = $form->render();
         static::assertStringContainsString('type="hidden"', $html);
