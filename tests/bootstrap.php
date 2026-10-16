@@ -29,6 +29,7 @@ define('LOGS', TMP . 'logs/');
 
 Configure::write('App', [
     'encoding' => 'UTF-8',
+    'jsBaseUrl' => 'js/',
     'namespace' => 'FormCompose\\Test',
     'paths' => ['templates' => [APP . 'templates/']],
 ]);
