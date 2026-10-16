@@ -43,7 +43,8 @@ rendering registers submitted fields. Form opening and closing prepare method,
 CSRF, and form-protection fields when needed.
 
 [Blueprints](./blueprints.md) supply optional configuration, and
-[definition layouts](./composition.md) arrange groups or nested relations. They
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout) arrange fields;
+[nested definitions](./composition.md) compose related sections. They
 use this same rendering flow. Validation and persistence stay in your existing
 CakePHP application layers.
 
@@ -62,8 +63,13 @@ echo $form->control('email', [
 ```
 
 ```php [templates/element/forms/email.php]
-<?php /** @var \FormCompose\Field\BoundField $field */ ?>
-<div class="contact-field">
+<?php
+/**
+ * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+?>
+<div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
     <?= $field->label() ?>
     <div class="input-with-icon">
         <span aria-hidden="true">@</span>
@@ -87,7 +93,7 @@ custom widgets need to be ported. The API is still evolving.
 
 [Build your first form](./getting-started.md) ·
 [Follow a control from data to HTML](./rendering.md) ·
-[Create a reusable theme](./themes.md)
+[Look up control options](./field-options.md)
 
 <style>
 .formcompose-architecture {

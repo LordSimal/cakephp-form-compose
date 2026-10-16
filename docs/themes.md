@@ -106,7 +106,7 @@ conflicting CSS utilities.
 ## 4. Customize another part when needed
 
 Follow the same approach for a label, button, or form structure. For example,
-this button element adds an application icon element:
+this button element adds decorative markup before its label:
 
 ```php [templates/element/forms/application/button/control.php]
 <?php
@@ -115,13 +115,14 @@ declare(strict_types=1);
 use FormCompose\Rendering\Html;
 ?>
 <button<?= (string)$attributes ?>>
-    <?= $this->element('icons/save') ?>
+    <span aria-hidden="true">→</span>
     <?= Html::text($label) ?>
 </button>
 ```
 
-Create the application's `icons/save` element before using this example.
 `$form->submit('Save')` selects this button template through the same theme.
+The decorative span is hidden from assistive technology; the button label remains
+its accessible name.
 
 ::: tip Changing every control
 A layer's generic `control.php` applies to all types without a more specific
@@ -151,4 +152,6 @@ FormCompose's base theme supplies plain semantic HTML.
 
 For Tailwind, write complete class names and include your theme element files in
 source scanning. Integration attributes such as `x-model` and `data-*` can be
-passed through field attributes.
+passed through [field attributes](./field-options.md#attributes). For the complete
+`Theme`, attribute-bag, and trusted-markup APIs, see the
+[template reference](./template-reference.md#theme-api).

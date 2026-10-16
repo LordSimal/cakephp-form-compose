@@ -1,4 +1,5 @@
 ---
+title: Association fields
 description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with CakePHP association conventions and PHP templates.
 ---
 
@@ -7,6 +8,8 @@ description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with Ca
 FormCompose uses CakePHP's entity context to resolve associated values, schemas,
 and validation metadata. The usual field paths work with both `control()` and
 `field()`, including inside [reusable definitions](./definitions.md).
+
+For basic select, radio, and checkbox syntax, start with [Choice controls](./choices.md).
 
 Load the associated records you want to edit before binding the entity. Choice
 lists are supplied by your application; FormCompose discovers matching view
@@ -25,7 +28,7 @@ $tags = $this->Articles->Tags->find('list');
 $this->set(compact('article', 'authors', 'tags'));
 ```
 
-Then render the fields without repeating the conventional configuration:
+Then render the fields without repeating conventional choice configuration:
 
 ```php [templates/Articles/edit.php]
 <?php $form = $this->Form->bind($article); ?>
@@ -43,6 +46,18 @@ Then render the fields without repeating the conventional configuration:
 | `tags._ids` | Multiple select labeled “Tags” | `$tags` | `tags[_ids][]` |
 | `comments.0.author_id` | Single select labeled “Author” | `$authors` | `comments[0][author_id]` |
 | `comments.0.tags._ids` | Multiple select labeled “Tags” | `$tags` | `comments[0][tags][_ids][]` |
+
+Selecting author 7 and tags 2 and 5 produces request data shaped like:
+
+```php
+[
+    'author_id' => '7',
+    'tags' => ['_ids' => ['2', '5']],
+]
+```
+
+Your normal `patchEntity()` call applies this data according to the application's
+association and accessibility configuration.
 
 `._ids` also works with `hasMany` associations. Loaded associated entities supply
 their selected identifiers through CakePHP's context, including custom single-column
@@ -65,13 +80,12 @@ key names or when you want to avoid name-based discovery:
 echo $form->control('tags._ids', [
     'options' => $availableTags,
     'label' => 'Choose topics',
-    'template' => 'forms/topic-picker',
 ]);
 ```
 
-This selects your `templates/element/forms/topic-picker.php` control element.
-Association binding works with the same [template overrides](./usage.md#choose-a-template-for-one-control)
-as other controls.
+Here `$availableTags` is an application-supplied iterable choice list. The explicit
+list replaces discovery for this field. All ordinary [field options](./field-options.md)
+and [template overrides](./usage.md#choose-a-template-for-one-control) still apply.
 
 Explicit types are preserved. An inferred `._ids` control defaults to a multiple
 select; if you specify `type => 'select'` yourself, also specify `multiple => true`
@@ -88,7 +102,8 @@ legend. Radio fields can also discover option lists when explicitly requested.
 
 ## Edit associated records
 
-Use property paths for `hasOne` and numeric indexes for `hasMany` records:
+For an article with a `hasOne` details association and `hasMany` comments, use
+property paths and numeric indexes after loading those records:
 
 ```php
 // Inside the open article form, with these associations loaded.
@@ -110,7 +125,8 @@ keys. Their rendered values are locked when form protection is enabled. Explicit
 field types can override that presentation. Associated schema metadata is available
 even when a new parent has no related entity yet.
 
-For editable `belongsToMany` junction data, use CakePHP's `_joinData` property:
+For editable `belongsToMany` junction data, use CakePHP's `_joinData` property.
+For example, if the tags table uses `tag_key` as its primary key:
 
 ```php
 echo $form->control('tags.0.tag_key');

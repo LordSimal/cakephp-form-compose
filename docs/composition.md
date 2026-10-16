@@ -1,16 +1,22 @@
 ---
-description: Compose associated form definitions and arrange blueprint fields with ordinary PHP layout elements.
+title: Nested definitions
+description: Embed reusable child blueprints at association paths and compose their layouts within one form.
 ---
 
-# Nested definitions and layouts
+# Nested definitions
 
-Blueprints describe field configuration. PHP elements arrange the fields. A
-blueprint can select a default layout without putting wrappers or grids into its
-field declarations.
+Use embedded definitions when a form includes a reusable child section, such as
+an author inside a post. Each child keeps relative field paths and its own layout,
+while sharing the enclosing form's session and submission protection.
 
-## Select a layout
+For arranging the fields of one blueprint, start with
+[blueprint layouts](./blueprints.md#keep-control-of-the-layout). This page focuses
+on mounting child definitions and rendering their layouts together.
 
-Declare the fields and select an ordinary CakePHP element:
+## Define a reusable child {#select-a-layout}
+
+This child declares paths relative to an author. It can render on its own or be
+embedded under a parent association:
 
 ```php [src/Form/AuthorForm.php]
 <?php
@@ -31,7 +37,7 @@ class AuthorForm extends FormBlueprint
 }
 ```
 
-The element owns the wrapper and field placement:
+Its layout only arranges the child fields:
 
 ```php [templates/element/forms/author.php]
 <?php
@@ -41,9 +47,7 @@ The element owns the wrapper and field placement:
  */
 ?>
 <section<?= (string)$attributes ?>>
-    <div class="grid grid-cols-2 gap-4">
-        <?= $form->controls(['first_name', 'last_name']) ?>
-    </div>
+    <?= $form->controls(['first_name', 'last_name']) ?>
     <?php if ($form->has('email')): ?>
         <section class="contact-details">
             <?= $form->control('email') ?>
@@ -51,58 +55,6 @@ The element owns the wrapper and field placement:
     <?php endif; ?>
 </section>
 ```
-
-These classes are an optional Tailwind example. The plugin requires no CSS or
-JavaScript framework. A semantic group can use an application-owned `<fieldset>`
-and `<legend>` in the same way.
-
-Render the definition inside one ordinary form session:
-
-```php
-use App\Form\AuthorForm;
-
-$form = $this->Form->bind($author);
-echo $form->open();
-echo $form->definition(AuthorForm::class);
-echo $form->submit('Save');
-echo $form->close();
-```
-
-The layout renders the definition's contents. The calling view owns the form
-lifecycle, either explicitly as above or through the complete-form shortcut:
-
-```php
-echo $this->Form->render(AuthorForm::class, $author, submit: 'Save');
-```
-
-Layout `controls()` accepts the same batch syntax as
-[session controls](./usage.md#render-several-controls), including per-field option
-arrays and `FieldDefinition` objects. Paths stay relative to the layout's mount;
-removed fields are omitted. It adds no wrapper and participates in the enclosing
-definition's input-registration transaction.
-
-Without an explicit layout, a bundled default element renders fields and embeds
-in declaration order, with no extra wrapper. Themes can override
-`definition/control.php`; variants use
-`definition/variants/{variant}/control.php`. Explicit layouts retain the usual
-`$parent()` fallback to the theme. Render each input once: calling `$parent()`
-after manually rendering the same controls triggers ordinary duplicate-ID checks.
-
-A local override can select a different layout for a screen:
-
-```php
-echo $form->definition(AuthorForm::class, options: [
-    'template' => 'forms/author-compact',
-    'attributes' => ['class' => 'author-panel', 'data-section' => 'author'],
-    'templateData' => ['heading' => 'Contact'],
-]);
-```
-
-`Form` also accepts `templates: ['control' => 'forms/author']` and
-`templateData: [...]`. Non-null attribute arguments supply presentation defaults;
-per-call options replace matching top-level options. Different values for
-`template` and `templates['control']` are rejected after merging. Layout data does
-not become field template data.
 
 ## Compose an association
 
@@ -135,6 +87,16 @@ The parent layout chooses where to render its compiled child:
 <?= $form->control('title') ?>
 <?= $form->embedded('author') ?>
 <?= $form->control('body') ?>
+```
+
+Render the parent as one complete form, with `$post` supplied by your controller
+and its author association loaded:
+
+```php [templates/Posts/edit.php]
+<?php
+use App\Form\PostForm;
+?>
+<?= $this->Form->render(PostForm::class, $post, submit: 'Save post') ?>
 ```
 
 `embedded('author')` renders the already configured child using its selected
@@ -176,16 +138,24 @@ public function configure(FormBuilder $form, FormContext $context): void
 Import `FormCompose\FormBuilder` and `FormCompose\FormContext` in that class.
 `remove('author')` removes the entire embedded subtree.
 
-The element receives a scoped `DefinitionView` as `$form`:
+The element receives a scoped `DefinitionView` as `$form`. Its paths are relative
+to this collection, and it can only render configured fields or embedded children:
 
-| Call | Behavior |
-| --- | --- |
-| `has('email')` | Checks final field or embed availability without rendering. |
-| `control('email')` | Renders the configured field; explicitly removed fields produce nothing. |
-| `controls(['first_name', 'last_name'])` | Renders ordered relative controls without a wrapper; explicitly removed fields produce nothing. |
-| `field('email')` | Returns a bound field for manual parts; requires an available field. |
-| `embedded('address')` | Renders an existing compiled child with its own layout. |
-| `embedded('address', options: [...])` | Overrides that child's presentation for this rendering. |
+```php
+<!-- In templates/element/forms/author.php, replacing the email block: -->
+<?php if ($form->has('email')): ?>
+    <?php $email = $form->field('email'); ?>
+    <section class="contact-details">
+        <?= $email->label() ?>
+        <?= $email->input() ?>
+        <?= $email->help() ?>
+        <?= $email->errors() ?>
+    </section>
+<?php endif; ?>
+```
+
+See the [scoped layout API](./definition-reference.md#definitionview) for all
+methods and how removed fields differ from unknown paths.
 
 Unknown names raise `InvalidArgumentException`, so typos are visible. Guard
 optional field parts and static wrappers with `has()`. Removing a field does not
@@ -253,22 +223,15 @@ and update both representations.
 
 ## Isolation and failures
 
-Each blueprint occurrence is configured once per resolution, using constructor
-injection and a cloned blueprint seed. Inheritance preserves declaration positions:
-inherited field options merge, and redeclaring an embed replaces its reference
-before any child is resolved. The concrete hook runs using normal PHP method
-inheritance. Layout selection inherits unless overridden.
+A child is compiled once for each occurrence and keeps its own relative layout.
+Children resolve before the parent's hook, allowing parent overrides such as
+`with('author.email', ...)`. Circular embeddings, duplicate paths, unknown
+references, and incompatible field/embed declarations are errors.
 
-Duplicate paths in one class, duplicate resolved field paths, incompatible
-field/embed replacements, unknown references, and circular embeddings are errors.
-The same blueprint can be used at independent mounts without sharing mutable
-hook state. Request-dependent configuration is never stored in discovery caches.
+All layouts share the enclosing form's lifecycle and submission registry.
+Membership checks and configuration register nothing. If a layout fails, its
+staged input registrations are rolled back; previously rendered controls remain
+registered. See [lifecycle and failures](./form-reference.md#lifecycle-and-failures).
 
-Every layout shares one form session, field resolver, theme, and submission
-protection lifecycle. Configuration and membership inspection register nothing.
-Successful definition rendering commits its rendered inputs; if an enclosing
-layout fails, its staged registrations are discarded so the compiled definition
-can be retried. Existing rendered controls remain registered.
-
-CakePHP continues to own association marshalling, validation, and persistence.
-Authorize submitted changes in the application regardless of which fields render.
+CakePHP owns association marshalling, validation, and persistence. Embedding a
+form does not load associations or authorize submitted changes.

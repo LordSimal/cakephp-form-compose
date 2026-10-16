@@ -1,39 +1,42 @@
 ---
-description: Install FormCompose, load its helper, and build your first CakePHP form.
+title: Your first form
+description: Install FormCompose and build an article editing form with values, validation feedback, and PHP templates.
 ---
 
-# Getting started
+# Your first form
 
-Install the plugin, load its helper, and build a form with the bundled base theme.
-If you want to understand how a control maps to a PHP file first, start with
-[how rendering works](./rendering.md).
+This walkthrough assumes you already use CakePHP controllers, entities, and view
+templates. You will render an article editing form, add field options, and see
+how a control connects to an application-owned PHP element.
+
+For the motivation and a side-by-side markup example, read
+[Why FormCompose?](./why.md). For a method or option lookup, use the
+[API reference](./form-reference.md).
 
 ## Requirements
 
-| CakePHP | PHP |
+| Dependency | Supported version |
 | --- | --- |
-| 6 development builds | 8.5+ |
+| PHP | 8.5+ |
+| CakePHP | 6 development builds |
 
 ::: info Experimental API
-FormCompose's API is still evolving. It provides a separate form-building API;
-existing core FormHelper calls and widgets need to be ported.
+FormCompose provides its own form-building API. When adopting it, port existing
+core FormHelper calls and widgets to this API. It is not a drop-in replacement
+for every core method or option.
 :::
 
 ## Install the plugin
 
-Start with a CakePHP 6 application. CakePHP 5.4 is no longer supported. Until
-CakePHP 6 and its dependencies have stable releases, the host application's
-Composer configuration must allow development dependencies with
-`"minimum-stability": "dev"` and `"prefer-stable": true`.
-
-Install from [Packagist](https://packagist.org/packages/josbeir/cakephp-form-compose)
-using the development branch until a release is tagged:
+The host application's Composer configuration must allow development dependencies
+with `"minimum-stability": "dev"` and `"prefer-stable": true` for the current
+CakePHP 6 dependency. CakePHP 5.4 is no longer supported.
 
 ```sh
 composer require josbeir/cakephp-form-compose:dev-main
 ```
 
-Register the plugin using either the Cake CLI or your application's bootstrap:
+Register the plugin with either approach:
 
 ::: code-group
 
@@ -41,129 +44,113 @@ Register the plugin using either the Cake CLI or your application's bootstrap:
 bin/cake plugin load FormCompose
 ```
 
-```php [src/Application.php]
+```php [src/Application.php — inside bootstrap()]
 use FormCompose\FormComposePlugin;
 
+// After parent::bootstrap().
 $this->addPlugin(FormComposePlugin::class);
 ```
 
 :::
 
-The CLI registers the plugin in `config/plugins.php`. For manual registration,
-place `addPlugin()` in your application's `bootstrap()`, after `parent::bootstrap()`.
+The CLI adds the plugin to `config/plugins.php`.
 
 ## Load the helper
 
-Choose the name you want to use in your view templates:
+Configure the helper in `AppView::initialize()`:
 
 ::: code-group
 
-```php [As Form]
-// In AppView::initialize()
+```php [Use the Form alias]
 $this->addHelper('Form', ['className' => 'FormCompose.Form']);
-
-// In a template
-$form = $this->Form->bind($article);
 ```
 
-```php [Alongside core FormHelper]
-// In AppView::initialize()
+```php [Keep core FormHelper alongside it]
 $this->addHelper('Form');
 $this->addHelper('Compose', ['className' => 'FormCompose.Form']);
-
-// In a template
-$form = $this->Compose->bind($article);
+// Use $this->Compose->bind(...) in templates.
 ```
 
 :::
 
-The examples below use the `Form` alias. Configure your application's CSRF
-middleware and FormProtectionComponent as needed.
+All documentation examples use the `Form` alias.
 
 ## Build your first form
 
-Start with inline controls, or declare reusable fields in a blueprint. The
-**Blueprint class** and **Blueprint template** tabs show the two files for the
-blueprint approach; both approaches render the same fields.
+Assume your existing controller passes an `$article` entity to the view. Keep
+record loading, authorization, `patchEntity()`, validation, and saving in that
+controller or your existing application services.
 
-::: code-group
-
-```php [Inline controls]
+```php [templates/Articles/edit.php]
 <?php
-// templates/Articles/edit.php
 $form = $this->Form->bind($article);
 ?>
-
 <?= $form->open() ?>
 <?= $form->control('title') ?>
-<?= $form->control('body', ['type' => 'textarea']) ?>
-<?= $form->control('published', ['type' => 'checkbox']) ?>
-<?= $form->submit('Save') ?>
+<?= $form->control('body') ?>
+<?= $form->control('published') ?>
+<?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
-```php [Blueprint class]
-<?php
-declare(strict_types=1);
+1. `bind()` creates an isolated form session using the entity's CakePHP context.
+2. `open()` renders the opening tag and initial method/CSRF inputs.
+3. `control()` renders a complete field: label, input, help, and errors.
+4. `submit()` renders a button. `close()` adds final protection fields and closes
+   the form.
 
-// src/Form/ArticleForm.php
-namespace App\Form;
+The context supplies current values, field types, and validation metadata. An
+existing entity defaults to PUT, submitted through POST with a method override;
+a new entity defaults to POST. The form submits to the current request URL.
+The entity schema supplies control types, such as a textarea for `body` and a
+checkbox for a boolean `published` field.
 
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+Configure CakePHP's CSRF middleware and FormProtectionComponent in your host
+application as needed. FormCompose uses their request metadata and protection
+APIs; loading the helper does not enable them.
 
-#[Form('article')]
-#[Field('title')]
-#[Field('body', type: 'textarea')]
-#[Field('published', type: 'checkbox')]
-class ArticleForm extends FormBlueprint
-{
-}
+## Add labels, help, and attributes
+
+Replace the title control with:
+
+```php
+echo $form->control('title', [
+    'label' => 'Article title',
+    'help' => 'Choose a title readers can recognize.',
+    'attributes' => [
+        'class' => 'article-title',
+        'placeholder' => 'For example: Our autumn release',
+        'autocomplete' => 'off',
+    ],
+]);
 ```
 
-```php [Blueprint template]
-<?php
-// templates/Articles/edit.php
-use App\Form\ArticleForm;
-?>
-<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save') ?>
-```
+`label` and `help` configure field presentation. `attributes` supplies HTML
+attributes for the input. To style the wrapper or label, use `partAttributes`.
+[Field options](./field-options.md) lists the supported options, defaults, and
+where each applies.
 
-:::
+## Show validation feedback
 
-1. `bind()` selects the data context and creates a form session.
-2. `open()` renders the opening form tag and initial method/CSRF fields.
-3. `control()` renders an individual field using control elements for labels,
-   inputs, help, and errors.
-4. `close()` renders the final protection fields and closing tag.
+When your existing submission handler patches the entity and validation fails,
+render the form with that entity again. Its CakePHP context supplies the errors;
+`control()` renders them and connects them to the input with ARIA attributes.
+Submitted request data takes priority over context values by default, so the
+user's attempted values remain visible.
 
-For a blueprint, helper `render()` handles that whole sequence: bind, open, render
-the definition and its layout, add a submit button, and close. Omitting `submit`
-uses a translated **Submit** label; `submit: false` leaves out the button.
+FormCompose does not validate or save the entity. Browser attributes such as
+`required` complement your server-side validation rules.
 
-This static blueprint needs no extra container configuration. See
-[form blueprints](./blueprints.md) for conditional fields, application services,
-and selecting blueprint defaults for individual `control()` calls.
+## Choose your next step
 
-An existing record defaults to PUT; a new record defaults to POST. Pass a route
-through `bind($article, ['url' => ['action' => 'edit', $article->id]])` to choose the
-action explicitly.
+| You want to… | Read |
+| --- | --- |
+| Set values, types, upload files, or build a search form | [Fields and values](./usage.md) |
+| Render selects, radio buttons, or checkboxes | [Choice controls](./choices.md) |
+| Understand which PHP element renders a control | [How rendering works](./rendering.md) |
+| Arrange one field's parts in the view | [Compose field parts](./field-parts.md) |
+| Reuse markup across forms | [Create a theme](./themes.md) |
+| Reuse field configuration across screens | [Field definitions](./definitions.md) |
 
-## Choose how to customize the layout
-
-To arrange a blueprint's fields in wrappers or grids, select a
-[PHP definition layout](./composition.md#select-a-layout) with
-`#[Form('article', template: 'forms/article')]`.
-
-For a reusable layout, [create a theme](./themes.md). Its elements determine what
-`control()` renders across your forms.
-
-For a layout used once, [compose field parts in your view](./usage.md#composing-field-parts)
-with `$form->field('title')`, then call that field's `label()`, `input()`, `help()`,
-and `errors()` methods where you need them.
-
-Continue with [fields and form data](./usage.md) for values and feedback,
-[reuse field definitions](./definitions.md) across screens,
-[declare attributed blueprints](./blueprints.md), or
-[create a theme](./themes.md) to write your first control element.
+Start with ordinary controls. Definitions and blueprints are optional layers you
+can add when configuration repeats.
