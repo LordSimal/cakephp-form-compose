@@ -84,4 +84,24 @@ class RepeatedAssociationTest extends AssociationTestCase
         $data['comments'][0] = ['id' => '10', 'body' => 'Injected row'];
         static::assertFalse(new FormProtector()->validate($data, '/articles/save', $session));
     }
+
+    public function testClearedAssociationsDoNotExposeLoadedChildErrorsAsCollectionFeedback(): void
+    {
+        $article = $this->article();
+        /** @var list<Entity> $comments */
+        $comments = $article->get('comments');
+        $comments[0]->setError('body', ['required' => 'Stale child error']);
+        $article->setError('comments', ['count' => 'Collection needs a comment']);
+        $form = $this->helper(['comments' => []])->bind(
+            $article,
+            ['context' => ['table' => $this->articles]],
+        );
+        $form->open();
+
+        $html = $form->embedMany('comments', CommentForm::class);
+        static::assertStringContainsString('Collection needs a comment', $html);
+        static::assertStringNotContainsString('Stale child error', $html);
+        static::assertSame(0, $this->xpath($html)->query('//input | //textarea')->length);
+        $form->close();
+    }
 }

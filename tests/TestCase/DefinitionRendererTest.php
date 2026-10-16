@@ -5,10 +5,19 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Attribute\Field;
+use FormCompose\DefinitionRenderer;
+use FormCompose\Field\FieldDefinition;
+use FormCompose\Form\InputRegistry;
 use FormCompose\FormDefinition;
+use FormCompose\Rendering\PhpRenderer;
+use FormCompose\Rendering\RenderContext;
+use FormCompose\Rendering\Theme;
+use FormCompose\RepeatedDefinition;
+use FormCompose\Security\FormProtection;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use InvalidArgumentException;
+use LogicException;
 
 /**
  * Checks field shorthand, manual parts, and definition presentation normalization.
@@ -63,5 +72,30 @@ class DefinitionRendererTest extends CompositionTestCase
         $form->open();
         $this->expectException(InvalidArgumentException::class);
         $form->definition(FormDefinition::make(), options: ['templateData' => 'invalid']);
+    }
+
+    public function testRepeatedRenderingRequiresCompiledRows(): void
+    {
+        $helper = $this->helper();
+        $form = $helper->bind();
+        $renderer = new DefinitionRenderer(new RenderContext(new PhpRenderer($helper->getView()), Theme::base()));
+        $inputs = new InputRegistry(new FormProtection($form->binding->request));
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Repeated embeds must be compiled before rendering.');
+        $renderer->renderMany($form, new RepeatedDefinition('comments', FormDefinition::make()), [], $inputs);
+    }
+
+    public function testRepeatedRenderingOnlyRendersMountedRowsFromCompiledDefinitions(): void
+    {
+        $row = FormDefinition::make()->add(FieldDefinition::make('body'));
+        $rows = FormDefinition::make()->add(FieldDefinition::make('unmounted'))->embed('2', $row);
+        $form = $this->helper(['comments' => [2 => ['body' => 'Mounted']]])->bind();
+        $form->open();
+
+        $html = $form->embedMany('comments', new RepeatedDefinition('comments', $row, keys: [2], rows: $rows));
+        static::assertStringContainsString('name="comments[2][body]"', $html);
+        static::assertStringNotContainsString('unmounted', $html);
+        static::assertStringContainsString('name="comments[unmounted]"', $form->control('comments.unmounted'));
+        $form->close();
     }
 }

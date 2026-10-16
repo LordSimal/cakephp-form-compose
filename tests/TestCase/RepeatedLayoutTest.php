@@ -58,7 +58,10 @@ class RepeatedLayoutTest extends FormTestCase
         $form = $this->helper(['comments' => [2 => ['body' => 'Comment']]])->bind();
         $form->open();
 
-        $options = ['attributes' => ['id' => 'comments-wrapper', 'data-heading' => '<Comments>']];
+        $options = [
+            'attributes' => ['id' => 'comments-wrapper', 'data-heading' => '<Comments>'],
+            'label' => 'Discussion <comments>',
+        ];
         try {
             $form->embedMany('comments', CommentForm::class, options: $options);
             static::fail('Expected wrapper attributes to require a custom template.');
@@ -75,6 +78,7 @@ class RepeatedLayoutTest extends FormTestCase
         ]);
         static::assertStringContainsString('<section id="comments-wrapper" data-heading="&lt;Comments&gt;"', $html);
         static::assertStringContainsString('name="comments[2][body]"', $html);
+        static::assertStringContainsString('<h2>Discussion &lt;comments&gt;</h2>', $html);
         $form->close();
     }
 

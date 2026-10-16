@@ -1,5 +1,8 @@
 <?php
 declare(strict_types=1);
+
+use FormCompose\Rendering\Html;
+
 /**
  * @var \FormCompose\RepeatedView $embed
  * @var array<int|string, \FormCompose\DefinitionView> $rows
@@ -7,7 +10,8 @@ declare(strict_types=1);
  */
 ?>
 <section<?= (string)$attributes->merge(['class' => 'comments']) ?>>
-<?php foreach ($rows as $row): ?>
+<h2><?= Html::text($embed->label()) ?></h2>
+<?php foreach ($embed->rows() as $row): ?>
     <article class="comment-row"><?= $row->render() ?></article>
 <?php endforeach; ?>
 <?= $embed->errors() ?>

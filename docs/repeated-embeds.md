@@ -129,8 +129,9 @@ Theme lookup uses `embed-many/control.php` and `embed-many/errors.php`, includin
 normal type and variant lookup. Explicit `templates['errors']` can replace the
 error element.
 
-Collection errors are read from the collection property without duplicating
-nested row errors. `errors => false` suppresses them; `partAttributes['errors']`
+Collection errors are direct messages on the collection property. Nested row
+error trees are excluded even when submitted data clears the collection or
+replaces its keys. `errors => false` suppresses them; `partAttributes['errors']`
 customizes their attributes. `$embed->hasErrors()`, `$embed->messages`,
 `$embed->label()`, and `$embed->rows()` are available without rendering inputs.
 
