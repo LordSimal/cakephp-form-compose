@@ -126,23 +126,21 @@ class ArticleForm extends FormBlueprint
 <?php
 // templates/Articles/edit.php
 use App\Form\ArticleForm;
-
-$form = $this->Form->bind($article);
 ?>
-<?= $form->open() ?>
-<?= $form->definition(ArticleForm::class) ?>
-<?= $form->submit('Save') ?>
-<?= $form->close() ?>
+<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save') ?>
 ```
 
 :::
 
 1. `bind()` selects the data context and creates a form session.
 2. `open()` renders the opening form tag and initial method/CSRF fields.
-3. `control()` renders an individual field; `definition()` renders the blueprint's
-   fields in declaration order. Both use the same control elements for labels,
+3. `control()` renders an individual field using control elements for labels,
    inputs, help, and errors.
 4. `close()` renders the final protection fields and closing tag.
+
+For a blueprint, helper `render()` handles that whole sequence: bind, open, render
+the definition and its layout, add a submit button, and close. Omitting `submit`
+uses a translated **Submit** label; `submit: false` leaves out the button.
 
 This static blueprint needs no extra container configuration. See
 [form blueprints](./blueprints.md) for conditional fields, application services,

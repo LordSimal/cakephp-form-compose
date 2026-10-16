@@ -7,12 +7,14 @@ use FormCompose\Binding\FieldResolver;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Field\BoundField;
+use FormCompose\Field\ControlList;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
 use Throwable;
+use function Cake\I18n\__;
 
 /**
  * Coordinates the public API for building and rendering one bound form.
@@ -27,6 +29,10 @@ use Throwable;
  * echo $form->open(), $form->control('title');
  * echo $form->submit('Save'), $form->close();
  * ```
+ *
+ * Keep complete-form and batch shortcuts alongside the explicit session operations.
+ *
+ * @mago-expect lint:too-many-methods
  */
 class FormSession
 {
@@ -45,6 +51,32 @@ class FormSession
     ) {
         $this->lifecycle = $this->createLifecycle();
         $this->definitions = $definitions ?? new DefinitionRenderer($rendering);
+    }
+
+    /**
+     * Open, render a definition and optional button, and close this fresh session.
+     *
+     * A null definition uses binding defaults; without defaults the body is empty.
+     * A null label translates Submit at rendering time; false omits the button.
+     * Returns all markup without echoing. Exceptions retain the existing lifecycle
+     * state at the failed step; retry a complete form using a new session.
+     *
+     * @param array<string, mixed> $options Opening options and form attributes.
+     * @param array<string, mixed> $submitOptions Button attributes and presentation options.
+     */
+    public function render(
+        FormDefinition|string|null $definition = null,
+        array $options = [],
+        string|Html|false|null $submit = null,
+        array $submitOptions = [],
+    ): string {
+        $html = $this->open($options);
+        $html .= $this->definition($definition);
+        if ($submit !== false) {
+            $html .= $this->submit($submit ?? __('Submit'), $submitOptions);
+        }
+
+        return $html . $this->close();
     }
 
     /**
@@ -127,6 +159,30 @@ class FormSession
     public function control(string|FieldDefinition $field, array $options = []): string
     {
         return $this->field($field, $options)->control();
+    }
+
+    /**
+     * Render ordered controls without a wrapper, committing inputs as one batch.
+     *
+     * Entries are indexed paths or FieldDefinition objects, or path => options.
+     * Failed batches roll back their input registrations, like definition layouts.
+     * Each control uses this session's existing defaults and extension points.
+     *
+     * @param array<array-key, mixed> $fields Batch control declarations.
+     * @throws \InvalidArgumentException For invalid batch declarations.
+     */
+    public function controls(array $fields): string
+    {
+        $definitions = ControlList::normalize($fields);
+
+        return $this->lifecycle->inputs->render(function () use ($definitions): string {
+            $html = '';
+            foreach ($definitions as $definition) {
+                $html .= $this->control($definition);
+            }
+
+            return $html;
+        });
     }
 
     /**

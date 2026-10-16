@@ -42,8 +42,7 @@ The element owns the wrapper and field placement:
 ?>
 <section<?= (string)$attributes ?>>
     <div class="grid grid-cols-2 gap-4">
-        <?= $form->control('first_name') ?>
-        <?= $form->control('last_name') ?>
+        <?= $form->controls(['first_name', 'last_name']) ?>
     </div>
     <?php if ($form->has('email')): ?>
         <section class="contact-details">
@@ -69,8 +68,18 @@ echo $form->submit('Save');
 echo $form->close();
 ```
 
-The layout renders the definition's contents. The calling view owns `open()`,
-`submit()`, and `close()`.
+The layout renders the definition's contents. The calling view owns the form
+lifecycle, either explicitly as above or through the complete-form shortcut:
+
+```php
+echo $this->Form->render(AuthorForm::class, $author, submit: 'Save');
+```
+
+Layout `controls()` accepts the same batch syntax as
+[session controls](./usage.md#render-several-controls), including per-field option
+arrays and `FieldDefinition` objects. Paths stay relative to the layout's mount;
+removed fields are omitted. It adds no wrapper and participates in the enclosing
+definition's input-registration transaction.
 
 Without an explicit layout, a bundled default element renders fields and embeds
 in declaration order, with no extra wrapper. Themes can override
@@ -173,6 +182,7 @@ The element receives a scoped `DefinitionView` as `$form`:
 | --- | --- |
 | `has('email')` | Checks final field or embed availability without rendering. |
 | `control('email')` | Renders the configured field; explicitly removed fields produce nothing. |
+| `controls(['first_name', 'last_name'])` | Renders ordered relative controls without a wrapper; explicitly removed fields produce nothing. |
 | `field('email')` | Returns a bound field for manual parts; requires an available field. |
 | `embedded('address')` | Renders an existing compiled child with its own layout. |
 | `embedded('address', options: [...])` | Overrides that child's presentation for this rendering. |

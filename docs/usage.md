@@ -32,6 +32,28 @@ CakePHP routing, request CSRF metadata, and CakePHP's form-protection mechanism.
 Configure Cake's normal CSRF middleware and FormProtectionComponent in the host
 application as needed; the plugin does not enable them itself.
 
+### Render several controls
+
+Use `controls()` for an ordered batch without an extra wrapper:
+
+```php
+echo $form->controls([
+    'first_name',
+    'last_name',
+    'email' => ['type' => 'email', 'label' => 'Work email'],
+]);
+```
+
+Indexed `FieldDefinition` objects are accepted alongside field names. Each entry
+uses the same defaults, escaping, templates, and field extensions as `control()`.
+The form must be open for nonempty batches. An empty batch returns an empty string.
+The entire batch syntax is validated first; malformed entries throw
+`InvalidArgumentException`. If rendering fails, input registrations from the batch
+are rolled back so it can be retried. Previously rendered inputs remain registered.
+
+For a complete form from a blueprint or definition, use the
+[complete-form shortcut](./blueprints.md#complete-form-shortcut).
+
 ### Opening and closing
 
 ::: info Render inputs before closing

@@ -200,6 +200,8 @@ session includes rendered inputs in submission protection when closing.
 | `$form->definition()` | HTML for the collection selected at `bind()`, or an empty string. |
 | `$form->definition($definition)` | HTML for the immutable collection, rendered in the current open form. |
 | `$form->definition('profile')` / `$form->definition(ProfileForm::class)` | Resolve and render a blueprint locally using this session’s context. |
+| `$this->Form->render($definition, $user, submit: 'Save')` | Bind data and render a complete form, including its submit button and protection fields. |
+| `$form->render(submit: 'Save')` | Open, render selected binding defaults, add a button, and close a fresh session. |
 
 Field paths must be unique within a collection. Duplicate paths, unknown lookup
 paths, and unknown override targets throw `InvalidArgumentException`. Dot-separated

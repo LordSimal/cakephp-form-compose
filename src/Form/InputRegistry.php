@@ -9,18 +9,18 @@ use LogicException;
 use Throwable;
 
 /**
- * Tracks rendered input identities and atomic definition registrations.
+ * Tracks rendered input identities and atomic rendering registrations.
  *
- * FormLifecycle enforces form phases and multipart requirements. Definitions stage
- * successful inputs here until their layout succeeds; failed layouts can be retried
- * without retaining IDs or partial protection data. Inject through FormLifecycle.
+ * FormLifecycle enforces form phases and multipart requirements. Definitions and
+ * control batches stage successful inputs until rendering succeeds; failed renders
+ * can be retried without retaining IDs or partial protection data. Inject through FormLifecycle.
  */
 class InputRegistry
 {
     /** @var array<string, true> Rendered identities, including staged inputs. */
     protected array $rendered = [];
 
-    /** @var list<\FormCompose\Field\Submission> Inputs staged until the outermost definition succeeds. */
+    /** @var list<\FormCompose\Field\Submission> Inputs staged until the outermost render succeeds. */
     protected array $pending = [];
 
     protected int $depth = 0;
@@ -61,7 +61,7 @@ class InputRegistry
     /**
      * Commit inputs only after the outermost layout succeeds, or restore the snapshot.
      *
-     * @param \Closure(): string $render Definition rendering operation.
+     * @param \Closure(): string $render Definition or control-batch rendering operation.
      */
     public function render(Closure $render): string
     {

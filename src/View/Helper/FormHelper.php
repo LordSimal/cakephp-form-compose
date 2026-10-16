@@ -11,6 +11,7 @@ use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\FormSession;
+use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RendererInterface;
@@ -18,7 +19,7 @@ use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
 
 /**
- * Creates bound form sessions from a CakePHP view.
+ * Creates bound form sessions and renders complete forms from a CakePHP view.
  *
  * bind() selects a CakePHP form context for the supplied data and collects the
  * form's theme, renderer, and custom field types. Each returned FormSession has
@@ -35,6 +36,27 @@ use InvalidArgumentException;
 class FormHelper extends Helper
 {
     protected int $sequence = 0;
+
+    /**
+     * Bind and render a complete form using a blueprint or ordinary definition.
+     *
+     * Includes a translated Submit button unless a label or false is supplied.
+     * Uses bind() and the returned session's render(), preserving application overrides.
+     * For a custom theme or renderer, use bind(...)->render() instead.
+     *
+     * @param array<string, mixed> $options Binding options and form attributes.
+     * @param array<string, mixed> $submitOptions Button attributes and presentation options.
+     */
+    public function render(
+        FormDefinition|string $definition,
+        mixed $data = null,
+        array $options = [],
+        string|Html|false|null $submit = null,
+        array $submitOptions = [],
+    ): string {
+        return $this->bind($data, $options, definition: $definition)
+            ->render(submit: $submit, submitOptions: $submitOptions);
+    }
 
     /**
      * Create a form session for the given context and presentation.

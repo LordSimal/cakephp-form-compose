@@ -38,8 +38,20 @@ class ProfileForm extends FormBlueprint
 configuration, in presentation order. These declarations do not require PHP
 properties or store the bound values.
 
-There are two ways to select the blueprint. Render it at a particular location,
-or select it during binding so individual field calls inherit its defaults:
+Render a complete form in one call:
+
+```php
+use App\Form\ProfileForm;
+
+echo $this->Form->render(ProfileForm::class, $user, submit: 'Save');
+```
+
+This includes the opening form tag, the blueprint's fields and layout, a submit
+button, and the closing tag with protection fields. It accepts an alias such as
+`'profile'` or an ordinary `FormDefinition` too.
+
+For manual rendering, select the blueprint at a particular location, or during
+binding so individual field calls inherit its defaults:
 
 ::: code-group
 
@@ -73,6 +85,45 @@ $form = $this->Form->bind($user, definition: ProfileForm::class);
 Both entry points accept aliases after plugin bootstrap: use
 `$form->definition('profile')` or `bind($user, definition: 'profile')`. A class name
 works outside the discovery paths and does not require a `Form` attribute.
+
+## Complete-form shortcut
+
+Form and button options remain separate:
+
+```php
+echo $this->Form->render(
+    ProfileForm::class,
+    $user,
+    options: ['url' => ['action' => 'edit', $user->id], 'class' => 'profile-form'],
+    submit: 'Save profile',
+    submitOptions: ['class' => 'button-primary', 'name' => 'save'],
+);
+```
+
+`submit` defaults to a translated **Submit** label at rendering time. Pass
+`false` to omit the button. Strings are escaped; trusted `Html` labels and the
+attributes, templates, variants, and template data accepted by `submit()` also work.
+File controls require `options: ['type' => 'file']`, as with an explicitly opened form.
+
+For a custom theme or renderer, bind first and render the selected definition:
+
+```php
+$form = $this->Form->bind($user, theme: $theme, definition: ProfileForm::class);
+echo $form->render(submit: 'Save');
+```
+
+Session `render()` also accepts a local definition as its first argument; this
+preserves the existing binding defaults. Its `options` apply to `open()`, while
+helper `render()` passes options to `bind()`. Definition layout settings belong
+to the definition's [presentation configuration](./composition.md#select-a-layout).
+
+Both methods return complete HTML without echoing it. Use a fresh session:
+`render()` opens and closes it once. Failures propagate without a partial return
+value or automatic closing; existing lifecycle rules apply at the failed step.
+Start a fresh binding to retry the complete form. With no selected or explicit
+definition, session `render()` produces an empty body and the optional button.
+
+## Definition selection
 
 | Selection | Configuration lifetime | Useful for |
 | --- | --- | --- |

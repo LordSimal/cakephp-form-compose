@@ -61,13 +61,8 @@ class ProfileForm extends FormBlueprint
 ```php [Render a blueprint]
 <?php
 use App\Form\ProfileForm;
-
-$form = $this->Form->bind($user);
 ?>
-<?= $form->open() ?>
-<?= $form->definition(ProfileForm::class) ?>
-<?= $form->submit('Save') ?>
-<?= $form->close() ?>
+<?= $this->Form->render(ProfileForm::class, $user, submit: 'Save') ?>
 ```
 
 ```php [Compose field parts]
