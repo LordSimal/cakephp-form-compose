@@ -33,13 +33,24 @@ using the development branch until a release is tagged:
 composer require josbeir/cakephp-form-compose:dev-main
 ```
 
-Register the plugin in your application's `bootstrap()`, after `parent::bootstrap()`:
+Register the plugin using either the Cake CLI or your application's bootstrap:
+
+::: code-group
+
+```sh [Cake CLI]
+bin/cake plugin load FormCompose
+```
 
 ```php [src/Application.php]
 use FormCompose\FormComposePlugin;
 
 $this->addPlugin(FormComposePlugin::class);
 ```
+
+:::
+
+The CLI registers the plugin in `config/plugins.php`. For manual registration,
+place `addPlugin()` in your application's `bootstrap()`, after `parent::bootstrap()`.
 
 ## Load the helper
 
