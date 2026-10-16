@@ -26,8 +26,14 @@ An entity with `status === 'draft'` selects Draft. Including `options` also infe
 `select` if no type is specified. `empty` supplies a placeholder label. Optional
 single selects have a blank option by default, so a nullable foreign key does not
 silently display the first record. Use `empty => false` to suppress it or
-`empty => true` to request a blank option on a required select. An explicit empty
-key in `options` also works and takes precedence over `empty`.
+`empty => true` to request a blank option on a required select.
+
+Use `empty` for placeholders. An empty string remains a valid application choice
+value, including an enum backing value. If `options` explicitly contains `''`,
+that choice is kept and no placeholder is added; its label takes precedence over
+`empty`. Setting `empty => false` only suppresses generated placeholders and does
+not remove explicit choices. Both a placeholder and an empty-string choice submit
+`''`; use a distinct value if your application needs to distinguish them.
 
 ## Backed enums
 
@@ -154,8 +160,8 @@ additional keys are HTML attributes on that choice:
 ```php
 echo $form->control('audience', [
     'type' => 'select',
+    'empty' => 'Choose an audience',
     'options' => [
-        '' => 'Choose an audience',
         'Public' => [
             'everyone' => 'Everyone',
             'subscribers' => 'Subscribers',

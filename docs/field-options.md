@@ -138,9 +138,14 @@ echo $form->control('reading_minutes', [
 | `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |
 | `hiddenField` | `bool` | `true`. Enables fallback inputs for checkboxes, radios, multi-checkboxes, and multiple selects. |
 
+Use `empty` to configure a select placeholder. Empty-string choice values remain
+supported for application data and backed enums. An explicit empty-value option,
+including one in an optgroup, keeps its label and prevents an additional
+placeholder. `empty => false` does not remove explicit choices. A placeholder and
+an empty-string choice both submit `''`.
+
 Radio and multiple-choice fallbacks submit an empty string when nothing is
-selected. An existing empty-value option, including one in an optgroup, is kept
-instead of adding another. Null and empty-string values select the automatic
+selected. Null and empty-string values select the automatic
 blank option; zero and false retain their own selection. The blank value is an
 empty string in the HTTP request; CakePHP's normal marshalling handles nullable
 associations. A select with no enabled options and no fallback registers no
