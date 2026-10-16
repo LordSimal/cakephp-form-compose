@@ -65,10 +65,10 @@ class RepeatedDefinitionTest extends FormTestCase
             'comments',
             CommentForm::class,
             keys: [2, 0],
-            options: ['attributes' => ['class' => 'rows']],
+            options: ['template' => 'repeat/comments', 'attributes' => ['class' => 'rows']],
         );
         static::assertLessThan(strpos($html, 'Zero'), strpos($html, 'Two'));
-        static::assertStringContainsString('class="rows"', $html);
+        static::assertStringContainsString('class="rows comments"', $html);
         $form->close();
     }
 

@@ -84,6 +84,7 @@ Select an occurrence template on the attribute:
 #[EmbedMany('comments', CommentForm::class, options: [
     'template' => 'forms/comments',
     'templateData' => ['heading' => 'Comments'],
+    'attributes' => ['class' => 'comments'],
 ])]
 ```
 
@@ -116,11 +117,17 @@ arrangement, use `$row->control('body')` or its independently renderable parts.
 Guard conditional fields with `$row->has('body')`. Extract a wrapper into an
 ordinary CakePHP element when needed; there is no separate row-template layer.
 
-Without a template, the base element renders rows in order followed by direct
-collection errors. It adds no wrapper unless theme or occurrence `attributes`
-are configured, in which case it emits a div with those attributes. Theme lookup
-uses `embed-many/control.php` and `embed-many/errors.php`, including normal type
-and variant lookup. Explicit `templates['errors']` can replace the error element.
+The base element renders rows in order followed by direct collection errors,
+without a wrapper. Wrapper `attributes` require a custom control template, selected
+on the occurrence or supplied by a theme layer. The base element rejects emitted
+wrapper attributes instead of discarding them or inventing markup. Null and false
+attribute values are omitted and do not require a wrapper. Preserve `$attributes`
+on your custom wrapper so configured IDs appear in the markup and remain subject
+to duplicate-ID checks.
+
+Theme lookup uses `embed-many/control.php` and `embed-many/errors.php`, including
+normal type and variant lookup. Explicit `templates['errors']` can replace the
+error element.
 
 Collection errors are read from the collection property without duplicating
 nested row errors. `errors => false` suppresses them; `partAttributes['errors']`
