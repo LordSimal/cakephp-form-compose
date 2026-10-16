@@ -401,7 +401,19 @@ public function configure(FormBuilder $form, FormContext $context): void
 These translations run when the blueprint is compiled, using the locale active
 at that time. Set the request's locale before binding or rendering the blueprint.
 The hook and inline field options also accept label/help closures when deferred
-resolution is useful. Those runtime closures may use normal PHP closure syntax.
+resolution is useful. Prefer arrow functions for simple runtime callbacks:
+
+```php
+// In configure(); import Cake\I18n\__.
+$form->with('title', [
+    'label' => static fn(): string => __('Article title'),
+    'help' => static fn(): string => __('Displayed above the article.'),
+]);
+```
+
+These callbacks defer translation until field resolution, following the same
+snapshot rules as attribute closures. Keep the full `static function` syntax for
+callbacks declared in PHP attribute arguments.
 
 ### Translate enum choices
 

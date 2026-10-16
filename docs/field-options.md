@@ -110,6 +110,14 @@ the inferred label or omits help. Other return types throw
 its text. See [translating blueprints](./blueprints.md#translate-a-blueprint) for
 attribute syntax, locale timing, and runtime configuration examples.
 
+```php
+// Inside an open form; import Cake\I18n\__.
+echo $form->control('title', [
+    'label' => static fn(): string => __('Article title'),
+    'help' => static fn(): string => __('Displayed above the article.'),
+]);
+```
+
 ## Constraints and state
 
 | Option | Type | Default and behavior |
