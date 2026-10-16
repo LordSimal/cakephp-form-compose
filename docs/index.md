@@ -5,7 +5,7 @@ description: A replacement for CakePHP's FormHelper, with PHP element templates 
 
 hero:
   name: FormCompose
-  text: A replacement for CakePHP’s FormHelper.
+  text: Composable CakePHP forms.
   tagline: Build CakePHP forms with bound fields and ordinary PHP element templates.
   image:
     src: /branding/formcompose-mark.svg
