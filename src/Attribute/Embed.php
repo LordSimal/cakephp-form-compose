@@ -17,8 +17,10 @@ final readonly class Embed
 {
     /**
      * Capture the mount path and a blueprint alias or class name.
+     *
+     * @param array<string, mixed> $options Presentation overrides for this occurrence.
      */
-    public function __construct(public string $path, public string $definition)
+    public function __construct(public string $path, public string $definition, public array $options = [])
     {
         new FieldDefinition($path);
         if ($definition === '' || trim($definition) !== $definition) {

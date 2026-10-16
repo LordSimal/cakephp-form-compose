@@ -116,8 +116,8 @@ For a standalone section, mount the same blueprint directly:
 echo $form->definition(AuthorForm::class, at: 'author');
 ```
 
-Explicit indexed paths such as `comments.0.author` work too. The plugin does not
-automatically expand collections or add a repeater lifecycle.
+Explicit indexed paths such as `comments.0.author` work too. For multiple rows, use [EmbedMany](./repeated-embeds.md), which expands row keys
+without introducing a browser repeater lifecycle.
 
 ## Conditional fields and parent overrides
 
@@ -235,3 +235,21 @@ registered. See [lifecycle and failures](./form-reference.md#lifecycle-and-failu
 
 CakePHP owns association marshalling, validation, and persistence. Embedding a
 form does not load associations or authorize submitted changes.
+
+## Select a template for one embed
+
+The normal `Embed` attribute accepts occurrence presentation options too:
+
+```php
+#[Embed('author', AuthorForm::class, options: [
+    'template' => 'forms/post-author',
+    'templateData' => ['heading' => 'Written by'],
+])]
+```
+
+The selected element receives the scoped child as `$form`. It can call
+`$form->render()` to wrap the child's own layout, or arrange its fields directly.
+Occurrence options apply only at this mount; the child definition keeps its own
+presentation. Options passed to `embedded('author', [...])` override those declared
+on the attribute. `template`, `templates`, `templateData`, `variant`, and `attributes`
+use the ordinary definition presentation contract.

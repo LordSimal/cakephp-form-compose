@@ -203,7 +203,7 @@ class FormSession
         array $options = [],
     ): string {
         $this->lifecycle->assertOpen();
-        $context = new FormContext($this->binding->context, $this->binding->request);
+        $context = FormContext::fromBinding($this->binding);
         if ($at !== null) {
             $context = $context->at($at);
         }
@@ -213,10 +213,45 @@ class FormSession
         }
 
         $definition ??= $this->binding->definition ?? FormDefinition::make();
+        $definition = $this->blueprints->expand($definition, $context);
 
         return $this->lifecycle->inputs->render(
             fn(): string => $this->definitions->render($this, $definition, $at ?? '', $options),
         );
+    }
+
+    /**
+     * Render repeated relative definitions at an association path in this open session.
+     *
+     * @param list<int|string>|null $keys Null infers row keys from the binding's value sources.
+     * @param array<string, mixed> $options Wrapper presentation, label, and collection feedback.
+     */
+    public function embedMany(
+        string $path,
+        FormDefinition|string|RepeatedDefinition $definition,
+        ?array $keys = null,
+        array $options = [],
+    ): string {
+        $this->lifecycle->assertOpen();
+        $repeat = $definition instanceof RepeatedDefinition
+            ? $definition
+            : new RepeatedDefinition($path, $definition, $keys);
+        $context = FormContext::fromBinding($this->binding);
+        $compiled = $this->blueprints->expand(new FormDefinition([$repeat]), $context)->index->repeats[$repeat->path];
+        $compiled = new RepeatedDefinition(
+            $path,
+            $compiled->definition,
+            $compiled->keys,
+            $compiled->options,
+            $compiled->rows,
+        );
+
+        return $this->lifecycle->inputs->render(fn(): string => $this->definitions->renderMany(
+            $this,
+            $compiled,
+            $options,
+            $this->lifecycle->inputs,
+        ));
     }
 
     /**

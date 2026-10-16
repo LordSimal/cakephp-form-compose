@@ -199,6 +199,23 @@ mounts relative field paths at a context path. `$options` are
 not field options. Rendering shares the session's theme and submission registry.
 See [layouts and composition](./composition.md) for examples.
 
+## embedMany() {#embed-many}
+
+```php
+public function embedMany(
+    string $path,
+    FormDefinition|string|RepeatedDefinition $definition,
+    ?array $keys = null,
+    array $options = [],
+): string;
+```
+
+Render rows at an association path inside the open session. Null `keys` infers
+original keys using binding value sources; `[]` renders no rows. Options select
+the repeated wrapper and collection-owned error presentation. Passing an already
+compiled `RepeatedDefinition` preserves its row hooks and parent adjustments.
+See [Repeated embeds](./repeated-embeds.md) for layouts and blank-row selection.
+
 ## submit() {#submit}
 
 ```php

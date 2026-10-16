@@ -7,6 +7,8 @@ use Cake\Controller\Controller;
 use Cake\Http\Response;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
+use FormCompose\Field\FieldDefinition;
+use FormCompose\FormDefinition;
 use FormCompose\Rendering\Theme;
 use FormCompose\View\Helper\FormHelper;
 
@@ -32,17 +34,8 @@ class FormsController extends Controller
     {
         $helper = new FormHelper(new View($this->getRequest()));
         $form = $helper->bind(
-            new ArrayContext(['errors' => ['email' => ['invalid' => 'Check your email']]]),
-            theme: new Theme(
-                layers: ['forms/starter'],
-                defaults: [
-                    'input' => ['class' => 'field-input'],
-                    'choice' => ['class' => 'choice-input'],
-                    'label' => ['class' => 'field-label'],
-                    'help' => ['class' => 'field-help'],
-                    'errors' => ['class' => 'field-errors'],
-                ],
-            ),
+            $this->createContext(),
+            theme: $this->createTheme(),
         );
         $html = $form->open(['url' => '/forms/save', 'type' => 'file']);
         $html .= $form->control('id', ['type' => 'hidden', 'value' => 42]);
@@ -70,6 +63,11 @@ class FormsController extends Controller
         $html .= $form->control('bio', ['type' => 'textarea', 'value' => 'Hello <world>']);
         $html .= $form->control('attachment', ['type' => 'file']);
         $html .= $form->control('disabled', ['disabled' => true]);
+        $row = FormDefinition::make()->add(FieldDefinition::make('id', 'hidden'))->add(FieldDefinition::make(
+            'body',
+            'textarea',
+        ));
+        $html .= $form->embedMany('comments', $row, options: ['template' => 'repeat/comments']);
         $html .= $form->submit('Save') . $form->close();
 
         return $this->getResponse()
@@ -79,6 +77,36 @@ class FormsController extends Controller
                     . $html
                     . '</body></html>',
             );
+    }
+
+    /**
+     * Supply realistic values and feedback to the HTTP rendering fixture.
+     */
+    protected function createContext(): ArrayContext
+    {
+        return new ArrayContext([
+            'errors' => ['email' => ['invalid' => 'Check your email']],
+            'defaults' => [
+                'comments' => [0 => ['id' => 10, 'body' => 'First'], 2 => ['id' => 12, 'body' => 'Third']],
+            ],
+        ]);
+    }
+
+    /**
+     * Share the application-owned starter theme across HTTP fixture actions.
+     */
+    protected function createTheme(): Theme
+    {
+        return new Theme(
+            layers: ['forms/starter'],
+            defaults: [
+                'input' => ['class' => 'field-input'],
+                'choice' => ['class' => 'choice-input'],
+                'label' => ['class' => 'field-label'],
+                'help' => ['class' => 'field-help'],
+                'errors' => ['class' => 'field-errors'],
+            ],
+        );
     }
 
     /**

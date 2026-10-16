@@ -93,6 +93,7 @@ export default defineConfig({
           { text: 'Field definitions', link: '/definitions' },
           { text: 'Form blueprints', link: '/blueprints' },
           { text: 'Nested definitions', link: '/composition' },
+          { text: 'Repeated embeds', link: '/repeated-embeds' },
         ],
       },
       {

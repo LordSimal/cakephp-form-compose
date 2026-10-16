@@ -18,6 +18,8 @@ test('native validity, successful controls, and theme associations', async ({ pa
     ['id', '42'], ['author_id', ''], ['topics', ''], ['topics[]', 'a'],
     ['active', '0'], ['visibility', ''], ['tags[_ids]', ''], ['email', 'reader@example.test'],
     ['author[name]', 'Ada'], ['bio', 'Hello <world>'],
+    ['comments[0][id]', '10'], ['comments[0][body]', 'First'],
+    ['comments[2][id]', '12'], ['comments[2][body]', 'Third'],
   ]);
   await expect(page.locator('fieldset')).toHaveCount(2);
   await expect(page.locator('fieldset > legend')).toHaveCount(2);
@@ -31,18 +33,21 @@ test('a real multipart browser POST passes Cake CSRF and form protection', async
   await expect(page).toHaveURL('/forms/save');
   const data = JSON.parse(await page.locator('body').innerText());
   expect(data).toMatchObject({ id: '42', author_id: '', topics: ['a'], active: '0', author: { name: 'Ada' } });
+  expect(data.comments).toEqual({ 0: { id: '10', body: 'First' }, 2: { id: '12', body: 'Third' } });
   expect(data).not.toHaveProperty('empty_select');
   expect(data).not.toHaveProperty('disabled');
   expect(data).not.toHaveProperty('_Token');
 });
 
-for (const attack of ['unexpected field', 'locked hidden value', 'missing CSRF']) {
+for (const attack of ['unexpected field', 'locked hidden value', 'missing CSRF', 'changed row ID', 'injected row']) {
   test(`Cake rejects ${attack}`, async ({ page }) => {
     await page.goto('/forms');
     const status = await page.locator('form').evaluate(async (form, attack) => {
       const data = new FormData(form);
       if (attack === 'unexpected field') data.set('injected', '1');
       if (attack === 'locked hidden value') data.set('id', '99');
+      if (attack === 'changed row ID') data.set('comments[2][id]', '99');
+      if (attack === 'injected row') data.set('comments[3][body]', 'Injected');
       if (attack === 'missing CSRF') data.delete('_csrfToken');
       return (await fetch(form.action, { method: 'POST', body: data })).status;
     }, attack);

@@ -6,6 +6,8 @@ namespace FormCompose;
 use FormCompose\Field\BoundField;
 use FormCompose\Field\ControlList;
 use FormCompose\Field\FieldDefinition;
+use FormCompose\Rendering\TemplateOptions;
+use InvalidArgumentException;
 
 /**
  * Exposes one compiled definition to its layout with relative field paths.
@@ -111,8 +113,43 @@ class DefinitionView
         return $this->session->definition(
             $this->definition->embedded($path),
             at: $this->qualify($path),
+            options: array_replace(
+                TemplateOptions::normalize($this->definition->index->embedOptions[$path] ?? []),
+                TemplateOptions::normalize($options),
+            ),
+        );
+    }
+
+    /**
+     * Render the child layout independently of an occurrence wrapper template.
+     *
+     * @param array<string, mixed> $options Local definition presentation.
+     */
+    public function render(array $options = []): string
+    {
+        return $this->session->definition(
+            $this->definition,
+            at: $this->path === '' ? null : $this->path,
             options: $options,
         );
+    }
+
+    /**
+     * Render compiled repeated rows without re-running their blueprint hooks.
+     *
+     * @param array<string, mixed> $options Occurrence presentation overrides.
+     */
+    public function embeddedMany(string $path, array $options = []): string
+    {
+        if ($this->definition->index->wasRemoved($path)) {
+            return '';
+        }
+
+        $repeat =
+            $this->definition->index->repeats[$path] ?? throw new InvalidArgumentException('Unknown repeated embed: '
+                . $path);
+
+        return $this->session->embedMany($this->qualify($path), $repeat, options: $options);
     }
 
     /**

@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace FormCompose;
 
+use FormCompose\Form\InputRegistry;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
 use FormCompose\Rendering\TemplateOptions;
+use LogicException;
 
 /**
  * Renders compiled definitions through the same theme/element pipeline as controls.
@@ -29,7 +31,10 @@ class DefinitionRenderer
      */
     public function render(FormSession $session, FormDefinition $definition, string $path, array $options): string
     {
-        $options = TemplateOptions::normalize(array_replace($definition->options, $options));
+        $options = array_replace(
+            TemplateOptions::normalize($definition->options),
+            TemplateOptions::normalize($options),
+        );
         /** @var array<string, mixed> $attributes */
         $attributes = $options['attributes'] ?? [];
         $node = new RenderNode(
@@ -47,6 +52,64 @@ class DefinitionRenderer
         );
 
         return $this->rendering->renderer->render('control', $node);
+    }
+
+    /**
+     * Render a repeated section through an optional PHP wrapper with scoped row views.
+     *
+     * @param array<string, mixed> $options Occurrence overrides.
+     */
+    public function renderMany(
+        FormSession $session,
+        RepeatedDefinition $repeat,
+        array $options,
+        InputRegistry $inputs,
+    ): string {
+        $rowDefinition = $repeat->rows;
+        if (!$rowDefinition instanceof FormDefinition) {
+            throw new LogicException('Repeated embeds must be compiled before rendering.');
+        }
+
+        $options = array_replace(TemplateOptions::normalize($repeat->options), TemplateOptions::normalize($options));
+        $repeat = new RepeatedDefinition($repeat->path, $repeat->definition, $repeat->keys, $options, $repeat->rows);
+        $rows = [];
+        foreach ($rowDefinition->entries as $entry) {
+            if (!$entry instanceof EmbeddedDefinition) {
+                continue;
+            }
+
+            $rows[$entry->path] = $this->createView(
+                $session,
+                $entry->definition,
+                $repeat->path . '.' . $entry->path,
+            );
+        }
+
+        $embed = $this->createRepeatedView($repeat, $rows, $session, $inputs);
+        /** @var array<string, mixed> $configured */
+        $configured = $options['attributes'] ?? [];
+        $attributes = $this->rendering->theme->attributes('embed-many.control', 'default')->merge($configured);
+
+        return $inputs->render(fn(): string => $this->rendering->renderer->render('control', new RenderNode(
+            'embed-many',
+            'default',
+            ['embed' => $embed, 'rows' => $rows, 'attributes' => $attributes],
+            $options,
+        )), $attributes);
+    }
+
+    /**
+     * Supply repeated feedback behavior through the same renderer extension boundary.
+     *
+     * @param array<int|string, \FormCompose\DefinitionView> $rows Scoped row views.
+     */
+    protected function createRepeatedView(
+        RepeatedDefinition $repeat,
+        array $rows,
+        FormSession $session,
+        InputRegistry $inputs,
+    ): RepeatedView {
+        return new RepeatedView($repeat, $rows, $session, $this->rendering, $inputs);
     }
 
     /**

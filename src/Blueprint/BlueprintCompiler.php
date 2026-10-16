@@ -5,11 +5,13 @@ namespace FormCompose\Blueprint;
 
 use Closure;
 use FormCompose\Attribute\Embed;
+use FormCompose\Attribute\EmbedMany;
 use FormCompose\EmbeddedDefinition;
 use FormCompose\FormBlueprint;
 use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
+use FormCompose\RepeatedDefinition;
 use LogicException;
 
 /**
@@ -50,18 +52,39 @@ class BlueprintCompiler
         $declarations = BlueprintDeclarations::read($blueprint);
         $entries = [];
         foreach ($declarations['entries'] as $entry) {
-            $entries[] = $entry instanceof Embed
-                ? new EmbeddedDefinition($entry->path, $this->resolve($entry->definition, $context->at($entry->path)))
-                : $entry;
+            $entries[] = match (true) {
+                $entry instanceof Embed => new EmbeddedDefinition(
+                    $entry->path,
+                    $this->resolve($entry->definition, $context->at($entry->path)),
+                    $entry->options,
+                ),
+                $entry instanceof EmbedMany => new RepeatedDefinition(
+                    $entry->path,
+                    $entry->definition,
+                    $entry->keys,
+                    $entry->options,
+                ),
+                default => $entry,
+            };
         }
 
-        $definition = new FormDefinition($entries, $declarations['options']);
-        $builder = $this->createBuilder($definition)->withResolver(
-            fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
-        );
+        $definition = $this->expand(new FormDefinition($entries, $declarations['options']), $context);
+        $builder = $this->createBuilder($definition)
+            ->withResolver(
+                fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
+            )
+            ->withExpansion(fn(FormDefinition $definition): FormDefinition => $this->expand($definition, $context));
         $blueprint->configure($builder, $context);
 
         return $builder->build();
+    }
+
+    /**
+     * Expand ordinary definitions through the same scoped resolver used by blueprints.
+     */
+    public function expand(FormDefinition $definition, FormContext $context): FormDefinition
+    {
+        return new DefinitionExpander($this->resolve(...))->expand($definition, $context);
     }
 
     /**

@@ -15,7 +15,7 @@ use InvalidArgumentException;
  */
 final readonly class FormDefinition
 {
-    /** @var list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition> Ordered relative children. */
+    /** @var list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition|\FormCompose\RepeatedDefinition> Ordered relative children. */
     public array $entries;
 
     /** @var list<\FormCompose\Field\FieldDefinition> Flattened field configuration. */
@@ -26,7 +26,7 @@ final readonly class FormDefinition
     /**
      * Collect unique entries, retaining compatibility with flat collections.
      *
-     * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition> $fields Ordered entries.
+     * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition|\FormCompose\RepeatedDefinition> $fields Ordered entries.
      * @param array<string, mixed> $options Definition presentation options.
      * @param list<string> $removed Explicitly removed paths for conditional layouts.
      */
@@ -48,18 +48,20 @@ final readonly class FormDefinition
     /**
      * Append a field without changing the original collection.
      */
-    public function add(FieldDefinition $field): self
+    public function add(FieldDefinition|RepeatedDefinition $field): self
     {
         return new self([...$this->entries, $field], $this->options, $this->removed);
     }
 
     /**
      * Append a resolved child at a relative association or indexed path.
+     *
+     * @param array<string, mixed> $options Presentation for this occurrence.
      */
-    public function embed(string $path, self $definition): self
+    public function embed(string $path, self $definition, array $options = []): self
     {
         return new self(
-            [...$this->entries, new EmbeddedDefinition($path, $definition)],
+            [...$this->entries, new EmbeddedDefinition($path, $definition, $options)],
             $this->options,
             $this->removed,
         );
@@ -130,7 +132,7 @@ final readonly class FormDefinition
         $entries = DefinitionEntries::change(
             $this->entries,
             $path,
-            static fn(FieldDefinition|EmbeddedDefinition $entry): null => null,
+            static fn(FieldDefinition|EmbeddedDefinition|RepeatedDefinition $entry): null => null,
             static fn(self $child, string $relative): self => $child->remove($relative),
         );
 
@@ -149,7 +151,7 @@ final readonly class FormDefinition
         $entries = DefinitionEntries::change(
             $this->entries,
             $path,
-            static fn(FieldDefinition|EmbeddedDefinition $entry): FieldDefinition => new FieldDefinition(
+            static fn(FieldDefinition|EmbeddedDefinition|RepeatedDefinition $entry): FieldDefinition => new FieldDefinition(
                 $entry->path,
                 $replacement->options,
             ),

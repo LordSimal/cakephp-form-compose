@@ -52,14 +52,14 @@ $editing = $shared->with('title', ['help' => 'Displayed above the article.']);
 
 | Signature | Result |
 | --- | --- |
-| `new FormDefinition(array $fields, array $options = [], array $removed = [])` | Collection of ordered `FieldDefinition`/`EmbeddedDefinition` entries; normally prefer the fluent API. |
+| `new FormDefinition(array $fields, array $options = [], array $removed = [])` | Collection of ordered `FieldDefinition`/`EmbeddedDefinition`/`RepeatedDefinition` entries; normally prefer the fluent API. |
 | `FormDefinition::make(): self` | Empty collection. |
 | `add(FieldDefinition $field): self` | New collection with appended field. |
 | `with(string $path, array $options): self` | New collection with that field's top-level options replaced; order is unchanged. Qualified embedded paths are supported. |
 | `remove(string $path): self` | New collection without that field or embedded subtree. |
 | `has(string $path): bool` | Final membership check for a field or embed. |
 | `field(string $path): FieldDefinition` | Existing field configuration; no binding or rendering. |
-| `embed(string $path, FormDefinition $definition): self` | New collection with a relative child mounted at this path. |
+| `embed(string $path, FormDefinition $definition, array $options = []): self` | New collection with a relative child mounted at this path. |
 | `embedded(string $path): FormDefinition` | Already compiled child, retaining its relative paths. |
 | `presentation(array $options): self` | New collection with top-level definition presentation options replaced. |
 
@@ -183,7 +183,7 @@ the parent's hook. The compiler-supplied `FormBuilder` is mutable:
 | `add(FieldDefinition $field): static` | Append a field. |
 | `with(string $path, array $options): static` | Replace an existing field's matching top-level options. |
 | `remove(string $path): static` | Remove an existing field or embed. |
-| `embed(string $path, FormDefinition\|string $definition): static` | Append a resolved collection or resolve a blueprint class/alias in this scope. |
+| `embed(string $path, FormDefinition\|string $definition, array $options = []): static` | Append a resolved collection or resolve a blueprint class/alias in this scope. |
 | `presentation(array $options): static` | Set definition layout options. |
 | `build(): FormDefinition` | Immutable snapshot unaffected by subsequent builder changes. |
 
@@ -277,3 +277,36 @@ field types with explicit instances taking precedence. See
 [services and discovery](./blueprint-configuration.md) for construction and cache
 configuration, and [service extensions](./extending.md#subclassing-services) for
 factory overrides.
+
+## Repeated definitions and occurrence options
+
+`#[Embed($path, $definition, options: [...])]` accepts occurrence presentation.
+`#[EmbedMany($path, $definition, keys: null, options: [...])]` repeats a blueprint.
+Both support `template`, `templates`, `templateData`, and `variant` in `options`.
+A child blueprint's own layout is retained for `DefinitionView::render()`.
+
+`RepeatedDefinition($path, $definition, $keys = null, $options = [], $rows = null)`
+is the immutable ordinary-PHP declaration accepted by `FormDefinition::add()`.
+The fifth argument is compiled metadata: leave it null when declaring reusable
+configuration. Binding returns a snapshot whose `rows` is a `FormDefinition` of
+keyed row embeds. Unresolved declarations index their mount but no row fields.
+
+`FormBuilder::embedMany(string $path, FormDefinition|string $definition,
+?array $keys = null, array $options = []): static` compiles rows immediately using
+the factory's scoped resolver, allowing parent `with()` and `remove()` calls.
+A standalone builder without that resolver rejects repeated embedding.
+
+`DefinitionView::embeddedMany(string $path, array $options = []): string` renders
+compiled rows; removed mounts return `''` and unknown mounts throw.
+`DefinitionView::render(array $options = []): string` renders that child's own
+layout at its existing path without re-running hooks or opening another form.
+
+`FormContext::value(string $path): mixed` reads relative values using the binding's
+source ordering. `path` is the absolute mount; `valueSources` retains that ordering.
+`context` keeps Cake's metadata provider and `request` remains the original request.
+`BlueprintFactory::expand(FormDefinition $definition, FormContext $context)` expands
+ordinary declarations with the same DI and cycle handling as blueprint compilation.
+
+`DefinitionRenderer::createView()` remains the factory for every repeated row;
+`createRepeatedView()` supplies the collection feedback facade. Override those
+protected factories through the injected definition renderer to specialize behavior.

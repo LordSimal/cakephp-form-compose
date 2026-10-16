@@ -249,6 +249,17 @@ Selecting a layout does not forward its data to individual controls or children.
 See [blueprint layouts](./blueprints.md#keep-control-of-the-layout) for a complete
 class/element example, and [nested definitions](./composition.md) for child layouts.
 
+## Repeated-embed layouts
+
+The `embed-many` scope renders `control` and `errors` through the standard theme
+lookup. The control receives `$embed` (`RepeatedView`), `$rows` (original keys
+mapped to scoped `DefinitionView` instances), `$attributes`, and `$templateData`.
+The error element receives `$embed`, `$messages`, `$attributes`, and `$templateData`.
+
+Use a normal `foreach` for row wrappers and `$row->render()` for each child's own
+layout. There is no `row` template part. See the
+[complete repeated layout example](./repeated-embeds.md#arrange-rows-with-a-php-element).
+
 ## Attributes
 
 Theme defaults use part keys, with optional type prefixes:

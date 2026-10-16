@@ -105,6 +105,16 @@ class BlueprintFactory
     }
 
     /**
+     * Expand reusable ordinary definitions using this factory's discovery and DI boundary.
+     */
+    public function expand(FormDefinition $definition, FormContext $context): FormDefinition
+    {
+        return $this->createCompiler()
+            ->withResolver($this->definition(...))
+            ->expand($definition, $context);
+    }
+
+    /**
      * Read only class-target declarations from CakePHP's cached metadata collection.
      */
     protected function attributes(): AttributeCollection

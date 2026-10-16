@@ -15,8 +15,10 @@ final readonly class EmbeddedDefinition
 {
     /**
      * Validate the mount path using the ordinary field-path contract.
+     *
+     * @param array<string, mixed> $options Presentation overrides, leaving the child layout intact.
      */
-    public function __construct(public string $path, public FormDefinition $definition)
+    public function __construct(public string $path, public FormDefinition $definition, public array $options = [])
     {
         new FieldDefinition($path);
     }
