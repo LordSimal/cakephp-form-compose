@@ -1,4 +1,5 @@
 ---
+title: Custom controls and service extensions
 description: Add custom field types, renderers, and service subclasses to FormCompose.
 ---
 

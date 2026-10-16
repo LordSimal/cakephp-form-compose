@@ -1,4 +1,5 @@
 ---
+title: Contributing
 description: Run the PHP checks, enforce coverage, and work on the VitePress documentation site.
 ---
 
@@ -55,6 +56,24 @@ npm run docs:preview
 The build checks internal links. Documentation changes build on pull requests and
 deploy to GitHub Pages from `main`. Keep generated output and installed Node
 dependencies out of commits.
+
+### Page metadata
+
+Give every documentation page a unique `title` and `description` in its YAML
+frontmatter. Keep the homepage title and hero explicit about CakePHP. Ordinary
+page titles receive the FormCompose suffix; the homepage sets `titleTemplate: false`
+to use its complete title directly.
+
+The VitePress configuration generates canonical URLs, Open Graph and Twitter
+metadata, and a sitemap for `https://josbeir.github.io/cakephp-form-compose/`.
+Page metadata also updates during client-side navigation. Keep the public
+hostname and repository base path aligned when changing hosting, and preserve
+existing `.html` URLs. The generated 404 page is marked `noindex`.
+The public asset directory is excluded from page discovery so asset documentation
+does not become a reader-facing page or sitemap entry.
+
+The SVG logo is the favicon; its PNG export supplies the social sharing image.
+Verify the built HTML and `sitemap.xml` when changing metadata configuration.
 
 ## Documentation structure
 

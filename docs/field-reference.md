@@ -1,4 +1,5 @@
 ---
+title: Bound fields
 description: Inspect BoundField state and look up rendering, attribute, and handwritten-input registration methods.
 ---
 

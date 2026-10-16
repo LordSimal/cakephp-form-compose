@@ -1,4 +1,5 @@
 ---
+title: Blueprint services and discovery
 description: Inject blueprint services, configure discovery, and manage declaration caches.
 ---
 

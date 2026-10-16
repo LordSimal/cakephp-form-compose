@@ -1,4 +1,5 @@
 ---
+title: Definitions and blueprints
 description: Look up field definitions, collections, blueprint declarations and hooks, builder methods, and scoped layout methods.
 ---
 

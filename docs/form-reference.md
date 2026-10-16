@@ -1,4 +1,5 @@
 ---
+title: Helper and form session
 description: Signatures, options, return values, and lifecycle contracts for the helper and a bound form session.
 ---
 

@@ -1,4 +1,5 @@
 ---
+title: Association fields
 description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with CakePHP association conventions and PHP templates.
 ---
 

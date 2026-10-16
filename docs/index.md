@@ -1,11 +1,13 @@
 ---
+title: FormCompose for CakePHP
+titleTemplate: false
 layout: home
 
-description: A CakePHP form API with bound fields and application-owned PHP elements.
+description: Build composable CakePHP forms with bound fields and application-owned PHP templates. Learn through practical examples, guides, and a complete API reference.
 
 hero:
   name: FormCompose
-  text: Your forms. Your markup.
+  text: Composable CakePHP forms.
   tagline: Bind CakePHP data, render controls with PHP elements, and keep your application in charge of the HTML.
   image:
     src: /branding/formcompose-mark.svg

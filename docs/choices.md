@@ -1,4 +1,5 @@
 ---
+title: Choice controls
 description: Build select lists, radio groups, single checkboxes, and multiple selections with explicit values and fallback behavior.
 ---
 

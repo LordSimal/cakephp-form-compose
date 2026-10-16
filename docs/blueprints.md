@@ -1,4 +1,5 @@
 ---
+title: Form blueprints
 description: Declare reusable form fields in a PHP class, render them, and configure choices or conditional fields for the current request.
 ---
 

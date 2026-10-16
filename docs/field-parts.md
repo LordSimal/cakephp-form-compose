@@ -1,4 +1,5 @@
 ---
+title: Compose field parts
 description: Arrange bound field parts in your own markup and register handwritten native inputs safely.
 ---
 
