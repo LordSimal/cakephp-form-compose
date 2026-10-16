@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
+use BackedEnum;
 use InvalidArgumentException;
 
 /**
@@ -34,8 +35,12 @@ final class FieldOptions
             self::validateBag($key, $bag);
         }
 
-        if (isset($options['options']) && !is_iterable($options['options'])) {
-            throw new InvalidArgumentException('The options option must be iterable.');
+        if (isset($options['options'])) {
+            /** @var mixed $choices */
+            $choices = $options['options'];
+            if (!is_iterable($choices) && (!is_string($choices) || !is_subclass_of($choices, BackedEnum::class))) {
+                throw new InvalidArgumentException('The options option must be iterable or a backed enum class name.');
+            }
         }
     }
 

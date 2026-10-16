@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Field;
 
+use BackedEnum;
 use DateTimeInterface;
 use InvalidArgumentException;
 use Stringable;
@@ -11,8 +12,8 @@ use Stringable;
  * Formats bound PHP values for use in standard browser controls.
  *
  * NativeAttributes and NativeType use these conversions when preparing templates.
- * Date/time objects use HTML input formats, false becomes the string zero, and
- * unsupported composite values are rejected. Password and file inputs receive no
+ * Backed enums use their backing values, date/time objects use HTML input formats,
+ * false becomes the string zero, and unsupported composite values are rejected. Password and file inputs receive no
  * prefilled value. Escaping is performed when templates render the prepared value.
  */
 final class NativeValue
@@ -22,6 +23,10 @@ final class NativeValue
      */
     public static function scalar(mixed $value): string
     {
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
         if ($value === false) {
             return '0';
         }

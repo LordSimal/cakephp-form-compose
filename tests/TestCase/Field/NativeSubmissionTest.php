@@ -7,6 +7,7 @@ use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
 use FormCompose\Rendering\Theme;
+use FormCompose\Test\Fixture\Enum\Priority;
 use FormCompose\Test\FormTestCase;
 use Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -58,6 +59,16 @@ class NativeSubmissionTest extends FormTestCase
     public static function selectSubmissions(): array
     {
         return [
+            'enum class' => [['options' => Priority::class], ['author_id' => '0']],
+            'enum cases multiple' => [
+                ['options' => Priority::cases(), 'multiple' => true],
+                ['author_id' => ['0', '2']],
+            ],
+            'disabled enum select' => [['options' => Priority::class, 'disabled' => true], []],
+            'disabled enum option' => [
+                ['options' => [['value' => Priority::Normal, 'disabled' => true]], 'empty' => false],
+                [],
+            ],
             'empty single' => [['options' => [], 'empty' => false], []],
             'required empty single' => [['options' => [], 'required' => true], []],
             'optional blank' => [['options' => []], ['author_id' => '']],
