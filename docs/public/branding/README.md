@@ -1,17 +1,12 @@
 # FormCompose logo assets
 
-The mark consists of three interlocking form modules. All artwork is SVG with
-transparent backgrounds and editable paths; no raster images, fonts, or scripts
-are embedded.
+`formcompose-mark.svg` is the icon-only logo used in the README, documentation
+navigation, and homepage. One wide module and two smaller modules form a geometric
+isometric composition.
 
-- `formcompose-mark.svg`: standalone mark for navigation and the homepage.
-- `formcompose-logo-light.svg`: horizontal wordmark for light backgrounds.
-- `formcompose-logo-dark.svg`: horizontal wordmark for dark backgrounds.
+Flat face colors give the blocks depth: `#818cf8` on top, `#6366f1` on the left,
+and `#4338ca` on the right. The same icon works on light and dark backgrounds.
 
-The mark uses indigo `#6366f1`. Wordmark colors are `#202337` on light backgrounds
-and `#f1f2f8` on dark backgrounds. Preserve the artwork's aspect ratio and clear
-space when resizing it.
-
-The wordmark uses Adwaita Sans lettering at weight 650 and optical size 32,
-converted to paths. Adwaita Sans is licensed under the SIL Open Font License 1.1;
-no font installation is needed to display these assets.
+The SVG has a transparent background and editable paths. It contains no lettering,
+embedded raster images, fonts, scripts, gradients, or filters. Preserve its square
+aspect ratio and clear space when resizing it.

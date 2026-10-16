@@ -1,8 +1,5 @@
 <h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/public/branding/formcompose-logo-dark.svg">
-    <img src="docs/public/branding/formcompose-logo-light.svg" alt="FormCompose" width="420">
-  </picture>
+  <img src="docs/public/branding/formcompose-mark.svg" alt="FormCompose" width="144" height="144">
 </h1>
 
 [![Packagist](https://img.shields.io/packagist/v/josbeir/cakephp-form-compose?label=Packagist)](https://packagist.org/packages/josbeir/cakephp-form-compose)

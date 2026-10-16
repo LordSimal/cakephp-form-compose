@@ -1,9 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
   <title id="title">FormCompose</title>
-  <desc id="desc">Three indigo form modules fitting together into a compact mark.</desc>
-  <g fill="#6366f1">
-    <path d="M14 8h68a6 6 0 0 1 6 6v8a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6v-8a6 6 0 0 1 6-6Z"/>
-    <path d="M14 36h40a6 6 0 0 1 6 6v8a6 6 0 0 1-6 6H34a6 6 0 0 0-6 6v20a6 6 0 0 1-6 6h-8a6 6 0 0 1-6-6V42a6 6 0 0 1 6-6Z"/>
-    <path d="M42 64h40a6 6 0 0 1 6 6v12a6 6 0 0 1-6 6H42a6 6 0 0 1-6-6V70a6 6 0 0 1 6-6Z"/>
+  <desc id="desc">Three geometric form modules assembled into an isometric block, with indigo faces giving subtle depth.</desc>
+  <g>
+    <path fill="#6366f1" d="M46 38.5 L94 66.5 L94 86.5 L46 58.5Z"/>
+    <path fill="#4338ca" d="M112 56 L94 66.5 L94 86.5 L112 76Z"/>
+    <path fill="#818cf8" d="M64 28 L112 56 L94 66.5 L46 38.5Z"/>
+  </g>
+  <g>
+    <path fill="#6366f1" d="M16 56 L34 66.5 L34 86.5 L16 76Z"/>
+    <path fill="#4338ca" d="M58 52.5 L34 66.5 L34 86.5 L58 72.5Z"/>
+    <path fill="#818cf8" d="M40 42 L58 52.5 L34 66.5 L16 56Z"/>
+  </g>
+  <g>
+    <path fill="#6366f1" d="M40 70 L64 84 L64 104 L40 90Z"/>
+    <path fill="#4338ca" d="M88 70 L64 84 L64 104 L88 90Z"/>
+    <path fill="#818cf8" d="M64 56 L88 70 L64 84 L40 70Z"/>
   </g>
 </svg>
