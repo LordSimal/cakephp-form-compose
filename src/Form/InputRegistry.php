@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use Closure;
+use FormCompose\Rendering\Attributes;
 use FormCompose\Security\FormProtection;
 use LogicException;
 use Throwable;
@@ -28,8 +29,10 @@ class InputRegistry
     /**
      * Share the owning lifecycle's protection service.
      */
-    public function __construct(protected readonly FormProtection $protection)
-    {
+    public function __construct(
+        protected readonly FormProtection $protection,
+        public readonly FeedbackRegistry $feedback = new FeedbackRegistry(),
+    ) {
     }
 
     /**
@@ -46,16 +49,42 @@ class InputRegistry
      * Record actual submissions after a field renders successfully.
      *
      * @param list<\FormCompose\Field\Submission> $submissions Actual submitted inputs.
+     * @param list<string> $ids Additional emitted IDs beyond the field's main ID.
      */
-    public function register(string $id, array $submissions): void
+    public function register(string $id, array $submissions, array $ids = []): void
     {
+        $this->registerIds([$id, ...$ids]);
         if ($this->depth > 0) {
             array_push($this->pending, ...$submissions);
         } else {
             $this->protection->register($submissions);
         }
+    }
 
-        $this->rendered[$id] = true;
+    /**
+     * Reserve emitted DOM IDs, including feedback, options, and custom composite inputs.
+     *
+     * @param list<string> $ids Emitted IDs.
+     */
+    public function registerIds(array $ids): void
+    {
+        $reserved = [];
+        foreach ($ids as $id) {
+            if ($id === '') {
+                throw new LogicException('Rendered element IDs must be nonempty.');
+            }
+
+            $this->assertAvailable($id);
+            if (isset($reserved[$id])) {
+                throw new LogicException('An input with this ID has already been rendered: ' . $id);
+            }
+
+            $reserved[$id] = true;
+        }
+
+        foreach ($ids as $id) {
+            $this->rendered[$id] = true;
+        }
     }
 
     /**
@@ -63,16 +92,21 @@ class InputRegistry
      *
      * @param \Closure(): string $render Definition or control-batch rendering operation.
      */
-    public function render(Closure $render): string
+    public function render(Closure $render, ?Attributes $attributes = null): string
     {
         $rendered = $this->rendered;
         $pending = $this->pending;
+        $feedback = $this->feedback->entries();
         $this->depth++;
         try {
             $html = $render();
+            if ($attributes?->has('id')) {
+                $this->registerIds([(string)$attributes->values['id']]);
+            }
         } catch (Throwable $throwable) {
             $this->rendered = $rendered;
             $this->pending = $pending;
+            $this->feedback->restore($feedback);
             throw $throwable;
         } finally {
             $this->depth--;

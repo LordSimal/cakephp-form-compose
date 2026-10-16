@@ -7,6 +7,7 @@ use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\RendererInterface;
 use FormCompose\Rendering\RenderNode;
 use FormCompose\Rendering\Theme;
+use WeakMap;
 
 /**
  * Implements standard HTML controls, including inputs, textareas, and choice lists.
@@ -20,13 +21,17 @@ use FormCompose\Rendering\Theme;
  * For example, control('active', ['type' => 'checkbox']) uses this class to prepare
  * the checkbox and its unchecked fallback; the theme determines their markup.
  */
-class NativeType implements FieldTypeInterface
+class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, ErrorTargetProviderInterface
 {
+    /** @var \WeakMap<\FormCompose\Field\BoundField, \FormCompose\Field\NativeInput> Successful render metadata. */
+    protected WeakMap $inputs;
+
     /**
      * Use the shared renderer for native inputs, choices, and fallback fields.
      */
     public function __construct(protected readonly RendererInterface $renderer, protected readonly Theme $theme)
     {
+        $this->inputs = new WeakMap();
     }
 
     /**
@@ -39,16 +44,17 @@ class NativeType implements FieldTypeInterface
             ? $this->renderer->render('fallback', RenderNode::field($field, $fallback))
             : '';
         $native = NativeAttributes::resolve($field->state, $attributes);
-        /** @var iterable<array-key, mixed> $options */
-        $options = $field->state->options['options'] ?? [];
-        $choices = $this->createChoices()->resolve($field->state, $native, $options);
+        $choices = $this->prepareChoices($field, $native);
         $value = $field->state->type === 'textarea' ? NativeValue::scalar($field->state->value) : '';
 
-        return $prefix . $this->renderer->render('native', RenderNode::field($field, $native, [
+        $html = $prefix . $this->renderer->render('native', RenderNode::field($field, $native, [
             'value' => $value,
             'choices' => $choices,
             'renderChoice' => fn(Choice $choice): string => $this->choice($field, $choice),
         ]));
+        $this->inputs[$field] = NativeInput::from($field->state, $choices, $fallback);
+
+        return $html;
     }
 
     /**
@@ -76,11 +82,55 @@ class NativeType implements FieldTypeInterface
             return [];
         }
 
+        $input = $this->inputs[$field] ?? NativeInput::from(
+            $field->state,
+            $this->prepareChoices($field, NativeAttributes::resolve($field->state, $attributes)),
+            ControlFallback::resolve($field->state, $attributes),
+        );
+        if (!$input->submittable) {
+            return [];
+        }
+
         return [new Submission(
             $field->state->name,
             ($field->state->options['secure'] ?? true) !== false,
             $field->state->type === 'hidden' ? NativeValue::scalar($field->state->value) : null,
         )];
+    }
+
+    /**
+     * Report the IDs prepared by native rendering, without consuming choices again.
+     *
+     * @return list<string>
+     */
+    public function inputIds(BoundField $field, Attributes $attributes): array
+    {
+        return $this->inputs->offsetExists($field) ? $this->inputs->offsetGet($field)->ids : [];
+    }
+
+    /**
+     * Read the rendered native target without rebuilding single-pass choices.
+     */
+    public function errorTarget(BoundField $field, Attributes $attributes): ?string
+    {
+        return $this->inputs->offsetExists($field) ? $this->inputs->offsetGet($field)->target : null;
+    }
+
+    /**
+     * Prepare choices and the single-select empty option through the normal extension point.
+     *
+     * @return list<\FormCompose\Field\Choice>
+     */
+    protected function prepareChoices(BoundField $field, Attributes $attributes): array
+    {
+        /** @var iterable<array-key, mixed> $options */
+        $options = $field->state->options['options'] ?? [];
+
+        return SelectPlaceholder::apply(
+            $field->state,
+            $attributes,
+            $this->createChoices()->resolve($field->state, $attributes, $options),
+        );
     }
 
     /**

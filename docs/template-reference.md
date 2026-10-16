@@ -249,6 +249,32 @@ Selecting a layout does not forward its data to individual controls or children.
 See [blueprint layouts](./blueprints.md#keep-control-of-the-layout) for a complete
 class/element example, and [nested definitions](./composition.md) for child layouts.
 
+## Repeated-embed layouts
+
+The `embed-many` scope renders `control` and `errors` through the standard theme
+lookup. The control receives `$embed` (`RepeatedView`), `$rows` (original keys
+mapped to scoped `DefinitionView` instances), `$attributes`, and `$templateData`.
+The error element receives `$embed`, `$messages`, `$attributes`, and `$templateData`.
+
+The base control renders rows and direct collection errors without a wrapper.
+Emitted wrapper attributes require a custom control element; render `$attributes`
+on its wrapper to preserve configured attributes and duplicate-ID checks.
+
+Use a normal `foreach` for row wrappers and `$row->render()` for each child's own
+layout. There is no `row` template part. See the
+[complete repeated layout example](./repeated-embeds.md#arrange-rows-with-a-php-element).
+
+## Error-summary elements
+
+The `error-summary` scope renders `control`. Its element receives `$form`,
+`$entries` (`list<FeedbackEntry>`), `$title`, `$attributes`, `$titleAttributes`,
+and `$templateData`. An entry exposes `label` (text or trusted `Html`), `messages`
+(escaped strings), and `target` (an emitted DOM ID or null for an unlinked message).
+
+The default section and heading IDs are associated with `aria-labelledby` and
+checked for collisions. Preserve those supplied attributes in custom markup.
+See the [complete summary element](./error-summaries.md#customize-the-summary-element).
+
 ## Attributes
 
 Theme defaults use part keys, with optional type prefixes:

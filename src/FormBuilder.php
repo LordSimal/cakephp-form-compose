@@ -19,6 +19,9 @@ class FormBuilder
     /** @var \Closure(string, string): \FormCompose\FormDefinition|null Scoped blueprint construction. */
     protected ?Closure $resolver = null;
 
+    /** @var \Closure(\FormCompose\FormDefinition): \FormCompose\FormDefinition|null Scoped repeat expansion. */
+    protected ?Closure $expansion = null;
+
     /**
      * Supply scoped blueprint construction without replacing application builder subclasses.
      *
@@ -51,8 +54,10 @@ class FormBuilder
 
     /**
      * Append an association definition, resolving strings in the current hook's context.
+     *
+     * @param array<string, mixed> $options Occurrence presentation.
      */
-    public function embed(string $path, FormDefinition|string $definition): static
+    public function embed(string $path, FormDefinition|string $definition, array $options = []): static
     {
         if (is_string($definition)) {
             if (!$this->resolver instanceof Closure) {
@@ -62,7 +67,46 @@ class FormBuilder
             $definition = ($this->resolver)($path, $definition);
         }
 
-        $this->definition = $this->definition->embed($path, $definition);
+        $this->definition = $this->definition->embed($path, $definition, $options);
+        if ($this->expansion instanceof Closure) {
+            $this->definition = ($this->expansion)($this->definition);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Supply compilation without changing application builder constructors.
+     *
+     * @param \Closure(\FormCompose\FormDefinition): \FormCompose\FormDefinition $expansion Scoped compilation.
+     */
+    public function withExpansion(Closure $expansion): static
+    {
+        $builder = clone $this;
+        $builder->expansion = $expansion;
+
+        return $builder;
+    }
+
+    /**
+     * Append repeated rows and make their qualified fields available to the current hook.
+     *
+     * @param list<int|string>|null $keys Explicit row keys, otherwise inferred.
+     * @param array<string, mixed> $options Repeated-embed presentation.
+     */
+    public function embedMany(
+        string $path,
+        FormDefinition|string $definition,
+        ?array $keys = null,
+        array $options = [],
+    ): static {
+        if (!$this->expansion instanceof Closure) {
+            throw new LogicException('Repeated embedding requires a builder supplied by BlueprintFactory.');
+        }
+
+        $this->definition = ($this->expansion)($this->definition->add(
+            new RepeatedDefinition($path, $definition, $keys, $options),
+        ));
 
         return $this;
     }

@@ -20,6 +20,12 @@ final readonly class DefinitionIndex
     /** @var array<string, \FormCompose\FormDefinition> Qualified embed paths to relative children. */
     public array $embeds;
 
+    /** @var array<string, array<string, mixed>> Presentation overrides per embed occurrence. */
+    public array $embedOptions;
+
+    /** @var array<string, \FormCompose\RepeatedDefinition> Repeated declarations and bound row snapshots. */
+    public array $repeats;
+
     /** @var list<string> Active field and embed paths. */
     public array $paths;
 
@@ -29,7 +35,7 @@ final readonly class DefinitionIndex
     /**
      * Flatten child indexes and reject collisions across the whole tree.
      *
-     * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition> $entries Ordered children.
+     * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition|\FormCompose\RepeatedDefinition> $entries Ordered children.
      * @param list<string> $removed Removal history local to this definition.
      */
     public function __construct(array $entries, array $removed)
@@ -37,6 +43,8 @@ final readonly class DefinitionIndex
         $fields = [];
         $embeds = [];
         $paths = [];
+        $repeats = [];
+        $embedOptions = [];
         foreach ($entries as $entry) {
             $paths[] = $entry->path;
             if ($entry instanceof FieldDefinition) {
@@ -44,22 +52,35 @@ final readonly class DefinitionIndex
                 continue;
             }
 
-            $embeds[$entry->path] = $entry->definition;
-            foreach ($entry->definition->index->embeds as $path => $child) {
-                $embeds[$entry->path . '.' . $path] = $child;
+            if ($entry instanceof RepeatedDefinition) {
+                $repeats[$entry->path] = $entry;
             }
 
-            foreach ($entry->definition->index->paths as $path) {
-                $paths[] = $entry->path . '.' . $path;
+            $childDefinition = $entry instanceof RepeatedDefinition ? $entry->rows : $entry->definition;
+            if (!$childDefinition instanceof FormDefinition) {
+                continue;
             }
 
-            foreach ($entry->definition->fields as $field) {
-                $fields[] = new FieldDefinition($entry->path . '.' . $field->path, $field->options);
-            }
-
-            foreach ($entry->definition->index->removed as $path) {
-                $removed[] = $entry->path . '.' . $path;
-            }
+            $embeds[$entry->path] = $childDefinition;
+            $embedOptions[$entry->path] = $entry->options;
+            $repeats += DefinitionChildren::qualify($childDefinition->index->repeats, $entry->path);
+            $embedOptions += DefinitionChildren::qualify($childDefinition->index->embedOptions, $entry->path);
+            $embeds += DefinitionChildren::qualify($childDefinition->index->embeds, $entry->path);
+            array_push($paths, ...array_map(
+                static fn(string $path): string => $entry->path . '.' . $path,
+                $childDefinition->index->paths,
+            ));
+            array_push($fields, ...array_map(
+                static fn(FieldDefinition $field): FieldDefinition => new FieldDefinition(
+                    $entry->path . '.' . $field->path,
+                    $field->options,
+                ),
+                $childDefinition->fields,
+            ));
+            array_push($removed, ...array_map(
+                static fn(string $path): string => $entry->path . '.' . $path,
+                $childDefinition->index->removed,
+            ));
         }
 
         if (count(array_unique($paths)) !== count($paths)) {
@@ -68,6 +89,8 @@ final readonly class DefinitionIndex
 
         $this->fields = $fields;
         $this->embeds = $embeds;
+        $this->embedOptions = $embedOptions;
+        $this->repeats = $repeats;
         $this->paths = $paths;
         $this->removed = array_values(array_unique($removed));
     }

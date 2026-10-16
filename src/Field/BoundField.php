@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Field;
 
+use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\FieldAttributes;
@@ -53,9 +54,16 @@ class BoundField
      */
     public function control(): string
     {
-        return $this->state->type === 'hidden'
-            ? $this->input()
-            : $this->renderer->render('control', RenderNode::field($this, $this->attributes('container')));
+        if ($this->state->type === 'hidden') {
+            return $this->input();
+        }
+
+        $attributes = $this->attributes('container');
+
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->renderer->render('control', RenderNode::field($this, $attributes)),
+            $attributes,
+        );
     }
 
     /**
@@ -67,10 +75,20 @@ class BoundField
     {
         $this->lifecycle->assertInput($this);
         $bag = $this->attributes('input', $attributes);
-        $html = $this->renderer->render('input', RenderNode::field($this, $bag));
-        $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
 
-        return $html;
+        return $this->lifecycle->inputs->render(function () use ($bag): string {
+            $html = $this->renderer->render('input', RenderNode::field($this, $bag));
+            $ids = $this->fieldType instanceof InputIdentityProviderInterface
+                ? $this->fieldType->inputIds($this, $bag)
+                : [];
+            $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag), $ids);
+            $this->lifecycle->inputs->feedback->record(
+                $this->state->id,
+                FeedbackEntry::field($this, $this->fieldType, $bag),
+            );
+
+            return $html;
+        });
     }
 
     /**
@@ -88,10 +106,16 @@ class BoundField
      */
     public function register(array $attributes = []): void
     {
-        $this->lifecycle->register($this, $this->fieldType->submissions($this, $this->attributes(
-            'input',
-            $attributes,
-        )));
+        $bag = $this->attributes('input', $attributes);
+        $this->lifecycle->inputs->render(function () use ($bag): string {
+            $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
+            $this->lifecycle->inputs->feedback->record(
+                $this->state->id,
+                FeedbackEntry::field($this, null, $bag),
+            );
+
+            return '';
+        });
     }
 
     /**
@@ -105,7 +129,12 @@ class BoundField
             return '';
         }
 
-        return $this->renderer->render('label', RenderNode::field($this, $this->attributes('label', $attributes)));
+        $bag = $this->attributes('label', $attributes);
+
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->renderer->render('label', RenderNode::field($this, $bag)),
+            $bag,
+        );
     }
 
     /**
@@ -115,9 +144,16 @@ class BoundField
      */
     public function help(array $attributes = []): string
     {
-        return $this->state->hasHelp()
-            ? $this->renderer->render('help', RenderNode::field($this, $this->attributes('help', $attributes)))
-            : '';
+        if (!$this->state->hasHelp()) {
+            return '';
+        }
+
+        $bag = $this->attributes('help', $attributes);
+
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->renderer->render('help', RenderNode::field($this, $bag)),
+            $bag,
+        );
     }
 
     /**
@@ -127,9 +163,16 @@ class BoundField
      */
     public function errors(array $attributes = []): string
     {
-        return $this->state->hasErrors()
-            ? $this->renderer->render('errors', RenderNode::field($this, $this->attributes('errors', $attributes)))
-            : '';
+        if (!$this->state->hasErrors()) {
+            return '';
+        }
+
+        $bag = $this->attributes('errors', $attributes);
+
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->renderer->render('errors', RenderNode::field($this, $bag)),
+            $bag,
+        );
     }
 
     /**

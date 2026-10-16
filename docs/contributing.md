@@ -37,6 +37,24 @@ Clover report to Codecov using GitHub OIDC. Upload errors are nonblocking; the
 local coverage gate remains mandatory. Codecov must have the repository enabled
 to populate its coverage badge.
 
+## Browser and HTTP regressions
+
+After `composer install`, install the development-only browser tooling:
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:browser
+```
+
+On Linux CI, use `npx playwright install --with-deps chromium` to install the
+browser's system libraries too. The suite starts a local PHP server on port 8765
+and tests native constraint validation, actual `FormData`, ID associations, native summary-link navigation, and
+multipart submissions through CakePHP's CSRF middleware and FormProtectionComponent.
+It also checks rejection of extra fields, altered locked values, and missing CSRF
+tokens. CI runs this as a separate test job. Browser tooling is not a
+runtime dependency of the plugin or rendered forms.
+
 ## Documentation site
 
 The site uses a pinned VitePress 2 preview. Use Node.js 24 or later:

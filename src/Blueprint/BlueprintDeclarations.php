@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Blueprint;
 
 use FormCompose\Attribute\Embed;
+use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
 use FormCompose\Field\FieldDefinition;
@@ -22,7 +23,7 @@ final class BlueprintDeclarations
     /**
      * Read class attributes in parent-to-child order without constructing embeds.
      *
-     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed>, options: array<string, mixed>}
+     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
      */
     public static function read(FormBlueprint $blueprint): array
     {
@@ -33,7 +34,7 @@ final class BlueprintDeclarations
             $reflection = $parent;
         }
 
-        /** @var array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed> $entries */
+        /** @var array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany> $entries */
         $entries = [];
         $options = [];
         foreach ($hierarchy as $level) {
@@ -59,18 +60,18 @@ final class BlueprintDeclarations
      * Read one class while enforcing uniqueness independently of inheritance.
      *
      * @param \ReflectionClass<\FormCompose\FormBlueprint>|\ReflectionClass<object> $level One inheritance level.
-     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed>, options: array<string, mixed>}
+     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
      */
     private static function level(ReflectionClass $level): array
     {
         $entries = [];
         $options = [];
         foreach ($level->getAttributes() as $attribute) {
-            if (!in_array($attribute->getName(), [Form::class, Field::class, Embed::class], true)) {
+            if (!in_array($attribute->getName(), [Form::class, Field::class, Embed::class, EmbedMany::class], true)) {
                 continue;
             }
 
-            /** @var \FormCompose\Attribute\Form|\FormCompose\Attribute\Field|\FormCompose\Attribute\Embed $declaration */
+            /** @var \FormCompose\Attribute\Form|\FormCompose\Attribute\Field|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany $declaration */
             $declaration = $attribute->newInstance();
             if ($declaration instanceof Form) {
                 $options = $declaration->options();

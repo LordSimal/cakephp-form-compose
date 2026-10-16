@@ -20,6 +20,10 @@ Explicit `types` registrations override discovered types. A complete
 [date-range implementation](./blueprint-configuration.md#discover-custom-field-types)
 shows rendering, disabled state, accessible names, and both submitted inputs.
 
+Discovered types are constructed lazily when first rendered or explicitly
+registered. Each binding reuses its own type instance. Ordinary binding and field
+inspection do not instantiate unused types or require their constructor services.
+
 ::: info Describe the inputs your control submits
 `render()` must return escaped markup without changing security state.
 `submissions()` must describe exactly the successful inputs emitted, respecting
@@ -27,6 +31,23 @@ shows rendering, disabled state, accessible names, and both submitted inputs.
 for a hidden value that must remain locked. Explicit unlocking is available with
 `locked: false`. Presentation templates cannot infer these semantics from HTML.
 :::
+
+Composite controls can also implement `InputIdentityProviderInterface`:
+
+```php
+public function inputIds(BoundField $field, Attributes $attributes): array
+{
+    return [$field->state->id . '-end'];
+}
+```
+
+Return additional DOM IDs emitted by `render()`, excluding the bound field's main
+ID, which is already tracked. This method must not render or register anything.
+The session checks these identities alongside native choice and feedback IDs;
+a collision rolls back the complete control's pending registrations. Existing
+`FieldTypeInterface` implementations remain valid without this optional interface.
+Templates must preserve the supplied identities; arbitrary handwritten HTML is
+the application's responsibility.
 
 ## Custom renderers
 
@@ -185,3 +206,32 @@ own mutable state. Immutable configuration and data objects, including `Theme`,
 value and escaping contracts stay consistent. Small stateless utilities such as
 `InputNames` and `NativeValue` are also final.
 :::
+
+## Custom summary targets
+
+Implement `Field\ErrorTargetProviderInterface` alongside `FieldTypeInterface`
+when a composite control needs a summary link to an input other than its main ID:
+
+```php
+public function errorTarget(BoundField $field, Attributes $attributes): ?string
+{
+    return $field->state->id . '-end';
+}
+```
+
+Return an actual emitted control ID without `#`, or null to show an unlinked
+message. An empty string is rejected. The method must not render, register, or
+consume choice iterators. Existing types without this interface use their main
+field ID; hidden and disabled controls remain unlinked. Discovered lazy types
+forward the contract through the same resolved instance.
+
+Native choice types retain prepared targets after rendering, so summaries do not
+consume single-pass option iterators again. Use `InputIdentityProviderInterface`
+to report additional emitted IDs for duplicate checks too.
+
+`FormSession` accepts an optional fifth `ErrorSummaryRenderer` dependency. Its
+protected `attributes()` prepares the summary/heading bags; inject a subclass
+through the helper's `createSession()` to specialize this behavior. The
+`InputRegistry` constructor accepts an optional second `FeedbackRegistry`, which
+shares its existing snapshot/rollback transaction. Preserve that coordination in
+application subclasses. Summary metadata stays separate from Cake form protection.

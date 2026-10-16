@@ -73,6 +73,7 @@ export default defineConfig({
         items: [
           { text: 'Why FormCompose?', link: '/why' },
           { text: 'Your first form', link: '/getting-started' },
+          { text: 'Migrate a core form', link: '/migration' },
           { text: 'How rendering works', link: '/rendering' },
         ],
       },
@@ -83,6 +84,7 @@ export default defineConfig({
           { text: 'Choice controls', link: '/choices' },
           { text: 'Association fields', link: '/associations' },
           { text: 'Compose field parts', link: '/field-parts' },
+          { text: 'Error summaries', link: '/error-summaries' },
           { text: 'Create a theme', link: '/themes' },
         ],
       },
@@ -92,6 +94,7 @@ export default defineConfig({
           { text: 'Field definitions', link: '/definitions' },
           { text: 'Form blueprints', link: '/blueprints' },
           { text: 'Nested definitions', link: '/composition' },
+          { text: 'Repeated embeds', link: '/repeated-embeds' },
         ],
       },
       {

@@ -95,11 +95,18 @@ class FormHelper extends Helper
         $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
         unset($options['context'], $options['types']);
         $factory = $this->createBlueprintFactory();
+        /** @var list<string> $valueSources */
+        $valueSources = $options['valueSources'] ?? ['data', 'context'];
+        $formContext = new FormContext($context, $view->getRequest(), valueSources: $valueSources);
         if (is_string($definition)) {
-            $definition = $factory->definition($definition, new FormContext($context, $view->getRequest()));
+            $definition = $factory->definition($definition, $formContext);
         }
 
-        $types = $factory->types($types);
+        if ($definition instanceof FormDefinition) {
+            $definition = $factory->expand($definition, $formContext);
+        }
+
+        $types = $factory->lazyTypes($types);
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $definition),

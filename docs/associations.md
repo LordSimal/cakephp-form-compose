@@ -166,3 +166,6 @@ Use `#[Embed('author', AuthorForm::class)]` to compose a child blueprint, or ren
 a relative definition with `$form->definition(AuthorForm::class, at: 'author')`.
 The child keeps its own PHP layout and relative field names. See
 [nested definitions and layouts](./composition.md#compose-an-association).
+
+Use [repeated embeds](./repeated-embeds.md) to render a reusable child definition
+for every row of a loaded or submitted association.

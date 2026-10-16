@@ -10,6 +10,7 @@ use Cake\Container\ContainerInterface;
 use FormCompose\Attribute\AsFieldType;
 use FormCompose\Attribute\Form;
 use FormCompose\Field\FieldTypeInterface;
+use FormCompose\Field\LazyFieldType;
 use FormCompose\FormBlueprint;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
@@ -80,6 +81,37 @@ class BlueprintFactory
         }
 
         return $types;
+    }
+
+    /**
+     * Discover type names now and defer construction until rendering or registration.
+     *
+     * Each binding gets independent proxies. Explicit instances win without invoking
+     * the discovered constructor. types() remains available for eager construction.
+     *
+     * @param array<string, \FormCompose\Field\FieldTypeInterface> $overrides Explicit per-form types.
+     * @return array<string, \FormCompose\Field\FieldTypeInterface>
+     */
+    public function lazyTypes(array $overrides = []): array
+    {
+        $types = $overrides;
+        foreach ($this->aliases(AsFieldType::class, FieldTypeInterface::class) as $name => $class) {
+            $types[$name] ??= new LazyFieldType(
+                fn(): FieldTypeInterface => $this->createInstance($class, FieldTypeInterface::class),
+            );
+        }
+
+        return $types;
+    }
+
+    /**
+     * Expand reusable ordinary definitions using this factory's discovery and DI boundary.
+     */
+    public function expand(FormDefinition $definition, FormContext $context): FormDefinition
+    {
+        return $this->createCompiler()
+            ->withResolver($this->definition(...))
+            ->expand($definition, $context);
     }
 
     /**

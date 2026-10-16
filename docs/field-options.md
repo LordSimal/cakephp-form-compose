@@ -42,7 +42,8 @@ forwarded to the input as HTML attributes.
 
 Paths must be nonempty dot-separated segments containing letters, digits,
 underscores, or hyphens. Names must use valid bracket notation. IDs must be
-nonempty and unique among rendered inputs. Type names must begin with a lowercase
+nonempty and unique among rendered elements in the session, including choices,
+feedback, and configured container IDs. Type names must begin with a lowercase
 letter and contain only lowercase letters, digits, underscores, or hyphens.
 
 ### Type inference
@@ -94,7 +95,7 @@ formats; false becomes `'0'` when rendered as a native scalar.
 | --- | --- | --- |
 | `label` | `string`, `Html`, or `false` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
 | `help` | `string`, `Html`, or `false` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
-| `errors` | `bool` | `true`. Renders available context messages. `false` suppresses error markup and its generated ARIA references. |
+| `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
 
 `Html` means `FormCompose\Rendering\Html`, the explicit
 [trusted-markup wrapper](./template-reference.md#trusted-markup). Ordinary strings
@@ -115,6 +116,10 @@ Context text-length limits supply `maxlength`. Numeric schema types supply `step
 such as `min`, `max`, `step`, `maxlength`, or `pattern`, in `attributes` to override
 or extend the prepared input attributes. Server-side validation remains in CakePHP.
 
+For `multicheckbox`, `required` describes the group requirement in field state;
+it does not emit `required` on each checkbox, which would require every choice.
+Validate an “at least one” rule in CakePHP. Radio groups retain native `required`.
+
 ```php
 echo $form->control('reading_minutes', [
     'type' => 'number',
@@ -128,14 +133,19 @@ echo $form->control('reading_minutes', [
 | Option | Type | Default and behavior |
 | --- | --- | --- |
 | `options` | `iterable` | Conventional view-variable choices when available, otherwise `[]`. Accepts value/label maps, nested groups, and extended entries. |
+| `empty` | `bool`, `string`, or `null` | `null`/omitted: prepend a blank option for optional single selects. `true`: prepend a blank label; a string: use that label; `false`: do not prepend. Required and multiple selects have no automatic blank option. |
 | `checkedValue` | Scalar or stringable | `'1'`. Submitted value for a checked single checkbox. |
 | `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |
 | `hiddenField` | `bool` | `true`. Enables fallback inputs for checkboxes, radios, multi-checkboxes, and multiple selects. |
 
 Radio and multiple-choice fallbacks submit an empty string when nothing is
-selected. There is no automatic blank option for single selects: include an empty
-key in `options` when needed. Group and per-choice data shapes are demonstrated
-in [Choice controls](./choices.md).
+selected. An existing empty-value option, including one in an optgroup, is kept
+instead of adding another. Null and empty-string values select the automatic
+blank option; zero and false retain their own selection. The blank value is an
+empty string in the HTTP request; CakePHP's normal marshalling handles nullable
+associations. A select with no enabled options and no fallback registers no
+submitted name, matching the browser. Group and per-choice data shapes are
+demonstrated in [Choice controls](./choices.md).
 
 Checkbox selection compares the bound scalar value with `checkedValue`. To
 explicitly override its checked attribute, use `attributes => ['checked' => true]`
@@ -171,6 +181,12 @@ Input attribute bags reject `name`, `id`, `type`, `value`, `escape`, `secure`,
 `options`, and `val`. Configure supported identity/behavior options at the field
 level. Use `value` for values and `Html` for trusted text markup. Preserve generated
 label, help, and error associations when customizing other parts.
+
+Configure feedback identities through `partAttributes`, for example
+`'help' => ['id' => 'email-hint']`. Generated `aria-describedby` references use
+these IDs. Setting an ID to null or false omits that reference. Passing `id` to
+`$field->help([...])` or `$field->errors([...])` is rejected so a later rendering
+call cannot invalidate the input's already resolved association.
 
 ## Templates
 
@@ -210,3 +226,9 @@ Matching top-level option keys are replaced. Nested arrays such as `attributes`,
 is separate from the subsequent attribute-bag merging described above.
 Blueprint declaration and hook precedence is documented in the
 [definitions reference](./definition-reference.md#configuration-order).
+
+Malformed core `attributes`, `partAttributes`, `templates`, and choice `options`
+bags fail during field resolution with `InvalidArgumentException`. Attribute and
+part keys must be nonempty strings; template values must be nonempty element
+names. Unknown option keys and arbitrary integration attributes remain available
+to application controls and templates.

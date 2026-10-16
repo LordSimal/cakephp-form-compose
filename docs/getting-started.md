@@ -24,6 +24,7 @@ For the motivation and a side-by-side markup example, read
 FormCompose provides its own form-building API. When adopting it, port existing
 core FormHelper calls and widgets to this API. It is not a drop-in replacement
 for every core method or option.
+See [Migrate a core form](./migration.md) for the main API and option differences.
 :::
 
 ## Install the plugin

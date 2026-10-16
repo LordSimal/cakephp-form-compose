@@ -155,3 +155,96 @@ source scanning. Integration attributes such as `x-model` and `data-*` can be
 passed through [field attributes](./field-options.md#attributes). For the complete
 `Theme`, attribute-bag, and trusted-markup APIs, see the
 [template reference](./template-reference.md#theme-api).
+
+## A complete starter theme
+
+For a theme that handles ordinary inputs, selects, textareas, files, a single
+checkbox, and grouped choices, start with a generic control element:
+
+```php [templates/element/forms/starter/control.php]
+<?php
+declare(strict_types=1);
+
+/**
+ * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+$tag = $field->state->grouped() ? 'fieldset' : 'div';
+?>
+<<?= $tag ?><?= (string)$attributes->merge(['class' => 'form-field']) ?>>
+    <?php if ($field->state->type === 'checkbox') { ?>
+        <div class="checkbox-row">
+            <?= $field->input() ?>
+            <?= $field->label() ?>
+        </div>
+    <?php } else { ?>
+        <?= $field->label() ?>
+        <?= $field->input() ?>
+    <?php } ?>
+    <?= $field->help() ?>
+    <?= $field->errors() ?>
+</<?= $tag ?>>
+```
+
+Grouped fields get a fieldset and the base label part supplies a legend. A single
+checkbox puts its label after the input. Hidden fields bypass this wrapper.
+All other parts fall back to the bundled elements, retaining escaped values,
+choice labels, help/error IDs, and hidden fallbacks.
+
+Use the theme in an existing article view:
+
+```php [templates/Articles/edit.php]
+<?php
+use FormCompose\Rendering\Theme;
+
+$form = $this->Form->bind($article, theme: new Theme(
+    layers: ['forms/starter'],
+    defaults: [
+        'input' => ['class' => 'field-input'],
+        'choice' => ['class' => 'choice-input'],
+        'label' => ['class' => 'field-label'],
+        'help' => ['class' => 'field-help'],
+        'errors' => ['class' => 'field-errors'],
+    ],
+));
+?>
+<?= $form->open(['type' => 'file']) ?>
+<?= $form->control('title', ['help' => 'Shown in the article list.']) ?>
+<?= $form->control('body', ['type' => 'textarea']) ?>
+<?= $form->control('author_id', ['options' => $authors, 'empty' => 'No author']) ?>
+<?= $form->control('published', ['type' => 'checkbox']) ?>
+<?= $form->control('visibility', [
+    'type' => 'radio',
+    'options' => ['public' => 'Public', 'private' => 'Private'],
+]) ?>
+<?= $form->control('topics', [
+    'type' => 'multicheckbox',
+    'options' => ['php' => 'PHP', 'cakephp' => 'CakePHP'],
+]) ?>
+<?= $form->control('attachment', ['type' => 'file']) ?>
+<?= $form->submit('Save article') ?>
+<?= $form->close() ?>
+```
+
+Add these classes to your application's existing stylesheet, adjusting colors
+to your design system:
+
+```css
+.form-field { border: 0; margin: 0 0 1.25rem; padding: 0; }
+.field-label { display: block; font-weight: 600; margin-bottom: .375rem; }
+.field-input:not([type="checkbox"]):not([type="radio"]) {
+  box-sizing: border-box; width: 100%; padding: .625rem;
+  border: 1px solid #64748b; border-radius: .375rem;
+}
+.checkbox-row { display: flex; align-items: baseline; gap: .5rem; }
+.choice-input { margin-right: .5rem; }
+.field-help { margin-top: .375rem; color: #475569; }
+.field-errors { margin-top: .375rem; color: #b91c1c; }
+[aria-invalid="true"] { outline: 2px solid #b91c1c; outline-offset: 2px; }
+```
+
+The browser regression suite uses this control element and the same defaults
+with nested names, validation feedback, disabled controls, choices, and a file
+upload. It checks native validity, unique IDs, matching ARIA references, and an
+accepted multipart POST through CakePHP protection. The theme requires no
+JavaScript or CSS framework.

@@ -184,7 +184,11 @@ attributes. See [custom field types](./extending.md#custom-field-types) for the
 rendering and submission contracts.
 
 Select it using a blueprint's `type: 'date-range'` or inline `['type' => 'date-range']`.
-Discovered types use the same factory and constructor injection as blueprints;
+Discovered types use the same factory and constructor injection as blueprints.
+The helper calls `BlueprintFactory::lazyTypes()` to construct each discovered type
+only on its first render or explicit registration, reusing it within that binding.
+Unused types do not need their services to be available. Direct `types()` calls
+retain eager construction for callers that request it;
 explicit `bind(..., ['types' => ['date-range' => $instance]])` registrations win
 without constructing the overridden discovered type.
 
