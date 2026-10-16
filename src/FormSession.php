@@ -29,6 +29,10 @@ use function Cake\I18n\__;
  * echo $form->open(), $form->control('title');
  * echo $form->submit('Save'), $form->close();
  * ```
+ *
+ * Keep complete-form and batch shortcuts alongside the explicit session operations.
+ *
+ * @mago-expect lint:too-many-methods
  */
 class FormSession
 {
