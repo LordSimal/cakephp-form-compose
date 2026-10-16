@@ -81,11 +81,15 @@ remains part of the application's normal CakePHP workflow.
 Select an occurrence template on the attribute:
 
 ```php
-#[EmbedMany('comments', CommentForm::class, options: [
-    'template' => 'forms/comments',
-    'templateData' => ['heading' => 'Comments'],
-    'attributes' => ['class' => 'comments'],
-])]
+#[EmbedMany(
+    'comments',
+    CommentForm::class,
+    options: [
+        'template' => 'forms/comments',
+        'templateData' => ['heading' => 'Comments'],
+        'attributes' => ['class' => 'comments'],
+    ],
+)]
 ```
 
 The element receives keyed, scoped `DefinitionView` instances as `$rows` and a

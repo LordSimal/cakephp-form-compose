@@ -89,9 +89,13 @@ Registers a custom `FieldTypeInterface` class under a discovered alias. See the
 ### Declaration behavior
 
 ```php
-#[Field('title', label: 'Article title', options: [
-    'attributes' => ['maxlength' => 160],
-])]
+#[Field(
+    'title',
+    label: 'Article title',
+    options: [
+        'attributes' => ['maxlength' => 160],
+    ],
+)]
 ```
 
 Place field/embed attributes on `FormBlueprint` subclasses. No PHP properties are

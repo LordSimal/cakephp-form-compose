@@ -346,11 +346,15 @@ use FormCompose\Attribute\Field;
 use FormCompose\FormBlueprint;
 use function Cake\I18n\__;
 
-#[Field('title', label: static function (): string {
-    return __('Article title');
-}, help: static function (): string {
-    return __('Displayed above the article.');
-})]
+#[Field(
+    'title',
+    label: static function (): string {
+        return __('Article title');
+    },
+    help: static function (): string {
+        return __('Displayed above the article.');
+    },
+)]
 class ArticleForm extends FormBlueprint
 {
 }
@@ -400,8 +404,9 @@ public function configure(FormBuilder $form, FormContext $context): void
 
 These translations run when the blueprint is compiled, using the locale active
 at that time. Set the request's locale before binding or rendering the blueprint.
-The hook and inline field options also accept label/help closures when deferred
-resolution is useful. Prefer arrow functions for simple runtime callbacks:
+When text deliberately needs the locale at field resolution rather than at
+blueprint compilation, the hook also accepts label/help closures. Prefer arrow
+functions for simple runtime callbacks:
 
 ```php
 // In configure(); import Cake\I18n\__.
@@ -412,8 +417,9 @@ $form->with('title', [
 ```
 
 These callbacks defer translation until field resolution, following the same
-snapshot rules as attribute closures. Keep the full `static function` syntax for
-callbacks declared in PHP attribute arguments.
+snapshot rules as attribute closures. For ordinary template calls such as
+`control()`, call `__()` directly in the options. Keep the full `static function`
+syntax for callbacks declared in PHP attribute arguments.
 
 ### Translate enum choices
 

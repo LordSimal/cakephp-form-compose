@@ -110,13 +110,18 @@ the inferred label or omits help. Other return types throw
 its text. See [translating blueprints](./blueprints.md#translate-a-blueprint) for
 attribute syntax, locale timing, and runtime configuration examples.
 
+In a template, call translation functions directly:
+
 ```php
 // Inside an open form; import Cake\I18n\__.
 echo $form->control('title', [
-    'label' => static fn(): string => __('Article title'),
-    'help' => static fn(): string => __('Displayed above the article.'),
+    'label' => __('Article title'),
+    'help' => __('Displayed above the article.'),
 ]);
 ```
+
+Use deferred text when declaring translations in PHP attributes or when storing
+configuration whose text should be evaluated at field resolution.
 
 ## Constraints and state
 
