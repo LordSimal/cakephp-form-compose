@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="610" viewBox="0 0 960 610" role="img" aria-labelledby="title description">
   <title id="title">FormCompose: from CakePHP data to your HTML</title>
-  <desc id="description">CakePHP data and request feed a form session. Optional definitions and blueprints configure its bound fields. Bound fields render through PHP elements to HTML. A separate submission tracker belongs to the session: successful input rendering registers submitted fields, and closing adds protection fields to the HTML. Resolving a field alone has no rendering or registration side effects.</desc>
+  <desc id="description">CakePHP data and request feed a form session through bind(), which emits no markup. Inline field options override optional blueprint defaults. field() resolves a bound field without rendering or registering inputs. Explicit control or part calls render through PHP elements; definition() renders a blueprint collection and render() renders a complete form. Successful input rendering registers submitted names with the session, and closing adds protection fields to the HTML.</desc>
   <defs>
     <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#a5b4fc" stroke-opacity=".045"/>
@@ -37,23 +37,31 @@
   <rect x="2" y="2" width="956" height="606" rx="21" fill="url(#grid)"/>
   <text x="32" y="37" class="eyebrow">FORMCOMPOSE / ARCHITECTURE</text>
 
-  <!-- Sources: the framework owns data; definitions supply optional configuration. -->
+  <!-- Sources: CakePHP owns data; inline field options override optional blueprint defaults. -->
   <rect x="32" y="64" width="260" height="116" rx="14" fill="#222639" stroke="#424a65"/>
   <text x="52" y="92" class="eyebrow">CAKEPHP</text>
   <text x="52" y="122" class="title">Data + request</text>
   <text x="52" y="148" class="detail">Values, schema, errors,</text>
   <text x="52" y="168" class="detail">submitted data</text>
 
-  <rect x="348" y="64" width="260" height="116" rx="14" fill="#252237" stroke="#8777b5" stroke-dasharray="5 5"/>
-  <text x="368" y="92" class="eyebrow" style="fill:#c2b3ed">OPTIONAL</text>
-  <text x="368" y="122" class="title" style="font-size:20px">Definitions / blueprints</text>
-  <text x="368" y="148" class="detail">Fields, choices,</text>
-  <text x="368" y="168" class="detail">and layout selection</text>
+  <rect x="348" y="64" width="260" height="116" rx="14" fill="#252237" stroke="#8777b5"/>
+  <text x="368" y="92" class="eyebrow" style="fill:#c2b3ed">CONFIGURATION</text>
+  <text x="368" y="122" class="title">Field options</text>
+  <text x="368" y="148" class="detail">Inline overrides +</text>
+  <text x="368" y="168" class="detail" style="font-size:17px">optional blueprint defaults</text>
+
+  <rect x="664" y="64" width="264" height="116" rx="14" fill="#252747" stroke="#7974b8"/>
+  <text x="684" y="92" class="eyebrow" style="fill:#c5beff">RENDER EXPLICITLY</text>
+  <text x="684" y="122" class="title" style="font-size:20px">control() or field parts</text>
+  <text x="684" y="148" class="detail" style="font-size:16px">definition() for a collection</text>
+  <text x="684" y="168" class="detail" style="font-size:16px">render() for a full form</text>
 
   <path d="M162 180V250" class="flow"/>
   <path d="M478 180V250" fill="none" stroke="#b8a9ed" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#optional-arrow)"/>
   <text x="178" y="219" class="label">bind()</text>
-  <text x="494" y="219" class="label">configure</text>
+  <text x="494" y="219" class="label">merge options</text>
+  <path d="M796 180V250" class="flow"/>
+  <text x="812" y="219" class="label">render calls</text>
 
   <!-- The rendering path keeps resolved state separate from application markup. -->
   <rect x="32" y="252" width="260" height="116" rx="14" fill="#24283f" stroke="#6975bd"/>
@@ -62,6 +70,7 @@
   <text x="52" y="340" class="detail">One context and lifecycle</text>
 
   <path d="M292 310H346" class="flow"/>
+  <text x="319" y="298" text-anchor="middle" class="label" style="font-size:12px">field()</text>
 
   <rect x="348" y="252" width="260" height="116" rx="14" fill="#282c49" stroke="#818cf8"/>
   <text x="368" y="281" class="eyebrow" style="fill:#b9c1ff">02 / RESOLVE</text>
@@ -70,6 +79,7 @@
   <text x="368" y="360" class="detail">constraints, errors</text>
 
   <path d="M608 310H662" class="flow"/>
+  <text x="635" y="298" text-anchor="middle" class="label" style="font-size:12px">render</text>
 
   <rect x="664" y="252" width="264" height="116" rx="14" fill="url(#template)" stroke="#a099fa"/>
   <text x="684" y="281" class="eyebrow" style="fill:#c5beff">03 / RENDER</text>
@@ -99,5 +109,5 @@
   <text x="684" y="515" class="title">HTML form</text>
   <text x="684" y="541" class="detail">Controls + security inputs</text>
 
-  <text x="32" y="589" class="label" style="fill:#969fbe">Inspecting a field renders nothing and registers no submitted inputs.</text>
+  <text x="32" y="589" class="label" style="fill:#969fbe">bind() and field() render no markup and register no submitted inputs.</text>
 </svg>
