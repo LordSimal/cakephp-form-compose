@@ -99,7 +99,7 @@ class FormHelper extends Helper
             $definition = $factory->definition($definition, new FormContext($context, $view->getRequest()));
         }
 
-        $types = $factory->types($types);
+        $types = $factory->lazyTypes($types);
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $definition),

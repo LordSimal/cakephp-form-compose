@@ -96,11 +96,12 @@ class FormLifecycle
      * Commit the actual submitted names only after an input renderer has succeeded.
      *
      * @param list<\FormCompose\Field\Submission> $submissions Actual submitted inputs.
+     * @param list<string> $ids Additional IDs emitted by the field type.
      */
-    public function register(BoundField $field, array $submissions): void
+    public function register(BoundField $field, array $submissions, array $ids = []): void
     {
         $this->assertInput($field);
-        $this->inputs->register($field->state->id, $submissions);
+        $this->inputs->register($field->state->id, $submissions, $ids);
     }
 
     /**

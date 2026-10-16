@@ -20,6 +20,10 @@ Explicit `types` registrations override discovered types. A complete
 [date-range implementation](./blueprint-configuration.md#discover-custom-field-types)
 shows rendering, disabled state, accessible names, and both submitted inputs.
 
+Discovered types are constructed lazily when first rendered or explicitly
+registered. Each binding reuses its own type instance. Ordinary binding and field
+inspection do not instantiate unused types or require their constructor services.
+
 ::: info Describe the inputs your control submits
 `render()` must return escaped markup without changing security state.
 `submissions()` must describe exactly the successful inputs emitted, respecting
@@ -27,6 +31,23 @@ shows rendering, disabled state, accessible names, and both submitted inputs.
 for a hidden value that must remain locked. Explicit unlocking is available with
 `locked: false`. Presentation templates cannot infer these semantics from HTML.
 :::
+
+Composite controls can also implement `InputIdentityProviderInterface`:
+
+```php
+public function inputIds(BoundField $field, Attributes $attributes): array
+{
+    return [$field->state->id . '-end'];
+}
+```
+
+Return additional DOM IDs emitted by `render()`, excluding the bound field's main
+ID, which is already tracked. This method must not render or register anything.
+The session checks these identities alongside native choice and feedback IDs;
+a collision rolls back the complete control's pending registrations. Existing
+`FieldTypeInterface` implementations remain valid without this optional interface.
+Templates must preserve the supplied identities; arbitrary handwritten HTML is
+the application's responsibility.
 
 ## Custom renderers
 

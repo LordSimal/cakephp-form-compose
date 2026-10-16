@@ -73,6 +73,7 @@ export default defineConfig({
         items: [
           { text: 'Why FormCompose?', link: '/why' },
           { text: 'Your first form', link: '/getting-started' },
+          { text: 'Migrate a core form', link: '/migration' },
           { text: 'How rendering works', link: '/rendering' },
         ],
       },

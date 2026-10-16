@@ -47,11 +47,13 @@ class FieldResolver
             ? $this->binding->definition?->field($path)->options ?? []
             : [];
         $conventions = $this->createFieldConventions();
-        $options = TemplateOptions::normalize($conventions->resolve($path, array_replace(
+        $options = array_replace(
             $defaults,
             $definition->options,
             $options,
-        )));
+        );
+        FieldOptions::validate($options);
+        $options = TemplateOptions::normalize($conventions->resolve($path, $options));
         $type = (string)($options['type'] ?? $this->inferType($path, $options));
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
             throw new InvalidArgumentException('Invalid control type.');

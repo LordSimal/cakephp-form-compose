@@ -15,16 +15,19 @@ bound value; use field `value` only when intentionally overriding it. See
 echo $form->control('status', [
     'type' => 'select',
     'options' => [
-        '' => 'Choose a status',
         'draft' => 'Draft',
         'published' => 'Published',
     ],
+    'empty' => 'Choose a status',
 ]);
 ```
 
 An entity with `status === 'draft'` selects Draft. Including `options` also infers
-`select` if no type is specified. The empty key creates a blank choice; there is
-no separate core FormHelper-style `empty` option.
+`select` if no type is specified. `empty` supplies a placeholder label. Optional
+single selects have a blank option by default, so a nullable foreign key does not
+silently display the first record. Use `empty => false` to suppress it or
+`empty => true` to request a blank option on a required select. An explicit empty
+key in `options` also works and takes precedence over `empty`.
 
 ## Groups and attributes on individual choices
 
@@ -119,6 +122,10 @@ These are alternative presentations of the same field. Both submit selected
 values under `topics[]`; `['php', 'testing']` selects PHP and Testing.
 For ORM associations, use paths such as `tags._ids` and read the
 [association guide](./associations.md).
+
+A required checkbox group does not add HTML `required` to each choice: that
+would force the user to select every box. Enforce “choose at least one” with
+CakePHP validation. Required radio groups use the browser's native group behavior.
 
 ## Empty selections and disabled controls
 

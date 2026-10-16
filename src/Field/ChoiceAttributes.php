@@ -49,6 +49,7 @@ class ChoiceAttributes
                 'value' => $value,
                 'checked' => $selected ? 'checked' : false,
                 'multiple' => null,
+                'required' => $state->type === 'multicheckbox' ? false : $common->values['required'] ?? false,
             ]);
         if ($common->has('disabled')) {
             $input = $input->replace(['disabled' => true]);

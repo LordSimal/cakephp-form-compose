@@ -99,6 +99,10 @@ echo $title->errors(['class' => 'feedback']);
 ```
 
 Render enabled feedback to preserve the input's generated ARIA relationships.
+Configure help/error IDs through field `partAttributes`; local ID overrides on
+`help()` and `errors()` are rejected. Rendered part IDs join the session's
+duplicate-ID checks. A complete control commits its input registrations only
+after all parts succeed.
 
 ## attributes() {#attributes}
 

@@ -30,6 +30,10 @@ class FieldAttributes
      */
     public function resolve(FieldState $state, string $part, array $extra): Attributes
     {
+        if (in_array($part, ['help', 'errors'], true) && array_key_exists('id', $extra)) {
+            throw new InvalidArgumentException('Configure help and error IDs using field partAttributes.');
+        }
+
         $values = match ($part) {
             'input' => ['name' => $state->name, 'id' => $state->id] + $state->constraints + $this->descriptions($state),
             'label' => $state->grouped() ? [] : ['for' => $state->id],
@@ -76,11 +80,18 @@ class FieldAttributes
         $ids = [];
         $attributes = [];
         if ($state->hasHelp()) {
-            $ids[] = $state->id . '-help';
+            $help = $this->resolve($state, 'help', []);
+            if ($help->has('id')) {
+                $ids[] = (string)$help->values['id'];
+            }
         }
 
         if ($state->hasErrors()) {
-            $ids[] = $state->id . '-errors';
+            $errors = $this->resolve($state, 'errors', []);
+            if ($errors->has('id')) {
+                $ids[] = (string)$errors->values['id'];
+            }
+
             $attributes['aria-invalid'] = 'true';
         }
 

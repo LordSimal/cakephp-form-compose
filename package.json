@@ -5,12 +5,14 @@
   "scripts": {
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "test:browser": "playwright test"
   },
   "engines": {
     "node": ">=22.12.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "vitepress": "2.0.0-alpha.20"
   }
 }
