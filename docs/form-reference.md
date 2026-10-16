@@ -12,6 +12,23 @@ for a walkthrough, or jump directly to [field options](./field-options.md).
 
 All rendering methods return HTML strings; they do not echo automatically.
 
+## postButton() and postLink() {#post-actions}
+
+Helper shortcuts create independent protected action forms:
+
+```php
+echo $this->Form->postButton('Delete', ['action' => 'delete', $article->id], [
+    'method' => 'delete',
+    'data' => ['version' => $article->version],
+]);
+```
+
+Both accept a label, URL, options, and optional named `theme` and `renderer`.
+`postLink()` permits an omitted URL and requires JavaScript. `postButton()` is
+native; optional `confirm` adds a browser confirmation. `block` buffers the
+independent form outside a parent form. See [POST buttons and links](./post-actions.md)
+for signatures, options, asset handling, and template contracts.
+
 ## bind() {#bind}
 
 ```php
