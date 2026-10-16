@@ -12,17 +12,36 @@ parts you do not replace.
 This example gives email controls an icon beside the input. It changes their
 presentation while keeping their bound values, feedback, and submission behavior.
 
-## 1. Select your element directory
+## 1. Select your element directory {#select-theme}
 
-Pass an element prefix as a theme layer when binding the form:
+Configure the theme once when loading the helper in `AppView::initialize()`:
 
-```php [templates/Users/edit.php]
+```php [src/View/AppView.php]
 <?php
+declare(strict_types=1);
+
+namespace App\View;
+
+use Cake\View\View;
 use FormCompose\Rendering\Theme;
 
-$theme = new Theme(layers: ['forms/application']);
-$form = $this->Form->bind($user, theme: $theme);
-?>
+class AppView extends View
+{
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->addHelper('Form', [
+            'className' => 'FormCompose.Form',
+            'theme' => new Theme(layers: ['forms/application']),
+        ]);
+    }
+}
+```
+
+Forms inherit that theme without repeating it at each binding:
+
+```php [templates/Users/edit.php]
+<?php $form = $this->Form->bind($user); ?>
 <?= $form->open() ?>
 <?= $form->control('email', ['type' => 'email']) ?>
 <?= $form->submit('Save') ?>
@@ -32,6 +51,27 @@ $form = $this->Form->bind($user, theme: $theme);
 The `forms/application` prefix maps to your application's
 `templates/element/forms/application/` directory. For this email control,
 FormCompose looks for `email/control.php`, then a generic `control.php`.
+
+The configured theme also applies to helper `render()`, `postButton()`, and
+`postLink()`. Use `theme:` for a per-call override:
+
+```php
+use FormCompose\Rendering\Theme;
+
+$form = $this->Form->bind($user, theme: new Theme(['forms/compact']));
+// Or use the bundled markup for this binding:
+$form = $this->Form->bind($user, theme: 'Base');
+```
+
+Omitting `theme:` or passing null inherits the helper setting. An explicit theme
+replaces the configured theme, including its layers and attribute defaults.
+Compose multiple layers inside one `Theme` when you want them combined.
+
+The default setting is `'Base'`; setting helper `theme` to null also selects the
+base theme. `setConfig('theme', $theme)` changes future bindings and action calls.
+Existing form sessions retain their selected theme, and other helper instances
+keep their own settings. Unsupported strings, arrays, and unrelated objects fail
+when the configured theme is selected.
 
 ## 2. Write the control element
 
