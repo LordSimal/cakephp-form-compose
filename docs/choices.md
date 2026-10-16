@@ -29,6 +29,123 @@ silently display the first record. Use `empty => false` to suppress it or
 `empty => true` to request a blank option on a required select. An explicit empty
 key in `options` also works and takes precedence over `empty`.
 
+## Backed enums
+
+Pass a backed enum class directly as `options` to use all its cases:
+
+```php
+use App\Enum\Status;
+
+echo $form->control('status', ['options' => Status::class]);
+```
+
+This renders a select with one option per case, in declaration order. There is
+no need to call `Status::cases()`. Each option submits the case's backing value;
+labels default to humanized case names (`InReview` becomes `In Review`).
+
+### Custom enum labels
+
+Implement CakePHP's `EnumLabelInterface` when cases need application-owned labels
+or translations:
+
+```php
+use Cake\Database\Type\EnumLabelInterface;
+use function Cake\I18n\__;
+
+enum Status: string implements EnumLabelInterface
+{
+    case Draft = 'draft';
+    case InReview = 'in-review';
+    case Published = 'published';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Draft => __('Draft'),
+            self::InReview => __('Awaiting review'),
+            self::Published => __('Published'),
+        };
+    }
+}
+
+// Inside an open form.
+echo $form->control('status', ['options' => Status::class]);
+```
+
+Each choice submits its string or integer backing value. Labels come from
+CakePHP's `EnumLabelInterface::label()` when implemented; otherwise the case name
+is humanized (`InReview` becomes `In Review`). Labels are escaped. Translate labels
+in the application, for example through the interface as shown above.
+
+### Subsets and multiple selections
+
+`Status::cases()` also supplies all cases. Pass an iterable of individual cases
+to select a subset or change the order. Iterable keys do not replace enum backing
+values. The same
+options work with `type => 'radio'` and `type => 'multicheckbox'`:
+
+```php
+echo $form->control('status', [
+    'type' => 'radio',
+    'options' => [Status::Published, Status::Draft],
+]);
+
+echo $form->control('allowed_statuses', [
+    'type' => 'multicheckbox',
+    'options' => Status::class,
+    'value' => [Status::Draft, Status::InReview],
+]);
+```
+
+A single selected value may be a backed enum case or its scalar backing value.
+Multiple selects and checkbox groups accept arrays of either. Submitted strings
+select the corresponding cases when redisplaying a form; normal request/context
+value precedence still applies.
+
+Cases also work inside nested groups and as extended entry values. An explicit
+`text` overrides the enum label, including an empty string or null for a blank
+label:
+
+```php
+echo $form->control('status', [
+    'options' => [
+        'Workflow' => [
+            Status::Draft,
+            ['value' => Status::Published, 'text' => __('Publish immediately'), 'disabled' => true],
+        ],
+    ],
+]);
+```
+
+Existing placeholder rules apply, including retaining a case with an empty-string
+backing value instead of adding another blank option. Integer zero remains a real
+choice. Pure enums are rejected because they have no backing value to submit.
+Enum choice sources are explicit; ORM enum column types do not automatically
+populate choices.
+
+Blueprint field attributes accept the same configuration:
+
+```php
+use FormCompose\Attribute\Field;
+use FormCompose\FormBlueprint;
+use FormCompose\FormBuilder;
+use FormCompose\FormContext;
+
+#[Field('status', options: ['options' => Status::class])]
+class ArticleForm extends FormBlueprint
+{
+    public function configure(FormBuilder $form, FormContext $context): void
+    {
+        $form->add('allowed_statuses', [
+            'type' => 'multicheckbox',
+            'options' => [Status::Draft, Status::Published],
+        ]);
+    }
+}
+```
+
+See [blueprints](./blueprints.md) for binding and rendering examples.
+
 ## Groups and attributes on individual choices
 
 Nested maps produce option groups. Extended entries use `value` and `text`;

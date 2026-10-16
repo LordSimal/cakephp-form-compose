@@ -123,7 +123,7 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, 
      */
     protected function prepareChoices(BoundField $field, Attributes $attributes): array
     {
-        /** @var iterable<array-key, mixed> $options */
+        /** @var iterable<array-key, mixed>|class-string<\BackedEnum> $options */
         $options = $field->state->options['options'] ?? [];
 
         return SelectPlaceholder::apply(

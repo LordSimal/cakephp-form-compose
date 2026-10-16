@@ -75,8 +75,8 @@ Source order belongs to binding [`valueSources`](./form-reference.md#binding-opt
 not to individual fields. The default order is request data, then context.
 A request key containing null counts as found; a context's null result falls
 through. Backed enums become their scalar values. Native controls accept scalar
-or stringable values, with arrays for multiple choices and date/time objects for
-native date/time formatting. Composite values need a custom field type.
+or stringable values, with arrays of scalars or backed enum cases for multiple
+choices and date/time objects for native date/time formatting. Composite values need a custom field type.
 
 ```php
 // Inside an open form; these are three independent fields.
@@ -132,7 +132,7 @@ echo $form->control('reading_minutes', [
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |
-| `options` | `iterable` | Conventional view-variable choices when available, otherwise `[]`. Accepts value/label maps, nested groups, and extended entries. |
+| `options` | `iterable` or backed enum class name | Conventional view-variable choices when available, otherwise `[]`. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](./choices.md#backed-enums) for labels and selection. |
 | `empty` | `bool`, `string`, or `null` | `null`/omitted: prepend a blank option for optional single selects. `true`: prepend a blank label; a string: use that label; `false`: do not prepend. Required and multiple selects have no automatic blank option. |
 | `checkedValue` | Scalar or stringable | `'1'`. Submitted value for a checked single checkbox. |
 | `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |

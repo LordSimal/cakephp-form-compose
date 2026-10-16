@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase\Binding;
 
+use FormCompose\Test\Fixture\Enum\PublicationStatus;
+use FormCompose\Test\Fixture\Enum\UnbackedStatus;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use stdClass;
 
 /**
  * Verifies malformed core options fail during public binding without closing extension bags.
@@ -46,6 +49,10 @@ class FieldOptionsTest extends FormTestCase
             ],
             'empty element' => [['templates' => ['control' => '']], 'Each templates entry'],
             'nonstring element' => [['templates' => ['control' => false]], 'Each templates entry'],
+            'pure enum class' => [['options' => UnbackedStatus::class], 'backed enum class name'],
+            'ordinary class' => [['options' => stdClass::class], 'backed enum class name'],
+            'unknown class' => [['options' => 'UnknownChoiceEnum'], 'backed enum class name'],
+            'single enum case' => [['options' => PublicationStatus::Published], 'backed enum class name'],
             'choices scalar' => [['options' => 'draft'], 'options option must be iterable'],
         ];
     }
