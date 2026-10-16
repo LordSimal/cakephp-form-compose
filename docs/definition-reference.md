@@ -52,8 +52,8 @@ with no surrounding whitespace. Arrays use the
 public function __construct(
     string $path,
     ?string $type = null,
-    string|Html|false|null $label = null,
-    string|Html|null $help = null,
+    string|Html|Closure|false|null $label = null,
+    string|Html|Closure|false|null $help = null,
     array $options = [],
     ?string $template = null,
     ?array $templates = null,
@@ -63,7 +63,10 @@ public function __construct(
 
 Repeatable class attribute for ordered field configuration. Non-null shorthand
 arguments override matching `options` keys. The options array accepts every
-[built-in field option](./field-options.md).
+[built-in field option](./field-options.md). Label/help closures take no arguments
+and return `string`, `Html`, `false`, or `null`; they run once per field resolution
+after configuration merging. See [translation options](./blueprints.md#translate-a-blueprint)
+for PHP 8.5 attribute syntax and locale timing.
 
 ### Embed
 
