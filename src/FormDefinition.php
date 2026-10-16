@@ -10,7 +10,7 @@ use InvalidArgumentException;
  * Stores an immutable, ordered composition of fields and resolved embeds.
  *
  * entries preserves the rendering tree; fields exposes flattened, qualified
- * leaves for existing binding defaults and field lookup. Presentation selects
+ * leaves for binding defaults and field lookup. Presentation selects
  * an optional PHP layout, without storing bound values or submission state.
  *
  * @internal Compiled configuration; author reusable forms with FormBlueprint.
@@ -26,7 +26,7 @@ final readonly class FormDefinition
     public DefinitionIndex $index;
 
     /**
-     * Collect unique entries, retaining compatibility with flat collections.
+     * Collect ordered entries and index their qualified paths.
      *
      * @param list<\FormCompose\Field\FieldDefinition|\FormCompose\EmbeddedDefinition|\FormCompose\RepeatedDefinition> $fields Ordered entries.
      * @param array<string, mixed> $options Definition presentation options.

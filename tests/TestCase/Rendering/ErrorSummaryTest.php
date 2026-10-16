@@ -4,10 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Rendering\Html;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\CommentsForm;
 use FormCompose\Test\Fixture\Authoring\EmptyForm;
 use FormCompose\Test\Fixture\Authoring\TitleForm;
 use FormCompose\Test\Fixture\Summary\CustomHelper;
@@ -81,15 +79,13 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testRepeatedRowsAndCollectionErrorsAreIncludedWithoutDuplicatingChildErrors(): void
     {
-        $row = new FormDefinition([])->add(new FieldDefinition('body'));
-        $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', $row));
         $context = new ArrayContext([
             'defaults' => ['comments' => [2 => ['body' => 'Value']]],
             'errors' => [
                 'comments' => ['count' => 'Add another', 2 => ['body' => ['invalid' => 'Fix row two']]],
             ],
         ]);
-        $form = $this->bindCompiled($definition, helper: $this->helper(), data: $context);
+        $form = $this->helper()->bind($context, definition: CommentsForm::class);
         $form->open();
         $form->definition();
 

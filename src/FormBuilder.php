@@ -5,7 +5,6 @@ namespace FormCompose;
 
 use Closure;
 use FormCompose\Field\FieldDefinition;
-use LogicException;
 
 /**
  * Mutably assembles configuration during one blueprint's configure() hook.
@@ -16,30 +15,17 @@ use LogicException;
  */
 class FormBuilder
 {
-    /** @var \Closure(string, string): \FormCompose\FormDefinition|null Scoped blueprint construction. */
-    protected ?Closure $resolver = null;
-
-    /** @var \Closure(\FormCompose\FormDefinition): \FormCompose\FormDefinition|null Scoped repeat expansion. */
-    protected ?Closure $expansion = null;
-
     /**
-     * Supply scoped blueprint construction without replacing application builder subclasses.
+     * Assemble one blueprint with its required scoped compilation collaborators.
      *
-     * @param \Closure(string, string): \FormCompose\FormDefinition $resolver Mount path and identifier to configuration.
+     * @param \Closure(string, string): \FormCompose\FormDefinition $resolver Mount path and blueprint identifier.
+     * @param \Closure(\FormCompose\RepeatedDefinition): \FormCompose\RepeatedDefinition $repeated Compile one repeated occurrence.
      */
-    public function withResolver(Closure $resolver): static
-    {
-        $builder = clone $this;
-        $builder->resolver = $resolver;
-
-        return $builder;
-    }
-
-    /**
-     * Start from the ordered attribute declarations.
-     */
-    public function __construct(protected FormDefinition $definition = new FormDefinition([]))
-    {
+    public function __construct(
+        protected FormDefinition $definition,
+        protected readonly Closure $resolver,
+        protected readonly Closure $repeated,
+    ) {
     }
 
     /**
@@ -61,31 +47,10 @@ class FormBuilder
      */
     public function embed(string $path, string $definition, array $options = []): static
     {
-        if (!$this->resolver instanceof Closure) {
-            throw new LogicException('Blueprint embedding requires a builder supplied by BlueprintFactory.');
-        }
-
-        $definition = ($this->resolver)($path, $definition);
-
-        $this->definition = $this->definition->embed($path, $definition, $options);
-        if ($this->expansion instanceof Closure) {
-            $this->definition = ($this->expansion)($this->definition);
-        }
+        $child = ($this->resolver)($path, $definition);
+        $this->definition = $this->definition->embed($path, $child, $options);
 
         return $this;
-    }
-
-    /**
-     * Supply compilation without changing application builder constructors.
-     *
-     * @param \Closure(\FormCompose\FormDefinition): \FormCompose\FormDefinition $expansion Scoped compilation.
-     */
-    public function withExpansion(Closure $expansion): static
-    {
-        $builder = clone $this;
-        $builder->expansion = $expansion;
-
-        return $builder;
     }
 
     /**
@@ -100,13 +65,8 @@ class FormBuilder
         ?array $keys = null,
         array $options = [],
     ): static {
-        if (!$this->expansion instanceof Closure) {
-            throw new LogicException('Repeated embedding requires a builder supplied by BlueprintFactory.');
-        }
-
-        $this->definition = ($this->expansion)($this->definition->add(
-            new RepeatedDefinition($path, $definition, $keys, $options),
-        ));
+        $compiled = ($this->repeated)(new RepeatedDefinition($path, $definition, $keys, $options));
+        $this->definition = $this->definition->add($compiled);
 
         return $this;
     }

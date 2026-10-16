@@ -65,14 +65,19 @@ class RepeatedBlueprintTest extends FormTestCase
 
     public function testRuntimeRowsAllowBlankKeysAndImmediateParentEdits(): void
     {
-        $form = $this->helper(['comments' => [0 => ['id' => 5, 'body' => 'Existing']]])->bind(
+        $calls = new ArrayObject();
+        $form = $this->helper(['comments' => [0 => ['id' => 5, 'body' => 'Existing']]], [
+            'repeatCalls' => $calls,
+        ])->bind(
             definition: RuntimeForm::class,
         );
+        static::assertSame(['comments.0', 'comments.3'], $calls->getArrayCopy());
         $html = $form->render();
         static::assertStringContainsString('name="comments[3][body]"', $html);
         static::assertStringContainsString('New comment', $html);
         static::assertStringContainsString('Nested blank', $html);
         static::assertStringNotContainsString('name="comments[0][id]"', $html);
+        static::assertSame(['comments.0', 'comments.3'], $calls->getArrayCopy());
     }
 
     public function testParentRemovalRemovesTheWholeRow(): void

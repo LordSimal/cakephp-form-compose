@@ -4,9 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Rendering\PhpRenderer;
+use FormCompose\Test\Fixture\Authoring\TitleForm;
 use FormCompose\Test\Fixture\FailOnceRenderer;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
 use FormCompose\Test\FormTestCase;
@@ -109,12 +108,9 @@ class ErrorSummaryFailureTest extends FormTestCase
 
     public function testInvalidCompleteFormOptionsFailBeforeOpening(): void
     {
-        $form = $this->bindCompiled(
-            new FormDefinition([])->add(new FieldDefinition('title')),
-            helper: $this->helper(),
-            data: new ArrayContext([
-                'errors' => ['title' => ['invalid' => 'Fix title']],
-            ]),
+        $form = $this->helper()->bind(
+            new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
+            definition: TitleForm::class,
         );
         try {
             $form->render(options: ['errorSummary' => 'enabled']);
@@ -144,11 +140,10 @@ class ErrorSummaryFailureTest extends FormTestCase
 
     public function testLocalFalseOverridesBindingOptInWithoutLeakingFormAttributes(): void
     {
-        $form = $this->bindCompiled(
-            new FormDefinition([])->add(new FieldDefinition('title')),
-            helper: $this->helper(),
-            data: new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
-            options: ['errorSummary' => true],
+        $form = $this->helper()->bind(
+            new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
+            ['errorSummary' => true],
+            definition: TitleForm::class,
         );
         $html = $form->render(options: ['errorSummary' => false]);
         static::assertStringNotContainsString('<section', $html);

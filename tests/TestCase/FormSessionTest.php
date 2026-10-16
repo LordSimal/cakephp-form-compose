@@ -15,6 +15,7 @@ use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Authoring\EmailForm;
+use FormCompose\Test\Fixture\Authoring\FailingPostForm;
 use FormCompose\Test\Fixture\Authoring\LocalEmailForm;
 use FormCompose\Test\Fixture\Authoring\SecureForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
@@ -149,11 +150,8 @@ class FormSessionTest extends CompositionTestCase
 
     public function testFailedCompleteRenderingDoesNotEchoOrAutomaticallyClose(): void
     {
-        $definition = $this->factory
-            ->definition(PostForm::class, $this->context())
-            ->presentation(['template' => 'composition/failure']);
         $helper = $this->helper();
-        $form = $this->bindCompiled($definition, helper: $helper);
+        $form = $helper->bind(definition: FailingPostForm::class);
         ob_start();
         try {
             $form->render();

@@ -12,7 +12,6 @@ use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
-use LogicException;
 
 /**
  * Compiles inherited declarations and nested blueprints before the parent's hook.
@@ -23,20 +22,13 @@ use LogicException;
  */
 class BlueprintCompiler
 {
-    /** @var \Closure(string, \FormCompose\FormContext): \FormCompose\FormDefinition|null Blueprint construction. */
-    protected ?Closure $resolver = null;
-
     /**
-     * Supply the owning factory's resolver without mutable shared compilation state.
+     * Resolve child blueprints through the owning factory.
      *
-     * @param \Closure(string, \FormCompose\FormContext): \FormCompose\FormDefinition $resolver Scoped construction.
+     * @param \Closure(string, \FormCompose\FormContext): \FormCompose\FormDefinition $resolver Scoped blueprint construction.
      */
-    public function withResolver(Closure $resolver): static
+    public function __construct(protected readonly Closure $resolver)
     {
-        $compiler = clone $this;
-        $compiler->resolver = $resolver;
-
-        return $compiler;
     }
 
     /**
@@ -58,33 +50,36 @@ class BlueprintCompiler
                     $this->resolve($entry->definition, $context->at($entry->path)),
                     $entry->options,
                 ),
-                $entry instanceof EmbedMany => new RepeatedDefinition(
+                $entry instanceof EmbedMany => $this->repeated(new RepeatedDefinition(
                     $entry->path,
                     $entry->definition,
                     $entry->keys,
                     $entry->options,
-                ),
+                ), $context),
                 default => $entry,
             };
         }
 
-        $definition = $this->expand(new FormDefinition($entries, $declarations['options']), $context);
-        $builder = $this->createBuilder($definition)
-            ->withResolver(
-                fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
-            )
-            ->withExpansion(fn(FormDefinition $definition): FormDefinition => $this->expand($definition, $context));
+        $builder = $this->createBuilder(new FormDefinition($entries, $declarations['options']), $context);
         $blueprint->configure($builder, $context);
 
         return $builder->build();
     }
 
     /**
-     * Expand internal composition records through the blueprint's scoped resolver.
+     * Compile only the requested repeated occurrence before parent configuration.
      */
-    public function expand(FormDefinition $definition, FormContext $context): FormDefinition
+    public function repeated(RepeatedDefinition $entry, FormContext $context): RepeatedDefinition
     {
-        return new DefinitionExpander($this->resolve(...))->expand($definition, $context);
+        return $this->createRepeatedCompiler()->compile($entry, $context);
+    }
+
+    /**
+     * Supply row compilation and key inference through the compiler extension point.
+     */
+    protected function createRepeatedCompiler(): RepeatedCompiler
+    {
+        return new RepeatedCompiler($this->resolve(...));
     }
 
     /**
@@ -92,18 +87,18 @@ class BlueprintCompiler
      */
     protected function resolve(string $name, FormContext $context): FormDefinition
     {
-        if (!$this->resolver instanceof Closure) {
-            throw new LogicException('Blueprint embedding requires a compiler supplied by BlueprintFactory.');
-        }
-
         return ($this->resolver)($name, $context);
     }
 
     /**
      * Supply the per-resolution builder used by the public configure() hook.
      */
-    protected function createBuilder(FormDefinition $definition): FormBuilder
+    protected function createBuilder(FormDefinition $definition, FormContext $context): FormBuilder
     {
-        return new FormBuilder($definition);
+        return new FormBuilder(
+            $definition,
+            fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
+            fn(RepeatedDefinition $entry): RepeatedDefinition => $this->repeated($entry, $context),
+        );
     }
 }

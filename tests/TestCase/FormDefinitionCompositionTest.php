@@ -3,19 +3,39 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase;
 
+use Cake\View\Form\ArrayContext;
+use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\DefinitionView;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\FormBuilder;
+use FormCompose\FormContext;
 use FormCompose\FormDefinition;
+use FormCompose\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\EmailForm;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
-use LogicException;
 
 /**
  * Verifies immutable tree edits and conditional layout membership.
  */
 class FormDefinitionCompositionTest extends FormTestCase
 {
+    public function testCompiledSnapshotsKeepRemovalAndBindingDefaultsIsolated(): void
+    {
+        $original = new FormDefinition([
+            new FieldDefinition('email', ['type' => 'email', 'label' => 'Email']),
+            new FieldDefinition('internal_note'),
+        ]);
+        $selected = $original->remove('internal_note');
+        $form = $this->helper()->bind();
+        $view = new DefinitionView($form, $selected);
+        static::assertTrue($original->has('internal_note'));
+        static::assertFalse($selected->has('internal_note'));
+        static::assertSame('email', $view->field('email')->state->type);
+        $html = $form->open() . $view->render() . $form->close();
+        static::assertStringNotContainsString('name="internal_note"', $html);
+    }
+
     public function testNestedOverridesAndRemovalPreserveBothViewsOfTheDefinition(): void
     {
         $child = new FormDefinition([])->add(new FieldDefinition('email', [
@@ -98,26 +118,26 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testBuilderSnapshotsPreservePresentationAndResolvedEmbeds(): void
     {
-        $builder = new FormBuilder()->withResolver(static fn(
-            string $mount,
-            string $identifier,
-        ): FormDefinition => new FormDefinition([new FieldDefinition('email')]));
+        $factory = new BlueprintFactory();
+        $context = new FormContext(new ArrayContext([]), $this->helper()->getView()->getRequest());
+        $builder = new FormBuilder(
+            new FormDefinition([]),
+            static fn(string $path, string $identifier): FormDefinition => $factory->definition(
+                $identifier,
+                $context->at($path),
+            ),
+            static fn(RepeatedDefinition $entry): RepeatedDefinition => $factory->repeated($entry, $context),
+        );
         $original = $builder->build();
-        $builder->embed('author', 'author-blueprint');
+        $builder->embed('author', EmailForm::class);
         $builder->presentation(['template' => 'composition/parts', 'templateData' => ['marker' => 'local']]);
 
         $snapshot = $builder->build();
         $builder->with('author.email', ['label' => 'Changed']);
         static::assertFalse($original->has('author'));
-        static::assertSame([], $snapshot->field('author.email')->options);
+        static::assertSame('Default email', $snapshot->field('author.email')->options['label']);
         static::assertSame('composition/parts', $snapshot->options['template']);
         static::assertSame(['marker' => 'local'], $snapshot->options['templateData']);
-    }
-
-    public function testStandaloneBuilderExplainsMissingBlueprintResolver(): void
-    {
-        $this->expectException(LogicException::class);
-        new FormBuilder()->embed('author', 'profile');
     }
 
     public function testRemovingUnknownPathsFails(): void

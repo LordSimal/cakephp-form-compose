@@ -255,7 +255,7 @@ class FormSession
         $this->lifecycle->assertOpen();
         $repeat = new RepeatedDefinition($path, $definition, $keys);
         $context = FormContext::fromBinding($this->binding);
-        $compiled = $this->blueprints->expand(new FormDefinition([$repeat]), $context)->index->repeats[$repeat->path];
+        $compiled = $this->blueprints->repeated($repeat, $context);
 
         return $this->renderRepeated($path, $compiled, $options);
     }

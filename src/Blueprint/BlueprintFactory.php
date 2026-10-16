@@ -14,6 +14,7 @@ use FormCompose\Field\LazyFieldType;
 use FormCompose\FormBlueprint;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
+use FormCompose\RepeatedDefinition;
 use InvalidArgumentException;
 use LogicException;
 use ReflectionClass;
@@ -62,9 +63,7 @@ class BlueprintFactory
         $context = $context->enter($class);
         $blueprint = $this->createInstance($class, FormBlueprint::class);
 
-        return $this->createCompiler()
-            ->withResolver($this->definition(...))
-            ->compile($blueprint, $context);
+        return $this->createCompiler()->compile($blueprint, $context);
     }
 
     /**
@@ -105,15 +104,13 @@ class BlueprintFactory
     }
 
     /**
-     * Expand internal composition records using this factory's discovery and DI boundary.
+     * Compile one repeated occurrence through this factory's discovery and DI boundary.
      *
-     * @internal Used by the compiler and session repeated-layout bridge.
+     * @internal Used by the session's repeated-layout bridge.
      */
-    public function expand(FormDefinition $definition, FormContext $context): FormDefinition
+    public function repeated(RepeatedDefinition $entry, FormContext $context): RepeatedDefinition
     {
-        return $this->createCompiler()
-            ->withResolver($this->definition(...))
-            ->expand($definition, $context);
+        return $this->createCompiler()->repeated($entry, $context);
     }
 
     /**
@@ -152,7 +149,7 @@ class BlueprintFactory
      */
     protected function createCompiler(): BlueprintCompiler
     {
-        return new BlueprintCompiler();
+        return new BlueprintCompiler($this->definition(...));
     }
 
     /**

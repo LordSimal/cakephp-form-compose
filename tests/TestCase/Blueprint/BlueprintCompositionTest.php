@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Blueprint;
 
 use FormCompose\Attribute\Embed;
-use FormCompose\Blueprint\BlueprintCompiler;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use FormCompose\Test\Fixture\Composition\InheritedPostForm;
@@ -15,7 +14,6 @@ use FormCompose\Test\Fixture\Composition\Invalid\DynamicCycle;
 use FormCompose\Test\Fixture\Composition\Invalid\OverlappingFields;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use InvalidArgumentException;
-use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
@@ -84,12 +82,6 @@ class BlueprintCompositionTest extends CompositionTestCase
             ['calls' => 1],
             $ordinary->binding->definition->field('first_name')->options['templateData'],
         );
-    }
-
-    public function testStandaloneCompilerExplainsMissingNestedResolver(): void
-    {
-        $this->expectException(LogicException::class);
-        new BlueprintCompiler()->compile(new PostForm($this->probe), $this->context());
     }
 
     /**

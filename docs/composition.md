@@ -189,8 +189,8 @@ public function configure(FormBuilder $form, FormContext $context): void
 ```
 
 This is an alternative to declaring those same mounts with attributes, so do not
-declare them twice. String resolution is available on builders supplied by
-`BlueprintFactory`; standalone builders cannot resolve blueprint references.
+declare them twice. The factory-supplied builder resolves blueprint references
+in the current scope before returning, so parent overrides can apply immediately.
 Use `$form->presentation(['template' => 'forms/post'])` when the hook should select
 a layout; that element must arrange the fields and embeds in the resulting blueprint.
 

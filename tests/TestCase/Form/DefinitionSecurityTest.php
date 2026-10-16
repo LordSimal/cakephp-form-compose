@@ -8,10 +8,8 @@ use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
 use FormCompose\DefinitionView;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\CompositionTestCase;
-use FormCompose\Test\Fixture\Blueprint\Valid\InputForm;
+use FormCompose\Test\Fixture\Authoring\BillingInputsForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use LogicException;
 use RuntimeException;
@@ -108,15 +106,12 @@ class DefinitionSecurityTest extends CompositionTestCase
     public function testMountedNativeInputsKeepFallbacksFilesAndDisabledProtection(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $child = $this->factory->definition(InputForm::class, $this->context())
-            ->add(new FieldDefinition('active', ['type' => 'checkbox']));
-        $form = $this->bindCompiled(
-            new FormDefinition([])->embed('billing', $child),
-            helper: $helper,
-            data: new ArrayContext([
+        $form = $helper->bind(
+            new ArrayContext([
                 'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
             ]),
-            options: ['type' => 'file', 'url' => '/articles/save'],
+            ['type' => 'file', 'url' => '/articles/save'],
+            definition: BillingInputsForm::class,
         );
         $html = $form->open() . $form->definition() . $form->close();
         $xpath = $this->xpath($html);
@@ -144,11 +139,7 @@ class DefinitionSecurityTest extends CompositionTestCase
 
     public function testMultipartFailureRollsBackEarlierControlsInTheDefinition(): void
     {
-        $definition = new FormDefinition([])->embed('billing', $this->factory->definition(
-            InputForm::class,
-            $this->context(),
-        ));
-        $form = $this->bindCompiled($definition, helper: $this->helper());
+        $form = $this->helper()->bind(definition: BillingInputsForm::class);
         $form->open();
         try {
             $form->definition();

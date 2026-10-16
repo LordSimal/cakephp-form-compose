@@ -15,6 +15,8 @@ use FormCompose\Rendering\Theme;
 use FormCompose\RepeatedDefinition;
 use FormCompose\Security\FormProtection;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\BodyForm;
+use FormCompose\Test\Fixture\Authoring\EmptyForm;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use InvalidArgumentException;
 use LogicException;
@@ -82,7 +84,7 @@ class DefinitionRendererTest extends CompositionTestCase
         $inputs = new InputRegistry(new FormProtection($form->binding->request));
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Repeated embeds must be compiled before rendering.');
-        $renderer->renderMany($form, new RepeatedDefinition('comments', new FormDefinition([])), [], $inputs);
+        $renderer->renderMany($form, new RepeatedDefinition('comments', EmptyForm::class), [], $inputs);
     }
 
     public function testRepeatedRenderingOnlyRendersMountedRowsFromCompiledDefinitions(): void
@@ -92,7 +94,10 @@ class DefinitionRendererTest extends CompositionTestCase
         $form = $this->helper(['comments' => [2 => ['body' => 'Mounted']]])->bind();
         $form->open();
 
-        $html = $form->renderRepeated('comments', new RepeatedDefinition('comments', $row, keys: [2], rows: $rows));
+        $html = $form->renderRepeated(
+            'comments',
+            new RepeatedDefinition('comments', BodyForm::class, keys: [2], rows: $rows),
+        );
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('unmounted', $html);
         static::assertStringContainsString('name="comments[unmounted]"', $form->control('comments.unmounted'));

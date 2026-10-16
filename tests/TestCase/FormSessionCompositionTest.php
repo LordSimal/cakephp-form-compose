@@ -8,6 +8,7 @@ use FormCompose\Field\FieldDefinition;
 use FormCompose\FormDefinition;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\CompositionTestCase;
+use FormCompose\Test\Fixture\Authoring\OrderedAuthorForm;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use FormCompose\Test\Fixture\Composition\DynamicPostForm;
 use FormCompose\Test\Fixture\Composition\EnvelopeForm;
@@ -44,10 +45,7 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testDefaultLayoutPreservesOrderingAndHonorsChildLayouts(): void
     {
-        $definition = new FormDefinition([])->add(new FieldDefinition('before'))
-            ->embed('author', $this->factory->definition(AuthorForm::class, $this->context()))
-            ->add(new FieldDefinition('after'));
-        $form = $this->bindCompiled($definition, helper: $this->helper());
+        $form = $this->helper()->bind(definition: OrderedAuthorForm::class);
         $html = $form->open() . $form->definition() . $form->close();
         static::assertLessThan(strpos($html, 'data-author'), strpos($html, 'name="before"'));
         static::assertLessThan(strpos($html, 'name="after"'), strpos($html, 'name="author[id]"'));

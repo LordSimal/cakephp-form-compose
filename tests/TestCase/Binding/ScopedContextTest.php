@@ -5,10 +5,9 @@ namespace FormCompose\Test\TestCase\Binding;
 
 use Cake\ORM\Entity;
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
 use FormCompose\FormContext;
-use FormCompose\FormDefinition;
 use FormCompose\Test\AssociationTestCase;
+use FormCompose\Test\Fixture\Authoring\ScopedArticleForm;
 
 /**
  * Verifies prefix delegation against real Cake contexts and ORM associations.
@@ -21,16 +20,10 @@ class ScopedContextTest extends AssociationTestCase
         /** @var list<Entity> $comments */
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['invalid' => '<Invalid comment>']);
-        $definition = new FormDefinition([])->embed('details', new FormDefinition([
-            new FieldDefinition('id'),
-            new FieldDefinition('summary'),
-        ]))
-            ->embed('comments.0', new FormDefinition([new FieldDefinition('id'), new FieldDefinition('body')]));
-        $form = $this->bindCompiled(
-            $definition,
-            helper: $this->helper(['comments' => [['body' => 'Submitted <comment>']]]),
-            data: $article,
-            options: ['context' => ['table' => $this->articles]],
+        $form = $this->helper(['comments' => [['body' => 'Submitted <comment>']]])->bind(
+            $article,
+            ['context' => ['table' => $this->articles]],
+            definition: ScopedArticleForm::class,
         );
         $html = $form->open() . $form->definition() . $form->close();
         $xpath = $this->xpath($html);

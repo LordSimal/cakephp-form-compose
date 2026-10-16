@@ -4,8 +4,6 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormDefinition;
 use FormCompose\Test\Fixture\Authoring\LocalEmailForm;
 use FormCompose\Test\Fixture\Blueprint\ChildForm;
 use FormCompose\Test\Fixture\Blueprint\Valid\ProfileForm;
@@ -70,21 +68,6 @@ class BlueprintTest extends FormTestCase
         static::assertStringContainsString('name="extra"', $html);
         static::assertSame('Email', $form->field('email')->state->options['label']);
         static::assertFalse($form->binding->definition?->has('extra'));
-    }
-
-    public function testCompiledSnapshotsKeepRemovalAndBindingDefaultsIsolated(): void
-    {
-        $original = new FormDefinition([
-            new FieldDefinition('email', ['type' => 'email', 'label' => 'Email']),
-            new FieldDefinition('internal_note'),
-        ]);
-        $selected = $original->remove('internal_note');
-        $form = $this->bindCompiled($selected, helper: $this->helper());
-        static::assertTrue($original->has('internal_note'));
-        static::assertFalse($selected->has('internal_note'));
-        static::assertSame('email', $form->field('email')->state->type);
-        $html = $form->open() . $form->definition() . $form->close();
-        static::assertStringNotContainsString('name="internal_note"', $html);
     }
 
     public function testParentDeclarationsAreOverriddenInPlaceAndRemainReusable(): void

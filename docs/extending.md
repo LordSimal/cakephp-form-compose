@@ -83,7 +83,7 @@ to the normal form-building API:
 | `FieldConventions` | `choices()`, `resolve()`, and `messages()` specialize choice discovery and association defaults |
 | `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
 | `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
-| `BlueprintCompiler` | `createBuilder()` supplies the builder passed to blueprint hooks |
+| `BlueprintCompiler` | `createBuilder()` supplies the hook builder; `createRepeatedCompiler()` supplies row compilation |
 | `DefinitionRenderer` | `createView()` supplies the scoped layout API |
 | `DefinitionView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
 | `ValueResolver` | `fromSources()` specializes request/context lookup |
@@ -161,9 +161,8 @@ class AppFieldResolver extends FieldResolver
 When overriding `createSession()`, accept and forward its third `BlueprintFactory`
 argument. This keeps application dependencies and custom discovery configuration
 available to local `$form->definition('profile')` calls in the session subclass.
-Overrides of the earlier two-argument factory must update their signature. Direct
-`new FormSession($binding, $rendering)` construction still supports dependency-free
-blueprints; pass the factory as the optional third constructor argument when needed.
+Direct `new FormSession($binding, $rendering)` construction supports
+dependency-free blueprints; pass the factory as the optional third constructor argument when needed.
 
 Load the helper in `AppView::initialize()`:
 
@@ -194,9 +193,18 @@ shares the lifecycle's `FormProtection` service and stages nested definition inp
 until the whole layout succeeds. Preserve duplicate-ID checks and rollback when
 replacing that collaborator.
 
-The factory injects a scoped resolver through `BlueprintCompiler::withResolver()`
-and `FormBuilder::withResolver()`. Custom compiler and builder factories retain
-string embedding support without changing their existing factory signatures.
+The factory constructs `BlueprintCompiler` with its scoped blueprint resolver.
+Override `createBuilder(FormDefinition $definition, FormContext $context)` to
+supply a builder subclass. Its constructor requires the initial compiled tree,
+a `(string $path, string $identifier): FormDefinition` child resolver, and a
+`(RepeatedDefinition $entry): RepeatedDefinition` occurrence compiler. Both
+callbacks must retain the current context and the owning factory's resolution.
+
+`BlueprintCompiler::createRepeatedCompiler()` supplies the row compiler used by
+attribute embeds, runtime builder embeds, and session `embedMany()` calls.
+Override it to supply a `RepeatedCompiler` subclass, such as one specializing
+`keys()`. Inferred keys are validated before any child hooks run. Each occurrence
+compiles independently; adding an embed never recompiles existing sections.
 
 ::: details Which classes support inheritance?
 

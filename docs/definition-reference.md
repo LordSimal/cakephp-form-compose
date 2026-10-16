@@ -128,9 +128,10 @@ public function configure(FormBuilder $form, FormContext $context): void
 }
 ```
 
-Unknown targets and duplicates fail. Use the builder supplied to `configure()` so embeds resolve through the
-application factory with the correct scoped context. The builder's constructor,
-resolver wiring, and `build()` snapshot belong to compiler integration.
+Unknown targets and duplicates fail. Use the builder supplied to `configure()` so
+embeds resolve through the application factory with the correct scoped context.
+The builder's required collaborators and `build()` snapshot belong to
+[compiler integration](./extending.md#subclassing-services).
 
 ## FormContext
 
@@ -215,7 +216,6 @@ A child blueprint's own layout is retained for `DefinitionView::render()`.
 `FormBuilder::embedMany(string $path, string $definition,
 ?array $keys = null, array $options = []): static` compiles rows immediately using
 the factory's scoped resolver, allowing parent `with()` and `remove()` calls.
-A standalone builder without that resolver rejects repeated embedding.
 
 `DefinitionView::embeddedMany(string $path, array $options = []): string` renders
 compiled rows; removed mounts return `''` and unknown mounts throw.
