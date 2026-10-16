@@ -40,7 +40,10 @@ class FormsController extends Controller
         $html = $form->open(['url' => '/forms/save', 'type' => 'file']);
         $html .= $form->control('id', ['type' => 'hidden', 'value' => 42]);
         $html .= $form->control('empty_select', ['type' => 'select', 'options' => [], 'empty' => false]);
-        $html .= $form->control('author_id', ['options' => [1 => 'Ada', 2 => 'Grace'], 'value' => null]);
+        $html .= $form->control('author_id', [
+            'options' => [1 => 'Ada', 'Authors' => [2 => 'Grace', '' => 'Unassigned']],
+            'value' => null,
+        ]);
         $html .= $form->control('topics', [
             'type' => 'multicheckbox',
             'options' => ['a' => 'A', 'b' => 'B'],
