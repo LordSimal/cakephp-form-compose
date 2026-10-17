@@ -76,11 +76,12 @@ resolution, `template` is normalized to the primary part: `templates['control']`
 for fields and blueprints, or `templates['layout']` for complete forms. Custom
 renderers receive those canonical options.
 
-The singular shorthand applies to field controls, blueprint layouts, and
-complete-form layouts. Hidden fields continue to render their input part directly.
-Set per-form `templates` using `layout`, `open`, `close`, or `hidden` keys in
-`bind()`; `layout` is used by complete-form `render()`. Set per-button `templates`
-using the `control` key in `submit()`.
+::: info The shorthand follows the rendered part
+For fields and blueprints, `template` means the outer `control` part. For a
+complete form, it means the `layout` part. Hidden fields render their input part
+directly. In `bind()`, use `templates` keys `layout`, `open`, `close`, or `hidden`;
+for a button, use `templates['control']` in `submit()`.
+:::
 
 ### Calling the parent layer
 

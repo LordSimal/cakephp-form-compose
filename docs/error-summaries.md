@@ -62,6 +62,12 @@ The plugin renders the blueprint into `$body` first, builds `$summary` from the
 controls that actually rendered, then invokes the form layout. Your page template
 needs no `$opening`, `$body`, or `$summary` variables.
 
+::: info Two templates, two jobs
+The blueprint's `#[Form(..., template: ...)]` arranges fields and embeds inside
+`$body`. The theme's `form/layout.php` arranges that prepared body, the summary,
+and actions for the complete form.
+:::
+
 ```php [templates/element/form/themes/daisy/form/layout.php]
 <?php
 declare(strict_types=1);
@@ -93,13 +99,13 @@ label, or `false`. `$submitOptions` contains the caller's button options.
 
 The session stays open while the layout renders its action buttons. The plugin
 then generates final protection fields and closes the form. Opening and closing
-remain the plugin's responsibility. Keep validation-bearing controls in the
-blueprint body so the prepared summary describes all of them.
+remain the plugin's responsibility. Within a theme, the root `control.php` wraps
+one field; the nested `form/layout.php` lays out the complete form.
 
-The blueprint's `#[Form(..., template: ...)]` element arranges fields and embeds;
-the theme's `form/layout.php` arranges the prepared body, summary, and actions.
-Within a theme, the root `control.php` wraps one field; the nested
-`form/layout.php` lays out the complete form.
+::: warning Keep validation controls in the blueprint body
+The automatic summary is prepared from controls rendered in `$body`. Controls
+added later by the complete-form layout won't be included in that summary.
+:::
 
 For an exceptional per-form override, pass
 `options: ['template' => 'form/layouts/special-editor', 'errorSummary' => true]`.

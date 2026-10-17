@@ -407,11 +407,15 @@ layout with the session still open, then closes the form. The layout receives
 and `$parent`. This uses the shared PHP template system; a custom renderer receives
 scope `form`, the effective method as its type, and part `layout`.
 
-Blueprint templates continue to arrange fields and embeds inside `$body`.
-Complete-form templates place that prepared body and summary and render action
-buttons. Use `options['template']` or `options['templates']['layout']` for a
-per-form exception; shared layout selection belongs in the theme. See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
+::: info Keep the two template choices separate
+`#[Form(template: ...)]` chooses the blueprint body layout. `form/layout.php`
+chooses the complete-form presentation used by `render()`, including the summary
+and actions. The theme supplies that layout automatically. For a one-form
+exception, use `options['template']` or `options['templates']['layout']`.
+
+See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
 and [template contract](./template-reference.md#complete-form-layouts).
+:::
 
 ## errorSummary() {#error-summary}
 
