@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
+use Cake\View\View;
 use Closure;
 
 /**
@@ -27,5 +28,19 @@ final readonly class RenderContext
         public array $types = [],
         public ?Closure $viewVariable = null,
     ) {
+    }
+
+    /**
+     * Assemble view-backed rendering for bound forms and standalone actions.
+     *
+     * @param array<string, \FormCompose\Field\FieldTypeInterface> $types Registered custom types.
+     */
+    public static function forView(
+        View $view,
+        Theme $theme,
+        ?RendererInterface $renderer = null,
+        array $types = [],
+    ): self {
+        return new self($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...));
     }
 }

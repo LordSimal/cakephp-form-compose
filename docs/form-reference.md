@@ -38,7 +38,8 @@ echo $this->Form->postButton('Delete', ['action' => 'delete', $article->id], [
 
 Both accept a label, URL, options, and optional named `theme` and `renderer`.
 `postLink()` permits an omitted URL and requires JavaScript. `postButton()` is
-native; optional `confirm` adds a browser confirmation. `block` buffers the
+native; optional `confirm` adds confirmation with a native dialog or an application
+event handler. `block` buffers the
 independent form outside a parent form. See [POST buttons and links](./post-actions.md)
 for signatures, options, asset handling, and template contracts.
 
@@ -100,13 +101,15 @@ settings. See [Fields and values](./usage.md#data-and-value-sources).
 
 ### Helper configuration
 
-Set these with `addHelper()` or the helper's `setConfig()` before binding:
+Set these with `addHelper()`. Binding settings can also use the helper's
+`setConfig()` before binding; `autoActionScript` is read during initialization:
 
 | Setting | Value and default |
 | --- | --- |
 | `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
 | `passwordFields` | Defaults to `['password', 'passwd']`. A list of terminal names, such as `['password', 'passwd', 'passphrase', 'password_confirmation']`. Each binding snapshots this list; its own `passwordFields` option replaces the helper default. Explicit field types and primary-key conventions take precedence. |
 | `typeMap` | Additional schema-to-control mappings, default `[]`. Each binding snapshots helper overrides over the native defaults; its own entries override matching keys. Reset helper overrides with `setConfig('typeMap')`. |
+| `autoActionScript` | Boolean, true by default. Registers the deferred `FormCompose.actions` asset in the `script` view block when the helper initializes, including pages with no initial actions. Render `$this->fetch('script')` in the layout. Set false before initialization to load or replace the behavior yourself. See [loading and dynamic fragments](./post-actions.md#load-the-enhancement). |
 | `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
 | `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
 

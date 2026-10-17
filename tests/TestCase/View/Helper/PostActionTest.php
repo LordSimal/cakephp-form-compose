@@ -51,9 +51,11 @@ class PostActionTest extends FormTestCase
         static::assertSame('_blank', $xpath->evaluate('string(//form[1]/@target)'));
         static::assertSame('form-compose-1', $xpath->evaluate('string(//a[1]/@data-form-compose-action)'));
         static::assertSame('#form-compose-1', $xpath->evaluate('string(//a[1]/@href)'));
-        static::assertSame(1, $xpath->query('//script[@src][@defer]')->length);
-        static::assertSame('nonce<safe>', $xpath->evaluate('string(//script/@nonce)'));
-        static::assertStringContainsString('/form_compose/js/actions.js', $html);
+        static::assertSame(0, $xpath->query('//script')->length);
+        $scripts = $this->xpath($helper->getView()->fetch('script'));
+        static::assertSame(1, $scripts->query('//script[@src][@defer]')->length);
+        static::assertSame('nonce<safe>', $scripts->evaluate('string(//script/@nonce)'));
+        static::assertStringContainsString('/form_compose/js/actions.js', $helper->getView()->fetch('script'));
         static::assertStringNotContainsString('onclick=', $html);
         static::assertStringContainsString('<strong>Archive</strong>', $html);
     }
@@ -66,7 +68,8 @@ class PostActionTest extends FormTestCase
         $xpath = $this->xpath($html);
         static::assertSame('Delete "this" <record>?', $xpath->evaluate('string(//form[1]/@data-form-compose-confirm)'));
         static::assertSame('Archive?', $xpath->evaluate('string(//form[2]/@data-form-compose-confirm)'));
-        static::assertSame(1, $xpath->query('//script')->length);
+        static::assertSame(0, $xpath->query('//script')->length);
+        static::assertSame(1, $this->xpath($helper->getView()->fetch('script'))->query('//script')->length);
         static::assertSame(0, $xpath->query('//*[@confirm or @onclick or @onsubmit]')->length);
     }
 

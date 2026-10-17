@@ -6,6 +6,7 @@ namespace FormCompose\View\Helper;
 use Cake\View\Form\ContextFactory;
 use Cake\View\Form\ContextInterface;
 use Cake\View\Helper;
+use Cake\View\Helper\HtmlHelper;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Binding\TypeMap;
 use FormCompose\Blueprint\BlueprintFactory;
@@ -13,7 +14,6 @@ use FormCompose\Form\FormIds;
 use FormCompose\FormContext;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
-use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\PostActionRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RendererInterface;
@@ -38,7 +38,7 @@ use InvalidArgumentException;
 class FormHelper extends Helper
 {
     /**
-     * Default presentation and type-inference conventions for new bindings.
+     * Default presentation, type inference, and page-level action enhancement.
      *
      * @var array<string, mixed>
      */
@@ -46,11 +46,31 @@ class FormHelper extends Helper
         'theme' => 'Base',
         'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS,
         'typeMap' => [],
+        'autoActionScript' => true,
     ];
 
     protected ?FormIds $formIds = null;
 
     protected ?PostActionRenderer $postActions = null;
+
+    /**
+     * Register delegated action behavior in the layout's script block on helper initialization.
+     *
+     * Configure autoActionScript before loading the helper. Disable it when the
+     * application bundles or replaces actions.js. Cake's shared HTML helper
+     * handles asset deduplication, routing, and the request's CSP script nonce.
+     *
+     * @param array<string, mixed> $config Helper configuration.
+     */
+    public function initialize(array $config): void
+    {
+        parent::initialize($config);
+        if ($this->getConfig('autoActionScript') === true) {
+            $html = $this->getView()->loadHelper('Html');
+            assert($html instanceof HtmlHelper, 'The Html helper must extend CakePHP HtmlHelper.');
+            $html->script('FormCompose.actions', ['block' => 'script', 'defer' => true]);
+        }
+    }
 
     /**
      * Render a standalone protected action using a native submit button.
@@ -70,12 +90,12 @@ class FormHelper extends Helper
             $url,
             $options,
             'button',
-            $this->actionRendering($theme, $renderer),
+            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
         );
     }
 
     /**
-     * Render a protected action link, loading the external JavaScript enhancement once.
+     * Render a protected action link using the page's delegated JavaScript enhancement.
      *
      * @param array|string|null $url Cake route or URL; null uses the current request target.
      * @param array<string, mixed> $options Method, locked data, form, block, confirm, and link presentation.
@@ -92,7 +112,7 @@ class FormHelper extends Helper
             $url,
             $options,
             'link',
-            $this->actionRendering($theme, $renderer),
+            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
         );
     }
 
@@ -164,7 +184,7 @@ class FormHelper extends Helper
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $compiled),
-            new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
+            RenderContext::forView($view, $theme, $renderer, $types),
             $factory,
         );
     }
@@ -227,17 +247,7 @@ class FormHelper extends Helper
     }
 
     /**
-     * Supply action presentation without constructing a second helper or form lifecycle.
-     */
-    protected function actionRendering(Theme|string|null $theme, ?RendererInterface $renderer): RenderContext
-    {
-        $theme = $this->resolveTheme($theme);
-
-        return new RenderContext($renderer ?? new PhpRenderer($this->getView(), $theme), $theme);
-    }
-
-    /**
-     * Replace action placement or script behavior through the helper's normal extension point.
+     * Replace action placement or trigger rendering through the helper's normal extension point.
      */
     protected function createPostActionRenderer(): PostActionRenderer
     {

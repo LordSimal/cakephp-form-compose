@@ -278,9 +278,9 @@ See the [complete summary element](./error-summaries.md#customize-the-summary-el
 
 Standalone action buttons use `button/control.php`; action links use
 `action/control.php`. Both receive `$form`, `$label`, `$attributes`, and
-`$templateData`. `action/script.php` receives the external script's `$attributes`,
-including its asset URL, defer flag, and optional CSP nonce. Preserve the supplied
-trigger associations in custom markup. See [POST action templates](./post-actions.md#options-and-presentation).
+`$templateData`. Preserve the supplied trigger associations in custom markup.
+The external action script is registered through CakePHP's HTML helper and the
+`script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](./post-actions.md#options-and-presentation).
 
 Theme defaults use part keys, with optional type prefixes:
 
