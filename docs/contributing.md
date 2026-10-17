@@ -102,7 +102,7 @@ short and connect a control call to its PHP element before detailed setup.
   introduces the rendering model. Keep optional configuration out of the first form.
 - **Build forms** contains focused recipes for values, choices, associations,
   field parts, and themes.
-- **Reusable forms** explains field definitions, attributed blueprints, and nested
+- **Reusable forms** explains reusable configuration, attributed blueprints, and nested
   layouts together. Keep reuse optional and explain each object's responsibility.
 - **API reference** owns complete signatures, return values, options, defaults,
   precedence, and failure contracts. Guides link to this material rather than

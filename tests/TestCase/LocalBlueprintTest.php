@@ -39,7 +39,7 @@ class LocalBlueprintTest extends BlueprintTestCase
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
         $form = $helper->bind();
-        $html = $form->open() . $form->definition($definition) . $form->close();
+        $html = $form->open() . $form->blueprint($definition) . $form->close();
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('value="posted@example.test"', $html);
         static::assertStringContainsString('Full &lt;name&gt;', $html);
@@ -58,8 +58,8 @@ class LocalBlueprintTest extends BlueprintTestCase
             'data' => ['billing' => ['street' => 'Main Street', 'city' => 'Brussels']],
         ]));
         $html = $form->open();
-        $html .= $form->definition('profile');
-        $html .= '<section class="billing">' . $form->definition(BillingAddressForm::class) . '</section>';
+        $html .= $form->blueprint('profile');
+        $html .= '<section class="billing">' . $form->blueprint(BillingAddressForm::class) . '</section>';
         $html .= $form->control('notes') . $form->submit('Save') . $form->close();
         static::assertSame(1, substr_count($html, '<form '));
         static::assertSame(1, substr_count($html, '</form>'));
@@ -73,9 +73,9 @@ class LocalBlueprintTest extends BlueprintTestCase
 
     public function testLocalBlueprintsOverrideAndPreserveSelectedDefaults(): void
     {
-        $form = $this->helper()->bind(definition: SessionEmailForm::class);
+        $form = $this->helper()->bind(blueprint: SessionEmailForm::class);
         $defaults = $form->binding->definition;
-        $html = $form->open() . $form->definition(ProfileForm::class);
+        $html = $form->open() . $form->blueprint(ProfileForm::class);
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);
         static::assertStringNotContainsString('Session email', $html);
@@ -92,7 +92,7 @@ class LocalBlueprintTest extends BlueprintTestCase
         $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
 
         $form = $helper->bind(new ArrayContext(['data' => ['label' => 'Runtime label']]));
-        $html = $form->open() . $form->definition('conditional') . $form->close();
+        $html = $form->open() . $form->blueprint('conditional') . $form->close();
         static::assertStringContainsString('Runtime label', $html);
         static::assertStringContainsString('Work &lt;address&gt;', $html);
         static::assertStringContainsString('name="active"', $html);
@@ -105,7 +105,7 @@ class LocalBlueprintTest extends BlueprintTestCase
     {
         $helper = new BlueprintFormHelper($this->helper()->getView());
         $form = $helper->bind();
-        $html = $form->open() . $form->definition(ProfileForm::class) . $form->close();
+        $html = $form->open() . $form->blueprint(ProfileForm::class) . $form->close();
         static::assertStringContainsString('Custom builder', $html);
         static::assertStringContainsString('name="custom"', $html);
         static::assertNull($form->binding->definition);
@@ -115,7 +115,7 @@ class LocalBlueprintTest extends BlueprintTestCase
     {
         $form = $this->helper()->bind();
         $this->expectException(LogicException::class);
-        $form->definition(FailingForm::class);
+        $form->blueprint(FailingForm::class);
     }
 
     public function testLocalCompilationCannotRunAfterClosing(): void
@@ -124,7 +124,7 @@ class LocalBlueprintTest extends BlueprintTestCase
         $form->open();
         $form->close();
         $this->expectException(LogicException::class);
-        $form->definition(FailingForm::class);
+        $form->blueprint(FailingForm::class);
     }
 
     public function testUnknownLocalAliasesDoNotInstallDefaults(): void
@@ -132,7 +132,7 @@ class LocalBlueprintTest extends BlueprintTestCase
         $form = $this->helper()->bind();
         $form->open();
         try {
-            $form->definition('missing');
+            $form->blueprint('missing');
             static::fail('Expected unknown local blueprint to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('Unknown form blueprint', $invalidArgumentException->getMessage());
@@ -147,8 +147,8 @@ class LocalBlueprintTest extends BlueprintTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
-        $form->definition(ProfileForm::class);
+        $form->blueprint(ProfileForm::class);
         $this->expectException(LogicException::class);
-        $form->definition(ProfileForm::class);
+        $form->blueprint(ProfileForm::class);
     }
 }

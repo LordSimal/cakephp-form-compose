@@ -21,10 +21,10 @@ class RepeatedDefinitionTest extends FormTestCase
     public function testRepeatedBlueprintsCompileIndependentlyPerBinding(): void
     {
         $first = $this->helper(['comments' => [2 => ['body' => 'First']]])->bind(
-            definition: CommentsForm::class,
+            blueprint: CommentsForm::class,
         );
         $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])->bind(
-            definition: CommentsForm::class,
+            blueprint: CommentsForm::class,
         );
         static::assertTrue($first->binding->definition?->has('comments.2.body'));
         static::assertFalse($second->binding->definition?->has('comments.2.body'));
@@ -95,9 +95,9 @@ class RepeatedDefinitionTest extends FormTestCase
     {
         $form = $this->helper()->bind(new ArrayContext([
             'errors' => ['comments' => ['count' => 'Required']],
-        ]), definition: SuppressedCommentsForm::class);
+        ]), blueprint: SuppressedCommentsForm::class);
         $form->open();
-        static::assertSame('', trim($form->definition()));
+        static::assertSame('', trim($form->blueprint()));
         static::assertFalse($form->binding->definition?->remove('comments')->has('comments'));
         $form->close();
     }

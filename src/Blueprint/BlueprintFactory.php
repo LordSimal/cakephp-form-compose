@@ -53,18 +53,20 @@ class BlueprintFactory
      *
      * @throws \InvalidArgumentException For unknown aliases or invalid declarations.
      */
-    public function definition(string $name, FormContext $context): FormDefinition
+    public function compile(string $blueprint, FormContext $context): FormDefinition
     {
-        $class = class_exists($name) ? $name : $this->aliases(Form::class, FormBlueprint::class)[$name] ?? null;
+        $class = class_exists($blueprint)
+            ? $blueprint
+            : $this->aliases(Form::class, FormBlueprint::class)[$blueprint] ?? null;
         if ($class === null) {
-            throw new InvalidArgumentException(sprintf('Unknown form blueprint "%s".', $name));
+            throw new InvalidArgumentException(sprintf('Unknown form blueprint "%s".', $blueprint));
         }
 
         $class = $this->validateClass($class, FormBlueprint::class);
         $context = $context->enter($class);
-        $blueprint = $this->createInstance($class, FormBlueprint::class);
+        $instance = $this->createInstance($class, FormBlueprint::class);
 
-        return $this->createCompiler()->compile($blueprint, $context);
+        return $this->createCompiler()->compile($instance, $context);
     }
 
     /**
@@ -151,7 +153,7 @@ class BlueprintFactory
      */
     protected function createCompiler(): BlueprintCompiler
     {
-        return new BlueprintCompiler($this->definition(...));
+        return new BlueprintCompiler($this->compile(...));
     }
 
     /**

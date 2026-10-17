@@ -28,7 +28,7 @@ class FormSessionCompositionTest extends CompositionTestCase
                 'author' => ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'label' => 'Family name'],
             ],
         ]));
-        $html = $form->open() . $form->definition('composed-post') . $form->close();
+        $html = $form->open() . $form->blueprint('composed-post') . $form->close();
         $xpath = $this->xpath($html);
         static::assertSame(1.0, $xpath->evaluate('count(//article[@data-post]/section[@data-author])'));
         static::assertSame(2.0, $xpath->evaluate('count(//div[@class="grid grid-cols-2 gap-4"]//input)'));
@@ -45,8 +45,8 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testDefaultLayoutPreservesOrderingAndHonorsChildLayouts(): void
     {
-        $form = $this->helper()->bind(definition: OrderedAuthorForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $this->helper()->bind(blueprint: OrderedAuthorForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertLessThan(strpos($html, 'data-author'), strpos($html, 'name="before"'));
         static::assertLessThan(strpos($html, 'name="after"'), strpos($html, 'name="author[id]"'));
         static::assertSame(1, substr_count($html, '<form '));
@@ -63,11 +63,11 @@ class FormSessionCompositionTest extends CompositionTestCase
             ],
         ]));
         $html = $form->open();
-        $html .= $form->definition(AuthorForm::class, at: 'billing', options: [
+        $html .= $form->blueprint(AuthorForm::class, at: 'billing', options: [
             'attributes' => ['data-scope' => '<billing>'],
             'templateData' => ['heading' => '<Billing>'],
         ]);
-        $html .= $form->definition('composed-author', at: 'shipping');
+        $html .= $form->blueprint('composed-author', at: 'shipping');
         $html .= $form->close();
         static::assertStringContainsString('name="billing[first_name]"', $html);
         static::assertStringContainsString('value="Submitted"', $html);
@@ -88,8 +88,8 @@ class FormSessionCompositionTest extends CompositionTestCase
                 'comments' => [['author' => ['first_name' => 'Nested', 'label' => 'Nested surname']]],
                 'details' => ['summary' => 'Summary'],
             ],
-        ]), definition: DynamicPostForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        ]), blueprint: DynamicPostForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertStringContainsString('name="comments[0][author][first_name]"', $html);
         static::assertStringContainsString('value="Nested"', $html);
         static::assertStringContainsString('value="Root"', $html);
@@ -108,7 +108,7 @@ class FormSessionCompositionTest extends CompositionTestCase
     {
         $helper = $this->helper();
         $form = $helper->bind(new ArrayContext(['data' => ['post' => ['author' => ['first_name' => 'Deep']]]]));
-        $html = $form->open() . $form->definition(EnvelopeForm::class) . $form->close();
+        $html = $form->open() . $form->blueprint(EnvelopeForm::class) . $form->close();
         static::assertStringContainsString('name="post[author][first_name]"', $html);
         static::assertStringContainsString('id="form-compose-1-post.author.first_name"', $html);
         static::assertStringContainsString('value="Deep"', $html);
@@ -119,8 +119,8 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testRemovedFieldsDoNotReappearAndConditionalWrappersDisappear(): void
     {
-        $form = $this->helper(attributes: ['stripParentEmail' => true])->bind(definition: PostForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $this->helper(attributes: ['stripParentEmail' => true])->bind(blueprint: PostForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertStringNotContainsString('data-email', $html);
         static::assertStringNotContainsString('name="author[email]"', $html);
         static::assertStringNotContainsString('name="author[internal]"', $html);
@@ -133,7 +133,7 @@ class FormSessionCompositionTest extends CompositionTestCase
     public function testDefinitionThemeFallbackAndPerCallOverrides(): void
     {
         $definition = new FormDefinition([])->add(new FieldDefinition('title'));
-        $form = $this->helper()->bind(theme: new Theme(['themes/definition']));
+        $form = $this->helper()->bind(theme: new Theme(['themes/blueprint']));
         $html = $form->open() . $form->renderDefinition($definition) . $form->close();
         static::assertStringContainsString('data-default-definition', $html);
         static::assertStringContainsString('name="title"', $html);
@@ -141,8 +141,8 @@ class FormSessionCompositionTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $html =
             $form->open()
-            . $form->definition(AuthorForm::class, options: [
-                'template' => 'themes/definition/definition/control',
+            . $form->blueprint(AuthorForm::class, options: [
+                'template' => 'themes/blueprint/blueprint/control',
             ])
             . $form->close();
         static::assertStringContainsString('data-default-definition', $html);

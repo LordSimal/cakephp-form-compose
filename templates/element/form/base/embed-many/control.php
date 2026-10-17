@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * @var \FormCompose\RepeatedView $embed
- * @var array<int|string, \FormCompose\DefinitionView> $rows
+ * @var array<int|string, \FormCompose\BlueprintView> $rows
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 if ((string)$attributes !== '') {

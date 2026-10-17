@@ -49,7 +49,7 @@ class TranslatedTextTest extends FormTestCase
         I18n::setLocale('en_US');
         $form = $this->helper()->bind(new ArrayContext([
             'errors' => ['title' => ['invalid' => 'Invalid title']],
-        ]), definition: MessageForm::class);
+        ]), blueprint: MessageForm::class);
         /** @var mixed $label */
         $label = $form->binding->definition?->field('title')->options['label'];
         static::assertInstanceOf(Translated::class, $label);
@@ -112,7 +112,7 @@ class TranslatedTextTest extends FormTestCase
             static fn(): never => throw new RuntimeException('Not needed.'),
             'fr_FR',
         );
-        $form = $this->helper()->bind(definition: MessageForm::class);
+        $form = $this->helper()->bind(blueprint: MessageForm::class);
         $field = $form->field('title', ['label' => false, 'help' => null]);
         static::assertFalse($field->state->options['label']);
         static::assertFalse($field->state->hasHelp());

@@ -208,5 +208,5 @@ input registration.
 ## Reusable forms
 
 When form configuration repeats, extract a [blueprint](./blueprints.md).
-[Reusable forms](./definitions.md) explains when to keep configuration inline and
+[Reusable forms](./reusable-forms.md) explains when to keep configuration inline and
 when to introduce a class. Both render through the controls and templates shown here.

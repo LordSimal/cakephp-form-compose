@@ -21,7 +21,7 @@ class BlueprintDiscoveryFailureTest extends BlueprintTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unknown form blueprint "missing".');
-        new BlueprintFactory(collection: 'testBlueprints')->definition('missing', $this->context());
+        new BlueprintFactory(collection: 'testBlueprints')->compile('missing', $this->context());
     }
 
     public function testDuplicateFormAliasesFailDeterministically(): void
@@ -33,7 +33,7 @@ class BlueprintDiscoveryFailureTest extends BlueprintTestCase
         ]);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Duplicate discovery alias "collision".');
-        new BlueprintFactory(collection: 'testBlueprints')->definition('collision', $this->context());
+        new BlueprintFactory(collection: 'testBlueprints')->compile('collision', $this->context());
     }
 
     public function testDuplicateTypeAliasesAreRejected(): void
@@ -57,7 +57,7 @@ class BlueprintDiscoveryFailureTest extends BlueprintTestCase
         ]);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('concrete implementation');
-        new BlueprintFactory(collection: 'testBlueprints')->definition('invalid', $this->context());
+        new BlueprintFactory(collection: 'testBlueprints')->compile('invalid', $this->context());
     }
 
     public function testUnrelatedDiscoveredClassesCannotBecomeControls(): void
@@ -78,7 +78,7 @@ class BlueprintDiscoveryFailureTest extends BlueprintTestCase
         $container->add(ProfileForm::class, new ProfileChoices());
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('must return an instance');
-        new BlueprintFactory($container, 'testBlueprints')->definition('profile', $this->context());
+        new BlueprintFactory($container, 'testBlueprints')->compile('profile', $this->context());
     }
 
     public function testDependencyConstructionFailuresPropagate(): void
@@ -89,6 +89,6 @@ class BlueprintDiscoveryFailureTest extends BlueprintTestCase
         });
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Dependency failed.');
-        new BlueprintFactory($container, 'testBlueprints')->definition('profile', $this->context());
+        new BlueprintFactory($container, 'testBlueprints')->compile('profile', $this->context());
     }
 }

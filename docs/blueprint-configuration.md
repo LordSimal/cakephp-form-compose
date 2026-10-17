@@ -14,7 +14,7 @@ with no constructor dependencies need no additional container wiring.
 Blueprints receive ordinary constructor dependencies. The plugin registers
 `FormCompose\Blueprint\BlueprintFactory` with CakePHP's application container;
 configure the helper with that factory when blueprints or discovered field types
-need services. The session keeps the same factory for later `definition()` calls.
+need services. The session keeps the same factory for later `blueprint()` calls.
 A dependency-free blueprint needs no container wiring.
 
 For example, suppose your application already has an `App\Service\StatusChoices`
@@ -29,8 +29,8 @@ namespace App\Form;
 use App\Service\StatusChoices;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 #[Form('article')]
@@ -42,7 +42,7 @@ class ArticleForm extends FormBlueprint
     {
     }
 
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->with('status', ['options' => $this->statuses->all()]);
     }
@@ -74,8 +74,8 @@ $this->addHelper('Form', [
 Alternatively, set the option on the existing helper before binding:
 `$this->Form->setConfig('blueprintFactory', $blueprints)`.
 
-Now `$this->Form->render(ArticleForm::class, $article)` uses the injected service
-when compiling that blueprint. Import `App\Form\ArticleForm` in the view.
+Now `$this->Form->render('article', $article)` uses the injected service
+when compiling that blueprint.
 
 CakePHP 6 autowires concrete dependencies. Register interfaces, scalar arguments,
 and application-specific factories in `Application::services()` as usual.

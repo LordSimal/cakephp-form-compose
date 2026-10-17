@@ -9,7 +9,7 @@ A blueprint is a PHP class that declares reusable form configuration. Attributes
 supply static field configuration; an optional `configure()` hook changes it for
 the current binding. Values, validation, and saving stay in their existing layers.
 
-Read [Reusable forms](./definitions.md#choose-the-right-layer) to choose between
+Read [Reusable forms](./reusable-forms.md#choose-the-right-layer) to choose between
 inline controls, a blueprint, and a layout. Use blueprints when
 a reusable named class helps; inline controls remain a complete form-building API.
 
@@ -39,52 +39,66 @@ class ArticleForm extends FormBlueprint
 ```
 
 ```php [templates/Articles/edit.php]
-<?php
-use App\Form\ArticleForm;
-?>
-<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save article') ?>
+<?= $this->Form->render('article', $article, submit: 'Save article') ?>
 ```
 
 :::
 
 Each `Field` adds configuration in order. Fields are not PHP properties and do
-not store entity values. `Form('article')` supplies a discovery alias; after plugin
-bootstrap you can pass `'article'` instead of `ArticleForm::class`. Resolving by
-class works outside discovery directories and does not require a `Form` attribute.
-A dependency-free class needs no additional container wiring.
+not store entity values. `#[Form('article')]` registers the discovery alias used by
+the examples after plugin bootstrap. A dependency-free class needs no additional
+container wiring.
 
-## Render a blueprint {#definition-selection}
+### Aliases and class references
+
+Use the declared alias to select a discovered blueprint:
+
+```php
+$form = $this->Form->bind($article, blueprint: 'article');
+```
+
+A class reference is also supported when you prefer IDE navigation and refactoring,
+or when the class lives outside discovery directories:
+
+```php
+use App\Form\ArticleForm;
+
+$form = $this->Form->bind($article, blueprint: ArticleForm::class);
+```
+
+Direct class selection does not require a `Form` attribute. Alias selection requires
+a matching `#[Form('article')]` declaration in the configured discovery paths.
+The alias and class resolve through the same compiler and constructor injection.
+
+A **blueprint** is the class or alias the application selects. Its compiled
+**definition** is a `FormDefinition` snapshot containing field and layout metadata;
+values and submission state belong to the form session.
+
+## Render a blueprint {#blueprint-selection}
 
 Render the complete blueprint form with the helper's `render()` method. Bind
-first when you need to configure a session, or use `definition()` when the
+first when you need to configure a session, or use `blueprint()` when the
 blueprint is one section of a larger form:
 
 ::: code-group
 
 ```php [Complete form]
-<?php
-use App\Form\ArticleForm;
-?>
-<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save article') ?>
+<?= $this->Form->render('article', $article, submit: 'Save article') ?>
 ```
 
 ```php [From a bound session]
 <?php
-use App\Form\ArticleForm;
-
-$form = $this->Form->bind($article, definition: ArticleForm::class);
+$form = $this->Form->bind($article, blueprint: 'article');
 ?>
 <?= $form->render(submit: 'Save article') ?>
 ```
 
 ```php [Inside a larger form]
 <?php
-use App\Form\ArticleForm;
-
 $form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
-<?= $form->definition(ArticleForm::class) ?>
+<?= $form->blueprint('article') ?>
 <?= $form->control('editor_notes', ['type' => 'textarea']) ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
@@ -98,13 +112,13 @@ renders the blueprint inside an already open form and adds a separate notes fiel
 
 Selecting a blueprint at `bind()` compiles it once and installs its field defaults.
 `$form->render()` uses that selected collection; inside an open session,
-`$form->definition()` does too, without rerunning the hook. Passing a blueprint
-explicitly to `definition()` compiles and renders it locally, preserving any
+`$form->blueprint()` does too, without rerunning the hook. Passing a blueprint
+explicitly to `blueprint()` compiles and renders it locally, preserving any
 existing binding defaults. Binding alone emits no markup. Individual `control()`
-calls render only their requested fields; `definition()` renders the selected
+calls render only their requested fields; `blueprint()` renders the selected
 blueprint through its collection layout.
 
-You can also [use selected defaults for individual fields](./definitions.md#select-defaults-for-the-whole-binding).
+You can also [use selected defaults for individual fields](./reusable-forms.md#select-defaults-for-the-whole-binding).
 For a reusable blueprint's field arrangement, prefer its own PHP layout below.
 
 ### Form and button options {#complete-form-shortcut}
@@ -112,10 +126,8 @@ For a reusable blueprint's field arrangement, prefer its own PHP layout below.
 Separate form options from button options:
 
 ```php
-use App\Form\ArticleForm;
-
 echo $this->Form->render(
-    ArticleForm::class,
+    'article',
     $article,
     options: ['url' => ['action' => 'edit', $article->id], 'class' => 'article-form'],
     submit: 'Save article',
@@ -157,7 +169,7 @@ class ArticleForm extends FormBlueprint
 ```php [templates/element/forms/article.php]
 <?php
 /**
- * @var \FormCompose\DefinitionView $form
+ * @var \FormCompose\BlueprintView $form
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
@@ -174,15 +186,12 @@ class ArticleForm extends FormBlueprint
 ```
 
 ```php [templates/Articles/edit.php]
-<?php
-use App\Form\ArticleForm;
-?>
-<?= $this->Form->render(ArticleForm::class, $article, submit: 'Save article') ?>
+<?= $this->Form->render('article', $article, submit: 'Save article') ?>
 ```
 
 :::
 
-Inside the layout, `$form` is a scoped `DefinitionView`. `control()` and `controls()`
+Inside the layout, `$form` is a scoped `BlueprintView`. `control()` and `controls()`
 render the blueprint's configured fields using relative paths. `has()` guards
 optional fields and their wrappers if a hook removes them. It does not open or
 close the form: the outer `render()` call handles that lifecycle.
@@ -191,11 +200,11 @@ This is a layout for the collection. Each `control()` still uses its own field
 control template for the label, input, help, and errors. Without a selected
 layout, the bundled element renders fields in declaration order without a wrapper.
 
-The [scoped layout API](./definition-reference.md#definitionview) lists available
-methods. The [presentation reference](./definition-reference.md#presentation-options)
+The [scoped layout API](./blueprint-reference.md#blueprintview) lists available
+methods. The [presentation reference](./blueprint-reference.md#presentation-options)
 covers per-render overrides, wrapper attributes, variants, and template data.
 To embed another blueprint and position its layout, continue with
-[Nested definitions](./composition.md).
+[Nested blueprints](./composition.md).
 
 ### Inspect values and field configuration
 
@@ -283,8 +292,8 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use function Cake\I18n\__;
 
@@ -295,7 +304,7 @@ use function Cake\I18n\__;
 #[Field('published', type: 'checkbox')]
 class ArticleForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->with('title', ['label' => __('Article title')]);
         $form->with('status', ['options' => [
@@ -343,9 +352,11 @@ declare(strict_types=1);
 namespace App\Form;
 
 use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
 use FormCompose\FormBlueprint;
 use FormCompose\Translated;
 
+#[Form('article')]
 #[Field(
     'title',
     label: new Translated('Article title'),
@@ -376,7 +387,7 @@ a translated message never marks HTML as trusted.
 ### Resolution timing and overrides
 
 `bind()` keeps message objects and closures as configuration. Each `field()`
-resolution, including those performed by `control()` or `definition()`, merges
+resolution, including those performed by `control()` or `blueprint()`, merges
 blueprint defaults with per-call options before resolving label/help text.
 Overridden messages and closures are never evaluated. Resolving text emits no
 markup and registers no submitted inputs.
@@ -393,8 +404,8 @@ Use ordinary PHP expressions in `configure()` when text depends on the current
 request, entity context, or injected services:
 
 ```php
-// In a blueprint class; import FormBuilder, FormContext, and Cake\I18n\__.
-public function configure(FormBuilder $form, FormContext $context): void
+// In a blueprint class; import BlueprintBuilder, FormContext, and Cake\I18n\__.
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->with('title', [
         'label' => $context->request->getAttribute('isAdmin')
@@ -485,12 +496,12 @@ calls remain discoverable by CakePHP's normal extractor.
 Inherited declarations establish defaults, then the concrete `configure()` hook
 runs. Per-call field options override those defaults.
 Nested option arrays are replaced as whole values. See
-[configuration precedence](./definition-reference.md#configuration-order) for
+[configuration precedence](./blueprint-reference.md#configuration-order) for
 inheritance, hook lifetime, and failure contracts.
 
 All ordinary [field options](./field-options.md) are available through
 `#[Field(..., options: [...])]`. The
-[attribute reference](./definition-reference.md#blueprint-declarations) lists
+[attribute reference](./blueprint-reference.md#blueprint-declarations) lists
 shorthand arguments and how explicit nulls work.
 
 ## Application services and discovery

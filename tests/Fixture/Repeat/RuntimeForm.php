@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Repeat;
 
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\Test\Fixture\Authoring\RuntimePostForm;
 
@@ -13,7 +13,7 @@ use FormCompose\Test\Fixture\Authoring\RuntimePostForm;
  */
 class RuntimeForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->embedMany('comments', CommentForm::class, keys: [0, 3]);
         $form->with('comments.3.body', ['label' => 'New comment']);

@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -30,7 +30,7 @@ class ConditionalForm extends FormBlueprint
     /**
      * Configure an independent collection for each binding.
      */
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->remove('internal_note');
         $form->with('email', [

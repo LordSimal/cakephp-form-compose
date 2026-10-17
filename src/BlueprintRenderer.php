@@ -11,12 +11,12 @@ use FormCompose\Rendering\TemplateOptions;
 use LogicException;
 
 /**
- * Renders compiled definitions through the same theme/element pipeline as controls.
+ * Renders blueprint layouts from compiled definitions through the shared template pipeline.
  *
  * Inject a subclass into FormSession to override createView() for an application's
  * scoped layout API. Rendering and submission lifecycle remain owned by the session.
  */
-class DefinitionRenderer
+class BlueprintRenderer
 {
     /**
      * Retain the session's shared rendering dependencies.
@@ -39,14 +39,14 @@ class DefinitionRenderer
         /** @var array<string, mixed> $attributes */
         $attributes = $options['attributes'] ?? [];
         $node = new RenderNode(
-            'definition',
+            'blueprint',
             'default',
             [
                 'form' => $this->createView($session, $definition, $path),
                 'definition' => $definition,
                 'attributes' => $this->rendering
                     ->theme
-                    ->attributes('definition.control', 'default')
+                    ->attributes('blueprint.control', 'default')
                     ->merge($attributes),
             ],
             $options,
@@ -72,7 +72,7 @@ class DefinitionRenderer
         }
 
         $options = array_replace(TemplateOptions::normalize($repeat->options), TemplateOptions::normalize($options));
-        $repeat = new RepeatedDefinition($repeat->path, $repeat->definition, $repeat->keys, $options, $repeat->rows);
+        $repeat = new RepeatedDefinition($repeat->path, $repeat->blueprint, $repeat->keys, $options, $repeat->rows);
         $rows = [];
         foreach ($rowDefinition->entries as $entry) {
             if (!$entry instanceof EmbeddedDefinition) {
@@ -112,7 +112,7 @@ class DefinitionRenderer
     /**
      * Supply repeated feedback behavior through the same renderer extension boundary.
      *
-     * @param array<int|string, \FormCompose\DefinitionView> $rows Scoped row views.
+     * @param array<int|string, \FormCompose\BlueprintView> $rows Scoped row views.
      */
     protected function createRepeatedView(
         RepeatedDefinition $repeat,
@@ -126,8 +126,8 @@ class DefinitionRenderer
     /**
      * Supply the layout API, preserving the original session's field extensions.
      */
-    protected function createView(FormSession $session, FormDefinition $definition, string $path): DefinitionView
+    protected function createView(FormSession $session, FormDefinition $definition, string $path): BlueprintView
     {
-        return new DefinitionView($session, $definition, $path);
+        return new BlueprintView($session, $definition, $path);
     }
 }

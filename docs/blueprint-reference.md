@@ -6,26 +6,26 @@ description: Blueprint declarations, runtime builder operations, configuration o
 # Blueprint reference
 
 Author local forms with inline controls and reusable forms with
-[blueprints](./blueprints.md). Use [Reusable forms](./definitions.md) to choose a
-starting point and [Nested definitions](./composition.md) for embedded sections.
+[blueprints](./blueprints.md). Use [Reusable forms](./reusable-forms.md) to choose a
+starting point and [Nested blueprints](./composition.md) for embedded sections.
 Validation and persistence stay in CakePHP.
 
 ## Presentation options
 
 These options apply to `presentation()` and local
-`$form->definition(..., options: [...])` or layout `embedded(..., options: [...])`:
+`$form->blueprint(..., options: [...])` or layout `embedded(..., options: [...])`:
 
 | Option | Type | Default and effect |
 | --- | --- | --- |
 | `template` | Nonempty `string` | Explicit layout element; shorthand for `templates['control']`. |
 | `templates` | `array<string, string>` | `[]`. The `control` key selects the layout element. |
-| `variant` | `string` | Omitted. Definition template variant. |
+| `variant` | `string` | Omitted. Blueprint layout variant. |
 | `attributes` | `array<string, mixed>` | `[]`. Wrapper attributes supplied to the layout; the bundled layout has no wrapper. |
 | `templateData` | `array<string, mixed>` | `[]`. Data scoped to this layout, not inherited by fields or children. |
 
 Local options replace matching top-level definition options. Conflicting singular
 and plural control template selections fail. Without an explicit layout, the theme
-renders fields and embeds in order. See [definition templates](./template-reference.md#definition-layouts).
+renders fields and embeds in order. See [blueprint templates](./template-reference.md#blueprint-layouts).
 
 ## Blueprint declarations
 
@@ -44,7 +44,7 @@ public function __construct(
 
 Class discovery alias and optional layout defaults. The alias must be nonempty
 with no surrounding whitespace. Arrays use the
-[definition presentation contracts](#presentation-options).
+[blueprint presentation contracts](#presentation-options).
 
 ### Field
 
@@ -71,7 +71,7 @@ for PHP 8.5 attribute syntax and locale timing.
 ### Embed
 
 ```php
-public function __construct(string $path, string $definition);
+public function __construct(string $path, string $blueprint, array $options = []);
 ```
 
 Repeatable class attribute mounting a child blueprint class or discovered alias
@@ -128,27 +128,27 @@ ordinary text and are escaped when rendered. The object does not cache translate
 results or implement implicit string conversion. See
 [translation behavior and extraction limitations](./blueprints.md#translate-a-blueprint).
 
-## configure() and FormBuilder
+## configure() and BlueprintBuilder
 
 ```php
-public function configure(FormBuilder $form, FormContext $context): void;
+public function configure(BlueprintBuilder $form, FormContext $context): void;
 ```
 
 Override this hook on `FormCompose\FormBlueprint` for dynamic configuration.
 Attributes establish the starting configuration; embedded children resolve before
-the parent's hook. The compiler-supplied `FormBuilder` is mutable:
+the parent's hook. The compiler-supplied `BlueprintBuilder` is mutable:
 
 | Signature | Effect |
 | --- | --- |
 | `add(string $path, array $options = []): static` | Append a field. |
 | `with(string $path, array $options): static` | Replace an existing field's matching top-level options. |
 | `remove(string $path): static` | Remove an existing field or embed. |
-| `embed(string $path, string $definition, array $options = []): static` | Resolve and append a blueprint class/alias in this scope. |
-| `presentation(array $options): static` | Set definition layout options. |
+| `embed(string $path, string $blueprint, array $options = []): static` | Resolve and append a blueprint class/alias in this scope. |
+| `presentation(array $options): static` | Set blueprint layout options. |
 
 ```php
-// In a blueprint class; import FormCompose\FormBuilder and FormCompose\FormContext.
-public function configure(FormBuilder $form, FormContext $context): void
+// In a blueprint class; import FormCompose\BlueprintBuilder and FormCompose\FormContext.
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->with('title', ['help' => 'Displayed above the article.']);
     if (!$context->request->getAttribute('canPublish')) {
@@ -192,14 +192,14 @@ when preserving inherited runtime configuration. Nested option arrays are replac
 not recursively merged.
 
 Compilation happens at binding when selecting defaults, or for each explicit
-`definition($classOrAlias)` call. `definition()` with no argument reuses the selected
+`blueprint($classOrAlias)` call. `blueprint()` with no argument reuses the selected
 compiled collection and does not rerun its hook. Each resolution gets independent
 blueprint state and a new builder; shared constructor dependencies keep their
 usual references. Request-dependent configuration is not cached as discovery metadata.
 
-## DefinitionView
+## BlueprintView
 
-Inside a definition layout, `$form` is a scoped `FormCompose\DefinitionView`,
+Inside a blueprint layout, `$form` is a scoped `FormCompose\BlueprintView`,
 not the outer `FormSession`. It cannot open or close a form.
 
 | Signature | Behavior |
@@ -225,7 +225,7 @@ and [request lookups](./blueprints.md#read-request-data-in-a-layout).
 service registration. Its principal application methods are:
 
 ```php
-public function definition(string $name, FormContext $context): FormDefinition;
+public function compile(string $blueprint, FormContext $context): FormDefinition;
 public function types(array $overrides = []): array;
 ```
 
@@ -235,28 +235,28 @@ field types with explicit instances taking precedence. See
 configuration, and [service extensions](./extending.md#subclassing-services) for
 factory overrides.
 
-## Repeated definitions and occurrence options
+## Repeated blueprints and occurrence options
 
-`#[Embed($path, $definition, options: [...])]` accepts occurrence presentation.
-`#[EmbedMany($path, $definition, keys: null, options: [...])]` repeats a blueprint.
+`#[Embed($path, $blueprint, options: [...])]` accepts occurrence presentation.
+`#[EmbedMany($path, $blueprint, keys: null, options: [...])]` repeats a blueprint.
 Both support `template`, `templates`, `templateData`, and `variant` in `options`.
-A child blueprint's own layout is retained for `DefinitionView::render()`.
+A child blueprint's own layout is retained for `BlueprintView::render()`.
 
-`FormBuilder::embedMany(string $path, string $definition,
+`BlueprintBuilder::embedMany(string $path, string $blueprint,
 ?array $keys = null, array $options = []): static` compiles rows immediately using
 the factory's scoped resolver, allowing parent `with()` and `remove()` calls.
 
-`DefinitionView::embeddedMany(string $path, array $options = []): string` renders
+`BlueprintView::embeddedMany(string $path, array $options = []): string` renders
 compiled rows; removed mounts return `''` and unknown mounts throw.
-`DefinitionView::render(array $options = []): string` renders that child's own
+`BlueprintView::render(array $options = []): string` renders that child's own
 layout at its existing path without re-running hooks or opening another form.
 
 `FormContext::value(string $path): mixed` reads relative values using the binding's
 source ordering. `path` is the absolute mount; `valueSources` retains that ordering.
 `context` keeps Cake's metadata provider and `request` remains the original request.
-`DefinitionRenderer::createView()` remains the factory for every repeated row;
+`BlueprintRenderer::createView()` remains the factory for every repeated row;
 `createRepeatedView()` supplies the collection feedback facade. Override those
-protected factories through the injected definition renderer to specialize behavior.
+protected factories through the injected blueprint renderer to specialize behavior.
 
 ## Internal compiled configuration
 
@@ -266,7 +266,7 @@ They are not accepted by application-facing field, binding, or embedding calls.
 Use inline option arrays or blueprint declarations and hooks to author forms.
 
 Compiler and renderer subclasses may encounter these records through service
-extension points. `FormBuilder::build()` returns an immutable snapshot for the
+extension points. `BlueprintBuilder::build()` returns an immutable snapshot for the
 compiler; scoped layouts should use `has()`, `field()`, `embedded()`, and
 `embeddedMany()` instead of manipulating the compiled tree. Session
 `renderDefinition()` and `renderRepeated()` are internal bridges for those layouts.

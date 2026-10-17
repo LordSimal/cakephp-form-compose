@@ -35,11 +35,11 @@ class RepeatedCompiler
         $rows = new FormDefinition([]);
         foreach ($keys as $key) {
             $rowContext = $context->at($entry->path . '.' . $key);
-            $row = ($this->resolve)($entry->definition, $rowContext);
+            $row = ($this->resolve)($entry->blueprint, $rowContext);
             $rows = $rows->embed((string)$key, $row);
         }
 
-        return new RepeatedDefinition($entry->path, $entry->definition, $keys, $entry->options, $rows);
+        return new RepeatedDefinition($entry->path, $entry->blueprint, $keys, $entry->options, $rows);
     }
 
     /**

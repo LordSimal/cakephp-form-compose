@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Authoring;
 
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -12,7 +12,7 @@ use FormCompose\FormContext;
  */
 class UnknownRemovalForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->remove('typo');
     }

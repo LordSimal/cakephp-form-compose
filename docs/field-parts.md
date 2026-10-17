@@ -40,7 +40,7 @@ attributes for that part; field behavior such as `type` or `value` belongs in th
 options passed to `field()`.
 
 Use a [theme element](./themes.md) when this structure should recur across forms.
-Use a [definition layout](./blueprints.md#keep-control-of-the-layout) when arranging a reusable collection
+Use a [blueprint layout](./blueprints.md#keep-control-of-the-layout) when arranging a reusable collection
 of fields rather than the internal structure of one field.
 
 ## Inspect state without rendering

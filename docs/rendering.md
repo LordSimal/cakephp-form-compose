@@ -116,18 +116,16 @@ rendering both alternatives would duplicate the input.
 
 ## Blueprints follow the same rendering flow
 
-A [blueprint](./blueprints.md) supplies reusable field configuration. Inside an
-open form, render one with:
+A [blueprint](./blueprints.md) supplies reusable field configuration. For a class
+declared with `#[Form('article')]`, render its alias inside an open form:
 
 ```php
-use App\Form\ProfileForm;
-
-echo $form->definition(ProfileForm::class);
+echo $form->blueprint('article');
 ```
 
-The bundled definition layout renders its fields in order through the same
-`control()` pipeline. A [custom definition layout](./blueprints.md#keep-control-of-the-layout)
-can arrange those fields in wrappers or grids and position embedded definitions.
+The bundled blueprint layout renders its fields in order through the same
+`control()` pipeline. A [custom blueprint layout](./blueprints.md#keep-control-of-the-layout)
+can arrange those fields in wrappers or grids and position embedded blueprints.
 Bound values, validation feedback, and submission bookkeeping use the same form
 session in either case.
 
@@ -153,4 +151,4 @@ and variants.
 
 Continue with [field options](./field-options.md),
 [compose field parts](./field-parts.md), or [create a theme](./themes.md).
-For configuration reused across screens, start with [field definitions](./definitions.md).
+For configuration reused across screens, start with [reusable forms](./reusable-forms.md).

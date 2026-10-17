@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture\Blueprint;
 
 use FormCompose\Blueprint\BlueprintCompiler;
 use FormCompose\Blueprint\RepeatedCompiler;
+use FormCompose\BlueprintBuilder;
 use FormCompose\Field\FieldDefinition;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
@@ -19,9 +19,9 @@ class CustomBlueprintCompiler extends BlueprintCompiler
     /**
      * Extend the collection through the protected builder factory.
      */
-    protected function createBuilder(FormDefinition $definition, FormContext $context): FormBuilder
+    protected function createBuilder(FormDefinition $definition, FormContext $context): BlueprintBuilder
     {
-        return new CustomFormBuilder(
+        return new CustomBlueprintBuilder(
             $definition->add(new FieldDefinition('custom', ['label' => 'Custom builder'])),
             fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
             fn(RepeatedDefinition $entry): RepeatedDefinition => $this->repeated($entry, $context),

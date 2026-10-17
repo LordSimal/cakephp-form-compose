@@ -29,8 +29,8 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
     {
         $factory = new BlueprintFactory(collection: 'testBlueprints');
         static::assertEquals(
-            $factory->definition(ProfileForm::class, $this->context()),
-            $factory->definition('profile', $this->context()),
+            $factory->compile(ProfileForm::class, $this->context()),
+            $factory->compile('profile', $this->context()),
         );
     }
 
@@ -46,10 +46,10 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper(attributes: ['canManageAccounts' => true]);
         $helper->setConfig('blueprintFactory', $factory);
 
-        $first = $helper->bind(new ArrayContext(['data' => ['label' => 'First email']]), definition: 'conditional');
+        $first = $helper->bind(new ArrayContext(['data' => ['label' => 'First email']]), blueprint: 'conditional');
         $second = $helper->bind(new ArrayContext(['data' => [
             'label' => 'Second email',
-        ]]), definition: ConditionalForm::class);
+        ]]), blueprint: ConditionalForm::class);
         static::assertSame('First email', $first->field('email')->state->options['label']);
         static::assertSame('Second email', $second->field('email')->state->options['label']);
         static::assertSame(['calls' => 1], $first->field('email')->state->options['templateData']);
@@ -58,7 +58,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
             ['email', 'id', 'kind', 'active'],
             array_column($first->binding->definition->fields ?? [], 'path'),
         );
-        $html = $first->open() . $first->definition() . $first->close();
+        $html = $first->open() . $first->blueprint() . $first->close();
         static::assertStringContainsString('Work &lt;address&gt;', $html);
         static::assertStringNotContainsString('name="internal_note"', $html);
         $unprivileged = $this->helper();
@@ -66,7 +66,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
 
         $third = $unprivileged->bind(new ArrayContext(['data' => [
             'label' => 'Third email',
-        ]]), definition: 'conditional');
+        ]]), blueprint: 'conditional');
         static::assertFalse($third->binding->definition?->has('active'));
         static::assertFalse($third->binding->definition?->has('internal_note'));
         static::assertTrue($first->binding->definition?->has('active'));
@@ -81,8 +81,8 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $seed = new ConditionalForm(new ProfileChoices());
         $container->addShared(ConditionalForm::class, $seed);
         $factory = new BlueprintFactory($container, 'testBlueprints');
-        $first = $factory->definition('conditional', $this->context());
-        $second = $factory->definition('conditional', $this->context());
+        $first = $factory->compile('conditional', $this->context());
+        $second = $factory->compile('conditional', $this->context());
         static::assertSame(['calls' => 1], $first->field('email')->options['templateData']);
         static::assertSame(['calls' => 1], $second->field('email')->options['templateData']);
     }
@@ -98,7 +98,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', $factory);
 
-        $form = $helper->bind(definition: ConditionalForm::class);
+        $form = $helper->bind(blueprint: ConditionalForm::class);
         static::assertSame(
             ['work' => 'Work <address>', 'home' => 'Home'],
             $form->field('kind')->state->options['options'],
@@ -123,13 +123,13 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
     public function testCacheClearingRefreshesAliasesForAnExistingFactory(): void
     {
         $factory = new BlueprintFactory(collection: 'testBlueprints');
-        static::assertTrue($factory->definition('profile', $this->context())->has('email'));
+        static::assertTrue($factory->compile('profile', $this->context())->has('email'));
         AttributeResolver::drop('testBlueprints');
         AttributeResolver::setConfig('testBlueprints', ['paths' => [], 'cache' => '_cake_attributes_']);
-        static::assertTrue($factory->definition('profile', $this->context())->has('email'));
+        static::assertTrue($factory->compile('profile', $this->context())->has('email'));
         AttributeResolver::clear('testBlueprints');
         $this->expectException(InvalidArgumentException::class);
-        $factory->definition('profile', $this->context());
+        $factory->compile('profile', $this->context());
     }
 
     public function testDiscoveryExpandsPathsAcrossLoadedPlugins(): void
@@ -144,16 +144,16 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
             'cache' => false,
         ]);
         $factory = new BlueprintFactory(collection: 'testBlueprints');
-        $definition = $factory->definition('BlueprintFixture.profile', $this->context());
+        $definition = $factory->compile('BlueprintFixture.profile', $this->context());
         static::assertSame('email', $definition->field('plugin_email')->options['type']);
-        static::assertTrue($factory->definition('BlueprintFixture.admin', $this->context())->has('admin_email'));
+        static::assertTrue($factory->compile('BlueprintFixture.admin', $this->context())->has('admin_email'));
         static::assertInstanceOf(PluginRangeType::class, $factory->types()['plugin-range']);
     }
 
     public function testSubclassFactoriesAreUsedByPublicBinding(): void
     {
         $helper = new BlueprintFormHelper($this->helper()->getView());
-        $form = $helper->bind(definition: ProfileForm::class);
+        $form = $helper->bind(blueprint: ProfileForm::class);
         static::assertSame('Custom builder', $form->field('custom')->state->options['label']);
     }
 }

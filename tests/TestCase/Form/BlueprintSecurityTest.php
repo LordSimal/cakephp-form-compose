@@ -7,7 +7,7 @@ use Cake\Form\FormProtector;
 use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\DefinitionView;
+use FormCompose\BlueprintView;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Authoring\BillingInputsForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
@@ -17,19 +17,19 @@ use RuntimeException;
 /**
  * Verifies one protection lifecycle across nested layouts, omissions, and failures.
  */
-class DefinitionSecurityTest extends CompositionTestCase
+class BlueprintSecurityTest extends CompositionTestCase
 {
     public function testNestedLayoutsProtectOnlyRenderedInputsAndLockedValues(): void
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf, 'stripParentEmail' => true]);
-        $form = $helper->bind(null, ['url' => '/articles/save', 'method' => 'patch'], definition: PostForm::class);
+        $form = $helper->bind(null, ['url' => '/articles/save', 'method' => 'patch'], blueprint: PostForm::class);
         static::assertNotNull($form->binding->definition);
-        $view = new DefinitionView($form, $form->binding->definition);
+        $view = new BlueprintView($form, $form->binding->definition);
         static::assertTrue($view->has('author'));
         static::assertFalse($view->has('author.email'));
         $view->field('author.last_name')->attributes();
-        $html = $form->open() . $form->definition() . $form->close();
+        $html = $form->open() . $form->blueprint() . $form->close();
         $data = [
             'title' => 'Title',
             'author' => ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'id' => '7'],
@@ -58,7 +58,7 @@ class DefinitionSecurityTest extends CompositionTestCase
         $form = $helper->bind(null, ['url' => '/articles/save']);
         $html = $form->open() . $form->control('existing');
         try {
-            $form->definition(PostForm::class, options: ['template' => 'composition/failure']);
+            $form->blueprint(PostForm::class, options: ['template' => 'composition/failure']);
             static::fail('Expected the enclosing layout to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Definition layout failed.', $runtimeException->getMessage());
@@ -79,16 +79,16 @@ class DefinitionSecurityTest extends CompositionTestCase
     public function testFailedLayoutCanBeRetriedUsingTheSameCompiledDefinition(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(definition: PostForm::class);
+        $form = $helper->bind(blueprint: PostForm::class);
         $html = $form->open();
         try {
-            $form->definition(options: ['template' => 'composition/failure']);
+            $form->blueprint(options: ['template' => 'composition/failure']);
             static::fail('Expected the enclosing layout to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Definition layout failed.', $runtimeException->getMessage());
         }
 
-        $html .= $form->definition() . $form->close();
+        $html .= $form->blueprint() . $form->close();
         static::assertSame(1, substr_count($html, 'name="title"'));
         static::assertSame(1, substr_count($html, 'name="author[first_name]"'));
         static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
@@ -98,9 +98,9 @@ class DefinitionSecurityTest extends CompositionTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
-        $form->definition(PostForm::class);
+        $form->blueprint(PostForm::class);
         $this->expectException(LogicException::class);
-        $form->definition(PostForm::class);
+        $form->blueprint(PostForm::class);
     }
 
     public function testMountedNativeInputsKeepFallbacksFilesAndDisabledProtection(): void
@@ -111,9 +111,9 @@ class DefinitionSecurityTest extends CompositionTestCase
                 'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
             ]),
             ['type' => 'file', 'url' => '/articles/save'],
-            definition: BillingInputsForm::class,
+            blueprint: BillingInputsForm::class,
         );
-        $html = $form->open() . $form->definition() . $form->close();
+        $html = $form->open() . $form->blueprint() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@enctype="multipart/form-data"])'));
         static::assertTrue($xpath->evaluate(
@@ -139,10 +139,10 @@ class DefinitionSecurityTest extends CompositionTestCase
 
     public function testMultipartFailureRollsBackEarlierControlsInTheDefinition(): void
     {
-        $form = $this->helper()->bind(definition: BillingInputsForm::class);
+        $form = $this->helper()->bind(blueprint: BillingInputsForm::class);
         $form->open();
         try {
-            $form->definition();
+            $form->blueprint();
             static::fail('Expected file inputs to require multipart.');
         } catch (LogicException $logicException) {
             static::assertSame('File inputs require a multipart form.', $logicException->getMessage());

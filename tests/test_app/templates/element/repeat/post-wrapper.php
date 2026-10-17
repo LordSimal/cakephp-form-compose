@@ -1,5 +1,5 @@
 <?php
 declare(strict_types=1);
-/** @var \FormCompose\DefinitionView $form */
+/** @var \FormCompose\BlueprintView $form */
 ?>
 <aside class="post-wrapper"><?= $form->render() ?></aside>

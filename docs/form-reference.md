@@ -51,7 +51,7 @@ public function bind(
     array $options = [],
     Theme|string|null $theme = null,
     ?RendererInterface $renderer = null,
-    ?string $definition = null,
+    ?string $blueprint = null,
 ): FormSession;
 ```
 
@@ -70,12 +70,12 @@ $form = $this->Form->bind($article, [
 Null uses the helper's configured `theme`, which defaults to the base theme.
 An explicit `Theme` replaces the configured theme; `'Base'` forces the bundled
 base theme for this binding. Other strings fail. `$renderer` accepts a
-`RendererInterface`; omitted, it uses `PhpRenderer`. `$definition` accepts a
+`RendererInterface`; omitted, it uses `PhpRenderer`. `$blueprint` accepts a
 blueprint class name or discovered alias. It installs field defaults without
-rendering fields or their collection layout. After opening, call `definition()`
+rendering fields or their collection layout. After opening, call `blueprint()`
 to render the selected blueprint, or call `control()` for each field you want to
 arrange manually. Session `render()` renders the complete selected form.
-See [blueprint defaults and manual layouts](./definitions.md#select-defaults-for-the-whole-binding).
+See [blueprint defaults and manual layouts](./reusable-forms.md#select-defaults-for-the-whole-binding).
 
 ### Binding options
 
@@ -178,7 +178,7 @@ GET renders `method="get"`; other effective methods render `method="post"`.
 Methods other than GET/POST add `_method`. A request CSRF token is included for
 non-GET forms. Final tamper-protection fields are rendered at `close()`.
 
-Use plural `templates` for form elements. Singular `template` is a field/definition
+Use plural `templates` for form elements. Singular `template` is a field/blueprint
 shorthand, not a form-opening option. See [template reference](./template-reference.md#form-and-button-templates)
 when customizing infrastructure markup.
 
@@ -242,11 +242,11 @@ echo $title->label(), $title->input(), $title->help(), $title->errors();
 
 See [Bound fields](./field-reference.md) for state and part methods.
 
-## definition() {#definition}
+## blueprint() {#blueprint}
 
 ```php
-public function definition(
-    ?string $definition = null,
+public function blueprint(
+    ?string $blueprint = null,
     ?string $at = null,
     array $options = [],
 ): string;
@@ -257,15 +257,13 @@ or a submit button. With no argument, uses the collection selected at `bind()`;
 without one, the default layout returns `''`.
 
 ```php
-use App\Form\AuthorForm;
-
-// AuthorForm declares paths relative to an author, such as 'email'.
-echo $form->definition(AuthorForm::class, at: 'author');
+// The 'author' blueprint declares relative paths such as 'email'.
+echo $form->blueprint('author', at: 'author');
 ```
 
 Strings resolve a blueprint locally; they do not replace binding defaults. `at`
 mounts relative field paths at a context path. `$options` are
-[definition presentation options](./definition-reference.md#presentation-options),
+[blueprint presentation options](./blueprint-reference.md#presentation-options),
 not field options. Rendering shares the session's theme and submission registry.
 See [layouts and composition](./composition.md) for examples.
 
@@ -274,7 +272,7 @@ See [layouts and composition](./composition.md) for examples.
 ```php
 public function embedMany(
     string $path,
-    string $definition,
+    string $blueprint,
     ?array $keys = null,
     array $options = [],
 ): string;
@@ -332,7 +330,7 @@ The helper creates a session; the session version uses an existing fresh binding
 
 ```php [FormHelper::render()]
 public function render(
-    string $definition,
+    string $blueprint,
     mixed $data = null,
     array $options = [],
     string|Html|false|null $submit = null,
@@ -342,7 +340,7 @@ public function render(
 
 ```php [FormSession::render()]
 public function render(
-    ?string $definition = null,
+    ?string $blueprint = null,
     array $options = [],
     string|Html|false|null $submit = null,
     array $submitOptions = [],
@@ -351,15 +349,13 @@ public function render(
 
 :::
 
-Both open, render the definition, optionally render a button, and close. Null
+Both open, render the blueprint, optionally render a button, and close. Null
 `submit` uses the translated **Submit** label; false omits the button.
 `submitOptions` uses the same options as `submit()`.
 
 ```php
-use App\Form\ArticleForm;
-
 echo $this->Form->render(
-    ArticleForm::class,
+    'article',
     $article,
     options: ['url' => ['action' => 'edit', $article->id]],
     submit: 'Save article',
@@ -371,16 +367,15 @@ Helper `options` go to `bind()`. Session `options` go to `open()`. Use binding
 first when selecting a custom theme or renderer:
 
 ```php
-use App\Form\ArticleForm;
 use FormCompose\Rendering\Theme;
 
 $theme = new Theme(layers: ['forms/application']);
-$form = $this->Form->bind($article, theme: $theme, definition: ArticleForm::class);
+$form = $this->Form->bind($article, theme: $theme, blueprint: 'article');
 echo $form->render(submit: 'Save article');
 ```
 
-The session's explicit definition stays local and does not replace defaults.
-Without an explicit or selected definition, the body is empty. Use a fresh
+The session's explicit blueprint stays local and does not replace defaults.
+Without an explicit or selected blueprint, the body is empty. Use a fresh
 binding to retry a failed complete-form rendering.
 
 ## errorSummary() {#error-summary}
@@ -426,13 +421,13 @@ For an application hidden value, use `control('token', ['type' => 'hidden'])`.
 
 ## Lifecycle and failures
 
-A session opens once. Inputs, buttons, and `definition()` require an open form;
+A session opens once. Inputs, buttons, and `blueprint()` require an open form;
 `field()` and state inspection do not. Duplicate rendered input IDs and file
 inputs outside multipart forms throw `LogicException`.
 
 Opening, closing, and button template failures do not commit their failed step;
 closing failure restores the open phase. A failed input template does not register
-that input. Batch and definition rendering stage registrations and roll them back
+that input. Batch and blueprint rendering stage registrations and roll them back
 on failure. Exceptions propagate to the application. Complete-form rendering does
 not return partial HTML or automatically close after a failure; retry it with a
 fresh session.

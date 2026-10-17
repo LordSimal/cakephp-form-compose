@@ -30,7 +30,7 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $form = $helper->bind(
             new ArrayContext(['data' => ['label' => 'Email']]),
             ['url' => '/articles/save'],
-            definition: 'conditional',
+            blueprint: 'conditional',
         );
         $form->field('kind')->attributes();
         $html = $form->open();
@@ -63,7 +63,7 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $form = $helper->bind(
             new ArrayContext(['data' => ['label' => 'Work <email>']]),
             ['url' => '/articles/save'],
-            definition: 'conditional',
+            blueprint: 'conditional',
         );
         $html = $form->render();
         static::assertStringContainsString('Work &lt;email&gt;', $html);
@@ -95,8 +95,8 @@ class BlueprintSecurityTest extends BlueprintTestCase
     public function testCollectionRenderingProtectsNestedFieldsAndCheckboxFallbacks(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save'], definition: ProfileForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $helper->bind(null, ['url' => '/articles/save'], blueprint: ProfileForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         $data = [
             'name' => 'Ada',
             'email' => 'ada@example.test',
@@ -122,8 +122,8 @@ class BlueprintSecurityTest extends BlueprintTestCase
             ['url' => '/articles/save', 'method' => 'patch'],
         );
         $html = $form->open();
-        $html .= $form->definition('conditional');
-        $html .= $form->definition(BillingAddressForm::class);
+        $html .= $form->blueprint('conditional');
+        $html .= $form->blueprint(BillingAddressForm::class);
         $html .= $form->control('period', ['type' => 'date-range']);
         static::assertSame('email', $form->field('email')->state->type);
         $html .= $form->close();
@@ -154,7 +154,7 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $form = $helper->bind(null, ['url' => '/articles/save']);
         $html = $form->open();
         try {
-            $form->definition(FailingForm::class);
+            $form->blueprint(FailingForm::class);
             static::fail('Expected configuration failure.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Configuration failed.', $runtimeException->getMessage());

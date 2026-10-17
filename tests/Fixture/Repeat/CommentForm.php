@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture\Repeat;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -17,7 +17,7 @@ use FormCompose\FormContext;
 #[Field('body', type: 'textarea', help: 'Comment text')]
 class CommentForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         /** @var \ArrayObject<int, string>|null $calls */
         $calls = $context->request->getAttribute('repeatCalls');

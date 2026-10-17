@@ -6,7 +6,7 @@ description: All built-in field options for control(), field(), and blueprint Fi
 # Field options
 
 These options apply to `$form->control($field, $options)` and
-`$form->field($field, $options)`. They also apply to `FormBuilder::add()` / `with()` and
+`$form->field($field, $options)`. They also apply to `BlueprintBuilder::add()` / `with()` and
 the `options` argument of a blueprint's `Field` attribute. Custom field types may
 define additional options.
 
@@ -324,14 +324,14 @@ registration. Handwritten inputs must use [`register()`](./field-reference.md#re
 
 For each field, later configuration wins:
 
-1. Field defaults selected at `bind(..., definition: ...)`.
+1. Field defaults selected at `bind(..., blueprint: ...)`.
 2. Per-call options.
 
 Matching top-level option keys are replaced. Nested arrays such as `attributes`,
 `templates`, and `templateData` are replaced as whole values at this stage. This
 is separate from the subsequent attribute-bag merging described above.
 Blueprint declaration and hook precedence is documented in the
-[definitions reference](./definition-reference.md#configuration-order).
+[blueprint reference](./blueprint-reference.md#configuration-order).
 
 Malformed core `attributes`, `partAttributes`, `templates`, and choice `options`
 bags fail during field resolution with `InvalidArgumentException`. Attribute and

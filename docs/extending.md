@@ -50,8 +50,8 @@ to the normal form-building API:
 | `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
 | `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
 | `BlueprintCompiler` | `createBuilder()` supplies the hook builder; `createRepeatedCompiler()` supplies row compilation |
-| `DefinitionRenderer` | `createView()` supplies the scoped layout API |
-| `DefinitionView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
+| `BlueprintRenderer` | `createView()` supplies the scoped layout API |
+| `BlueprintView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
 | `ValueResolver` | `fromSources()` specializes request/context lookup |
 | `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
 | `NativeType` | `choice()` and `createChoices()` specialize standard controls |
@@ -126,7 +126,7 @@ class AppFieldResolver extends FieldResolver
 
 When overriding `createSession()`, accept and forward its third `BlueprintFactory`
 argument. This keeps application dependencies and custom discovery configuration
-available to local `$form->definition('profile')` calls in the session subclass.
+available to local `$form->blueprint('profile')` calls in the session subclass.
 Direct `new FormSession($binding, $rendering)` construction supports
 dependency-free blueprints; pass the factory as the optional third constructor argument when needed.
 
@@ -148,14 +148,14 @@ to supply application-specific association or choice-list conventions. The defau
 override the session's `createLifecycle()` to supply them. Preserve lifecycle
 checks and register the inputs actually rendered when specializing these services.
 
-`FormSession` accepts an optional fourth `DefinitionRenderer` constructor argument.
+`FormSession` accepts an optional fourth `BlueprintRenderer` constructor argument.
 Supply a subclass from the helper's `createSession()` override to customize its
 protected `createView()` factory. The default view delegates to the original
 session's field and control methods, retaining application resolver and field
 subclasses. It does not construct another lifecycle.
 
 `FormLifecycle` accepts an optional fourth `InputRegistry` dependency. Its registry
-shares the lifecycle's `FormProtection` service and stages nested definition inputs
+shares the lifecycle's `FormProtection` service and stages nested blueprint inputs
 until the whole layout succeeds. Preserve duplicate-ID checks and rollback when
 replacing that collaborator.
 

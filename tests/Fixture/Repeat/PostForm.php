@@ -6,8 +6,8 @@ namespace FormCompose\Test\Fixture\Repeat;
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -18,7 +18,7 @@ use FormCompose\FormContext;
 #[EmbedMany('comments', CommentForm::class, options: ['template' => 'repeat/comments'])]
 class PostForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         if ($context->request->getAttribute('removeRow') === true) {
             $form->remove('comments.2');

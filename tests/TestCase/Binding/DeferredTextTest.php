@@ -41,7 +41,7 @@ class DeferredTextTest extends FormTestCase
             I18n::setLocale('en_US');
             $form = $this->helper()->bind(new ArrayContext([
                 'errors' => ['title' => ['invalid' => 'Invalid title']],
-            ]), definition: ArticleForm::class);
+            ]), blueprint: ArticleForm::class);
             static::assertInstanceOf(Closure::class, $form->binding->definition?->field('title')->options['label']);
             I18n::setLocale('fr_FR');
             $field = $form->field('title');
@@ -98,7 +98,7 @@ class DeferredTextTest extends FormTestCase
 
     public function testPerCallOptionsReplaceBlueprintClosuresBeforeTheyExecute(): void
     {
-        $form = $this->helper()->bind(definition: OverriddenForm::class);
+        $form = $this->helper()->bind(blueprint: OverriddenForm::class);
         $html = $form->open() . $form->control('title', ['label' => false, 'help' => null]) . $form->close();
         static::assertStringNotContainsString('<label', $html);
         static::assertStringNotContainsString('title-help', $html);

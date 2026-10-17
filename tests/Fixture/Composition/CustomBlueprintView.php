@@ -3,12 +3,12 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition;
 
-use FormCompose\DefinitionView;
+use FormCompose\BlueprintView;
 
 /**
  * Adds application layout behavior while keeping scoped field resolution intact.
  */
-class CustomDefinitionView extends DefinitionView
+class CustomBlueprintView extends BlueprintView
 {
     /**
      * Annotate controls through ordinary field options.

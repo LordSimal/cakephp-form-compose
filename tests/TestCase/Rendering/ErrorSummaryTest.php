@@ -85,9 +85,9 @@ class ErrorSummaryTest extends FormTestCase
                 'comments' => ['count' => 'Add another', 2 => ['body' => ['invalid' => 'Fix row two']]],
             ],
         ]);
-        $form = $this->helper()->bind($context, definition: CommentsForm::class);
+        $form = $this->helper()->bind($context, blueprint: CommentsForm::class);
         $form->open();
-        $form->definition();
+        $form->blueprint();
 
         $summary = $form->errorSummary();
         static::assertSame(1, substr_count($summary, 'Fix row two'));

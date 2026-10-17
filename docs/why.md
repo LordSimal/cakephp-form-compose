@@ -32,7 +32,7 @@ the starting point for that work.
 
 <figure class="formcompose-architecture">
   <div class="formcompose-architecture-scroll" tabindex="0" role="region" aria-label="FormCompose architecture diagram; scroll horizontally on small screens">
-    <img src="/diagrams/formcompose-architecture.svg" width="960" height="610" alt="CakePHP data and request feed a form session through bind(). Inline field options override optional blueprint defaults. field() resolves bound fields without rendering. Explicit control or part calls render PHP elements; definition() renders a blueprint collection and render() renders a full form. Successful input rendering registers submitted names with the session, and closing adds protection fields to the HTML." />
+    <img src="/diagrams/formcompose-architecture.svg" width="960" height="610" alt="CakePHP data and request feed a form session through bind(). Inline field options override optional blueprint defaults. field() resolves bound fields without rendering. Explicit control or part calls render PHP elements; blueprint() renders a blueprint collection and render() renders a full form. Successful input rendering registers submitted names with the session, and closing adds protection fields to the HTML." />
   </div>
   <figcaption>Bind the data, resolve fields, and explicitly render markup. The session tracks submitted inputs.</figcaption>
 </figure>
@@ -40,7 +40,7 @@ the starting point for that work.
 `bind()` prepares a form session and optional blueprint configuration without
 emitting markup. `field()` resolves values, names, IDs, constraints, and errors
 without rendering or registering inputs. `control()` resolves and renders one
-field; calling parts on a bound field renders only those parts. Use `definition()`
+field; calling parts on a bound field renders only those parts. Use `blueprint()`
 for a selected blueprint's field collection/layout, or `render()` for a complete
 form. PHP elements render the parts you call; successful input
 rendering registers submitted fields. Form opening and closing prepare method,

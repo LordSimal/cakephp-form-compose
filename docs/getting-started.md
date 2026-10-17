@@ -151,7 +151,7 @@ FormCompose does not validate or save the entity. Browser attributes such as
 | Understand which PHP element renders a control | [How rendering works](./rendering.md) |
 | Arrange one field's parts in the view | [Compose field parts](./field-parts.md) |
 | Reuse markup across forms | [Create a theme](./themes.md) |
-| Reuse field configuration across screens | [Field definitions](./definitions.md) |
+| Reuse field configuration across screens | [Reusable forms](./reusable-forms.md) |
 
 Start with ordinary controls. Definitions and blueprints are optional layers you
 can add when configuration repeats.

@@ -5,8 +5,8 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
@@ -32,9 +32,9 @@ class BlueprintFailureTest extends FormTestCase
     {
         $factory = new BlueprintFactory();
         $context = new FormContext(new ArrayContext([]), $this->helper()->getView()->getRequest());
-        $builder = new FormBuilder(
+        $builder = new BlueprintBuilder(
             new FormDefinition([]),
-            static fn(string $path, string $identifier): FormDefinition => $factory->definition(
+            static fn(string $path, string $identifier): FormDefinition => $factory->compile(
                 $identifier,
                 $context->at($path),
             ),
@@ -55,20 +55,20 @@ class BlueprintFailureTest extends FormTestCase
     public function testRemovingUnknownFieldsFailsClearly(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(definition: UnknownRemovalForm::class);
+        $this->helper()->bind(blueprint: UnknownRemovalForm::class);
     }
 
     public function testDuplicateDeclarationsAreRejectedBeforeRendering(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('duplicate field paths');
-        $this->helper()->bind(definition: DuplicateFields::class);
+        $this->helper()->bind(blueprint: DuplicateFields::class);
     }
 
     public function testInvalidDeclaredPathsAreRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(definition: InvalidPath::class);
+        $this->helper()->bind(blueprint: InvalidPath::class);
     }
 
     /**
@@ -90,21 +90,21 @@ class BlueprintFailureTest extends FormTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('concrete implementation');
-        $this->helper()->bind(definition: $class);
+        $this->helper()->bind(blueprint: $class);
     }
 
     public function testDependencyFreeModeExplainsMissingContainerConfiguration(): void
     {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Configure blueprintFactory');
-        $this->helper()->bind(definition: ConditionalForm::class);
+        $this->helper()->bind(blueprint: ConditionalForm::class);
     }
 
     public function testHookFailuresPropagateWithoutLeakingConfiguration(): void
     {
         $helper = $this->helper();
         try {
-            $helper->bind(definition: FailingForm::class);
+            $helper->bind(blueprint: FailingForm::class);
             static::fail('Expected configuration to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Configuration failed.', $runtimeException->getMessage());
@@ -125,6 +125,6 @@ class BlueprintFailureTest extends FormTestCase
     public function testDefinitionRenderingStillRequiresAnOpenForm(): void
     {
         $this->expectException(LogicException::class);
-        $this->helper()->bind(definition: ProfileForm::class)->definition();
+        $this->helper()->bind(blueprint: ProfileForm::class)->blueprint();
     }
 }

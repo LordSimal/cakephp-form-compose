@@ -14,7 +14,7 @@ use LogicException;
 /**
  * Exercises internal compiled configuration through the shared rendering lifecycle.
  */
-class DefinitionRenderingTest extends FormTestCase
+class BlueprintRenderingTest extends FormTestCase
 {
     public function testCollectionsRenderAtTheirCallSitesAlongsideOrdinaryControls(): void
     {

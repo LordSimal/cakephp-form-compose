@@ -5,7 +5,7 @@ description: Render a child blueprint for each associated row while retaining Ca
 
 # Repeat embedded forms
 
-`Embed` mounts one child definition. `EmbedMany` repeats a child definition for
+`Embed` mounts one child blueprint. `EmbedMany` repeats a child blueprint for
 multiple associated records. Each row keeps relative field paths and its own
 configuration and layout, sharing the parent form's session and protection.
 
@@ -18,8 +18,10 @@ declare(strict_types=1);
 namespace App\Form;
 
 use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
 use FormCompose\FormBlueprint;
 
+#[Form('comment')]
 #[Field('id')]
 #[Field('body', type: 'textarea', label: 'Comment')]
 class CommentForm extends FormBlueprint
@@ -35,10 +37,12 @@ namespace App\Form;
 
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
 use FormCompose\FormBlueprint;
 
+#[Form('post')]
 #[Field('title')]
-#[EmbedMany('comments', CommentForm::class)]
+#[EmbedMany('comments', 'comment')]
 class PostForm extends FormBlueprint
 {
 }
@@ -47,9 +51,7 @@ class PostForm extends FormBlueprint
 With `$post->comments` loaded by the application, render the complete form:
 
 ```php
-use App\Form\PostForm;
-
-echo $this->Form->render(PostForm::class, $post, submit: 'Save post');
+echo $this->Form->render('post', $post, submit: 'Save post');
 ```
 
 Rows keyed `0` and `2` render fields such as `comments.0.body` and
@@ -67,7 +69,7 @@ no rows, leaving validation of that value to CakePHP.
 Use `keys` to select an explicit order or include an unused key for a blank row:
 
 ```php
-#[EmbedMany('comments', CommentForm::class, keys: [0, 2, 3])]
+#[EmbedMany('comments', 'comment', keys: [0, 2, 3])]
 ```
 
 An explicit empty list renders no rows. Keys can be integers or strings matching
@@ -83,7 +85,7 @@ Select an occurrence template on the attribute:
 ```php
 #[EmbedMany(
     'comments',
-    CommentForm::class,
+    'comment',
     options: [
         'template' => 'forms/comments',
         'templateData' => ['heading' => 'Comments'],
@@ -92,14 +94,14 @@ Select an occurrence template on the attribute:
 )]
 ```
 
-The element receives keyed, scoped `DefinitionView` instances as `$rows` and a
+The element receives keyed, scoped `BlueprintView` instances as `$rows` and a
 `RepeatedView` as `$embed` for collection-owned errors:
 
 ```php [templates/element/forms/comments.php]
 <?php
 use FormCompose\Rendering\Html;
 /**
- * @var array<int|string, \FormCompose\DefinitionView> $rows
+ * @var array<int|string, \FormCompose\BlueprintView> $rows
  * @var \FormCompose\RepeatedView $embed
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array{heading: string} $templateData
@@ -144,21 +146,21 @@ customizes their attributes. `$embed->hasErrors()`, `$embed->messages`,
 A parent blueprint hook can add rows and then adjust their qualified fields:
 
 ```php
-public function configure(FormBuilder $form, FormContext $context): void
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->embedMany('comments', CommentForm::class, keys: [0, 3]);
+    $form->embedMany('comments', 'comment', keys: [0, 3]);
     $form->with('comments.3.body', ['label' => 'New comment']);
     $form->remove('comments.0.id');
 }
 ```
 
-Import `FormCompose\FormBuilder` and `FormCompose\FormContext` in that class.
+Import `FormCompose\BlueprintBuilder` and `FormCompose\FormContext` in that class.
 Row hooks run once before the parent hook, including rows declared with
 attributes. They can read relative values using `$context->value('body')`, which
 honors binding value sources; `$context->path` exposes the absolute row mount.
 The public `$context->request` remains the original request.
 
-In a parent definition layout, use `<?= $form->embeddedMany('comments') ?>` to
+In a parent blueprint layout, use `<?= $form->embeddedMany('comments') ?>` to
 render already compiled rows. Repeated embeds can contain ordinary embeds and
 further repeated embeds. Removing a collection or row removes its subtree;
 removed fields retain the existing `has()` and omission behavior.
@@ -166,9 +168,7 @@ removed fields retain the existing `has()` and omission behavior.
 For an ordinary open session, without a parent blueprint:
 
 ```php
-use App\Form\CommentForm;
-
-echo $form->embedMany('comments', CommentForm::class);
+echo $form->embedMany('comments', 'comment');
 ```
 
 Each blueprint occurrence compiles into an independent configuration snapshot.

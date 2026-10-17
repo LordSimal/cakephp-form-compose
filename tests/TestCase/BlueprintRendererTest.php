@@ -5,7 +5,7 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Attribute\Field;
-use FormCompose\DefinitionRenderer;
+use FormCompose\BlueprintRenderer;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\Form\InputRegistry;
 use FormCompose\FormDefinition;
@@ -24,7 +24,7 @@ use LogicException;
 /**
  * Checks field shorthand, manual parts, and definition presentation normalization.
  */
-class DefinitionRendererTest extends CompositionTestCase
+class BlueprintRendererTest extends CompositionTestCase
 {
     public function testManualFieldPartsUseScopedNamesOverridesAndFeedback(): void
     {
@@ -32,7 +32,7 @@ class DefinitionRendererTest extends CompositionTestCase
             'data' => ['author' => ['email' => 'author@example.test']],
             'errors' => ['author' => ['email' => ['invalid' => '<Invalid email>']]],
         ]));
-        $html = $form->open() . $form->definition(AuthorForm::class, at: 'author', options: [
+        $html = $form->open() . $form->blueprint(AuthorForm::class, at: 'author', options: [
             'template' => 'composition/parts',
         ]) . $form->close();
         static::assertStringContainsString('data-parts', $html);
@@ -80,7 +80,7 @@ class DefinitionRendererTest extends CompositionTestCase
     {
         $helper = $this->helper();
         $form = $helper->bind();
-        $renderer = new DefinitionRenderer(new RenderContext(new PhpRenderer($helper->getView()), Theme::base()));
+        $renderer = new BlueprintRenderer(new RenderContext(new PhpRenderer($helper->getView()), Theme::base()));
         $inputs = new InputRegistry(new FormProtection($form->binding->request));
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Repeated embeds must be compiled before rendering.');

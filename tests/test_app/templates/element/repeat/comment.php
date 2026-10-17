@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-/** @var \FormCompose\DefinitionView $form */
+/** @var \FormCompose\BlueprintView $form */
 ?>
 <div class="comment-content">
     <?= $form->control('id') ?>

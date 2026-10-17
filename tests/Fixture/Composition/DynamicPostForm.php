@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\Test\Fixture\Authoring\DetailsForm;
 
@@ -20,7 +20,7 @@ class DynamicPostForm extends FormBlueprint
     /**
      * Exercise scoped blueprint resolution and runtime field construction.
      */
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->embed('author', AuthorForm::class);
         $form->embed('comments.0.author', 'composed-author');

@@ -6,8 +6,8 @@ namespace FormCompose\Test\Fixture\Composition;
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -29,7 +29,7 @@ class PostForm extends FormBlueprint
     /**
      * Override nested fields after the child has applied its own configuration.
      */
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $this->probe->record('post', $context);
         $form->with('author.first_name', ['label' => 'Author name from parent']);

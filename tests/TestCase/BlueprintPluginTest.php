@@ -15,7 +15,7 @@ use FormCompose\FormComposePlugin;
 use FormCompose\Test\Fixture\Blueprint\CustomBlueprintFactory;
 use FormCompose\Test\Fixture\Blueprint\Valid\ConditionalForm;
 use FormCompose\Test\Fixture\BlueprintApplication;
-use FormCompose\Test\Fixture\BlueprintView;
+use FormCompose\Test\Fixture\BlueprintAppView;
 use FormCompose\Test\FormTestCase;
 use FormCompose\View\Helper\FormHelper;
 use InvalidArgumentException;
@@ -162,12 +162,12 @@ class BlueprintPluginTest extends FormTestCase
             /** @var mixed $factory */
             $factory = $app->getContainer()->get(BlueprintFactory::class);
             static::assertInstanceOf(BlueprintFactory::class, $factory);
-            $view = new BlueprintView($this->helper()->getView()->getRequest(), viewOptions: ['viewVars' => [
+            $view = new BlueprintAppView($this->helper()->getView()->getRequest(), viewOptions: ['viewVars' => [
                 'blueprints' => $factory,
             ]]);
             $helper = $view->helpers()->get('Form');
             static::assertInstanceOf(FormHelper::class, $helper);
-            $form = $helper->bind(definition: ConditionalForm::class);
+            $form = $helper->bind(blueprint: ConditionalForm::class);
             static::assertSame(
                 ['work' => 'Work <address>', 'home' => 'Home'],
                 $form->field('kind')->state->options['options'],

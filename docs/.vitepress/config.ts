@@ -64,7 +64,7 @@ export default defineConfig({
     },
     nav: [
       { text: 'Guide', link: '/getting-started' },
-      { text: 'Reusable forms', link: '/definitions' },
+      { text: 'Reusable forms', link: '/reusable-forms' },
       { text: 'API reference', link: '/form-reference' },
     ],
     sidebar: [
@@ -93,9 +93,9 @@ export default defineConfig({
       {
         text: 'Reusable forms',
         items: [
-          { text: 'Reusable forms', link: '/definitions' },
+          { text: 'Reusable forms', link: '/reusable-forms' },
           { text: 'Form blueprints', link: '/blueprints' },
-          { text: 'Nested definitions', link: '/composition' },
+          { text: 'Nested blueprints', link: '/composition' },
           { text: 'Repeated embeds', link: '/repeated-embeds' },
         ],
       },
@@ -105,7 +105,7 @@ export default defineConfig({
           { text: 'Helper and form session', link: '/form-reference' },
           { text: 'Field options', link: '/field-options' },
           { text: 'Bound fields', link: '/field-reference' },
-          { text: 'Blueprint reference', link: '/definition-reference' },
+          { text: 'Blueprint reference', link: '/blueprint-reference' },
           { text: 'Template reference', link: '/template-reference' },
         ],
       },

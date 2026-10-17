@@ -23,7 +23,7 @@ class BlueprintCompositionTest extends CompositionTestCase
 {
     public function testInheritedEmbedsResolveOnlyTheSurvivingOccurrence(): void
     {
-        $definition = $this->factory->definition(InheritedPostForm::class, $this->context());
+        $definition = $this->factory->compile(InheritedPostForm::class, $this->context());
         static::assertSame(
             ['title', 'author.first_name', 'author.last_name', 'author.email', 'author.id', 'body', 'extra'],
             array_column($definition->fields, 'path'),
@@ -55,25 +55,25 @@ class BlueprintCompositionTest extends CompositionTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($message);
-        $this->factory->definition($class, $this->context());
+        $this->factory->compile($class, $this->context());
     }
 
     public function testCycleFailureDoesNotPoisonLaterResolutions(): void
     {
         try {
-            $this->factory->definition(CycleA::class, $this->context());
+            $this->factory->compile(CycleA::class, $this->context());
             static::fail('Expected a cycle to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString(CycleA::class, $invalidArgumentException->getMessage());
         }
 
-        static::assertTrue($this->factory->definition(PostForm::class, $this->context())->has('author.email'));
+        static::assertTrue($this->factory->compile(PostForm::class, $this->context())->has('author.email'));
     }
 
     public function testSeparateResolutionsKeepRemovalHistoryAndHookStateIsolated(): void
     {
-        $restricted = $this->helper(attributes: ['canEditEmail' => false])->bind(definition: AuthorForm::class);
-        $ordinary = $this->helper()->bind(definition: AuthorForm::class);
+        $restricted = $this->helper(attributes: ['canEditEmail' => false])->bind(blueprint: AuthorForm::class);
+        $ordinary = $this->helper()->bind(blueprint: AuthorForm::class);
         static::assertNotNull($restricted->binding->definition);
         static::assertNotNull($ordinary->binding->definition);
         static::assertFalse($restricted->binding->definition->has('email'));
@@ -112,7 +112,7 @@ class BlueprintCompositionTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
         try {
-            $form->definition(AuthorForm::class, at: 'author..name');
+            $form->blueprint(AuthorForm::class, at: 'author..name');
             static::fail('Expected invalid mounting to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('dot-separated', $invalidArgumentException->getMessage());

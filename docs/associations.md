@@ -7,7 +7,7 @@ description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with Ca
 
 FormCompose uses CakePHP's entity context to resolve associated values, schemas,
 and validation metadata. The usual field paths work with both `control()` and
-`field()`, including inside [reusable definitions](./definitions.md).
+`field()`, including inside [reusable blueprints](./reusable-forms.md).
 
 For basic select, radio, and checkbox syntax, start with [Choice controls](./choices.md).
 
@@ -160,12 +160,12 @@ Pass the resulting request data to CakePHP's normal `patchEntity()` workflow wit
 the appropriate `associated` configuration, then validate and save through the
 ORM. Definitions, templates, and form sessions do not load or persist associations.
 
-## Reuse associated field definitions
+## Reuse associated field configuration
 
-Use `#[Embed('author', AuthorForm::class)]` to compose a child blueprint, or render
-a relative definition with `$form->definition(AuthorForm::class, at: 'author')`.
+For a blueprint declared with `#[Form('author')]`, use `#[Embed('author', 'author')]`
+to compose it, or render it with `$form->blueprint('author', at: 'author')`.
 The child keeps its own PHP layout and relative field names. See
-[nested definitions and layouts](./composition.md#compose-an-association).
+[nested blueprints and layouts](./composition.md#compose-an-association).
 
-Use [repeated embeds](./repeated-embeds.md) to render a reusable child definition
+Use [repeated embeds](./repeated-embeds.md) to render a reusable child blueprint
 for every row of a loaded or submitted association.
