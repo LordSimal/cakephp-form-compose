@@ -5,6 +5,7 @@ namespace FormCompose\Field;
 
 use BackedEnum;
 use DateTimeInterface;
+use FormCompose\Rendering\Attributes;
 use InvalidArgumentException;
 use Stringable;
 
@@ -41,21 +42,18 @@ final class NativeValue
     /**
      * Format native date/time values and prevent password or file values from being echoed.
      */
-    public static function input(FieldState $state): ?string
+    public static function input(FieldState $state, ?Attributes $attributes = null): ?string
     {
         if (in_array($state->type, ['file', 'password'], true) || $state->value === null) {
             return null;
         }
 
-        if ($state->value instanceof DateTimeInterface) {
-            $format = match ($state->type) {
-                'date' => 'Y-m-d',
-                'month' => 'Y-m',
-                'time' => 'H:i:s',
-                default => 'Y-m-d\TH:i:s',
-            };
+        if (in_array($state->type, ['date', 'month', 'week', 'time', 'datetime-local'], true)) {
+            return TemporalValue::format($state, $attributes ?? new Attributes($state->constraints));
+        }
 
-            return $state->value->format($format);
+        if ($state->value instanceof DateTimeInterface) {
+            return $state->value->format('Y-m-d\TH:i:s');
         }
 
         return self::scalar($state->value);

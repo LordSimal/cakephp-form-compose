@@ -45,6 +45,6 @@ final class NativeAttributes
             return $attributes;
         }
 
-        return $attributes->replace(['type' => $state->type, 'value' => NativeValue::input($state)]);
+        return $attributes->replace(['type' => $state->type, 'value' => NativeValue::input($state, $attributes)]);
     }
 }

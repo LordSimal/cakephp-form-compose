@@ -78,6 +78,7 @@ conventional choice list, infers a select.
 | `value` | `mixed` | Absent: resolve from binding sources. When supplied, wins even when null, false, zero, or an empty string. |
 | `default` | `mixed` | `null`. Used when no configured source supplies a value; also passed to context lookup. |
 | `schemaDefault` | `bool` | `true`. Passed to the context to control schema defaults. |
+| `timezone` | `string`, `DateTimeZone`, or `null` | `null`. For temporal inputs, convert date/time objects or integer Unix timestamps to this timezone without changing the original object. Date-only and time-only objects reject timezone conversion. |
 
 Source order belongs to binding [`valueSources`](./form-reference.md#binding-options),
 not to individual fields. The default order is request data, then context.
@@ -96,6 +97,21 @@ echo $form->control('reviewed_at', ['value' => null]);
 `default` fills missing values; `value` deliberately overrides found values.
 Password and file inputs never prefill values. Date/time objects use native HTML
 formats; false becomes `'0'` when rendered as a native scalar.
+
+Native `date`, `month`, `week`, `time`, and `datetime-local` inputs format PHP
+date/time objects and CakePHP `Date` and `Time` objects without localized strings.
+Week values use the ISO week year. Date-only objects support date/month/week;
+time-only objects support time. Integer Unix timestamps use UTC unless `timezone`
+is configured. Strings, including submitted values, must already use the native
+input format and pass through unchanged: they represent local wall-clock values
+and are not parsed or converted again. Invalid strings are never replaced with
+the current date.
+
+Time and datetime inputs default to `step="1"` so nonzero seconds remain valid.
+Fractional datetime schema types default to `step="0.001"`. Fractional steps or
+`step="any"` format object values with milliseconds; precision beyond milliseconds
+cannot be represented by native browser inputs. Override `attributes['step']`
+to choose another interval or remove the attribute with null.
 
 ## Labels and feedback
 

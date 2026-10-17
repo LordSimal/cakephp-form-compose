@@ -5,8 +5,11 @@ namespace FormCompose\Test\Fixture\Http\Controller;
 
 use Cake\Controller\Controller;
 use Cake\Http\Response;
+use Cake\I18n\Date;
+use Cake\I18n\Time;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
+use DateTimeImmutable;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
 use FormCompose\View\Helper\FormHelper;
@@ -98,6 +101,33 @@ class FormsController extends Controller
                 'comments' => [0 => ['id' => 10, 'body' => 'First'], 2 => ['id' => 12, 'body' => 'Third']],
             ],
         ]);
+    }
+
+    /**
+     * Render temporal objects for browser normalization and protected round trips.
+     */
+    public function temporal(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext([
+            'schema' => [
+                'day' => ['type' => 'date'],
+                'clock' => ['type' => 'time'],
+                'instant' => ['type' => 'datetimefractional'],
+            ],
+            'data' => [
+                'day' => new Date('2026-10-15'),
+                'clock' => new Time('14:23:45'),
+                'instant' => new DateTimeImmutable('2026-10-15 14:23:45.123'),
+            ],
+        ]));
+        $html = $form->open(['url' => '/forms/save']) . $form->controls(['day', 'clock', 'instant']);
+        $html .= $form->control('week', ['type' => 'week', 'value' => new Date('2027-01-01')]);
+        $html .= $form->submit('Save temporal') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
     }
 
     /**
