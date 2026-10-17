@@ -137,8 +137,8 @@ echo $form->control('status', [
 Existing placeholder rules apply, including retaining a case with an empty-string
 backing value instead of adding another blank option. Integer zero remains a real
 choice. Pure enums are rejected because they have no backing value to submit.
-Enum choice sources are explicit; ORM enum column types do not automatically
-populate choices.
+Explicit `options` overrides automatic schema discovery, including when selecting
+a subset of enum cases.
 
 Blueprint field attributes accept the same configuration:
 
