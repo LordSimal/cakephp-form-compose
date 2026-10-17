@@ -110,7 +110,7 @@ class FormSessionCompositionTest extends CompositionTestCase
         $form = $helper->bind(new ArrayContext(['data' => ['post' => ['author' => ['first_name' => 'Deep']]]]));
         $html = $form->open() . $form->definition(EnvelopeForm::class) . $form->close();
         static::assertStringContainsString('name="post[author][first_name]"', $html);
-        static::assertStringContainsString('id="form-compose-1-post-author-first_name"', $html);
+        static::assertStringContainsString('id="form-compose-1-post.author.first_name"', $html);
         static::assertStringContainsString('value="Deep"', $html);
         static::assertSame('Deep', $this->probe->calls[0]['context']->context->val('first_name'));
         static::assertSame($helper->getView()->getRequest(), $this->probe->calls[0]['context']->request);

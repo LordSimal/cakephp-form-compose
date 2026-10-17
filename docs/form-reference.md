@@ -80,13 +80,18 @@ See [blueprint defaults and manual layouts](./definitions.md#select-defaults-for
 
 | Option | Type | Default and effect |
 | --- | --- | --- |
-| `id` | `string` | Generated `form-compose-N` within the helper. Also prefixes generated input IDs. Set explicit unique IDs when needed. |
+| `id` | `string` | Generated `form-compose-N` across FormCompose helpers sharing the same Cake view. Also prefixes generated input IDs. Set explicit unique IDs when needed. |
 | `context` | `array` | `[]`. Additional options passed to CakePHP's context factory; not used when `$data` is already a context. |
 | `valueSources` | Nonempty list of `data`, `context`, `query` | `['data', 'context']`. Field value lookup order. |
 | `passwordFields` | List of terminal field names | Inherits helper configuration, normally `['password', 'passwd']`. Replaces the names that infer password inputs, including nested paths. An empty list disables name-based inference; explicit password controls never prefill values. |
 | `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
 | `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
 | Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
+
+Form IDs are reserved at binding time for the owning Cake view.
+Automatic IDs skip explicit reservations; duplicate explicit form IDs throw
+`LogicException`. A separate Cake view starts an independent sequence. Form IDs
+must be nonempty and contain no whitespace.
 
 The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
 Likewise context, types, password field names, and value sources are binding settings, not opening

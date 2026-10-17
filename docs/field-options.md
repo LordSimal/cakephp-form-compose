@@ -38,13 +38,18 @@ forwarded to the input as HTML attributes.
 | --- | --- | --- |
 | `type` | `string` | Inferred from conventions and context; overrides inference. Native HTML input types, `textarea`, `select`, `radio`, `multicheckbox`, or a registered custom type. |
 | `name` | `string` | Bracket notation derived from the path: `comments.0.body` becomes `comments[0][body]`. Overrides the submitted name, not the context lookup path. |
-| `id` | `string` | Binding ID plus the path with dots replaced by hyphens. Set a unique explicit ID for repeated presentations. |
+| `id` | `string` | Binding ID plus the path; dots are retained and literal hyphens become `:2d`. Set a unique explicit ID for repeated presentations. |
 
 Paths must be nonempty dot-separated segments containing letters, digits,
 underscores, or hyphens. Names must use valid bracket notation. IDs must be
 nonempty and unique among rendered elements in the session, including choices,
 feedback, and configured container IDs. Type names must begin with a lowercase
 letter and contain only lowercase letters, digits, underscores, or hyphens.
+
+Generated field IDs distinguish `author.name` from `author-name` and reserve
+hyphens for feedback and choice suffixes. Read IDs from `$field->state->id`;
+use `document.getElementById()` or `CSS.escape()` with JavaScript selectors.
+Explicit IDs remain application-owned and must be unique.
 
 ### Type inference
 

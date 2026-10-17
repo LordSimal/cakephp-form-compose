@@ -33,8 +33,8 @@ class ScopedContextTest extends AssociationTestCase
         ));
         static::assertStringContainsString('Submitted &lt;comment&gt;', $html);
         static::assertStringContainsString('&lt;Invalid comment&gt;', $html);
-        static::assertStringContainsString('for="form-compose-1-comments-0-body"', $html);
-        static::assertStringContainsString('id="form-compose-1-comments-0-body-errors"', $html);
+        static::assertStringContainsString('for="form-compose-1-comments.0.body"', $html);
+        static::assertStringContainsString('id="form-compose-1-comments.0.body-errors"', $html);
         static::assertTrue($xpath->evaluate(
             'boolean(//input[@name="details[summary]"][@maxlength="60"][@value="Summary"])',
         ));

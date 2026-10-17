@@ -61,7 +61,8 @@ class FieldResolver
         $parts = explode('.', $path);
         $first = array_shift($parts);
         $name = (string)($options['name'] ?? $first . ($parts === [] ? '' : '[' . implode('][', $parts) . ']'));
-        $id = (string)($options['id'] ?? $this->binding->id . '-' . str_replace('.', '-', $path));
+        // Preserve path separators and reserve hyphens for generated part suffixes.
+        $id = (string)($options['id'] ?? $this->binding->id . '-' . str_replace('-', ':2d', $path));
         if ($id === '' || !preg_match('/^[a-zA-Z0-9_.:-]+(?:\[[a-zA-Z0-9_.:-]*\])*$/D', $name)) {
             throw new InvalidArgumentException('Use a nonempty ID and a valid bracket-notation input name.');
         }

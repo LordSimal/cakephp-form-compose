@@ -8,6 +8,7 @@ use Cake\View\Form\ContextInterface;
 use Cake\View\Helper;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\Form\FormIds;
 use FormCompose\FormContext;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
@@ -42,7 +43,7 @@ class FormHelper extends Helper
      */
     protected array $defaultConfig = ['theme' => 'Base', 'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS];
 
-    protected int $sequence = 0;
+    protected ?FormIds $formIds = null;
 
     protected ?PostActionRenderer $postActions = null;
 
@@ -140,7 +141,9 @@ class FormHelper extends Helper
                 ->get($view->getRequest(), ['entity' => $data] + $contextOptions);
         $theme = $this->resolveTheme($theme);
 
-        $id = (string)($options['id'] ?? 'form-compose-' . ++$this->sequence);
+        $id = ($this->formIds ??= $this->createFormIds())->allocate(
+            isset($options['id']) ? (string)$options['id'] : null,
+        );
         unset($options['context'], $options['types']);
         $factory = $this->createBlueprintFactory();
         /** @var list<string> $valueSources */
@@ -155,6 +158,14 @@ class FormHelper extends Helper
             new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
             $factory,
         );
+    }
+
+    /**
+     * Construct the internal identity service with this helper's view dependency.
+     */
+    protected function createFormIds(): FormIds
+    {
+        return new FormIds($this->getView());
     }
 
     /**

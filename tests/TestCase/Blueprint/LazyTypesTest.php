@@ -100,7 +100,7 @@ class LazyTypesTest extends BlueprintTestCase
         $form->open();
         $form->control('custom', ['type' => 'dependency-type']);
         $this->expectException(LogicException::class);
-        $form->control('custom-extra');
+        $form->control('custom-extra', ['id' => 'form-compose-1-custom-extra']);
     }
 
     public function testFailedConstructionCanBeRetried(): void
