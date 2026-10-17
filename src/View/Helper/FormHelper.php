@@ -14,7 +14,6 @@ use FormCompose\Form\FormIds;
 use FormCompose\FormContext;
 use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
-use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\PostActionRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RendererInterface;
@@ -91,7 +90,7 @@ class FormHelper extends Helper
             $url,
             $options,
             'button',
-            $this->actionRendering($theme, $renderer),
+            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
         );
     }
 
@@ -113,7 +112,7 @@ class FormHelper extends Helper
             $url,
             $options,
             'link',
-            $this->actionRendering($theme, $renderer),
+            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
         );
     }
 
@@ -185,7 +184,7 @@ class FormHelper extends Helper
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $compiled),
-            new RenderContext($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...)),
+            RenderContext::forView($view, $theme, $renderer, $types),
             $factory,
         );
     }
@@ -245,16 +244,6 @@ class FormHelper extends Helper
                 ? $selected
                 : throw new InvalidArgumentException('Use Base or a Theme instance.'),
         };
-    }
-
-    /**
-     * Supply action presentation without constructing a second helper or form lifecycle.
-     */
-    protected function actionRendering(Theme|string|null $theme, ?RendererInterface $renderer): RenderContext
-    {
-        $theme = $this->resolveTheme($theme);
-
-        return new RenderContext($renderer ?? new PhpRenderer($this->getView(), $theme), $theme);
     }
 
     /**
