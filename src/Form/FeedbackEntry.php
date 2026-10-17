@@ -41,17 +41,24 @@ final readonly class FeedbackEntry
 
         /** @var string|Html|false $label */
         $label = $field->state->options['label'] ?? FieldPath::label($field->state->path);
-        $target = match (true) {
+
+        return new self(
+            $label === false || $label === '' ? FieldPath::label($field->state->path) : $label,
+            $field->state->messages,
+            self::target($field, $type, $attributes),
+        );
+    }
+
+    /**
+     * Describe the actual focus target independently of validation-message presence.
+     */
+    public static function target(BoundField $field, ?FieldTypeInterface $type, Attributes $attributes): ?string
+    {
+        return match (true) {
             !$type instanceof FieldTypeInterface || $attributes->has('disabled') || $field->state->type === 'hidden'
                 => null,
             $type instanceof ErrorTargetProviderInterface => $type->errorTarget($field, $attributes),
             default => $field->state->id,
         };
-
-        return new self(
-            $label === false || $label === '' ? FieldPath::label($field->state->path) : $label,
-            $field->state->messages,
-            $target,
-        );
     }
 }

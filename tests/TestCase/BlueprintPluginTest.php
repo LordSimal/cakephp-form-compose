@@ -32,7 +32,7 @@ class BlueprintPluginTest extends FormTestCase
         $config = AttributeResolver::getConfig('formCompose');
         static::assertIsArray($config);
         static::assertSame(
-            ['src/Form/*.php', 'src/Form/**/*.php', 'src/Field/*.php', 'src/Field/**/*.php'],
+            ['src/Form/*.php', 'src/Form/**/*.php'],
             $config['paths'],
         );
         static::assertSame('_cake_core_', $config['cache']);

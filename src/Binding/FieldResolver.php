@@ -4,14 +4,16 @@ declare(strict_types=1);
 namespace FormCompose\Binding;
 
 use FormCompose\Field\BoundField;
+use FormCompose\Field\CompositeType;
+use FormCompose\Field\FieldChildren;
 use FormCompose\Field\FieldDefinition;
+use FormCompose\Field\FieldIdentity;
 use FormCompose\Field\FieldState;
 use FormCompose\Field\FieldTypeInterface;
 use FormCompose\Field\NativeType;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\TemplateOptions;
-use InvalidArgumentException;
 
 /**
  * Builds a BoundField from a context path and merged configuration.
@@ -39,13 +41,15 @@ class FieldResolver
      *
      * @param array<string, mixed> $options Explicit field overrides.
      */
-    public function resolve(string $field, array $options, FormLifecycle $lifecycle): BoundField
-    {
+    public function resolve(
+        string $field,
+        array $options,
+        FormLifecycle $lifecycle,
+        ?BoundField $parent = null,
+    ): BoundField {
         $definition = new FieldDefinition($field);
         $path = $definition->path;
-        $defaults = in_array($path, array_column($this->binding->definition->fields ?? [], 'path'), true)
-            ? $this->binding->definition?->field($path)->options ?? []
-            : [];
+        $defaults = array_column($this->binding->definition->fields ?? [], 'options', 'path')[$path] ?? [];
         $conventions = $this->createFieldConventions();
         $options = array_replace(
             $defaults,
@@ -53,30 +57,25 @@ class FieldResolver
         );
         FieldOptions::validate($options);
         $options = FieldText::resolve(TemplateOptions::normalize($conventions->resolve($path, $options)));
-        $type = (string)($options['type'] ?? $this->inferType($path, $options));
-        if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
-            throw new InvalidArgumentException('Invalid control type.');
-        }
-
-        $parts = explode('.', $path);
-        $first = array_shift($parts);
-        $name = (string)($options['name'] ?? $first . ($parts === [] ? '' : '[' . implode('][', $parts) . ']'));
-        // Preserve path separators and reserve hyphens for generated part suffixes.
-        $id = (string)($options['id'] ?? $this->binding->id . '-' . str_replace('-', ':2d', $path));
-        if ($id === '' || !preg_match('/^[a-zA-Z0-9_.:-]+(?:\[[a-zA-Z0-9_.:-]*\])*$/D', $name)) {
-            throw new InvalidArgumentException('Use a nonempty ID and a valid bracket-notation input name.');
-        }
+        $identity = new FieldIdentity(
+            $path,
+            (string)($options['type'] ?? $this->inferType($path, $options)),
+            $this->binding->id,
+            $options,
+        );
+        $type = $identity->type;
 
         $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $options), [
-            'name' => $name,
-            'id' => $id,
-            'messages' => $conventions->messages($path),
+            'name' => $identity->name,
+            'id' => $identity->id,
+            'messages' => $this->composite($type) ? $conventions->directMessages($path) : $conventions->messages($path),
+            'composite' => $this->composite($type),
             'requiredMessage' => $conventions->requiredMessage($path),
             'constraints' => Constraints::resolve($this->binding->context, $path, $type, $options),
             'options' => $options,
         ]);
 
-        return $this->createBoundField($state, $lifecycle);
+        return $this->createBoundField($state, $lifecycle, $parent);
     }
 
     /**
@@ -106,15 +105,42 @@ class FieldResolver
     /**
      * Create the field object exposed to application templates.
      */
-    protected function createBoundField(FieldState $state, FormLifecycle $lifecycle): BoundField
-    {
+    protected function createBoundField(
+        FieldState $state,
+        FormLifecycle $lifecycle,
+        ?BoundField $parent = null,
+    ): BoundField {
         return new BoundField(
             $state,
             $lifecycle,
-            $this->rendering->renderer,
-            $this->rendering->theme,
+            $this->rendering,
             $this->createFieldType($state->type),
+            $this->createFieldChildren($lifecycle, $parent),
         );
+    }
+
+    /**
+     * Create the child resolver using this same binding and lifecycle.
+     */
+    protected function createFieldChildren(FormLifecycle $lifecycle, ?BoundField $parent = null): FieldChildren
+    {
+        return new FieldChildren(
+            fn(string $path, array $options, BoundField $parent): BoundField => $this->resolve(
+                $path,
+                $options,
+                $lifecycle,
+                $parent,
+            ),
+            $parent,
+        );
+    }
+
+    /**
+     * Inspect discovered metadata without instantiating a custom type.
+     */
+    protected function composite(string $type): bool
+    {
+        return CompositeType::matches($this->rendering->types[$type] ?? null);
     }
 
     /**

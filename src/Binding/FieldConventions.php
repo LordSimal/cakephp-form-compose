@@ -82,6 +82,22 @@ class FieldConventions
     }
 
     /**
+     * Read composite-owned messages without duplicating nested child feedback.
+     *
+     * @return list<string>
+     */
+    public function directMessages(string $path): array
+    {
+        return array_map(
+            static fn(mixed $message): string => (string)$message,
+            array_values(array_filter(
+                $this->binding->context->error($path),
+                static fn(mixed $message): bool => !is_array($message),
+            )),
+        );
+    }
+
+    /**
      * Read the context's required-validation text for the actual validated property.
      */
     public function requiredMessage(string $path): ?string

@@ -35,14 +35,17 @@ class ContactFieldResolver extends FieldResolver
     /**
      * Expose the application's label behavior on every resolved field.
      */
-    protected function createBoundField(FieldState $state, FormLifecycle $lifecycle): BoundField
-    {
+    protected function createBoundField(
+        FieldState $state,
+        FormLifecycle $lifecycle,
+        ?BoundField $parent = null,
+    ): BoundField {
         return new ContactField(
             $state,
             $lifecycle,
-            $this->rendering->renderer,
-            $this->rendering->theme,
+            $this->rendering,
             $this->createFieldType($state->type),
+            $this->createFieldChildren($lifecycle, $parent),
         );
     }
 }

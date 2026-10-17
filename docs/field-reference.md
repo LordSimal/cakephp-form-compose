@@ -20,7 +20,8 @@ resolved state with independently renderable parts. See
 | `id` | `string` | Resolved input ID, also used for feedback associations. |
 | `type` | `string` | Inferred or explicit field type. |
 | `value` | `mixed` | Resolved value, before native rendering formats it. |
-| `messages` | `list<string>` | Flattened context validation messages. |
+| `messages` | `list<string>` | Context validation messages; composites exclude nested child errors. |
+| `composite` | `bool` | Whether the type declares independently bound children. |
 | `requiredMessage` | `?string` | Required-validation text supplied by the CakePHP context, or null. Plain text for application templates and enhancements. |
 | `constraints` | `array<string, mixed>` | Inferred/explicit browser constraints. |
 | `options` | `array<string, mixed>` | Merged field configuration. |
@@ -33,7 +34,7 @@ $hasErrors = $title->state->hasErrors();
 
 | State method | Return and behavior |
 | --- | --- |
-| `grouped(): bool` | True for radio and multi-checkbox controls. |
+| `grouped(): bool` | True for radio, multi-checkbox, and composite controls. |
 | `hasHelp(): bool` | Whether nonempty help is enabled. |
 | `hasErrors(): bool` | Whether messages exist and error rendering is enabled. |
 | `labelText(): string` | Escaped generated/configured label, preserving trusted `Html`. |
@@ -194,3 +195,15 @@ handles registration after successful rendering.
 Application views normally call `input()` instead. See the
 [template reference](./template-reference.md#standard-input-markup) for native
 markup and choice parts.
+
+## Composite children
+
+`$field->inputs` contains the declared relative paths mapped to bound children, or
+`[]` for an ordinary field. Reading it resolves the declarations without rendering
+or registering inputs. Each child supports the same state and field-part API.
+`$field->parent` exposes its enclosing composite, or null for a root field.
+
+`$field->focusTarget` is null until an eligible input renders successfully, then
+contains its actual focus ID. Failed enclosing layouts roll that metadata back.
+Custom types can use `$field->renderer` to render parts through the shared pipeline.
+See [Custom field types](./custom-fields.md) for complete declarations and layouts.

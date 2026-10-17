@@ -9,6 +9,7 @@ use Cake\AttributeResolver\Enum\AttributeTargetType;
 use Cake\Container\ContainerInterface;
 use FormCompose\Attribute\AsFieldType;
 use FormCompose\Attribute\Form;
+use FormCompose\Field\CompositeType;
 use FormCompose\Field\FieldTypeInterface;
 use FormCompose\Field\LazyFieldType;
 use FormCompose\FormBlueprint;
@@ -97,6 +98,7 @@ class BlueprintFactory
         foreach ($this->aliases(AsFieldType::class, FieldTypeInterface::class) as $name => $class) {
             $types[$name] ??= new LazyFieldType(
                 fn(): FieldTypeInterface => $this->createInstance($class, FieldTypeInterface::class),
+                is_subclass_of($class, CompositeType::class),
             );
         }
 

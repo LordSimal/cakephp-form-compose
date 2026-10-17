@@ -385,3 +385,18 @@ echo $form->submit(new Html('<strong>Save article</strong>'));
 `Html::text(string|Html $text): string` escapes ordinary strings and preserves an
 explicit `Html` value. Custom templates should use this method when outputting
 text. Attribute values always go through the attribute bag's escaping.
+
+## Custom widget bodies
+
+[Custom field types](./custom-fields.md) use two additional field body parts:
+
+| Part | Prepared locals | Contract |
+| --- | --- | --- |
+| `widget` | `$field`, `$attributes`, scalar `$value` | `SingleInputType`: emit one editable input with the supplied name and ID. |
+| `composite` | `$field`, `$attributes`, `$inputs` keyed by relative path | `CompositeType`: arrange child controls or their independently renderable parts. |
+
+Both receive `$templateData` and `$parent()`, and support normal layers, variants,
+and explicit `templates` overrides. Outer control elements can access children
+through `$field->inputs`. Composite wrappers retain their supplied ID and feedback
+attributes; remove input-only attributes such as `name` and `required` from a div.
+The type declaration supplies semantics, and the PHP element owns layout.

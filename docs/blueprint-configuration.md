@@ -88,7 +88,7 @@ container substitutions fail instead of silently dropping fields.
 
 `FormComposePlugin::bootstrap()` registers the `formCompose` resolver collection
 only when the application has not already configured it. The defaults scan both
-direct and nested PHP files under `src/Form/` and `src/Field/` in the application
+direct and nested PHP files under `src/Form/`, including `src/Form/Field/`, in the application
 and loaded plugins, using the standard `_cake_core_` cache and file validation.
 Plugin blueprint aliases should be qualified, for example `#[Form('Blog.edit')]`.
 Duplicate form aliases and duplicate custom-type aliases are rejected within
@@ -103,7 +103,6 @@ use Cake\AttributeResolver\AttributeResolver;
 AttributeResolver::setConfig('formCompose', [
     'paths' => [
         'src/Form/*.php', 'src/Form/**/*.php',
-        'src/Field/*.php', 'src/Field/**/*.php',
         'src/Admin/Form/*.php', 'src/Admin/Form/**/*.php',
     ],
     'cache' => '_cake_core_',
@@ -127,72 +126,12 @@ alias index, so it observes the resolver's refreshed collection after clearing.
 
 ## Discover custom field types
 
-Put a PSR-4-autoloadable `FieldTypeInterface` implementation in `src/Field/` and
-mark it with `#[AsFieldType('date-range')]`:
+Put application controls in `src/Form/Field/` under `App\Form\Field`, and mark them
+with `#[AsFieldType('your-type')]`. The dedicated [custom field types guide](./custom-fields.md)
+explains discovery, `CompositeType`, `SingleInputType`, and lower-level contracts,
+with date-range, amount/currency, and Markdown editor examples.
 
-```php [src/Field/DateRangeType.php]
-<?php
-declare(strict_types=1);
-
-namespace App\Field;
-
-use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\Submission;
-use FormCompose\Rendering\Attributes;
-use function Cake\I18n\__;
-
-#[AsFieldType('date-range')]
-class DateRangeType implements FieldTypeInterface
-{
-    public function render(BoundField $field, Attributes $attributes): string
-    {
-        $values = is_array($field->state->value) ? $field->state->value : [];
-        $start = $attributes->replace([
-            'type' => 'date',
-            'name' => $field->state->name . '[start]',
-            'value' => $values['start'] ?? null,
-        ]);
-        $end = $attributes->replace([
-            'type' => 'date',
-            'name' => $field->state->name . '[end]',
-            'id' => $field->state->id . '-end',
-            'value' => $values['end'] ?? null,
-            'aria-label' => __('End date'),
-        ]);
-
-        return '<input' . (string)$start . '><input' . (string)$end . '>';
-    }
-
-    /**
-     * @return list<\FormCompose\Field\Submission>
-     */
-    public function submissions(BoundField $field, Attributes $attributes): array
-    {
-        return $attributes->has('disabled') ? [] : [
-            new Submission($field->state->name . '[start]'),
-            new Submission($field->state->name . '[end]'),
-        ];
-    }
-}
-```
-
-The first input retains the field's ID and label association; the second gets a
-unique ID and an accessible name. Both inherit disabled state and other input
-attributes. See [custom field types](./extending.md#custom-field-types) for the
-rendering and submission contracts.
-
-Select it using a blueprint's `type: 'date-range'` or inline `['type' => 'date-range']`.
-Discovered types use the same factory and constructor injection as blueprints.
-The helper calls `BlueprintFactory::lazyTypes()` to construct each discovered type
-only on its first render or explicit registration, reusing it within that binding.
-Unused types do not need their services to be available. Direct `types()` calls
-retain eager construction for callers that request it;
-explicit `bind(..., ['types' => ['date-range' => $instance]])` registrations win
-without constructing the overridden discovered type.
-
-Discovery and configuration register no submitted fields. Custom controls still
-describe their real submitted inputs through `submissions()`, and registration
-occurs after successful rendering. CSRF, method overrides, disabled controls, and
-locked hidden values retain their existing behavior.
+Custom types share the factory's constructor injection and discovery configuration.
+Explicit binding-level type instances override discovered aliases. Discovery and
+field inspection register no submitted names; successful rendering or explicit
+registration determines the actual protected inputs.

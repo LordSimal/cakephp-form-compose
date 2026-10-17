@@ -28,7 +28,7 @@ class FormComposePlugin extends BasePlugin
         parent::bootstrap($app);
         if (AttributeResolver::getConfig('formCompose') === null) {
             AttributeResolver::setConfig('formCompose', [
-                'paths' => ['src/Form/*.php', 'src/Form/**/*.php', 'src/Field/*.php', 'src/Field/**/*.php'],
+                'paths' => ['src/Form/*.php', 'src/Form/**/*.php'],
                 'cache' => '_cake_core_',
                 'validateFiles' => true,
             ]);

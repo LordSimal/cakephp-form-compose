@@ -29,6 +29,7 @@ part of the form-building workflow.
 - [Choose inline controls or reusable blueprints](https://josbeir.github.io/cakephp-form-compose/definitions.html)
 - [Declare reusable form blueprints](https://josbeir.github.io/cakephp-form-compose/blueprints.html)
 - [Create a PHP template theme](https://josbeir.github.io/cakephp-form-compose/themes.html)
+- [Build custom field widgets](https://josbeir.github.io/cakephp-form-compose/custom-fields.html)
 
 Experimental API. Requires PHP 8.5+ and CakePHP 6 development builds. See the installation guide for setup and compatibility notes.
 

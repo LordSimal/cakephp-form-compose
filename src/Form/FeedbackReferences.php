@@ -48,6 +48,10 @@ class FeedbackReferences
                 $this->expected[$id] = true;
             }
         }
+
+        if ($field->parent instanceof BoundField) {
+            $this->record($field->parent, $attributes);
+        }
     }
 
     /**
