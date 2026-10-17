@@ -77,6 +77,12 @@ to render the selected blueprint, or call `control()` for each field you want to
 arrange manually. Session `render()` renders the complete selected form.
 See [blueprint defaults and manual layouts](./reusable-forms.md#select-defaults-for-the-whole-binding).
 
+Helper option `themeDebug` defaults to `false`. Set it to `true` when loading the
+helper or through `setConfig()` to annotate default PHP rendering with HTML
+comments describing template lookup. It is a helper setting, rather than a binding
+or HTML attribute option. Existing sessions retain their setting, and explicitly
+supplied renderers keep their own diagnostics. See [debug template selection](./themes.md#debug-template-selection).
+
 ### Binding options
 
 | Option | Type | Default and effect |

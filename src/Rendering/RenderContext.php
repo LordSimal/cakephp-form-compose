@@ -33,6 +33,9 @@ final readonly class RenderContext
     /**
      * Assemble view-backed rendering for bound forms and standalone actions.
      *
+     * themeDebug configures only the default PHP renderer. Explicit renderers keep
+     * their own diagnostic behavior and are retained without wrapping or mutation.
+     *
      * @param array<string, \FormCompose\Field\FieldTypeInterface> $types Registered custom types.
      */
     public static function forView(
@@ -40,7 +43,8 @@ final readonly class RenderContext
         Theme $theme,
         ?RendererInterface $renderer = null,
         array $types = [],
+        bool $themeDebug = false,
     ): self {
-        return new self($renderer ?? new PhpRenderer($view, $theme), $theme, $types, $view->get(...));
+        return new self($renderer ?? new PhpRenderer($view, $theme, $themeDebug), $theme, $types, $view->get(...));
     }
 }
