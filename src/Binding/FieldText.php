@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Binding;
 
 use Closure;
+use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
-use FormCompose\Translated;
 use InvalidArgumentException;
 
 /**

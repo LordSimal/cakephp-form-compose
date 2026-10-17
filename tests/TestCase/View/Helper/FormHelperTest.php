@@ -6,7 +6,7 @@ namespace FormCompose\Test\TestCase\View\Helper;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Test\CompositionTestCase;

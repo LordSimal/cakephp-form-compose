@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Blueprint;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\FormDefinition;
+use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Test\CompositionTestCase;
 
 /**

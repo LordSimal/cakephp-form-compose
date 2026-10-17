@@ -5,7 +5,7 @@ namespace FormCompose\Test\TestCase\Binding;
 
 use Cake\ORM\Entity;
 use Cake\View\Form\ArrayContext;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\FormContext;
 use FormCompose\Test\AssociationTestCase;
 use FormCompose\Test\Fixture\Authoring\ScopedArticleForm;
 

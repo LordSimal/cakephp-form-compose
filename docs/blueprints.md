@@ -27,7 +27,7 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('article')]
 #[Field('title', label: 'Article title', help: 'Displayed above the article.')]
@@ -155,7 +155,7 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('article', template: 'forms/article')]
 #[Field('title', label: 'Article title', help: 'Displayed above the article.')]
@@ -169,7 +169,7 @@ class ArticleForm extends FormBlueprint
 ```php [templates/element/forms/article.php]
 <?php
 /**
- * @var \FormCompose\BlueprintView $form
+ * @var \FormCompose\Blueprint\BlueprintView $form
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
@@ -292,9 +292,9 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 use function Cake\I18n\__;
 
 #[Form('article')]
@@ -337,7 +337,7 @@ defaults, check `$form->binding->definition->has('published')` first.
 ## Translate a blueprint
 
 ::: info Future core integration
-`FormCompose\Translated` will likely be replaced by a CakePHP-owned equivalent
+`FormCompose\Form\Field\Translated` will likely be replaced by a CakePHP-owned equivalent
 if this functionality is added to core.
 :::
 
@@ -353,8 +353,8 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
-use FormCompose\Translated;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Form\Field\Translated;
 
 #[Form('article')]
 #[Field(

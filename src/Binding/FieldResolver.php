@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
-use FormCompose\Field\BoundField;
-use FormCompose\Field\CompositeType;
-use FormCompose\Field\FieldChildren;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\Field\FieldIdentity;
-use FormCompose\Field\FieldState;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\NativeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldChildren;
+use FormCompose\Form\Field\FieldDefinition;
+use FormCompose\Form\Field\FieldIdentity;
+use FormCompose\Form\Field\FieldState;
+use FormCompose\Form\Field\FieldTypeInterface;
+use FormCompose\Form\Field\NativeType;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\TemplateOptions;

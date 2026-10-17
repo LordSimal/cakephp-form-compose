@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
-use FormCompose\Field\BoundField;
+use FormCompose\Form\Field\BoundField;
 
 /**
  * Describes one successful PHP element lookup for optional HTML comment diagnostics.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Attribute;
 
 use Attribute;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Blueprint\RepeatedDefinition;
 
 /**
  * Repeats a child blueprint at an association path, preserving its row keys.

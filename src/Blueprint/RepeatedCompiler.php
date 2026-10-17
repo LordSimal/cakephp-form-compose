@@ -4,9 +4,6 @@ declare(strict_types=1);
 namespace FormCompose\Blueprint;
 
 use Closure;
-use FormCompose\FormContext;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
 
 /**
  * Compiles one repeated blueprint occurrence into independent row embeds.
@@ -19,7 +16,7 @@ class RepeatedCompiler
     /**
      * Reuse the caller's blueprint resolver, including dependency injection and cycles.
      *
-     * @param \Closure(string, \FormCompose\FormContext): \FormCompose\FormDefinition $resolve Blueprint construction.
+     * @param \Closure(string, \FormCompose\Blueprint\FormContext): \FormCompose\Blueprint\FormDefinition $resolve Blueprint construction.
      */
     public function __construct(protected readonly Closure $resolve)
     {

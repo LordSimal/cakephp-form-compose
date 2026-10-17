@@ -5,7 +5,7 @@ description: Inspect BoundField state and look up rendering, attribute, and hand
 
 # Bound fields
 
-`$form->field()` returns a `FormCompose\Field\BoundField`. It connects immutable
+`$form->field()` returns a `FormCompose\Form\Field\BoundField`. It connects immutable
 resolved state with independently renderable parts. See
 [Compose field parts](./field-parts.md) for a full view example.
 

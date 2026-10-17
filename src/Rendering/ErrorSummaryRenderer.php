@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Rendering;
 
 use FormCompose\Binding\FieldOptions;
+use FormCompose\Form\FormSession;
 use FormCompose\Form\InputRegistry;
-use FormCompose\FormSession;
 use InvalidArgumentException;
 use function Cake\I18n\__;
 

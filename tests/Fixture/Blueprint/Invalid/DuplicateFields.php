@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Blueprint\Invalid;
 
 use FormCompose\Attribute\Field;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Rejects duplicate declarations on the same blueprint class.

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Repeat;
 
 use FormCompose\Attribute\Embed;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Verifies relative repetition and occurrence wrappers inside an ordinary embed.

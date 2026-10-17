@@ -5,9 +5,9 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Supplies relative fields and a custom layout for each author occurrence.

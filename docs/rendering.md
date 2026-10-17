@@ -58,7 +58,7 @@ A control element is an ordinary CakePHP PHP element:
 ```php [templates/element/forms/email.php]
 <?php
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>

@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Translation;
 
 use FormCompose\Attribute\Field;
-use FormCompose\FormBlueprint;
-use FormCompose\Translated;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Form\Field\Translated;
 
 /**
  * Supplies locale-independent attribute metadata with context and arguments.

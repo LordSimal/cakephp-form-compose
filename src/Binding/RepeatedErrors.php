@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
-use FormCompose\FormContext;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Extracts collection-owned feedback without flattening errors from its child rows.

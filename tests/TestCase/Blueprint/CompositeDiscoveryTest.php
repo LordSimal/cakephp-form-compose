@@ -6,7 +6,7 @@ namespace FormCompose\Test\TestCase\Blueprint;
 use Cake\AttributeResolver\AttributeResolver;
 use Cake\Container\Container;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\Field\SingleInputType;
+use FormCompose\Form\Field\SingleInputType;
 use FormCompose\Test\BlueprintTestCase;
 use FormCompose\Test\Fixture\Blueprint\Lazy\TypeProbe;
 use FormCompose\Test\Fixture\Widget\DateRangeType;

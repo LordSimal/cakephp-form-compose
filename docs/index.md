@@ -42,7 +42,7 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 ```php [templates/element/forms/article-title.php]
 <?php
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>

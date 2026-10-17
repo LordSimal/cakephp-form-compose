@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition\Invalid;
 
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Attempts recursive composition from a runtime hook.

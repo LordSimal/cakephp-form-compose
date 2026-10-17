@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture;
 
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\Submission;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldTypeInterface;
+use FormCompose\Form\Field\Submission;
 use FormCompose\Rendering\Attributes;
 
 /**
@@ -31,7 +31,7 @@ final class RangeType implements FieldTypeInterface
     /**
      * Describe every submitted input independently of its presentation.
      *
-     * @return list<\FormCompose\Field\Submission>
+     * @return list<\FormCompose\Form\Field\Submission>
      */
     public function submissions(BoundField $field, Attributes $attributes): array
     {

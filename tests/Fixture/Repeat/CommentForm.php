@@ -5,9 +5,9 @@ namespace FormCompose\Test\Fixture\Repeat;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Records per-row hook calls and uses relative source-aware values.

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-/** @var \FormCompose\BlueprintView $form */
+/** @var \FormCompose\Blueprint\BlueprintView $form */
 ?>
 <article data-post>
     <?= $form->control('title') ?>

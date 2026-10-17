@@ -19,7 +19,7 @@ final readonly class RenderContext
     /**
      * Collect the renderer, theme, and optional custom field implementations.
      *
-     * @param array<string, \FormCompose\Field\FieldTypeInterface> $types Registered custom types.
+     * @param array<string, \FormCompose\Form\Field\FieldTypeInterface> $types Registered custom types.
      * @param \Closure(string): mixed|null $viewVariable Live view-variable lookup for choice lists.
      */
     public function __construct(
@@ -36,7 +36,7 @@ final readonly class RenderContext
      * themeDebug configures only the default PHP renderer. Explicit renderers keep
      * their own diagnostic behavior and are retained without wrapping or mutation.
      *
-     * @param array<string, \FormCompose\Field\FieldTypeInterface> $types Registered custom types.
+     * @param array<string, \FormCompose\Form\Field\FieldTypeInterface> $types Registered custom types.
      */
     public static function forView(
         View $view,

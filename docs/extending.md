@@ -71,7 +71,7 @@ namespace App\View\Helper;
 use App\Form\AppFormSession;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\View\Helper\FormHelper;
 
@@ -94,7 +94,7 @@ declare(strict_types=1);
 namespace App\Form;
 
 use FormCompose\Binding\FieldResolver;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 
 class AppFormSession extends FormSession
 {

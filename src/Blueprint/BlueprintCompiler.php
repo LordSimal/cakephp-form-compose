@@ -6,12 +6,6 @@ namespace FormCompose\Blueprint;
 use Closure;
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\EmbedMany;
-use FormCompose\BlueprintBuilder;
-use FormCompose\EmbeddedDefinition;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
 
 /**
  * Compiles inherited declarations and nested blueprints before the parent's hook.
@@ -25,7 +19,7 @@ class BlueprintCompiler
     /**
      * Resolve child blueprints through the owning factory.
      *
-     * @param \Closure(string, \FormCompose\FormContext): \FormCompose\FormDefinition $resolver Scoped blueprint construction.
+     * @param \Closure(string, \FormCompose\Blueprint\FormContext): \FormCompose\Blueprint\FormDefinition $resolver Scoped blueprint construction.
      */
     public function __construct(protected readonly Closure $resolver)
     {

@@ -108,7 +108,7 @@ code supplies blueprint class names or discovered aliases to binding and renderi
 
 ## Translated text
 
-`FormCompose\Translated` is an immutable message value for field labels/help:
+`FormCompose\Form\Field\Translated` is an immutable message value for field labels/help:
 
 ```php
 public function __construct(
@@ -134,7 +134,7 @@ results or implement implicit string conversion. See
 public function configure(BlueprintBuilder $form, FormContext $context): void;
 ```
 
-Override this hook on `FormCompose\FormBlueprint` for dynamic configuration.
+Override this hook on `FormCompose\Blueprint\FormBlueprint` for dynamic configuration.
 Attributes establish the starting configuration; embedded children resolve before
 the parent's hook. The compiler-supplied `BlueprintBuilder` is mutable:
 
@@ -147,7 +147,7 @@ the parent's hook. The compiler-supplied `BlueprintBuilder` is mutable:
 | `presentation(array $options): static` | Set blueprint layout options. |
 
 ```php
-// In a blueprint class; import FormCompose\BlueprintBuilder and FormCompose\FormContext.
+// In a blueprint class; import FormCompose\Blueprint\BlueprintBuilder and FormCompose\Blueprint\FormContext.
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->with('title', ['help' => 'Displayed above the article.']);
@@ -164,7 +164,7 @@ The builder's required collaborators and `build()` snapshot belong to
 
 ## FormContext
 
-The hook receives `FormCompose\FormContext`:
+The hook receives `FormCompose\Blueprint\FormContext`:
 
 | API | Meaning |
 | --- | --- |
@@ -199,7 +199,7 @@ usual references. Request-dependent configuration is not cached as discovery met
 
 ## BlueprintView
 
-Inside a blueprint layout, `$form` is a scoped `FormCompose\BlueprintView`,
+Inside a blueprint layout, `$form` is a scoped `FormCompose\Blueprint\BlueprintView`,
 not the outer `FormSession`. It cannot open or close a form.
 
 | Signature | Behavior |

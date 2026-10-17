@@ -82,7 +82,7 @@ Create this file in the selected layer:
 declare(strict_types=1);
 
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
@@ -306,7 +306,7 @@ checkbox, and grouped choices, start with a generic control element:
 declare(strict_types=1);
 
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';

@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use FormCompose\Binding\FieldPath;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\ErrorTargetProviderInterface;
-use FormCompose\Field\FieldTypeInterface;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\ErrorTargetProviderInterface;
+use FormCompose\Form\Field\FieldTypeInterface;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
 use InvalidArgumentException;

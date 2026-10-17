@@ -1,0 +1,107 @@
+<?php
+declare(strict_types=1);
+
+namespace FormCompose\Test\TestCase\Blueprint;
+
+use ArrayIterator;
+use Cake\View\Form\ArrayContext;
+use FormCompose\Blueprint\BlueprintView;
+use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Test\Fixture\Authoring\BodyOccurrenceForm;
+use FormCompose\Test\Fixture\Authoring\EmptyForm;
+use FormCompose\Test\Fixture\Authoring\NestedPostsForm;
+use FormCompose\Test\Fixture\Composition\CustomCompositionHelper;
+use FormCompose\Test\Fixture\Repeat\CommentForm;
+use FormCompose\Test\FormTestCase;
+use InvalidArgumentException;
+
+/**
+ * Verifies row layouts, nested repetition, and normal service extension boundaries.
+ */
+class RepeatedRenderingTest extends FormTestCase
+{
+    public function testNestedRepeatedDefinitionsKeepAbsoluteNamesAndRelativeViews(): void
+    {
+        $form = $this->helper([
+            'posts' => ['draft' => ['comments' => [3 => ['body' => 'Nested']]]],
+        ])->bind(blueprint: NestedPostsForm::class);
+        static::assertTrue($form->binding->definition?->has('posts.draft.comments.3.body'));
+        static::assertStringContainsString('name="posts[draft][comments][3][body]"', $form->render());
+    }
+
+    public function testQuerySourcesAndContextIterablesPreserveKeys(): void
+    {
+        $helper = $this->helper();
+        $helper->getView()->setRequest($helper->getView()
+            ->getRequest()
+            ->withQueryParams(['comments' => [4 => ['id' => 4, 'body' => 'Query']]]));
+        $form = $helper->bind(null, ['valueSources' => ['query']]);
+        $form->open();
+        static::assertStringContainsString('Query', $form->embedMany('comments', CommentForm::class));
+        $form->close();
+        $other = $this->helper()->bind(new ArrayContext(['defaults' => ['comments' => new ArrayIterator(['new' => [
+            'body' => 'Iterable',
+        ]])]]));
+        $other->open();
+        static::assertStringContainsString('comments[new][body]', $other->embedMany('comments', CommentForm::class));
+        $other->close();
+    }
+
+    public function testCustomBlueprintViewsAreUsedForRepeatedRows(): void
+    {
+        $helper = new CustomCompositionHelper($this->helper(['comments' => [0 => ['body' => 'Value']]])->getView());
+        $form = $helper->bind();
+        $form->open();
+        static::assertStringContainsString('Application layout field', $form->embedMany(
+            'comments',
+            CommentForm::class,
+        ));
+        $form->close();
+    }
+
+    public function testConfiguredOccurrenceTemplateCanBeOverriddenWithoutChangingChildLayout(): void
+    {
+        $form = $this->helper()->bind(blueprint: BodyOccurrenceForm::class);
+        static::assertNotNull($form->binding->definition);
+        $view = new BlueprintView($form, $form->binding->definition);
+        $form->open();
+        $html = $view->embedded('author', ['templates' => ['control' => 'repeat/post-wrapper']]);
+        static::assertStringContainsString('post-wrapper', $html);
+        static::assertNotNull($form->binding->definition);
+        static::assertArrayNotHasKey('template', $form->binding->definition->embedded('author')->options);
+        $form->close();
+    }
+
+    public function testUnknownRepeatedMountIsRejected(): void
+    {
+        $form = $this->helper()->bind();
+        $view = new BlueprintView($form, new FormDefinition([]));
+        $this->expectException(InvalidArgumentException::class);
+        $view->embeddedMany('missing');
+    }
+
+    public function testAnExplicitlyRemovedRepeatProducesNoMarkup(): void
+    {
+        $form = $this->helper()->bind();
+        $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', EmptyForm::class))->remove(
+            'comments',
+        );
+        static::assertSame('', new BlueprintView($form, $definition)->embeddedMany('comments'));
+    }
+
+    public function testInferredInvalidKeysFailBeforeInputRegistration(): void
+    {
+        $form = $this->helper(['comments' => ['bad.key' => []]])->bind();
+        $form->open();
+        try {
+            $form->embedMany('comments', CommentForm::class);
+            static::fail('Expected invalid inferred keys to fail.');
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            static::assertStringContainsString('valid field-path segments', $invalidArgumentException->getMessage());
+        }
+
+        static::assertStringContainsString('name="comments"', $form->control('comments', ['value' => 'Retry']));
+        $form->close();
+    }
+}

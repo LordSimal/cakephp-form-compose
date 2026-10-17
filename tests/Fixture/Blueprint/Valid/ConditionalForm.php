@@ -5,9 +5,9 @@ namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Reads injected choices, bound metadata and per-request conditions without retaining state.

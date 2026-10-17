@@ -144,9 +144,9 @@ Blueprint field attributes accept the same configuration:
 
 ```php
 use FormCompose\Attribute\Field;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 #[Field('status', options: ['options' => Status::class])]
 class ArticleForm extends FormBlueprint

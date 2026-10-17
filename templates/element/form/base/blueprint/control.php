@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-use FormCompose\EmbeddedDefinition;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Blueprint\EmbeddedDefinition;
+use FormCompose\Blueprint\RepeatedDefinition;
 
 /**
- * @var \FormCompose\BlueprintView $form
- * @var \FormCompose\FormDefinition $definition
+ * @var \FormCompose\Blueprint\BlueprintView $form
+ * @var \FormCompose\Blueprint\FormDefinition $definition
  */
 foreach ($definition->entries as $entry) {
     echo match (true) {

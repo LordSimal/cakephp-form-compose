@@ -5,8 +5,8 @@ namespace FormCompose\Test\TestCase\Rendering;
 
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\Form\FormSession;
 use FormCompose\Form\PostAction;
-use FormCompose\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\PostActionRenderer;

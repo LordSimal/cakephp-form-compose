@@ -9,13 +9,9 @@ use Cake\AttributeResolver\Enum\AttributeTargetType;
 use Cake\Container\ContainerInterface;
 use FormCompose\Attribute\AsFieldType;
 use FormCompose\Attribute\Form;
-use FormCompose\Field\CompositeType;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\LazyFieldType;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldTypeInterface;
+use FormCompose\Form\Field\LazyFieldType;
 use InvalidArgumentException;
 use LogicException;
 use ReflectionClass;
@@ -72,8 +68,8 @@ class BlueprintFactory
     /**
      * Construct discovered controls, allowing explicit instances to win without construction.
      *
-     * @param array<string, \FormCompose\Field\FieldTypeInterface> $overrides Explicit per-form types.
-     * @return array<string, \FormCompose\Field\FieldTypeInterface>
+     * @param array<string, \FormCompose\Form\Field\FieldTypeInterface> $overrides Explicit per-form types.
+     * @return array<string, \FormCompose\Form\Field\FieldTypeInterface>
      */
     public function types(array $overrides = []): array
     {
@@ -91,8 +87,8 @@ class BlueprintFactory
      * Each binding gets independent proxies. Explicit instances win without invoking
      * the discovered constructor. types() remains available for eager construction.
      *
-     * @param array<string, \FormCompose\Field\FieldTypeInterface> $overrides Explicit per-form types.
-     * @return array<string, \FormCompose\Field\FieldTypeInterface>
+     * @param array<string, \FormCompose\Form\Field\FieldTypeInterface> $overrides Explicit per-form types.
+     * @return array<string, \FormCompose\Form\Field\FieldTypeInterface>
      */
     public function lazyTypes(array $overrides = []): array
     {

@@ -4,11 +4,11 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Summary;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\ErrorTargetProviderInterface;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\InputIdentityProviderInterface;
-use FormCompose\Field\Submission;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\ErrorTargetProviderInterface;
+use FormCompose\Form\Field\FieldTypeInterface;
+use FormCompose\Form\Field\InputIdentityProviderInterface;
+use FormCompose\Form\Field\Submission;
 use FormCompose\Rendering\Attributes;
 
 /**
@@ -38,7 +38,7 @@ class RangeType implements FieldTypeInterface, InputIdentityProviderInterface, E
         );
     }
 
-    /** @return list<\FormCompose\Field\Submission> */
+    /** @return list<\FormCompose\Form\Field\Submission> */
     public function submissions(BoundField $field, Attributes $attributes): array
     {
         return (

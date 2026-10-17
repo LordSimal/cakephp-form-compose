@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace FormCompose\Form;
 
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldTypeInterface;
-use FormCompose\Field\NativeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldTypeInterface;
+use FormCompose\Form\Field\NativeType;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\AttributeTokens;
 use LogicException;

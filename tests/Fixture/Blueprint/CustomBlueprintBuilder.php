@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Blueprint;
 
-use FormCompose\BlueprintBuilder;
+use FormCompose\Blueprint\BlueprintBuilder;
 
 /**
  * Adds application-owned help to runtime fields through the compiler's builder.

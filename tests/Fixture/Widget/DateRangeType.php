@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Widget;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\CompositeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
 
 /**
  * Reuses date input semantics across independent PHP layouts.

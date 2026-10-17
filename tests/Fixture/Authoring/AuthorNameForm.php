@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Authoring;
 
 use FormCompose\Attribute\Embed;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Supplies a minimal blueprint for application authoring integration tests.

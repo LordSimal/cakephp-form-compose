@@ -6,9 +6,9 @@ namespace FormCompose\Test\Fixture\Repeat;
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Overrides compiled rows after all child hooks have run.

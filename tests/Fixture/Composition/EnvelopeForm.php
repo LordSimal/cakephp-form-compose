@@ -5,7 +5,7 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Tests multi-level scope composition with the original request.

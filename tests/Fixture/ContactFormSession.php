@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture;
 
 use FormCompose\Binding\FieldResolver;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 
 /**
  * Applies contact-field conventions while retaining the normal form lifecycle.

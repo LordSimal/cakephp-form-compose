@@ -6,7 +6,7 @@ description: Signatures, options, return values, and lifecycle contracts for the
 # Helper and form session
 
 `$this->Form` is `FormCompose\View\Helper\FormHelper`. Its `bind()` method returns
-a `FormCompose\FormSession`, called `$form` throughout these docs. These objects
+a `FormCompose\Form\FormSession`, called `$form` throughout these docs. These objects
 have different jobs and methods. Follow [Your first form](./getting-started.md)
 for a walkthrough, or jump directly to [field options](./field-options.md).
 

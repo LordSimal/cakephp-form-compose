@@ -163,7 +163,7 @@ declare(strict_types=1);
 use FormCompose\Rendering\Html;
 
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array{prefix: string} $templateData
  */

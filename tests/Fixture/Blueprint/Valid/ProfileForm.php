@@ -5,7 +5,7 @@ namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Supplies static configuration and explicit false/null/zero values for binding tests.

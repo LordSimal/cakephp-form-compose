@@ -7,8 +7,7 @@ use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormBlueprint;
+use FormCompose\Form\Field\FieldDefinition;
 use InvalidArgumentException;
 use ReflectionClass;
 
@@ -23,7 +22,7 @@ final class BlueprintDeclarations
     /**
      * Read class attributes in parent-to-child order without constructing embeds.
      *
-     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
+     * @return array{entries: array<string, \FormCompose\Form\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
      */
     public static function read(FormBlueprint $blueprint): array
     {
@@ -34,7 +33,7 @@ final class BlueprintDeclarations
             $reflection = $parent;
         }
 
-        /** @var array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany> $entries */
+        /** @var array<string, \FormCompose\Form\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany> $entries */
         $entries = [];
         $options = [];
         foreach ($hierarchy as $level) {
@@ -59,8 +58,8 @@ final class BlueprintDeclarations
     /**
      * Read one class while enforcing uniqueness independently of inheritance.
      *
-     * @param \ReflectionClass<\FormCompose\FormBlueprint>|\ReflectionClass<object> $level One inheritance level.
-     * @return array{entries: array<string, \FormCompose\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
+     * @param \ReflectionClass<\FormCompose\Blueprint\FormBlueprint>|\ReflectionClass<object> $level One inheritance level.
+     * @return array{entries: array<string, \FormCompose\Form\Field\FieldDefinition|\FormCompose\Attribute\Embed|\FormCompose\Attribute\EmbedMany>, options: array<string, mixed>}
      */
     private static function level(ReflectionClass $level): array
     {

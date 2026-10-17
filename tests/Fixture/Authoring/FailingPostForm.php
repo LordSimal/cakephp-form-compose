@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Authoring;
 
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormContext;
 use FormCompose\Test\Fixture\Composition\PostForm;
 
 /**

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Widget;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\SingleInputType;
+use FormCompose\Form\Field\SingleInputType;
 
 /**
  * Keeps one native textarea usable before an optional editor enhancement loads.

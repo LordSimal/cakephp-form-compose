@@ -10,9 +10,9 @@ use Cake\View\Helper\HtmlHelper;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Binding\TypeMap;
 use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\Blueprint\FormContext;
 use FormCompose\Form\FormIds;
-use FormCompose\FormContext;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PostActionRenderer;
 use FormCompose\Rendering\RenderContext;
@@ -168,7 +168,7 @@ class FormHelper extends Helper
             TypeMap::normalize($this->getConfig('typeMap', [])),
             TypeMap::normalize(array_key_exists('typeMap', $options) ? $options['typeMap'] : []),
         );
-        /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
+        /** @var array<string, \FormCompose\Form\Field\FieldTypeInterface> $types */
         $types = $options['types'] ?? [];
         /** @var ContextFactory|null $contextFactory */
         $contextFactory = $this->getConfig('contextFactory');

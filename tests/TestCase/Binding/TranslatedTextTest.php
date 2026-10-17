@@ -7,9 +7,9 @@ use Cake\Cache\Cache;
 use Cake\I18n\I18n;
 use Cake\I18n\Package;
 use Cake\View\Form\ArrayContext;
+use FormCompose\Form\Field\Translated;
 use FormCompose\Test\Fixture\Translation\MessageForm;
 use FormCompose\Test\FormTestCase;
-use FormCompose\Translated;
 use RuntimeException;
 
 /**

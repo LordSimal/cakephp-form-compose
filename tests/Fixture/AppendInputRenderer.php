@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture;
 
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 use FormCompose\Rendering\RendererInterface;
 use FormCompose\Rendering\RenderNode;
 
