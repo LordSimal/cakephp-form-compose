@@ -5,12 +5,16 @@ namespace FormCompose\Test\Fixture\Http\Controller;
 
 use Cake\Controller\Controller;
 use Cake\Http\Response;
+use Cake\Routing\Attribute\Get;
+use Cake\Routing\Attribute\Route;
+use Cake\Routing\Attribute\Scope;
 use Cake\View\View;
 use FormCompose\View\Helper\FormHelper;
 
 /**
  * Exercises standalone actions alongside a parent form through real HTTP security.
  */
+#[Scope('/actions')]
 class ActionsController extends Controller
 {
     /**
@@ -26,6 +30,7 @@ class ActionsController extends Controller
     /**
      * Render native, enhanced, and externally associated actions under a strict CSP.
      */
+    #[Get('')]
     public function index(): Response
     {
         $request = $this->getRequest()->withAttribute('cspScriptNonce', 'fixture-actions');
@@ -76,6 +81,7 @@ class ActionsController extends Controller
     /**
      * Return the actual effective method and payload after CSRF and tamper checks.
      */
+    #[Route('/save', methods: ['POST', 'PUT', 'PATCH', 'DELETE'])]
     public function save(): Response
     {
         $this->getRequest()->allowMethod(['post', 'put', 'patch', 'delete']);

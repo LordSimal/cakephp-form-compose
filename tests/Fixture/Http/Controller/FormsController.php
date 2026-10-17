@@ -8,6 +8,9 @@ use Cake\Database\Type\EnumType;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\I18n\Time;
+use Cake\Routing\Attribute\Get;
+use Cake\Routing\Attribute\Post;
+use Cake\Routing\Attribute\Scope;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
 use DateTimeImmutable;
@@ -20,6 +23,7 @@ use FormCompose\View\Helper\FormHelper;
 /**
  * Exercises application-owned markup and real Cake form protection over HTTP.
  */
+#[Scope('/forms')]
 class FormsController extends Controller
 {
     /**
@@ -35,6 +39,7 @@ class FormsController extends Controller
     /**
      * Render representative native controls using the documented starter theme.
      */
+    #[Get('')]
     public function index(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
@@ -109,6 +114,7 @@ class FormsController extends Controller
     /**
      * Render temporal objects for browser normalization and protected round trips.
      */
+    #[Get('/temporal')]
     public function temporal(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
@@ -148,6 +154,7 @@ class FormsController extends Controller
     /**
      * Compose inputs with both rendered and handwritten accessible feedback.
      */
+    #[Get('/composition')]
     public function composition(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
@@ -166,6 +173,7 @@ class FormsController extends Controller
     /**
      * Discover schema enum choices for native select and radio submissions.
      */
+    #[Get('/enums')]
     public function enums(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
@@ -204,6 +212,7 @@ class FormsController extends Controller
     /**
      * Return only submissions accepted by CSRF and FormProtectionComponent.
      */
+    #[Post('/save')]
     public function save(): Response
     {
         $this->getRequest()->allowMethod(['post']);

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Http;
 
+use Cake\AttributeResolver\AttributeResolver;
 use Cake\Core\Configure;
 use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
@@ -26,6 +27,14 @@ class FormsApplication extends BaseApplication
     {
         Configure::write('App.namespace', __NAMESPACE__);
         Router::reload();
+        AttributeResolver::drop('formComposeHttp');
+        AttributeResolver::setConfig('formComposeHttp', [
+            'basePath' => __DIR__,
+            'paths' => ['Controller/*.php'],
+            'cache' => false,
+        ]);
+        // Discover application controllers before this repository is registered as a plugin.
+        AttributeResolver::collection('formComposeHttp');
         $this->addPlugin(new FormComposePlugin(['path' => dirname(__DIR__, 3) . '/']));
     }
 
@@ -41,16 +50,10 @@ class FormsApplication extends BaseApplication
     }
 
     /**
-     * Expose only the two test actions.
+     * Discover the form and action browser fixtures from their controller attributes.
      */
     public function routes(RouteBuilder $routes): void
     {
-        $routes->connect('/forms', ['controller' => 'Forms', 'action' => 'index']);
-        $routes->connect('/forms/save', ['controller' => 'Forms', 'action' => 'save']);
-        $routes->connect('/forms/temporal', ['controller' => 'Forms', 'action' => 'temporal']);
-        $routes->connect('/forms/composition', ['controller' => 'Forms', 'action' => 'composition']);
-        $routes->connect('/forms/enums', ['controller' => 'Forms', 'action' => 'enums']);
-        $routes->connect('/actions', ['controller' => 'Actions', 'action' => 'index']);
-        $routes->connect('/actions/save', ['controller' => 'Actions', 'action' => 'save']);
+        $routes->connectAttributes('formComposeHttp');
     }
 }
