@@ -84,7 +84,7 @@ class FieldResolver
      */
     protected function inferType(string $path, array $options): string
     {
-        if (in_array(array_last(explode('.', $path)), ['password', 'passwd'], true)) {
+        if (in_array(array_last(explode('.', $path)), $this->binding->passwordFields, true)) {
             return 'password';
         }
 

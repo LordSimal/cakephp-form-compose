@@ -36,11 +36,11 @@ use InvalidArgumentException;
 class FormHelper extends Helper
 {
     /**
-     * Default presentation for bindings and standalone action helpers.
+     * Default presentation and password-name conventions for new bindings.
      *
      * @var array<string, mixed>
      */
-    protected array $defaultConfig = ['theme' => 'Base'];
+    protected array $defaultConfig = ['theme' => 'Base', 'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS];
 
     protected int $sequence = 0;
 
@@ -124,6 +124,7 @@ class FormHelper extends Helper
         ?string $definition = null,
     ): FormSession {
         $view = $this->getView();
+        $options += ['passwordFields' => $this->getConfig('passwordFields', FormBinding::DEFAULT_PASSWORD_FIELDS)];
         /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
         $types = $options['types'] ?? [];
         /** @var ContextFactory|null $contextFactory */

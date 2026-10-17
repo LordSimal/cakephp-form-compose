@@ -54,7 +54,11 @@ and foreign-key paths ending in `_id` become selects. Other fields whose final
 path segment is `password` or `passwd` infer a password input, including nested
 paths. Password inference takes precedence over choice-list discovery and never
 prefills the input from request, context, default, or explicit values. An explicit
-`type` still wins. For other fields, an explicit `options` list, or a discovered
+`type` still wins. Configure helper or binding `passwordFields` to replace these
+terminal names; include the defaults when adding application-specific names.
+Native non-choice controls do not consume choice iterators or reserve choice IDs,
+even when their configuration includes `options`.
+For other fields, an explicit `options` list, or a discovered
 conventional choice list, infers a select.
 
 | Context type | Control type |
