@@ -8,15 +8,15 @@ declare(strict_types=1);
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>
 <<?= $tag ?><?= (string)$attributes->merge(['class' => 'form-field']) ?>>
-    <?php if ($field->state->type === 'checkbox') { ?>
+    <?php if ($field->state->type === 'checkbox'): ?>
         <div class="checkbox-row">
             <?= $field->input() ?>
             <?= $field->label() ?>
         </div>
-    <?php } else { ?>
+    <?php else: ?>
         <?= $field->label() ?>
         <?= $field->input() ?>
-    <?php } ?>
+    <?php endif; ?>
     <?= $field->help() ?>
     <?= $field->errors() ?>
 </<?= $tag ?>>

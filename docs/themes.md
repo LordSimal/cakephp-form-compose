@@ -212,15 +212,15 @@ declare(strict_types=1);
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>
 <<?= $tag ?><?= (string)$attributes->merge(['class' => 'form-field']) ?>>
-    <?php if ($field->state->type === 'checkbox') { ?>
+    <?php if ($field->state->type === 'checkbox'): ?>
         <div class="checkbox-row">
             <?= $field->input() ?>
             <?= $field->label() ?>
         </div>
-    <?php } else { ?>
+    <?php else: ?>
         <?= $field->label() ?>
         <?= $field->input() ?>
-    <?php } ?>
+    <?php endif; ?>
     <?= $field->help() ?>
     <?= $field->errors() ?>
 </<?= $tag ?>>
@@ -270,17 +270,50 @@ Add these classes to your application's existing stylesheet, adjusting colors
 to your design system:
 
 ```css
-.form-field { border: 0; margin: 0 0 1.25rem; padding: 0; }
-.field-label { display: block; font-weight: 600; margin-bottom: .375rem; }
-.field-input:not([type="checkbox"]):not([type="radio"]) {
-  box-sizing: border-box; width: 100%; padding: .625rem;
-  border: 1px solid #64748b; border-radius: .375rem;
+.form-field {
+  border: 0;
+  margin: 0 0 1.25rem;
+  padding: 0;
 }
-.checkbox-row { display: flex; align-items: baseline; gap: .5rem; }
-.choice-input { margin-right: .5rem; }
-.field-help { margin-top: .375rem; color: #475569; }
-.field-errors { margin-top: .375rem; color: #b91c1c; }
-[aria-invalid="true"] { outline: 2px solid #b91c1c; outline-offset: 2px; }
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: .375rem;
+}
+
+.field-input:not([type="checkbox"]):not([type="radio"]) {
+  box-sizing: border-box;
+  width: 100%;
+  padding: .625rem;
+  border: 1px solid #64748b;
+  border-radius: .375rem;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+}
+
+.choice-input {
+  margin-right: .5rem;
+}
+
+.field-help {
+  margin-top: .375rem;
+  color: #475569;
+}
+
+.field-errors {
+  margin-top: .375rem;
+  color: #b91c1c;
+}
+
+[aria-invalid="true"] {
+  outline: 2px solid #b91c1c;
+  outline-offset: 2px;
+}
 ```
 
 The browser regression suite uses this control element and the same defaults

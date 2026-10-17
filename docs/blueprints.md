@@ -218,11 +218,11 @@ In the layout above, replace `controls(['title', 'body'])` with this fragment:
     $showHint = $title->state->options['templateData']['showHint'] ?? false;
     $disabled = $title->attributes()->has('disabled');
 
-    if ($showHint && $isEmpty && !$disabled) {
+    if ($showHint && $isEmpty && !$disabled):
         $title = $form->field('title', [
             'help' => 'Give this article a title before publishing.',
         ]);
-    }
+    endif;
     ?>
     <?= $title->control() ?>
 <?php endif; ?>

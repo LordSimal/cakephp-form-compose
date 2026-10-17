@@ -18,6 +18,7 @@ These instructions apply to the entire plugin repository.
 
 - Declare supported PHP and CakePHP versions explicitly in Composer and test that supported matrix in CI. Use modern PHP features within the declared minimum version.
 - Follow CakePHP conventions and the CakePHP Mago preset. Use `declare(strict_types=1);` in PHP classes and executable support scripts.
+- Use PHP alternative control syntax (`if: ... endif;`, `foreach: ... endforeach;`) in templates and template examples.
 - Use a dedicated plugin namespace, PSR-4 autoloading, and Composer package type `cakephp-plugin`.
 - Follow the standard plugin structure: `src/`, `templates/`, `config/`, and `tests/`, adding directories only when needed. Keep tests under `tests/TestCase/` and fixtures under `tests/Fixture/`.
 - Use CakePHP's plugin lifecycle and dependency injection facilities. Avoid global state, hidden service lookups, and host-application-specific assumptions.
@@ -104,6 +105,7 @@ Composer scripts resolve dependency binaries from `vendor/bin`. For direct execu
 - Keep the README concise and link to the documentation site. The site owns the full explanation: show the problem and a control call connected to its PHP element before detailed setup, recipes, and reference material.
 - Keep the homepage short, with a few tabbed code examples. Put conceptual explanations, recipes, and detailed contracts in the guides and reference pages.
 - Prefer built-in navigation, local search, code groups, callouts, and details blocks over custom Vue components when they meet the need.
+- Write CSS examples as multiline rule blocks with one declaration per line.
 - Run `npm ci` and `npm run docs:build` for documentation-site changes. Fix broken links rather than disabling VitePress's link checks.
 - Keep the repository Pages base path configured, and publish only from `main`. Pull requests must build the site without deploying it.
 - Commit the npm lockfile; exclude installed dependencies, VitePress caches, and build output.
