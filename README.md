@@ -33,6 +33,26 @@ part of the form-building workflow.
 
 Experimental API. Requires PHP 8.5+ and CakePHP 6 development builds. See the installation guide for setup and compatibility notes.
 
+**PHP template syntax:** Use alternative control syntax when a block wraps HTML
+across PHP tags:
+
+```php
+<?php if ($showHelp): ?>
+    <p>Choose arrival and departure dates.</p>
+<?php endif; ?>
+```
+
+Use normal braces for blocks containing only PHP logic, even inside a template:
+
+```php
+if ($showHelp) {
+    $options['help'] = 'Choose arrival and departure dates.';
+}
+```
+
+The same distinction applies to loops: `foreach: ... endforeach;` around HTML,
+and `foreach (...) { ... }` for PHP-only logic.
+
 Contributor commands and documentation-site setup are in the
 [contributing guide](https://josbeir.github.io/cakephp-form-compose/contributing.html).
 
