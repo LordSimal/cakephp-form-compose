@@ -12,8 +12,9 @@ use Closure;
  * Applies CakePHP's association and choice-list conventions before field binding.
  *
  * _ids paths default to multiple selects, foreign keys to selects, and context
- * primary keys to hidden inputs. Matching iterable view variables supply choices
- * when none are explicitly configured. Association errors use the collection's
+ * primary keys to hidden inputs. Registered enum schema types supply choices
+ * before matching iterable view variables when none are explicitly configured.
+ * Association errors use the collection's
  * property path while values and submitted names retain the original _ids path.
  * Override choices() to specialize discovery without replacing context binding.
  */
@@ -88,11 +89,20 @@ class FieldConventions
      */
     protected function choices(string $path, array $options): array
     {
-        if (array_key_exists('options', $options) || !$this->viewVariable instanceof Closure) {
+        if (array_key_exists('options', $options)) {
             return $options;
         }
 
         if (!in_array($options['type'] ?? 'select', ['select', 'radio', 'multicheckbox'], true)) {
+            return $options;
+        }
+
+        $enum = EnumChoices::discover($this->binding->context, $path);
+        if ($enum !== null) {
+            return $options + ['options' => $enum];
+        }
+
+        if (!$this->viewVariable instanceof Closure) {
             return $options;
         }
 

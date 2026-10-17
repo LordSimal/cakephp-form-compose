@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Http\Controller;
 
 use Cake\Controller\Controller;
+use Cake\Database\Type\EnumType;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use Cake\I18n\Time;
@@ -12,6 +13,8 @@ use Cake\View\View;
 use DateTimeImmutable;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
+use FormCompose\Test\Fixture\Enum\Priority;
+use FormCompose\Test\Fixture\Enum\PublicationStatus;
 use FormCompose\View\Helper\FormHelper;
 
 /**
@@ -154,6 +157,27 @@ class FormsController extends Controller
         $html .= '<p' . (string)$field->attributes('help') . '>Use a descriptive title</p>';
         $form->registerFeedback($field, 'help');
         $html .= $field->errors() . $form->submit('Save composition') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
+    }
+
+    /**
+     * Discover schema enum choices for native select and radio submissions.
+     */
+    public function enums(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext([
+            'schema' => [
+                'status' => ['type' => EnumType::from(PublicationStatus::class)],
+                'priority' => ['type' => EnumType::from(Priority::class)],
+            ],
+            'data' => ['status' => PublicationStatus::Published, 'priority' => Priority::Normal],
+        ]));
+        $html = $form->open(['url' => '/forms/save']) . $form->controls(['status', 'priority' => ['type' => 'radio']]);
+        $html .= $form->submit('Save enums') . $form->close();
 
         return $this->getResponse()
             ->withType('html')

@@ -49,6 +49,7 @@ class FormsApplication extends BaseApplication
         $routes->connect('/forms/save', ['controller' => 'Forms', 'action' => 'save']);
         $routes->connect('/forms/temporal', ['controller' => 'Forms', 'action' => 'temporal']);
         $routes->connect('/forms/composition', ['controller' => 'Forms', 'action' => 'composition']);
+        $routes->connect('/forms/enums', ['controller' => 'Forms', 'action' => 'enums']);
         $routes->connect('/actions', ['controller' => 'Actions', 'action' => 'index']);
         $routes->connect('/actions/save', ['controller' => 'Actions', 'action' => 'save']);
     }

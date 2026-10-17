@@ -59,7 +59,9 @@ terminal names; include the defaults when adding application-specific names.
 Native non-choice controls do not consume choice iterators or reserve choice IDs,
 even when their configuration includes `options`.
 For other fields, an explicit `options` list, or a discovered
-conventional choice list, infers a select.
+conventional choice list, infers a select. Registered CakePHP `enum-*` schema types
+discover their backed enum class before view-variable choices. Explicit `options`
+and non-choice `type` overrides remain authoritative.
 
 | Context type | Control type |
 | --- | --- |
