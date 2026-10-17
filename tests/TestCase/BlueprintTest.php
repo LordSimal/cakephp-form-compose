@@ -93,7 +93,7 @@ class BlueprintTest extends FormTestCase
         static::assertSame('', $form->definition());
         static::assertStringContainsString('name="email"', $form->control('email'));
         $form->close();
-        static::assertSame('text', $form->field('email')->state->type);
+        static::assertSame('email', $form->field('email')->state->type);
     }
 
     public function testManualFieldPartsUseBlueprintConfiguration(): void

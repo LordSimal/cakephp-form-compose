@@ -52,6 +52,7 @@ class FormConstruction
             $options['templateData'],
             $options['valueSources'],
             $options['passwordFields'],
+            $options['typeMap'],
             $options['errorSummary'],
         );
         $attributes = $theme->attributes('form.open', $method)

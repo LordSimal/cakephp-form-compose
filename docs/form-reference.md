@@ -84,6 +84,7 @@ See [blueprint defaults and manual layouts](./definitions.md#select-defaults-for
 | `context` | `array` | `[]`. Additional options passed to CakePHP's context factory; not used when `$data` is already a context. |
 | `valueSources` | Nonempty list of `data`, `context`, `query` | `['data', 'context']`. Field value lookup order. |
 | `passwordFields` | List of terminal field names | Inherits helper configuration, normally `['password', 'passwd']`. Replaces the names that infer password inputs, including nested paths. An empty list disables name-based inference; explicit password controls never prefill values. |
+| `typeMap` | Map of schema names to control aliases | Inherits helper overrides. Binding entries override matching helper entries; native defaults remain for other schema types. |
 | `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
 | `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
 | Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
@@ -94,7 +95,7 @@ Automatic IDs skip explicit reservations; duplicate explicit form IDs throw
 must be nonempty and contain no whitespace.
 
 The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
-Likewise context, types, password field names, and value sources are binding settings, not opening
+Likewise context, types, type mappings, password field names, and value sources are binding settings, not opening
 settings. See [Fields and values](./usage.md#data-and-value-sources).
 
 ### Helper configuration
@@ -105,6 +106,7 @@ Set these with `addHelper()` or the helper's `setConfig()` before binding:
 | --- | --- |
 | `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
 | `passwordFields` | Defaults to `['password', 'passwd']`. A list of terminal names, such as `['password', 'passwd', 'passphrase', 'password_confirmation']`. Each binding snapshots this list; its own `passwordFields` option replaces the helper default. Explicit field types and primary-key conventions take precedence. |
+| `typeMap` | Additional schema-to-control mappings, default `[]`. Each binding snapshots helper overrides over the native defaults; its own entries override matching keys. Reset helper overrides with `setConfig('typeMap')`. |
 | `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
 | `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
 

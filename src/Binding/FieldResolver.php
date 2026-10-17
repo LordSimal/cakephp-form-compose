@@ -93,21 +93,13 @@ class FieldResolver
             return 'select';
         }
 
-        return match ($this->binding->context->type($path)) {
-            'boolean' => 'checkbox',
-            'text' => 'textarea',
-            'integer', 'tinyinteger', 'smallinteger', 'biginteger', 'decimal', 'float' => 'number',
-            'datetime',
-            'timestamp',
-            'datetimefractional',
-            'timestampfractional',
-            'timestamptimezone',
-                => 'datetime-local',
-            'date' => 'date',
-            'time' => 'time',
-            'binary' => 'file',
-            default => 'text',
-        };
+        $name = array_last(explode('.', $path));
+
+        return (
+            TypeMap::FIELD_NAMES[$name]
+                ?? $this->binding->typeMap[(string)$this->binding->context->type($path)]
+                ?? 'text'
+        );
     }
 
     /**

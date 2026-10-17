@@ -7,6 +7,7 @@ use Cake\View\Form\ContextFactory;
 use Cake\View\Form\ContextInterface;
 use Cake\View\Helper;
 use FormCompose\Binding\FormBinding;
+use FormCompose\Binding\TypeMap;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Form\FormIds;
 use FormCompose\FormContext;
@@ -37,11 +38,15 @@ use InvalidArgumentException;
 class FormHelper extends Helper
 {
     /**
-     * Default presentation and password-name conventions for new bindings.
+     * Default presentation and type-inference conventions for new bindings.
      *
      * @var array<string, mixed>
      */
-    protected array $defaultConfig = ['theme' => 'Base', 'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS];
+    protected array $defaultConfig = [
+        'theme' => 'Base',
+        'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS,
+        'typeMap' => [],
+    ];
 
     protected ?FormIds $formIds = null;
 
@@ -126,6 +131,10 @@ class FormHelper extends Helper
     ): FormSession {
         $view = $this->getView();
         $options += ['passwordFields' => $this->getConfig('passwordFields', FormBinding::DEFAULT_PASSWORD_FIELDS)];
+        $options['typeMap'] = array_replace(
+            TypeMap::normalize($this->getConfig('typeMap', [])),
+            TypeMap::normalize(array_key_exists('typeMap', $options) ? $options['typeMap'] : []),
+        );
         /** @var array<string, \FormCompose\Field\FieldTypeInterface> $types */
         $types = $options['types'] ?? [];
         /** @var ContextFactory|null $contextFactory */

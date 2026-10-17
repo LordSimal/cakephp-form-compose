@@ -22,11 +22,14 @@ final readonly class FormBinding
     /** @var list<string> Terminal field names that infer password inputs. */
     public array $passwordFields;
 
+    /** @var array<string, string> Schema types mapped to native or registered control aliases. */
+    public array $typeMap;
+
     /**
      * Capture binding inputs independently of rendering state.
      *
-     * @param array<string, mixed> $options Form creation options, valueSources, and passwordFields.
-     * @throws \InvalidArgumentException For malformed password field names.
+     * @param array<string, mixed> $options Form creation options, valueSources, passwordFields, and typeMap.
+     * @throws \InvalidArgumentException For malformed password field names or type mappings.
      */
     public function __construct(
         public ContextInterface $context,
@@ -54,5 +57,8 @@ final readonly class FormBinding
         }
 
         $this->passwordFields = $passwordFields;
+        $this->typeMap = array_replace(TypeMap::DEFAULTS, TypeMap::normalize(
+            array_key_exists('typeMap', $options) ? $options['typeMap'] : [],
+        ));
     }
 }

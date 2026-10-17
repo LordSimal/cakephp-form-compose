@@ -45,7 +45,7 @@ class LocalBlueprintTest extends BlueprintTestCase
         static::assertStringContainsString('Full &lt;name&gt;', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);
         static::assertNull($form->binding->definition);
-        static::assertSame('text', $form->field('email')->state->type);
+        static::assertSame('email', $form->field('email')->state->type);
         static::assertSame([], $form->field('email')->state->options);
     }
 

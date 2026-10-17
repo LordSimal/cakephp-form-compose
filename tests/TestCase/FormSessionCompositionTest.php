@@ -127,7 +127,7 @@ class FormSessionCompositionTest extends CompositionTestCase
         static::assertStringContainsString('name="author[id]"', $html);
         static::assertNotNull($form->binding->definition);
         static::assertFalse($form->binding->definition->has('author.email'));
-        static::assertSame('text', $form->field('author.email')->state->type);
+        static::assertSame('email', $form->field('author.email')->state->type);
     }
 
     public function testDefinitionThemeFallbackAndPerCallOverrides(): void

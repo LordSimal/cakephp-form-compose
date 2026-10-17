@@ -61,6 +61,35 @@ paths. Password inference takes precedence over choice-list discovery and never
 prefills the input from request, context, default, or explicit values. An explicit
 `type` still wins. Configure helper or binding `passwordFields` to replace these
 terminal names; include the defaults when adding application-specific names.
+After password and choice conventions, terminal `email` infers `email`, and
+`tel`, `telephone`, or `phone` infer `tel`, including nested paths. Names are exact
+and case-sensitive: `email_address` and `cellphone` do not match. Other fields use
+the binding's schema `typeMap`, falling back to `text` for unmapped types.
+
+Configure mappings once on the helper or override individual entries per binding:
+
+```php
+$this->Compose->setConfig('typeMap', [
+    'money' => 'currency',
+    'json' => 'textarea',
+]);
+$form = $this->Compose->bind($invoice, [
+    'types' => ['currency' => $currencyType],
+]);
+echo $form->open();
+echo $form->control('total'); // money schema uses the registered currency control.
+echo $form->close();
+```
+
+Explicit `['type' => 'number']` still overrides the mapping. A binding option such
+as `['typeMap' => ['money' => 'number']]` overrides the schema mapping for one form.
+Mapping overrides merge in this order: native defaults, helper configuration, binding options. They do not
+change schema types, constraints, values, or submitted names. Association,
+primary-key, password, choice, and email/telephone conventions take precedence
+over schema mappings. Map values must be valid native control names or registered
+aliases; malformed maps fail at binding time. Types may still be registered
+without a schema mapping and selected explicitly.
+
 Native non-choice controls do not consume choice iterators or reserve choice IDs,
 even when their configuration includes `options`.
 For other fields, an explicit `options` list, or a discovered
