@@ -216,7 +216,9 @@ Comment boundaries and rendered parts are separated by newlines for readable
 page source. Debug mode therefore adds formatting whitespace between elements;
 control values remain unchanged. Comments use two spaces per render nesting level,
 including `$parent()` delegation. This reflects the rendering hierarchy rather
-than the surrounding page's HTML indentation. Template markup is not reindented.
+than the surrounding page's HTML indentation. The first HTML tag of each part
+aligns with its comments. Lines inside controls and existing nested traces stay
+unchanged, preserving multiline textarea values and other content.
 
 Element names are CakePHP identifiers, not absolute filesystem paths.
 `forms/application/email/control` normally maps to

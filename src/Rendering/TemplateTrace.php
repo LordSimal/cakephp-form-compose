@@ -31,7 +31,7 @@ final readonly class TemplateTrace
     /**
      * Put diagnostic boundaries on separate lines while keeping empty parts empty.
      *
-     * @param non-negative-int $depth Render nesting level; only comments are indented.
+     * @param non-negative-int $depth Render nesting level for comments and the first HTML tag.
      */
     public function wrap(string $html, RenderNode $node, int $depth = 0): string
     {
@@ -81,6 +81,8 @@ final readonly class TemplateTrace
         }
 
         $indent = str_repeat('  ', $depth);
+        // Align the first HTML tag without rewriting lines inside controls or nested traces.
+        $html = (string)preg_replace('/\\A((?:[ \t]*\r?\n)*)[ \t]*(?=<[a-zA-Z\/])/', '$1' . $indent, $html);
         $separator = str_ends_with($html, "\n") ? '' : "\n";
 
         return (

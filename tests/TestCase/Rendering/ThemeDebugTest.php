@@ -180,11 +180,27 @@ class ThemeDebugTest extends FormTestCase
                 "\n    <!-- FormCompose BEGIN\n    scope: field\n    part: native",
                 $html,
             );
+            static::assertStringContainsString("\n  -->\n  <label", $html);
+            static::assertStringContainsString("\n    -->\n    <input", $html);
             static::assertStringContainsString("\n    <!-- FormCompose END part=native -->\n", $html);
             static::assertStringEndsWith("\n<!-- FormCompose END part=control -->\n", $html);
         }
 
         $form->close();
+    }
+
+    public function testTagAlignmentPreservesMultilineControlContentAndNestedTraces(): void
+    {
+        $trace = new TemplateTrace('native', 'custom/native', 'explicit override');
+        $node = new RenderNode('field', 'textarea', []);
+        $content = "First line\n  Keep these spaces\nLast line\n";
+        $html = $trace->wrap('  <textarea>' . $content . '</textarea>', $node, 2);
+        static::assertStringContainsString("\n    -->\n    <textarea>" . $content . '</textarea>', $html);
+        static::assertSame($content, $this->xpath($html)->evaluate('string(//textarea)'));
+        $nested = $trace->wrap($html, $node, 1);
+        static::assertStringContainsString($html, $nested);
+        static::assertStringContainsString("\n  -->\n\n    <!-- FormCompose BEGIN", $nested);
+        static::assertStringContainsString("\n  -->\nPlain text\n", $trace->wrap('Plain text', $node, 1));
     }
 
     public function testInternalMetadataUsesOnlyTheNameAndHandlesApplicationInfrastructure(): void
