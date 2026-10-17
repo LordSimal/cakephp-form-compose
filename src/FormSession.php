@@ -59,10 +59,14 @@ class FormSession
     }
 
     /**
-     * Open, render a blueprint and optional button, and close this fresh session.
+     * Open, buffer a blueprint, arrange its summary/body/actions, and close this fresh session.
      *
      * A null blueprint uses binding defaults; without defaults the body is empty.
      * A null label translates Submit at rendering time; false omits the button.
+     * The form/control element receives the buffered body, summary, submit label,
+     * and submitOptions while the session remains open for custom action buttons.
+     * Select it with options['template'] or templates['control']; blueprint layouts
+     * continue to arrange the fields inside the body.
      * Returns all markup without echoing. Exceptions retain the existing lifecycle
      * state at the failed step; retry a complete form using a new session.
      *
@@ -79,11 +83,24 @@ class FormSession
         unset($options['errorSummary']);
         $html = $this->open($options);
         $body = $this->blueprint($blueprint);
-        $html .= $summary === null ? '' : $this->errorSummary($summary);
-        $html .= $body;
-        if ($submit !== false) {
-            $html .= $this->submit($submit ?? __('Submit'), $submitOptions);
-        }
+        $summary = $summary === null ? '' : $this->errorSummary($summary);
+        $state = $this->lifecycle->assertOpen();
+        $html .= $this->rendering->renderer->render(
+            'control',
+            new RenderNode(
+                'form',
+                $state->method,
+                [
+                    'form' => $this,
+                    'state' => $state,
+                    'body' => $body,
+                    'summary' => $summary,
+                    'submit' => $submit ?? __('Submit'),
+                    'submitOptions' => $submitOptions,
+                ],
+                $state->presentation,
+            ),
+        );
 
         return $html . $this->close();
     }

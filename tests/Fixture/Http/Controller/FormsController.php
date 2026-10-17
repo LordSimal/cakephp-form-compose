@@ -16,6 +16,7 @@ use Cake\View\View;
 use DateTimeImmutable;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
+use FormCompose\Test\Fixture\Authoring\LayoutForm;
 use FormCompose\Test\Fixture\Enum\Priority;
 use FormCompose\Test\Fixture\Enum\PublicationStatus;
 use FormCompose\View\Helper\FormHelper;
@@ -90,6 +91,35 @@ class FormsController extends Controller
                     . $html
                     . '</body></html>',
             );
+    }
+
+    /**
+     * Render a complete form with an application-owned body/summary/action layout.
+     */
+    #[Get('/complete')]
+    public function complete(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()), ['themeDebug' => true]);
+        $html = $helper->render(
+            LayoutForm::class,
+            new ArrayContext([
+                'defaults' => ['id' => 42, 'title' => 'A complete form'],
+                'errors' => ['title' => ['invalid' => 'Review the title']],
+            ]),
+            [
+                'url' => '/forms/save',
+                'type' => 'file',
+                'template' => 'forms/editor',
+                'templateData' => ['caption' => 'Complete form'],
+                'errorSummary' => true,
+            ],
+            submit: 'Save complete form',
+            submitOptions: ['name' => 'intent', 'value' => 'save'],
+        );
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
     }
 
     /**

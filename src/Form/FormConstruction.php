@@ -6,6 +6,7 @@ namespace FormCompose\Form;
 use Cake\Core\Configure;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Rendering\Attributes;
+use FormCompose\Rendering\TemplateOptions;
 use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
 
@@ -27,7 +28,10 @@ class FormConstruction
      */
     public function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
     {
-        $options = array_replace($binding->options, $extra);
+        $options = array_replace(
+            TemplateOptions::normalize($binding->options),
+            TemplateOptions::normalize($extra),
+        );
         $defaultMethod = $binding->context->isCreate() ? 'post' : 'put';
         $type = strtolower((string)($options['type'] ?? $defaultMethod));
         $method = strtolower((string)($options['method'] ?? ($type === 'file' ? $defaultMethod : $type)));

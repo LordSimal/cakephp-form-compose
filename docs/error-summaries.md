@@ -41,10 +41,73 @@ The session version supports the same option. A local `errorSummary => false`
 overrides a true binding default. This setting is consumed internally and is
 never emitted as a form attribute.
 
+## Keep custom layouts and actions without manual buffering
+
+Use complete-form `render()` when the summary belongs above a blueprint's fields.
+Select an application-owned form layout through the usual `template` option:
+
+```php
+<?= $this->Form->render(
+    'article',
+    $article,
+    options: [
+        'template' => 'form/layouts/editor',
+        'errorSummary' => true,
+    ],
+    submit: 'Save article',
+) ?>
+```
+
+The plugin renders the blueprint into `$body` first, builds `$summary` from the
+controls that actually rendered, then invokes the form layout. Your page template
+needs no `$opening`, `$body`, or `$summary` variables.
+
+```php [templates/element/form/layouts/editor.php]
+<?php
+declare(strict_types=1);
+
+/**
+ * @var \FormCompose\FormSession $form
+ * @var string $body
+ * @var string $summary
+ * @var string|\FormCompose\Rendering\Html|false $submit
+ * @var array<string, mixed> $submitOptions
+ */
+?>
+<?= $summary ?>
+<div class="form-body">
+    <?= $body ?>
+</div>
+<div class="form-actions">
+    <?= $form->submit(__('Check server validation'), ['formnovalidate' => true]) ?>
+    <?php if ($submit !== false): ?>
+        <?= $form->submit($submit, $submitOptions) ?>
+    <?php endif; ?>
+</div>
+```
+
+`$body` and `$summary` are prepared HTML; output them directly, once each. The
+summary is an empty string when disabled or when there are no eligible errors.
+`$submit` is the requested text/trusted HTML label, a translated default Submit
+label, or `false`. `$submitOptions` contains the caller's button options.
+
+The session stays open while the layout renders its action buttons. The plugin
+then generates final protection fields and closes the form. Opening and closing
+remain the plugin's responsibility. Keep validation-bearing controls in the
+blueprint body so the prepared summary describes all of them.
+
+The two layouts have separate responsibilities: the blueprint's `#[Form(...,
+template: ...)]` element arranges fields and embeds; the complete form's
+`options['template']` element arranges the prepared body, summary, and actions.
+The same element can be selected with `templates['control']`, or through a theme's
+`form/control.php`. See [form layout variables](./template-reference.md#complete-form-layouts).
+
 ## Place a summary manually
 
-Render or buffer the controls first so their actual labels, errors, and target
-IDs are known. Then output the summary where needed:
+The low-level `open()` / `control()` / `close()` API emits each part immediately.
+Its `errorSummary()` can describe only controls rendered so far. For a summary
+above handwritten controls, buffer those controls first so their actual labels,
+errors, and target IDs are known:
 
 ```php
 $form = $this->Form->bind($post);
@@ -61,7 +124,9 @@ echo $form->submit('Save post');
 echo $form->close();
 ```
 
-An early call sees only controls rendered so far. Merely calling `field()` or
+A summary below the controls can be echoed directly after them, without a body
+buffer. For blueprint forms, the complete-form layout above handles this ordering
+inside the plugin. Merely calling `field()` or
 inspecting attributes does not add feedback. A successfully registered handwritten
 input also contributes its errors through the normal `register()` contract.
 Handwritten registrations contribute unlinked messages: configured types and

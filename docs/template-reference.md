@@ -76,10 +76,11 @@ Both spellings work through `field()` and blueprint field declarations too. Duri
 resolution, `template` is normalized to `templates['control']`, so custom renderers
 receive the same canonical options.
 
-The singular shorthand applies to field controls and blueprint layouts. Hidden fields continue to
-render their input part directly. Set per-form `templates` using `open`, `close`,
-or `hidden` keys in `bind()`; set per-button `templates` using the `control` key in
-`submit()`.
+The singular shorthand applies to field controls, blueprint layouts, and
+complete-form layouts. Hidden fields continue to render their input part directly.
+Set per-form `templates` using `control`, `open`, `close`, or `hidden` keys in
+`bind()`; `control` is used by complete-form `render()`. Set per-button `templates`
+using the `control` key in `submit()`.
 
 ### Calling the parent layer
 
@@ -206,6 +207,7 @@ its label, attributes, children, and presentation attributes.
 
 | Element | Purpose |
 | --- | --- |
+| `form/control.php` | Complete-form body, summary, and actions used by `render()`. |
 | `form/open.php` | Opening form tag and initial method/CSRF inputs. |
 | `form/close.php` | Final protection inputs and closing form tag. |
 | `form/hidden.php` | One infrastructure hidden input. |
@@ -226,6 +228,34 @@ prepared fields.
 Button templates receive `$form`, `$label`, `$attributes`, and `$templateData`. Use
 `Html::text($label)` to escape ordinary labels while preserving explicitly trusted
 `Html` labels.
+
+### Complete-form layouts
+
+Complete-form `render()` invokes `form/control.php` after buffering the selected
+blueprint and preparing its optional error summary. The bundled element outputs
+the summary, body, and optional submit button. Ordinary `open()` / `close()` calls
+do not invoke this part.
+
+| Variable | Meaning |
+| --- | --- |
+| `$form` | The open `FormSession`; use `submit()` for custom action buttons. |
+| `$state` | Prepared form metadata, including the effective method. |
+| `$body` | Already rendered blueprint HTML, including nested/custom controls. Emit it once. |
+| `$summary` | Already rendered summary HTML, or an empty string. Emit it once. |
+| `$submit` | Requested text/trusted `Html` label, translated default Submit label, or `false`. |
+| `$submitOptions` | Button options passed to complete-form `render()`. |
+| `$templateData` | The form's application-owned presentation data. |
+| `$parent` | Callback that resumes normal theme lookup for this part. |
+
+Select an explicit element with `options['template']` or
+`options['templates']['control']`. These options also work as binding defaults.
+Normal theme lookup supports method-specific and variant overrides, for example
+`form/patch/control.php` and `form/variants/compact/control.php`.
+
+The plugin outputs the opening before this layout and generates protection fields
+and closing markup afterward. The blueprint owns validation-bearing controls;
+the form layout arranges their prepared HTML and renders actions. See the
+[complete-form layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering).
 
 ## Blueprint layouts
 
