@@ -113,30 +113,6 @@ AttributeResolver::setConfig('formCompose', [
 ]);
 ```
 
-The application owns the cache engine configuration. The CakePHP 6 application
-skeleton configures `_cake_attributes_` with `PhpEngine`, which stores metadata as
-PHP files that OPcache can accelerate. Applications upgrading from an older
-skeleton should add this entry under `Cache` in `config/app.php`:
-
-```php
-use Cake\Cache\Engine\PhpEngine;
-
-// Inside the 'Cache' configuration array:
-'_cake_attributes_' => [
-    'className' => PhpEngine::class,
-    'prefix' => 'myapp_attributes_',
-    'path' => CACHE . 'attributes' . DS,
-    'duration' => 0,
-],
-```
-
-Choose an application-specific prefix. The plugin uses the configured engine
-without registering or replacing it; it does not fall back to another cache when
-`_cake_attributes_` is missing. An application-supplied `formCompose` collection
-is preserved in both production and debug mode. The skeleton's debug override for
-`AttributeResolver.default` applies only to that collection, so custom
-`formCompose` configuration should set its own debug caching policy as above.
-
 Keep both direct and recursive patterns: the current resolver glob implementation
 requires a directory below `**/`. Use `'cache' => false` in the configuration array
 when explicitly disabling persistent metadata caching.
@@ -145,8 +121,7 @@ For a separately configured collection, inject
 `new BlueprintFactory($container, collection: 'myForms')` as the helper option.
 The factory consumes existing configuration and never creates it.
 
-With the configuration above, the production cache has no expiry (`duration` is
-`0`). Clear discovery metadata after changing declarations during deployment with
+Clear discovery metadata after changing declarations during deployment with
 `AttributeResolver::clear('formCompose')`; warming uses
 `AttributeResolver::warm('formCompose')`. File validation alone does not discover
 new files or guarantee invalidation in a running process. The factory retains no
