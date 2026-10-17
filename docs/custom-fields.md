@@ -237,12 +237,15 @@ also render and register their inputs.
 | Render a child configured with `secure => false` | Its name is explicitly unlocked, allowing omission or changed values. |
 | Fail during an enclosing composite layout | Pending registrations roll back together with feedback, focus targets, and reserved IDs. |
 
-For example, if the element renders only `start`, `period[end]` is not expected.
-Posting that omitted name fails ordinary form protection unless the application
-has explicitly unlocked it. Declaring a child is not permission to submit it.
+::: warning Only rendered children are protected
+If the element renders only `start`, `period[end]` is not expected. Posting that
+omitted name fails ordinary form protection unless the application explicitly
+unlocks it. Declaring a child does not register it for submission.
+:::
+
 The parent's `secure` option supplies a default for its children; an explicit child
-option wins. Native checkbox fallbacks, multiple selections, and file/multipart
-checks and duplicate-ID checks retain their normal contracts.
+option wins. Native checkbox fallbacks, multiple selections, file/multipart checks,
+and duplicate-ID checks retain their normal contracts.
 
 Handwritten HTML is not inspected for input names. Register each actual child
 using [`$inputs['start']->register()`](./field-reference.md#register) after emitting

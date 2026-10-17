@@ -208,10 +208,13 @@ lookup:
 <!-- FormCompose END part=label -->
 ```
 
-`MISS` entries explain why an override did not match; `MATCH` identifies the
-selected element. The list contains only candidates actually attempted, in order,
-and stops at the winner. A requested `variant` appears in the metadata and is
-tried before the type-specific and generic candidates within each layer.
+::: info Read the lookup list
+`MISS` entries show candidates that did not match; `MATCH` identifies the selected
+element. The list includes only candidates actually attempted and stops at the
+winner. A requested `variant` is tried before type-specific and generic candidates
+within each layer.
+:::
+
 Comment boundaries and rendered parts are separated by newlines for readable
 page source. Debug mode therefore adds formatting whitespace between elements;
 control values remain unchanged. Comments use two spaces per render nesting level,
@@ -258,9 +261,12 @@ CSRF input rendered inside the form opening includes:
   -->
 ```
 
-Diagnostics contain template identifiers, field names, and infrastructure purposes,
-without values, other attributes, labels, validation messages, `templateData`, or
+::: info Debug traces omit submitted values
+Traces show template identifiers, field names, and infrastructure purposes. They
+omit values, other attributes, labels, validation messages, `templateData`, and
 security tokens. Token values and hashes are never repeated in comments.
+:::
+
 Empty parts remain empty, and template exceptions still propagate normally.
 Inspection methods that do not render templates produce no comments. Handwritten
 markup and ordinary CakePHP elements called directly by application templates do

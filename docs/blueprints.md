@@ -482,10 +482,12 @@ Validation messages stay in CakePHP's validation and application layers.
 
 ### Translation catalog extraction
 
+::: warning `Translated` messages need manual extraction
 CakePHP's standard `i18n extract` command does not currently recognize
 `new Translated(...)` values. Maintain their source messages, domains, and contexts
 in your translation catalogs manually. FormCompose does not provide an extraction
 command.
+:::
 
 When automatic extraction is needed, use literal messages with CakePHP's
 translation functions in `configure()`, templates, or attribute closures. Those

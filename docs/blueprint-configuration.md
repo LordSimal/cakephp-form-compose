@@ -96,8 +96,12 @@ Plugin blueprint aliases should be qualified, for example `#[Form('Blog.edit')]`
 Duplicate form aliases and duplicate custom-type aliases are rejected within
 their respective registries.
 
-Set your own collection configuration **before plugin bootstrap** to change paths
-or cache settings:
+::: warning Configure discovery before plugin bootstrap
+Set your own resolver collection before the plugin bootstraps. Changing it later
+does not reconfigure the collection that the plugin already registered.
+:::
+
+For example, change the paths or cache settings like this:
 
 ```php
 use Cake\AttributeResolver\AttributeResolver;

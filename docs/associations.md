@@ -11,9 +11,11 @@ and validation metadata. The usual field paths work with both `control()` and
 
 For basic select, radio, and checkbox syntax, start with [Choice controls](./choices.md).
 
-Load the associated records you want to edit before binding the entity. Choice
-lists are supplied by your application; FormCompose discovers matching view
-variables but does not query the ORM to create a list.
+::: info Your application owns association data
+Load the associated records you want to edit before binding the entity. Supply
+choice lists from your application; FormCompose can discover matching view
+variables, but it does not query the ORM for choices or load and save associations.
+:::
 
 ## Choose related records
 

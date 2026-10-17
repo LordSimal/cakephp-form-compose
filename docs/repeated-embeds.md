@@ -74,9 +74,13 @@ Use `keys` to select an explicit order or include an unused key for a blank row:
 
 An explicit empty list renders no rows. Keys can be integers or strings matching
 one field-path segment; dots and bracket notation are not valid row keys.
-Duplicate keys are rejected before row hooks run. Keys control presentation,
-not authorization or record identity. Creating or deleting associated records
+Duplicate keys are rejected before row hooks run.
+
+::: warning Row keys are presentation keys
+Keys select which rows to render and in what order. They do not authorize access
+or identify records for persistence. Creating and deleting associated records
 remains part of the application's normal CakePHP workflow.
+:::
 
 ## Arrange rows with a PHP element
 

@@ -43,10 +43,14 @@ Both shortcuts accept `confirm`. By default, confirmation uses the browser's
 `window.confirm()` dialog. Applications can [supply a custom dialog](#custom-confirmation-dialogs),
 including one that returns a promise.
 
-Confirmation is a browser enhancement, not an authorization check. Without
-JavaScript, native buttons still submit without showing a confirmation; links do
-not submit. Messages and labels are escaped. For developer-owned label markup,
-pass `new Html('<span>Delete</span>')` from `FormCompose\Rendering\Html`.
+::: warning Confirmation is not authorization
+The confirmation dialog is a browser enhancement. Without JavaScript, a native
+`postButton()` still submits without showing confirmation, while a `postLink()`
+does not submit. The controller must still authorize the action.
+:::
+
+Messages and labels are escaped. For developer-owned label markup, pass
+`new Html('<span>Delete</span>')` from `FormCompose\Rendering\Html`.
 
 ## Load the enhancement {#load-the-enhancement}
 
@@ -153,9 +157,12 @@ cancellation. The event does not insert the message into HTML.
 | `submitter` | The original submit button/input, or null for a post link or submission without a button. |
 | `respondWith(response)` | Accepts a boolean or `Promise<boolean>`. Call synchronously during dispatch, once per event. |
 
-Call `respondWith()` before awaiting anything. For an asynchronous listener, pass
-the promise directly; returning a promise from the listener does not claim the
-event. A second call, or a call after dispatch finishes, throws `InvalidStateError`.
+::: tip Register an asynchronous response immediately
+Call `respondWith()` during event dispatch, before awaiting other work. Pass the
+promise itself; returning a promise from the listener does not claim the event.
+:::
+
+A second call, or a call after dispatch finishes, throws `InvalidStateError`.
 Only a result strictly equal to true approves. False, a rejected promise, or a
 non-boolean result cancels without a native dialog. If no listener responds,
 the script falls back to `window.confirm(message)`.

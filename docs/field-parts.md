@@ -58,12 +58,14 @@ and part methods. A bound field is a snapshot; resolve it again if its inputs ch
 
 ## Preserve feedback and accessible names
 
+::: warning Keep generated ARIA references valid
 Render enabled help and error parts so generated `aria-describedby` references
 have matching elements. When deliberately omitting them, configure `help => false`
 or `errors => false` during field resolution. `close()` rejects generated feedback
 references whose targets have not been rendered or registered, and leaves the
 form open so missing parts can be rendered before retrying. Parts may appear
 before or after their input. Reading attributes alone registers nothing.
+:::
 
 To show errors only in a summary, keep error presentation enabled and omit the
 input's descriptions explicitly with `input(['aria-describedby' => null])`.

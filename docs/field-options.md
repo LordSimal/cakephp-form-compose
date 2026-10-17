@@ -53,18 +53,22 @@ Explicit IDs remain application-owned and must be unique.
 
 ### Type inference
 
-Explicit `type` wins. Before schema inference, conventional association selectors
-(`tags._ids`) become multiple selects, context primary keys become hidden inputs,
-and foreign-key paths ending in `_id` become selects. Other fields whose final
-path segment is `password` or `passwd` infer a password input, including nested
-paths. Password inference takes precedence over choice-list discovery and never
-prefills the input from request, context, default, or explicit values. An explicit
-`type` still wins. Configure helper or binding `passwordFields` to replace these
-terminal names; include the defaults when adding application-specific names.
-After password and choice conventions, terminal `email` infers `email`, and
-`tel`, `telephone`, or `phone` infer `tel`, including nested paths. Names are exact
-and case-sensitive: `email_address` and `cellphone` do not match. Other fields use
-the binding's schema `typeMap`, falling back to `text` for unmapped types.
+An explicit `type` always wins. Otherwise, FormCompose applies these conventions
+before the schema `typeMap`, in order:
+
+1. Association selectors such as `tags._ids` become multiple selects; context
+   primary keys become hidden inputs; foreign-key paths ending in `_id` become selects.
+2. Paths ending in `password` or `passwd` infer password inputs, including nested
+   paths. Password inputs never prefill from request, context, defaults, or explicit
+   values. Configure `passwordFields` to replace the default terminal names; include
+   the defaults when adding application-specific names.
+3. A non-null `options` value or discovered choice list infers a select, except
+   where a password name takes precedence. Backed enums from CakePHP `enum-*`
+   schema types are discovered before view-variable choices.
+4. Terminal `email` infers `email`; `tel`, `telephone`, or `phone` infer `tel`,
+   including nested paths. Names are exact and case-sensitive, so `email_address`
+   and `cellphone` do not match.
+5. Other fields use the schema `typeMap`, falling back to `text` for unmapped types.
 
 Configure mappings once on the helper or override individual entries per binding:
 
@@ -91,11 +95,8 @@ aliases; malformed maps fail at binding time. Types may still be registered
 without a schema mapping and selected explicitly.
 
 Native non-choice controls do not consume choice iterators or reserve choice IDs,
-even when their configuration includes `options`.
-For other fields, an explicit `options` list, or a discovered
-conventional choice list, infers a select. Registered CakePHP `enum-*` schema types
-discover their backed enum class before view-variable choices. Explicit `options`
-and non-choice `type` overrides remain authoritative.
+even when their configuration includes `options`. Explicit choice lists and
+non-choice `type` overrides remain authoritative.
 
 | Context type | Control type |
 | --- | --- |
@@ -118,10 +119,17 @@ and non-choice `type` overrides remain authoritative.
 
 Source order belongs to binding [`valueSources`](./form-reference.md#binding-options),
 not to individual fields. The default order is request data, then context.
-A request key containing null counts as found; a context's null result falls
-through. Backed enums become their scalar values. Native controls accept scalar
-or stringable values, with arrays of scalars or backed enum cases for multiple
-choices and date/time objects for native date/time formatting. Composite values need a custom field type.
+
+::: info A submitted null is still a submitted value
+A request key containing null counts as found and stops lookup. A context's null
+result falls through to the next source or the field's default. This preserves the
+difference between a missing request key and a key explicitly submitted as null.
+:::
+
+Backed enums become their scalar values. Native controls accept scalar or
+stringable values, with arrays of scalars or backed enum cases for multiple
+choices and date/time objects for native date/time formatting. Composite values
+need a custom field type.
 
 ```php
 // Inside an open form; these are three independent fields.

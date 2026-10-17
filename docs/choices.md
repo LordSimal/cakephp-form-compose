@@ -28,12 +28,15 @@ single selects have a blank option by default, so a nullable foreign key does no
 silently display the first record. Use `empty => false` to suppress it or
 `empty => true` to request a blank option on a required select.
 
-Use `empty` for placeholders. An empty string remains a valid application choice
-value, including an enum backing value. If `options` explicitly contains `''`,
-that choice is kept and no placeholder is added; its label takes precedence over
-`empty`. Setting `empty => false` only suppresses generated placeholders and does
-not remove explicit choices. Both a placeholder and an empty-string choice submit
-`''`; use a distinct value if your application needs to distinguish them.
+::: info Empty placeholder and empty-string choice
+Use `empty` for a placeholder. An empty string remains a valid choice value,
+including an enum backing value. If `options` explicitly contains `''`, that
+choice is kept and no placeholder is added; its label takes precedence over
+`empty`. Setting `empty => false` suppresses only generated placeholders.
+
+Both a placeholder and an empty-string choice submit `''`. Use a distinct value
+if your application needs to distinguish them.
+:::
 
 ## Backed enums
 
