@@ -46,8 +46,10 @@ declare(strict_types=1);
 namespace App\Form;
 
 use FormCompose\Attribute\Field;
+use FormCompose\Attribute\Form;
 use FormCompose\FormBlueprint;
 
+#[Form('article')]
 #[Field('title', label: 'Article title', help: 'Displayed above the article.')]
 #[Field('body', type: 'textarea')]
 class ArticleForm extends FormBlueprint
@@ -61,26 +63,24 @@ Use the helper's `render()` method to bind the article, render the blueprint's
 fields and layout, add a button, and close the form:
 
 ```php
-use App\Form\ArticleForm;
-
-echo $this->Form->render(ArticleForm::class, $article, submit: 'Save article');
+echo $this->Form->render('article', $article, submit: 'Save article');
 ```
 
 For explicit opening and closing, select the blueprint when binding and call
-`definition()` inside the open form:
+`blueprint()` inside the open form:
 
 ```php
 use App\Form\ArticleForm;
 
-$form = $this->Form->bind($article, definition: ArticleForm::class);
+$form = $this->Form->bind($article, blueprint: 'article');
 echo $form->open();
-echo $form->definition(); // Render ArticleForm's fields through its layout.
+echo $form->blueprint(); // Render ArticleForm's fields through its layout.
 echo $form->submit('Save article');
 echo $form->close();
 ```
 
 `bind()` prepares the form session and blueprint configuration; it emits no markup. The
-`definition()` call above renders the selected blueprint. Without that call,
+`blueprint()` call above renders the selected blueprint. Without that call,
 opening and closing the form would render no application fields.
 
 ## Use blueprint defaults with a manual layout {#select-defaults-for-the-whole-binding}
@@ -90,9 +90,7 @@ arrange individual controls yourself. Each `control()` call renders only the
 requested field:
 
 ```php
-use App\Form\ArticleForm;
-
-$form = $this->Form->bind($article, definition: ArticleForm::class);
+$form = $this->Form->bind($article, blueprint: 'article');
 echo $form->open();
 echo $form->control('title', ['label' => 'Working title']);
 echo $form->control('body');
@@ -109,12 +107,12 @@ Per-call options override defaults for that field call. Values and validation
 metadata come from the bound article and request. Resolving a field with `field()`
 emits no markup and registers no input; its rendering methods produce the parts.
 
-Calling `definition(ArticleForm::class)` in an existing open session compiles and
+Calling `blueprint('article')` in an existing open session compiles and
 renders that blueprint locally without installing defaults for later controls.
-Calling `definition()` without an argument reuses the blueprint selected at
+Calling `blueprint()` without an argument reuses the blueprint selected at
 binding, without running its hook again. Render each control once: use the
 blueprint layout or arrange its fields manually.
 
 Continue with [Form blueprints](./blueprints.md) for runtime fields, choices, and
-layouts, [Nested definitions](./composition.md) for child sections, and
+layouts, [Nested blueprints](./composition.md) for child sections, and
 [Repeated embeds](./repeated-embeds.md) for associated rows.

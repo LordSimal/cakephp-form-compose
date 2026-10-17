@@ -5,9 +5,9 @@ namespace FormCompose\Test\TestCase;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\DefinitionView;
+use FormCompose\BlueprintBuilder;
+use FormCompose\BlueprintView;
 use FormCompose\Field\FieldDefinition;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
@@ -28,7 +28,7 @@ class FormDefinitionCompositionTest extends FormTestCase
         ]);
         $selected = $original->remove('internal_note');
         $form = $this->helper()->bind();
-        $view = new DefinitionView($form, $selected);
+        $view = new BlueprintView($form, $selected);
         static::assertTrue($original->has('internal_note'));
         static::assertFalse($selected->has('internal_note'));
         static::assertSame('email', $view->field('email')->state->type);
@@ -59,7 +59,7 @@ class FormDefinitionCompositionTest extends FormTestCase
             ->remove('internal');
         $original = new FormDefinition([])->embed('post', new FormDefinition([])->embed('author', $child));
         $removed = $original->remove('post');
-        $view = new DefinitionView($this->helper()->bind(), $removed);
+        $view = new BlueprintView($this->helper()->bind(), $removed);
         static::assertSame([], $removed->fields);
         static::assertFalse($view->has('post.author.email'));
         static::assertSame('', $view->embedded('post'));
@@ -75,7 +75,7 @@ class FormDefinitionCompositionTest extends FormTestCase
             ->remove('email')
             ->add(new FieldDefinition('email', ['type' => 'email']));
         $form = $this->helper()->bind();
-        $view = new DefinitionView($form, $definition);
+        $view = new BlueprintView($form, $definition);
         static::assertTrue($view->has('email'));
         $html = $form->open() . $view->control('email') . $form->close();
         static::assertStringContainsString('type="email"', $html);
@@ -84,7 +84,7 @@ class FormDefinitionCompositionTest extends FormTestCase
     public function testConditionalPartsRequireAvailableFields(): void
     {
         $definition = new FormDefinition([])->add(new FieldDefinition('email'))->remove('email');
-        $view = new DefinitionView($this->helper()->bind(), $definition);
+        $view = new BlueprintView($this->helper()->bind(), $definition);
         static::assertFalse($view->has('email'));
         static::assertFalse($view->has('typo'));
         static::assertSame('', $view->control('email'));
@@ -94,14 +94,14 @@ class FormDefinitionCompositionTest extends FormTestCase
 
     public function testUnknownControlsAreNotSilentlyHidden(): void
     {
-        $view = new DefinitionView($this->helper()->bind(), new FormDefinition([]));
+        $view = new BlueprintView($this->helper()->bind(), new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->control('typo');
     }
 
     public function testUnknownEmbedsFailClearly(): void
     {
-        $view = new DefinitionView($this->helper()->bind(), new FormDefinition([]));
+        $view = new BlueprintView($this->helper()->bind(), new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->embedded('typo');
     }
@@ -120,9 +120,9 @@ class FormDefinitionCompositionTest extends FormTestCase
     {
         $factory = new BlueprintFactory();
         $context = new FormContext(new ArrayContext([]), $this->helper()->getView()->getRequest());
-        $builder = new FormBuilder(
+        $builder = new BlueprintBuilder(
             new FormDefinition([]),
-            static fn(string $path, string $identifier): FormDefinition => $factory->definition(
+            static fn(string $path, string $identifier): FormDefinition => $factory->compile(
                 $identifier,
                 $context->at($path),
             ),

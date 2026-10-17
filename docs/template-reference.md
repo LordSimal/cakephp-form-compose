@@ -23,7 +23,7 @@ control.php
 Layers are searched in their supplied order. The bundled `FormCompose.form/base`
 layer is last. The first matching element is rendered.
 
-Form, button, and definition paths have scope prefixes. A primary submit button tries:
+Form, button, and blueprint paths have scope prefixes. A primary submit button tries:
 
 ```text
 button/variants/primary/control.php
@@ -76,7 +76,7 @@ Both spellings work through `field()` and blueprint field declarations too. Duri
 resolution, `template` is normalized to `templates['control']`, so custom renderers
 receive the same canonical options.
 
-The singular shorthand applies to field controls and definition layouts. Hidden fields continue to
+The singular shorthand applies to field controls and blueprint layouts. Hidden fields continue to
 render their input part directly. Set per-form `templates` using `open`, `close`,
 or `hidden` keys in `bind()`; set per-button `templates` using the `control` key in
 `submit()`.
@@ -120,7 +120,7 @@ The same applies to `$attributes`, `$parent`, and other prepared variables.
 | `control()` or `field()` options | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
 | `bind()` options or `open()` options | That form's opening, closing, and infrastructure hidden-input elements. |
 | `submit()` options | That button's element. |
-| `Form` attribute, builder `presentation()`, or `definition()` options | That definition's layout, independently of child field or embedded layout data. |
+| `Form` attribute, builder `presentation()`, or `blueprint()` options | That blueprint's layout, independently of child field or embedded layout data. |
 
 Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
 their field, form, or button. Form data does not become a default for its fields
@@ -227,32 +227,32 @@ Button templates receive `$form`, `$label`, `$attributes`, and `$templateData`. 
 `Html::text($label)` to escape ordinary labels while preserving explicitly trusted
 `Html` labels.
 
-## Definition layouts
+## Blueprint layouts
 
-Definition nodes use scope `definition`, type `default`, and part `control`.
-Each theme layer tries `definition/variants/{variant}/control.php` when selected,
-then `definition/default/control.php`, then `definition/control.php`.
+Blueprint nodes use scope `blueprint`, type `default`, and part `control`.
+Each theme layer tries `blueprint/variants/{variant}/control.php` when selected,
+then `blueprint/default/control.php`, then `blueprint/control.php`.
 The bundled default renders ordered fields and embeds without a wrapper.
 
 | Variable | Meaning |
 | --- | --- |
-| `$form` | A scoped `DefinitionView` with `has()`, `field()`, `control()`, and `embedded()`. |
+| `$form` | A scoped `BlueprintView` with `has()`, `field()`, `control()`, and `embedded()`. |
 | `$definition` | Internal compiled layout metadata, relative to this mount; use `$form` for field access. |
 | `$attributes` | Escaped attribute bag from theme defaults and local definition options. |
-| `$templateData` | This definition's application-owned presentation data. |
+| `$templateData` | This blueprint layout's application-owned presentation data. |
 | `$parent` | The standard callback to resume theme lookup. |
 
-Use theme defaults keyed by `definition.control` for layout attributes. The default
+Use theme defaults keyed by `blueprint.control` for layout attributes. The default
 layout adds no element, so a custom wrapper must emit `$attributes` when needed.
 Selecting a layout does not forward its data to individual controls or children.
 See [blueprint layouts](./blueprints.md#keep-control-of-the-layout) for a complete
-class/element example, and [nested definitions](./composition.md) for child layouts.
+class/element example, and [nested blueprints](./composition.md) for child layouts.
 
 ## Repeated-embed layouts
 
 The `embed-many` scope renders `control` and `errors` through the standard theme
 lookup. The control receives `$embed` (`RepeatedView`), `$rows` (original keys
-mapped to scoped `DefinitionView` instances), `$attributes`, and `$templateData`.
+mapped to scoped `BlueprintView` instances), `$attributes`, and `$templateData`.
 The error element receives `$embed`, `$messages`, `$attributes`, and `$templateData`.
 
 The base control renders rows and direct collection errors without a wrapper.
@@ -324,7 +324,7 @@ $theme = new Theme(
     defaults: [
         'input' => ['class' => 'field-input'],
         'email.input' => ['class' => 'email-input'],
-        'definition.control' => ['class' => 'form-section'],
+        'blueprint.control' => ['class' => 'form-section'],
     ],
 );
 $form = $this->Form->bind($article, theme: $theme);

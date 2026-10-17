@@ -127,13 +127,13 @@ class FormHelper extends Helper
      * @param array<string, mixed> $submitOptions Button attributes and presentation options.
      */
     public function render(
-        string $definition,
+        string $blueprint,
         mixed $data = null,
         array $options = [],
         string|Html|false|null $submit = null,
         array $submitOptions = [],
     ): string {
-        return $this->bind($data, $options, definition: $definition)
+        return $this->bind($data, $options, blueprint: $blueprint)
             ->render(submit: $submit, submitOptions: $submitOptions);
     }
 
@@ -147,7 +147,7 @@ class FormHelper extends Helper
         array $options = [],
         Theme|string|null $theme = null,
         ?RendererInterface $renderer = null,
-        ?string $definition = null,
+        ?string $blueprint = null,
     ): FormSession {
         $view = $this->getView();
         $options += ['passwordFields' => $this->getConfig('passwordFields', FormBinding::DEFAULT_PASSWORD_FIELDS)];
@@ -178,7 +178,7 @@ class FormHelper extends Helper
         /** @var list<string> $valueSources */
         $valueSources = $options['valueSources'] ?? ['data', 'context'];
         $formContext = new FormContext($context, $view->getRequest(), valueSources: $valueSources);
-        $compiled = $definition === null ? null : $factory->definition($definition, $formContext);
+        $compiled = $blueprint === null ? null : $factory->compile($blueprint, $formContext);
 
         $types = $factory->lazyTypes($types);
 

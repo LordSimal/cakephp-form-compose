@@ -26,13 +26,13 @@ final readonly class RepeatedDefinition
      */
     public function __construct(
         public string $path,
-        public string $definition,
+        public string $blueprint,
         public ?array $keys = null,
         public array $options = [],
         public ?FormDefinition $rows = null,
     ) {
         new FieldDefinition($path);
-        if ($definition === '' || trim($definition) !== $definition) {
+        if ($blueprint === '' || trim($blueprint) !== $blueprint) {
             throw new InvalidArgumentException(
                 'Repeated blueprint names must be nonempty and have no surrounding whitespace.',
             );

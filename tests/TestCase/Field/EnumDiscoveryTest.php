@@ -134,7 +134,7 @@ class EnumDiscoveryTest extends FormTestCase
         $form = $this->helper()->bind($entity, ['context' => ['table' => $table]]);
         static::assertSame('select', $form->field('status')->state->type);
         $form->open();
-        $html = $form->definition(DiscoveredForm::class, at: 'comments.0');
+        $html = $form->blueprint(DiscoveredForm::class, at: 'comments.0');
         static::assertSame('comments[0][status]', $this->xpath($html)->evaluate('string(//select/@name)'));
         static::assertSame('in-review', $this->xpath($html)->evaluate('string(//option[@selected]/@value)'));
         $form->close();

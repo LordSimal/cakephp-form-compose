@@ -110,7 +110,7 @@ class ErrorSummaryFailureTest extends FormTestCase
     {
         $form = $this->helper()->bind(
             new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
-            definition: TitleForm::class,
+            blueprint: TitleForm::class,
         );
         try {
             $form->render(options: ['errorSummary' => 'enabled']);
@@ -143,7 +143,7 @@ class ErrorSummaryFailureTest extends FormTestCase
         $form = $this->helper()->bind(
             new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
             ['errorSummary' => true],
-            definition: TitleForm::class,
+            blueprint: TitleForm::class,
         );
         $html = $form->render(options: ['errorSummary' => false]);
         static::assertStringNotContainsString('<section', $html);

@@ -104,14 +104,14 @@ class FormHelperTest extends CompositionTestCase
                      * @param array<string, mixed> $submitOptions Button options.
                      */
                     public function render(
-                        ?string $definition = null,
+                        ?string $blueprint = null,
                         array $options = [],
                         string|Html|false|null $submit = null,
                         array $submitOptions = [],
                     ): string {
                         return (
                             '<section data-session-render>'
-                                . parent::render($definition, $options, $submit, $submitOptions)
+                                . parent::render($blueprint, $options, $submit, $submitOptions)
                                 . '</section>'
                         );
                     }

@@ -5,7 +5,7 @@ use FormCompose\EmbeddedDefinition;
 use FormCompose\RepeatedDefinition;
 
 /**
- * @var \FormCompose\DefinitionView $form
+ * @var \FormCompose\BlueprintView $form
  * @var \FormCompose\FormDefinition $definition
  */
 foreach ($definition->entries as $entry) {

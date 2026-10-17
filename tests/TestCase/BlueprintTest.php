@@ -18,14 +18,14 @@ class BlueprintTest extends FormTestCase
     {
         $form = $this->helper()->bind(
             new ArrayContext(['data' => ['name' => 'Ada', 'email' => 'ada@example.test']]),
-            definition: ProfileForm::class,
+            blueprint: ProfileForm::class,
         );
         static::assertSame('ada@example.test', $form->field('email')->state->value);
         static::assertSame('email', $form->field('email')->state->type);
         static::assertNull($form->field('comments.0.body')->state->value);
         static::assertFalse($form->field('active')->state->value);
         static::assertSame(0, $form->field('count')->state->value);
-        $html = $form->open() . $form->definition() . $form->close();
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertStringContainsString('Full &lt;name&gt;', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);
         static::assertStringContainsString('value="ada@example.test"', $html);
@@ -39,7 +39,7 @@ class BlueprintTest extends FormTestCase
 
     public function testPerCallOptionsOverrideDefaultsWithoutLeaking(): void
     {
-        $form = $this->helper()->bind(definition: ProfileForm::class);
+        $form = $this->helper()->bind(blueprint: ProfileForm::class);
         $field = $form->field('email', [
             'label' => false,
             'value' => '',
@@ -58,10 +58,10 @@ class BlueprintTest extends FormTestCase
 
     public function testLocalBlueprintDoesNotReplaceBoundDefaults(): void
     {
-        $form = $this->helper()->bind(definition: ProfileForm::class);
+        $form = $this->helper()->bind(blueprint: ProfileForm::class);
         $form->open();
 
-        $html = $form->definition(LocalEmailForm::class);
+        $html = $form->blueprint(LocalEmailForm::class);
         $form->close();
         static::assertStringContainsString('Local email', $html);
         static::assertStringContainsString('type="email"', $html);
@@ -73,8 +73,8 @@ class BlueprintTest extends FormTestCase
     public function testParentDeclarationsAreOverriddenInPlaceAndRemainReusable(): void
     {
         $helper = $this->helper();
-        $child = $helper->bind(definition: ChildForm::class);
-        $parent = $helper->bind(definition: ProfileForm::class);
+        $child = $helper->bind(blueprint: ChildForm::class);
+        $parent = $helper->bind(blueprint: ProfileForm::class);
         static::assertSame(
             ['name', 'email', 'comments.0.body', 'active', 'count', 'phone'],
             array_column($child->binding->definition->fields ?? [], 'path'),
@@ -90,7 +90,7 @@ class BlueprintTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
-        static::assertSame('', $form->definition());
+        static::assertSame('', $form->blueprint());
         static::assertStringContainsString('name="email"', $form->control('email'));
         $form->close();
         static::assertSame('email', $form->field('email')->state->type);
@@ -98,7 +98,7 @@ class BlueprintTest extends FormTestCase
 
     public function testManualFieldPartsUseBlueprintConfiguration(): void
     {
-        $form = $this->helper()->bind(definition: ProfileForm::class);
+        $form = $this->helper()->bind(blueprint: ProfileForm::class);
         $email = $form->field('email');
         $form->open();
         $html = $email->label() . $email->input() . $email->help() . $email->errors();

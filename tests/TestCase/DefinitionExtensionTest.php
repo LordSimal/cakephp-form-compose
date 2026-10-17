@@ -21,11 +21,11 @@ use InvalidArgumentException;
  */
 class DefinitionExtensionTest extends CompositionTestCase
 {
-    public function testApplicationDefinitionRendererWorksThroughOrdinaryBinding(): void
+    public function testApplicationBlueprintRendererWorksThroughOrdinaryBinding(): void
     {
         $helper = new CustomCompositionHelper($this->helper()->getView());
-        $form = $helper->bind(definition: AuthorNameForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $helper->bind(blueprint: AuthorNameForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertStringContainsString('name="author[name]"', $html);
         static::assertStringContainsString('Application layout field', $html);
     }
@@ -37,8 +37,8 @@ class DefinitionExtensionTest extends CompositionTestCase
             'blueprintFactory',
             new CustomBlueprintFactory(new Container(), 'testBlueprints'),
         );
-        $form = $helper->bind(definition: DynamicPostForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $helper->bind(blueprint: DynamicPostForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         static::assertStringContainsString('Runtime &lt;field&gt;', $html);
         static::assertStringContainsString('id="form-compose-1-body-help"', $html);
         static::assertStringContainsString('aria-describedby="form-compose-1-body-help"', $html);
@@ -58,12 +58,12 @@ class DefinitionExtensionTest extends CompositionTestCase
         ], ['rowKeys' => [2]]);
         $helper->setConfig('blueprintFactory', new CustomBlueprintFactory());
 
-        $form = $helper->bind(definition: CommentsForm::class);
+        $form = $helper->bind(blueprint: CommentsForm::class);
         $html = $form->render();
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('comments[0]', $html);
 
-        $runtime = $helper->bind(definition: RuntimeCommentsForm::class);
+        $runtime = $helper->bind(blueprint: RuntimeCommentsForm::class);
         $runtimeHtml = $runtime->render();
         static::assertStringContainsString('name="comments[2][body]"', $runtimeHtml);
         static::assertStringNotContainsString('comments[0]', $runtimeHtml);

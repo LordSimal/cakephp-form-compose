@@ -22,10 +22,10 @@ final readonly class EmbedMany
      */
     public function __construct(
         public string $path,
-        public string $definition,
+        public string $blueprint,
         public ?array $keys = null,
         public array $options = [],
     ) {
-        new RepeatedDefinition($path, $definition, $keys, $options);
+        new RepeatedDefinition($path, $blueprint, $keys, $options);
     }
 }

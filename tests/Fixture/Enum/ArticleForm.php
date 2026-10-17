@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Enum;
 
 use FormCompose\Attribute\Field;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -14,7 +14,7 @@ use FormCompose\FormContext;
 #[Field('status', options: ['options' => PublicationStatus::class])]
 class ArticleForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->add('priority', ['options' => Priority::cases()]);
     }

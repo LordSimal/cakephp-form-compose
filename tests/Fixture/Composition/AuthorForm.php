@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 /**
@@ -39,7 +39,7 @@ class AuthorForm extends FormBlueprint
     /**
      * Record scoped data and remove optional controls before a parent hook runs.
      */
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $this->probe->record('author', $context);
         $form->remove('internal');

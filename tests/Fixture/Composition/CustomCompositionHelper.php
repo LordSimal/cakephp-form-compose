@@ -22,6 +22,6 @@ class CustomCompositionHelper extends FormHelper
         RenderContext $rendering,
         BlueprintFactory $blueprints,
     ): FormSession {
-        return new FormSession($binding, $rendering, $blueprints, new CustomDefinitionRenderer($rendering));
+        return new FormSession($binding, $rendering, $blueprints, new CustomBlueprintRenderer($rendering));
     }
 }

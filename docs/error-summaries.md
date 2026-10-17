@@ -22,7 +22,7 @@ echo $this->Form->render(
 );
 ```
 
-`render()` buffers the definition body and places the summary above it. Summaries
+`render()` buffers the blueprint body and places the summary above it. Summaries
 are opt-in and render nothing when there are no eligible errors. Form attributes,
 method overrides, CSRF, and tamper-protection fields keep their normal behavior.
 
@@ -84,7 +84,7 @@ Call `errorSummary()` inside the open session.
   the qualified row inputs and are not duplicated as collection errors.
 
 Only successful rendering contributes feedback. A failed control, batch,
-definition, or repeated wrapper restores the earlier feedback snapshot alongside
+blueprint layout, or repeated wrapper restores the earlier feedback snapshot alongside
 its ID and submission registrations. Summaries remain isolated between sessions.
 
 ## Customize the summary element

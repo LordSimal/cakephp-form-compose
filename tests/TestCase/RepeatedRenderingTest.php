@@ -5,7 +5,7 @@ namespace FormCompose\Test\TestCase;
 
 use ArrayIterator;
 use Cake\View\Form\ArrayContext;
-use FormCompose\DefinitionView;
+use FormCompose\BlueprintView;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
 use FormCompose\Test\Fixture\Authoring\BodyOccurrenceForm;
@@ -25,7 +25,7 @@ class RepeatedRenderingTest extends FormTestCase
     {
         $form = $this->helper([
             'posts' => ['draft' => ['comments' => [3 => ['body' => 'Nested']]]],
-        ])->bind(definition: NestedPostsForm::class);
+        ])->bind(blueprint: NestedPostsForm::class);
         static::assertTrue($form->binding->definition?->has('posts.draft.comments.3.body'));
         static::assertStringContainsString('name="posts[draft][comments][3][body]"', $form->render());
     }
@@ -48,7 +48,7 @@ class RepeatedRenderingTest extends FormTestCase
         $other->close();
     }
 
-    public function testCustomDefinitionViewsAreUsedForRepeatedRows(): void
+    public function testCustomBlueprintViewsAreUsedForRepeatedRows(): void
     {
         $helper = new CustomCompositionHelper($this->helper(['comments' => [0 => ['body' => 'Value']]])->getView());
         $form = $helper->bind();
@@ -62,9 +62,9 @@ class RepeatedRenderingTest extends FormTestCase
 
     public function testConfiguredOccurrenceTemplateCanBeOverriddenWithoutChangingChildLayout(): void
     {
-        $form = $this->helper()->bind(definition: BodyOccurrenceForm::class);
+        $form = $this->helper()->bind(blueprint: BodyOccurrenceForm::class);
         static::assertNotNull($form->binding->definition);
-        $view = new DefinitionView($form, $form->binding->definition);
+        $view = new BlueprintView($form, $form->binding->definition);
         $form->open();
         $html = $view->embedded('author', ['templates' => ['control' => 'repeat/post-wrapper']]);
         static::assertStringContainsString('post-wrapper', $html);
@@ -76,7 +76,7 @@ class RepeatedRenderingTest extends FormTestCase
     public function testUnknownRepeatedMountIsRejected(): void
     {
         $form = $this->helper()->bind();
-        $view = new DefinitionView($form, new FormDefinition([]));
+        $view = new BlueprintView($form, new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->embeddedMany('missing');
     }
@@ -87,7 +87,7 @@ class RepeatedRenderingTest extends FormTestCase
         $definition = new FormDefinition([])->add(new RepeatedDefinition('comments', EmptyForm::class))->remove(
             'comments',
         );
-        static::assertSame('', new DefinitionView($form, $definition)->embeddedMany('comments'));
+        static::assertSame('', new BlueprintView($form, $definition)->embeddedMany('comments'));
     }
 
     public function testInferredInvalidKeysFailBeforeInputRegistration(): void

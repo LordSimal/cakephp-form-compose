@@ -13,7 +13,7 @@ use FormCompose\Rendering\RenderNode;
 /**
  * Exposes scoped rows and collection-owned feedback to a repeated-embed template.
  *
- * Templates iterate rows and call each DefinitionView::render() or its individual
+ * Templates iterate rows and call each BlueprintView::render() or its individual
  * field methods. The existing session owns submissions and render transactions.
  */
 class RepeatedView
@@ -24,7 +24,7 @@ class RepeatedView
     /**
      * Capture compiled rows and presentation without rendering or registering inputs.
      *
-     * @param array<int|string, \FormCompose\DefinitionView> $rows Scoped row views, preserving original keys.
+     * @param array<int|string, \FormCompose\BlueprintView> $rows Scoped row views, preserving original keys.
      */
     public function __construct(
         public readonly RepeatedDefinition $definition,
@@ -43,7 +43,7 @@ class RepeatedView
     /**
      * Read the same keyed views supplied as $rows to the PHP element.
      *
-     * @return array<int|string, \FormCompose\DefinitionView>
+     * @return array<int|string, \FormCompose\BlueprintView>
      */
     public function rows(): array
     {

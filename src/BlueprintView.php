@@ -9,13 +9,13 @@ use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
 /**
- * Exposes one compiled definition to its layout with relative field paths.
+ * Exposes a blueprint's compiled definition to its layout with relative field paths.
  *
  * The original session resolves and registers controls, preserving custom field
  * services and one form lifecycle. This view cannot open or close another form.
- * Override qualify() through DefinitionRenderer::createView() to specialize it.
+ * Override qualify() through BlueprintRenderer::createView() to specialize it.
  */
-class DefinitionView
+class BlueprintView
 {
     /**
      * Retain compiled local configuration and its absolute mount within the form.
@@ -65,7 +65,7 @@ class DefinitionView
     }
 
     /**
-     * Render ordered relative controls inside this definition's layout transaction.
+     * Render ordered relative controls inside this blueprint's layout transaction.
      *
      * Like control(), removed fields produce nothing and unknown fields fail.
      * Calls this view's control() so subclasses retain their layout behavior.
@@ -87,7 +87,7 @@ class DefinitionView
     /**
      * Render an already compiled embed with its own layout and parent adjustments.
      *
-     * @param array<string, mixed> $options Local definition presentation overrides.
+     * @param array<string, mixed> $options Local blueprint presentation overrides.
      */
     public function embedded(string $path, array $options = []): string
     {
@@ -108,7 +108,7 @@ class DefinitionView
     /**
      * Render the child layout independently of an occurrence wrapper template.
      *
-     * @param array<string, mixed> $options Local definition presentation.
+     * @param array<string, mixed> $options Local blueprint presentation.
      */
     public function render(array $options = []): string
     {

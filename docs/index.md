@@ -73,7 +73,7 @@ $title = $form->field('title');
 :::
 
 Use a [theme](./themes.md) to share markup or optional
-[reusable forms](./definitions.md) to share field configuration.
+[reusable forms](./reusable-forms.md) to share field configuration.
 CakePHP continues to supply values, validation metadata, routing, and submission
 protection. No CSS framework or JavaScript runtime is required.
 

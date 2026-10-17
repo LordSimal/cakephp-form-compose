@@ -144,14 +144,14 @@ Blueprint field attributes accept the same configuration:
 
 ```php
 use FormCompose\Attribute\Field;
+use FormCompose\BlueprintBuilder;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 
 #[Field('status', options: ['options' => Status::class])]
 class ArticleForm extends FormBlueprint
 {
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->add('allowed_statuses', [
             'type' => 'multicheckbox',

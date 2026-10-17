@@ -15,9 +15,9 @@ use InvalidArgumentException;
 final readonly class Form
 {
     /**
-     * Declare an alias and optional definition layout presentation.
+     * Declare an alias and optional blueprint layout presentation.
      *
-     * @param array<string, string>|null $templates Definition part overrides; control selects the layout.
+     * @param array<string, string>|null $templates Blueprint part overrides; control selects the layout.
      * @param array<string, mixed>|null $templateData Application-owned layout variables.
      */
     public function __construct(

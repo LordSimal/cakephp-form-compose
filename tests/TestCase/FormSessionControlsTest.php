@@ -26,7 +26,7 @@ class FormSessionControlsTest extends CompositionTestCase
     public function testMixedBatchControlsPreserveDefaultsOverridesAndExtensions(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $form = $helper->bind(definition: EmailForm::class);
+        $form = $helper->bind(blueprint: EmailForm::class);
         $form->open();
 
         $html = $form->controls([

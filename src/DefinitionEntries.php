@@ -41,7 +41,7 @@ final class DefinitionEntries
                     $entry = $entry instanceof RepeatedDefinition
                         ? new RepeatedDefinition(
                             $entry->path,
-                            $entry->definition,
+                            $entry->blueprint,
                             $entry->keys,
                             $entry->options,
                             $child,

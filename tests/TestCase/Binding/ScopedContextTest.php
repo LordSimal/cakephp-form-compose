@@ -23,9 +23,9 @@ class ScopedContextTest extends AssociationTestCase
         $form = $this->helper(['comments' => [['body' => 'Submitted <comment>']]])->bind(
             $article,
             ['context' => ['table' => $this->articles]],
-            definition: ScopedArticleForm::class,
+            blueprint: ScopedArticleForm::class,
         );
-        $html = $form->open() . $form->definition() . $form->close();
+        $html = $form->open() . $form->blueprint() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//input[@name="comments[0][id]"][@type="hidden"][@value="10"])'));
         static::assertTrue($xpath->evaluate(

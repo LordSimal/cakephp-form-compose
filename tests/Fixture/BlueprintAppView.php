@@ -8,7 +8,7 @@ use Cake\View\View;
 /**
  * Mirrors the documented AppView configuration using controller-supplied view data.
  */
-class BlueprintView extends View
+class BlueprintAppView extends View
 {
     /**
      * Supply the application factory to the normal helper-loading path.

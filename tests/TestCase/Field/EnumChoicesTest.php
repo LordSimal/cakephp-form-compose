@@ -162,10 +162,10 @@ class EnumChoicesTest extends FormTestCase
 
     public function testBlueprintsAcceptEnumClassesAndCaseListsWithLocalOverrides(): void
     {
-        $form = $this->helper()->bind(definition: ArticleForm::class);
+        $form = $this->helper()->bind(blueprint: ArticleForm::class);
         $form->open();
 
-        $html = $form->definition();
+        $html = $form->blueprint();
         static::assertSame(3.0, $this->xpath($html)->evaluate('count(//select[@name="status"]/option)'));
         static::assertStringContainsString('Standard &lt;priority&gt;', $html);
         $override = $form->control('status', [

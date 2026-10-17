@@ -1,17 +1,17 @@
 ---
-title: Nested definitions
+title: Nested blueprints
 description: Embed reusable child blueprints at association paths and compose their layouts within one form.
 ---
 
-# Nested definitions
+# Nested blueprints
 
-Use embedded definitions when a form includes a reusable child section, such as
+Use embedded blueprints when a form includes a reusable child section, such as
 an author inside a post. Each child keeps relative field paths and its own layout,
 while sharing the enclosing form's session and submission protection.
 
 For arranging the fields of one blueprint, start with
 [blueprint layouts](./blueprints.md#keep-control-of-the-layout). This page focuses
-on mounting child definitions and rendering their layouts together.
+on mounting child blueprints and rendering their layouts together.
 
 ## Define a reusable child {#select-a-layout}
 
@@ -42,7 +42,7 @@ Its layout only arranges the child fields:
 ```php [templates/element/forms/author.php]
 <?php
 /**
- * @var \FormCompose\DefinitionView $form
+ * @var \FormCompose\BlueprintView $form
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
@@ -58,7 +58,7 @@ Its layout only arranges the child fields:
 
 ## Compose an association
 
-Mount the author definition inside a post definition:
+Mount the author blueprint inside a post blueprint:
 
 ```php [src/Form/PostForm.php]
 <?php
@@ -73,7 +73,7 @@ use FormCompose\FormBlueprint;
 
 #[Form('post', template: 'forms/post')]
 #[Field('title')]
-#[Embed('author', AuthorForm::class)]
+#[Embed('author', 'author')]
 #[Field('body', type: 'textarea')]
 class PostForm extends FormBlueprint
 {
@@ -83,7 +83,7 @@ class PostForm extends FormBlueprint
 The parent layout chooses where to render its compiled child:
 
 ```php [templates/element/forms/post.php]
-<?php /** @var \FormCompose\DefinitionView $form */ ?>
+<?php /** @var \FormCompose\BlueprintView $form */ ?>
 <?= $form->control('title') ?>
 <?= $form->embedded('author') ?>
 <?= $form->control('body') ?>
@@ -93,15 +93,12 @@ Render the parent as one complete form, with `$post` supplied by your controller
 and its author association loaded:
 
 ```php [templates/Posts/edit.php]
-<?php
-use App\Form\PostForm;
-?>
-<?= $this->Form->render(PostForm::class, $post, submit: 'Save post') ?>
+<?= $this->Form->render('post', $post, submit: 'Save post') ?>
 ```
 
 `embedded('author')` renders the already configured child using its selected
 layout. It preserves changes made by the parent's hook and does not run the
-child's hook again. Calling `definition(AuthorForm::class, at: 'author')` on the
+child's hook again. Calling `blueprint('author', at: 'author')` on the
 outer session instead resolves a new, independent occurrence.
 
 When binding `$post`, mount its association at `author`. The child's relative
@@ -113,7 +110,7 @@ are accepted.
 For a standalone section, mount the same blueprint directly:
 
 ```php
-echo $form->definition(AuthorForm::class, at: 'author');
+echo $form->blueprint('author', at: 'author');
 ```
 
 Explicit indexed paths such as `comments.0.author` work too. For multiple rows, use [EmbedMany](./repeated-embeds.md), which expands row keys
@@ -125,7 +122,7 @@ Children resolve before their parent's `configure()` hook. The parent can adjust
 or remove qualified fields:
 
 ```php
-public function configure(FormBuilder $form, FormContext $context): void
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->with('author.email', ['label' => 'Contact email']);
 
@@ -135,10 +132,10 @@ public function configure(FormBuilder $form, FormContext $context): void
 }
 ```
 
-Import `FormCompose\FormBuilder` and `FormCompose\FormContext` in that class.
+Import `FormCompose\BlueprintBuilder` and `FormCompose\FormContext` in that class.
 `remove('author')` removes the entire embedded subtree.
 
-The element receives a scoped `DefinitionView` as `$form`. Its paths are relative
+The element receives a scoped `BlueprintView` as `$form`. Its paths are relative
 to this collection, and it can only render configured fields or embedded children:
 
 ```php
@@ -154,7 +151,7 @@ to this collection, and it can only render configured fields or embedded childre
 <?php endif; ?>
 ```
 
-See the [scoped layout API](./definition-reference.md#definitionview) for all
+See the [scoped layout API](./blueprint-reference.md#blueprintview) for all
 methods and how removed fields differ from unknown paths.
 
 Unknown names raise `InvalidArgumentException`, so typos are visible. Guard
@@ -181,9 +178,9 @@ The builder can resolve an alias or class with the same container and scoped
 context as attribute embeds:
 
 ```php
-public function configure(FormBuilder $form, FormContext $context): void
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->embed('author', AuthorForm::class);
+    $form->embed('author', 'author');
     $form->embed('comments.0.author', 'author');
 }
 ```
@@ -197,10 +194,10 @@ a layout; that element must arrange the fields and embeds in the resulting bluep
 Add runtime fields with paths and option arrays:
 
 ```php
-public function configure(FormBuilder $form, FormContext $context): void
+public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->add('summary', ['type' => 'textarea', 'label' => 'Summary']);
-    $form->embed('author', AuthorForm::class);
+    $form->embed('author', 'author');
 }
 ```
 
@@ -228,7 +225,7 @@ The normal `Embed` attribute accepts occurrence presentation options too:
 ```php
 #[Embed(
     'author',
-    AuthorForm::class,
+    'author',
     options: [
         'template' => 'forms/post-author',
         'templateData' => ['heading' => 'Written by'],
@@ -241,4 +238,4 @@ The selected element receives the scoped child as `$form`. It can call
 Occurrence options apply only at this mount; the child definition keeps its own
 presentation. Options passed to `embedded('author', [...])` override those declared
 on the attribute. `template`, `templates`, `templateData`, `variant`, and `attributes`
-use the ordinary definition presentation contract.
+use the ordinary blueprint presentation contract.

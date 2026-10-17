@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase;
 
-use FormCompose\DefinitionView;
+use FormCompose\BlueprintView;
 use FormCompose\Field\FieldDefinition;
 use FormCompose\FormDefinition;
 use FormCompose\Test\CompositionTestCase;
@@ -13,15 +13,15 @@ use InvalidArgumentException;
 /**
  * Checks layout batches against scoped configuration and the layout's control extension point.
  */
-class DefinitionViewTest extends CompositionTestCase
+class BlueprintViewTest extends CompositionTestCase
 {
     public function testLayoutBatchesPreserveScopesOptionsOrderAndRemovedFields(): void
     {
-        $definition = $this->factory->definition(AuthorForm::class, $this->context());
+        $definition = $this->factory->compile(AuthorForm::class, $this->context());
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new DefinitionView($form, $definition, 'author');
+        $view = new BlueprintView($form, $definition, 'author');
         $html = $view->controls([
             'first_name' => ['label' => 'Given <name>'],
             'last_name' => ['label' => 'Family name'],
@@ -45,7 +45,7 @@ class DefinitionViewTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new DefinitionView($form, new FormDefinition([]));
+        $view = new BlueprintView($form, new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
         $view->controls(['typo']);
     }
@@ -56,7 +56,7 @@ class DefinitionViewTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new DefinitionView($form, $definition);
+        $view = new BlueprintView($form, $definition);
         try {
             $view->controls(['name', false]);
             static::fail('Expected invalid syntax to fail before rendering.');
@@ -72,7 +72,7 @@ class DefinitionViewTest extends CompositionTestCase
         $form = $this->helper()->bind();
         $form->open();
 
-        $view = new class($form, new FormDefinition([])->add(new FieldDefinition('name'))) extends DefinitionView {
+        $view = new class($form, new FormDefinition([])->add(new FieldDefinition('name'))) extends BlueprintView {
             /**
              * Decorate controls through the public extension point.
              *

@@ -10,7 +10,7 @@ use InvalidArgumentException;
 /**
  * Declares a reusable blueprint at a relative association path, in presentation order.
  *
- * #[Embed('author', AuthorForm::class)] qualifies the child's email as author.email.
+ * #[Embed('author', 'author')] mounts the discovered alias and qualifies email as author.email.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
 final readonly class Embed
@@ -20,10 +20,10 @@ final readonly class Embed
      *
      * @param array<string, mixed> $options Presentation overrides for this occurrence.
      */
-    public function __construct(public string $path, public string $definition, public array $options = [])
+    public function __construct(public string $path, public string $blueprint, public array $options = [])
     {
         new FieldDefinition($path);
-        if ($definition === '' || trim($definition) !== $definition) {
+        if ($blueprint === '' || trim($blueprint) !== $blueprint) {
             throw new InvalidArgumentException(
                 'Embedded blueprint names must be nonempty and have no surrounding whitespace.',
             );

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 use FormCompose\Rendering\Html;
 /**
- * @var \FormCompose\DefinitionView $form
+ * @var \FormCompose\BlueprintView $form
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array<string, mixed> $templateData
  */

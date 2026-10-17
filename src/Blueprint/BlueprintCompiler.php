@@ -6,9 +6,9 @@ namespace FormCompose\Blueprint;
 use Closure;
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\EmbedMany;
+use FormCompose\BlueprintBuilder;
 use FormCompose\EmbeddedDefinition;
 use FormCompose\FormBlueprint;
-use FormCompose\FormBuilder;
 use FormCompose\FormContext;
 use FormCompose\FormDefinition;
 use FormCompose\RepeatedDefinition;
@@ -47,12 +47,12 @@ class BlueprintCompiler
             $entries[] = match (true) {
                 $entry instanceof Embed => new EmbeddedDefinition(
                     $entry->path,
-                    $this->resolve($entry->definition, $context->at($entry->path)),
+                    $this->resolve($entry->blueprint, $context->at($entry->path)),
                     $entry->options,
                 ),
                 $entry instanceof EmbedMany => $this->repeated(new RepeatedDefinition(
                     $entry->path,
-                    $entry->definition,
+                    $entry->blueprint,
                     $entry->keys,
                     $entry->options,
                 ), $context),
@@ -93,9 +93,9 @@ class BlueprintCompiler
     /**
      * Supply the per-resolution builder used by the public configure() hook.
      */
-    protected function createBuilder(FormDefinition $definition, FormContext $context): FormBuilder
+    protected function createBuilder(FormDefinition $definition, FormContext $context): BlueprintBuilder
     {
-        return new FormBuilder(
+        return new BlueprintBuilder(
             $definition,
             fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
             fn(RepeatedDefinition $entry): RepeatedDefinition => $this->repeated($entry, $context),

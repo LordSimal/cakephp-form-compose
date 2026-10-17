@@ -23,8 +23,8 @@ class BlueprintNativeTest extends FormTestCase
             'errors' => ['status' => ['invalid' => 'Choose <one>']],
             'required' => ['status' => true],
         ]);
-        $form = $helper->bind($context, ['type' => 'file', 'url' => '/articles/save'], definition: InputForm::class);
-        $html = $form->open() . $form->definition() . $form->close();
+        $form = $helper->bind($context, ['type' => 'file', 'url' => '/articles/save'], blueprint: InputForm::class);
+        $html = $form->open() . $form->blueprint() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@enctype="multipart/form-data"])'));
         static::assertTrue($xpath->evaluate(

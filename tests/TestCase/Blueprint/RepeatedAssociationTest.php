@@ -27,7 +27,7 @@ class RepeatedAssociationTest extends AssociationTestCase
         $form = $this->helper()->bind(
             $article,
             ['context' => ['table' => $this->articles]],
-            definition: CommentsWithIdForm::class,
+            blueprint: CommentsWithIdForm::class,
         );
         $html = $form->render();
         static::assertStringContainsString('type="hidden"', $html);

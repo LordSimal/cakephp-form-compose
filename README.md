@@ -26,7 +26,7 @@ part of the form-building workflow.
 - [Why FormCompose?](https://josbeir.github.io/cakephp-form-compose/why.html)
 - [Install and build your first form](https://josbeir.github.io/cakephp-form-compose/getting-started.html)
 - [Look up control options](https://josbeir.github.io/cakephp-form-compose/field-options.html)
-- [Choose inline controls or reusable blueprints](https://josbeir.github.io/cakephp-form-compose/definitions.html)
+- [Choose inline controls or reusable blueprints](https://josbeir.github.io/cakephp-form-compose/reusable-forms.html)
 - [Declare reusable form blueprints](https://josbeir.github.io/cakephp-form-compose/blueprints.html)
 - [Create a PHP template theme](https://josbeir.github.io/cakephp-form-compose/themes.html)
 - [Build custom field widgets](https://josbeir.github.io/cakephp-form-compose/custom-fields.html)

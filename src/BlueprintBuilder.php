@@ -13,7 +13,7 @@ use FormCompose\Field\FieldDefinition;
  * snapshot that subsequent builder changes cannot modify. No values or rendering
  * state are kept here. Subclasses may specialize operations used by a factory.
  */
-class FormBuilder
+class BlueprintBuilder
 {
     /**
      * Assemble one blueprint with its required scoped compilation collaborators.
@@ -45,9 +45,9 @@ class FormBuilder
      *
      * @param array<string, mixed> $options Occurrence presentation.
      */
-    public function embed(string $path, string $definition, array $options = []): static
+    public function embed(string $path, string $blueprint, array $options = []): static
     {
-        $child = ($this->resolver)($path, $definition);
+        $child = ($this->resolver)($path, $blueprint);
         $this->definition = $this->definition->embed($path, $child, $options);
 
         return $this;
@@ -61,20 +61,20 @@ class FormBuilder
      */
     public function embedMany(
         string $path,
-        string $definition,
+        string $blueprint,
         ?array $keys = null,
         array $options = [],
     ): static {
-        $compiled = ($this->repeated)(new RepeatedDefinition($path, $definition, $keys, $options));
+        $compiled = ($this->repeated)(new RepeatedDefinition($path, $blueprint, $keys, $options));
         $this->definition = $this->definition->add($compiled);
 
         return $this;
     }
 
     /**
-     * Select presentation for this resolved definition.
+     * Select presentation for this blueprint's layout.
      *
-     * @param array<string, mixed> $options Definition layout presentation.
+     * @param array<string, mixed> $options Blueprint layout presentation.
      */
     public function presentation(array $options): static
     {

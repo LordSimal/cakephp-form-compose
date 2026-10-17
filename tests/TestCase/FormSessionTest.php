@@ -35,7 +35,7 @@ class FormSessionTest extends CompositionTestCase
             new ArrayContext(['data' => ['title' => 'Original']]),
             theme: $theme,
             renderer: new PhpRenderer($helper->getView(), $theme),
-            definition: PostForm::class,
+            blueprint: PostForm::class,
         );
         static::assertCount(2, $this->probe->calls);
         $html = $form->render(options: ['class' => 'complete'], submit: 'Save', submitOptions: [
@@ -50,7 +50,7 @@ class FormSessionTest extends CompositionTestCase
 
     public function testAnExplicitDefinitionRendersLocallyWithoutReplacingBindingDefaults(): void
     {
-        $form = $this->helper()->bind(definition: EmailForm::class);
+        $form = $this->helper()->bind(blueprint: EmailForm::class);
         $defaults = $form->binding->definition;
         $html = $form->render(LocalEmailForm::class);
         static::assertStringContainsString('Local email', $html);
@@ -151,7 +151,7 @@ class FormSessionTest extends CompositionTestCase
     public function testFailedCompleteRenderingDoesNotEchoOrAutomaticallyClose(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(definition: FailingPostForm::class);
+        $form = $helper->bind(blueprint: FailingPostForm::class);
         ob_start();
         try {
             $form->render();

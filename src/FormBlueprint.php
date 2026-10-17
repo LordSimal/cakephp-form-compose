@@ -14,12 +14,12 @@ namespace FormCompose;
 abstract class FormBlueprint
 {
     /**
-     * Customize declared fields when selected at bind() or rendered by definition().
+     * Customize declared fields when selected at bind() or rendered by blueprint().
      *
      * For example: $form->with('country_id', ['options' => $this->countries->choices()]);
      * Exceptions propagate to the caller; partial configuration is never bound.
      */
-    public function configure(FormBuilder $form, FormContext $context): void
+    public function configure(BlueprintBuilder $form, FormContext $context): void
     {
     }
 }
