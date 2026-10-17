@@ -18,7 +18,7 @@ These instructions apply to the entire plugin repository.
 
 - Declare supported PHP and CakePHP versions explicitly in Composer and test that supported matrix in CI. Use modern PHP features within the declared minimum version.
 - Follow CakePHP conventions and the CakePHP Mago preset. Use `declare(strict_types=1);` in PHP classes and executable support scripts.
-- Use PHP alternative control syntax (`if: ... endif;`, `foreach: ... endforeach;`) in templates and template examples.
+- Use PHP alternative control syntax (`if: ... endif;`, `foreach: ... endforeach;`) only when the block wraps HTML across PHP tags. Use normal braces for blocks containing only PHP logic, including inside templates and documentation examples.
 - Use a dedicated plugin namespace, PSR-4 autoloading, and Composer package type `cakephp-plugin`.
 - Follow the standard plugin structure: `src/`, `templates/`, `config/`, and `tests/`, adding directories only when needed. Keep tests under `tests/TestCase/` and fixtures under `tests/Fixture/`.
 - Use CakePHP's plugin lifecycle and dependency injection facilities. Avoid global state, hidden service lookups, and host-application-specific assumptions.
