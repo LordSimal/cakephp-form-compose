@@ -29,8 +29,8 @@ class FormConstruction
     public function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
     {
         $options = array_replace(
-            TemplateOptions::normalize($binding->options),
-            TemplateOptions::normalize($extra),
+            TemplateOptions::normalize($binding->options, 'layout'),
+            TemplateOptions::normalize($extra, 'layout'),
         );
         $defaultMethod = $binding->context->isCreate() ? 'post' : 'put';
         $type = strtolower((string)($options['type'] ?? $defaultMethod));

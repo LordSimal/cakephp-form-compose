@@ -117,8 +117,8 @@ class FormLayoutTest extends FormTestCase
         ));
         $html = $helper->bind(null, ['method' => 'patch'], renderer: $renderer, blueprint: TitleForm::class)->render();
         static::assertStringContainsString('<main data-method-layout>', $html);
-        static::assertStringContainsString('element: themes/form-layout/form/patch/control', $html);
-        static::assertStringContainsString('element: FormCompose.form/base/form/control', $html);
+        static::assertStringContainsString('element: themes/form-layout/form/patch/layout', $html);
+        static::assertStringContainsString('element: FormCompose.form/base/form/layout', $html);
         static::assertStringContainsString('FormCompose PARENT', $html);
         $parts = array_map(
             static fn(array $call): string => $call['node']->scope . '.' . $call['part'],
@@ -128,7 +128,7 @@ class FormLayoutTest extends FormTestCase
             'form.open',
             'form.hidden',
             'blueprint.control',
-            'form.control',
+            'form.layout',
             'button.control',
             'form.close',
         ], array_values(
@@ -139,7 +139,7 @@ class FormLayoutTest extends FormTestCase
     public function testLocalLayoutSelectionOverridesTheBindingShorthand(): void
     {
         $form = $this->helper()->bind(null, ['template' => 'forms/failing-editor'], blueprint: TitleForm::class);
-        $html = $form->render(options: ['templates' => ['control' => 'forms/editor']], submit: false);
+        $html = $form->render(options: ['templates' => ['layout' => 'forms/editor']], submit: false);
         static::assertStringContainsString('data-form-layout', $html);
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//button)'));
         static::assertStringNotContainsString('Partial action', $html);
@@ -156,6 +156,22 @@ class FormLayoutTest extends FormTestCase
         }
 
         static::assertStringContainsString('<form', $form->render());
+    }
+
+    public function testConflictingLayoutOptionsFailBeforeOpeningTheSession(): void
+    {
+        $form = $this->helper()->bind(blueprint: TitleForm::class);
+        try {
+            $form->render(options: [
+                'template' => 'forms/editor',
+                'templates' => ['layout' => 'forms/failing-editor'],
+            ]);
+            static::fail('Expected conflicting layout selection.');
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            static::assertStringContainsString('templates[layout]', $invalidArgumentException->getMessage());
+        }
+
+        static::assertStringContainsString('data-form-layout', $form->render(options: ['template' => 'forms/editor']));
     }
 
     public function testLayoutExceptionsDoNotEchoPartialFormsAndFreshBindingsCanRender(): void

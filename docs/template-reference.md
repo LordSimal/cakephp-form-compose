@@ -51,8 +51,8 @@ element names without `.php`, including plugin-qualified names such as
 `MyDesignSystem.forms/email`. The [control guide](./usage.md#choose-a-template-for-one-control)
 shows the call and a complete element together.
 
-Plural `templates` maps individual parts to elements. The existing
-`templates['control']` spelling remains supported:
+Plural `templates` maps individual parts to elements. For a field's outer
+wrapper, select the `control` part:
 
 ```php
 $form->control('email', [
@@ -67,19 +67,19 @@ $form->control('email', [
 
 Each entry names its own element. Parts without an explicit override keep their
 normal theme lookup. You can combine `template` with `templates` entries for other
-parts. Supplying different values for `template` and `templates['control']` throws
-`InvalidArgumentException` during field resolution; identical values are accepted.
-The shorthand must be a nonempty string. Conflict checking uses the merged
-definition and per-call options.
+parts. Supplying different values for `template` and its primary part override
+throws `InvalidArgumentException` before the selected element renders; identical
+values are accepted. The shorthand must be a nonempty string.
 
 Both spellings work through `field()` and blueprint field declarations too. During
-resolution, `template` is normalized to `templates['control']`, so custom renderers
-receive the same canonical options.
+resolution, `template` is normalized to the primary part: `templates['control']`
+for fields and blueprints, or `templates['layout']` for complete forms. Custom
+renderers receive those canonical options.
 
 The singular shorthand applies to field controls, blueprint layouts, and
 complete-form layouts. Hidden fields continue to render their input part directly.
-Set per-form `templates` using `control`, `open`, `close`, or `hidden` keys in
-`bind()`; `control` is used by complete-form `render()`. Set per-button `templates`
+Set per-form `templates` using `layout`, `open`, `close`, or `hidden` keys in
+`bind()`; `layout` is used by complete-form `render()`. Set per-button `templates`
 using the `control` key in `submit()`.
 
 ### Calling the parent layer
@@ -207,7 +207,7 @@ its label, attributes, children, and presentation attributes.
 
 | Element | Purpose |
 | --- | --- |
-| `form/control.php` | Complete-form body, summary, and actions used by `render()`. |
+| `form/layout.php` | Complete-form body, summary, and actions used by `render()`. |
 | `form/open.php` | Opening form tag and initial method/CSRF inputs. |
 | `form/close.php` | Final protection inputs and closing form tag. |
 | `form/hidden.php` | One infrastructure hidden input. |
@@ -231,7 +231,7 @@ Button templates receive `$form`, `$label`, `$attributes`, and `$templateData`. 
 
 ### Complete-form layouts
 
-Complete-form `render()` invokes `form/control.php` after buffering the selected
+Complete-form `render()` invokes `form/layout.php` after buffering the selected
 blueprint and preparing its optional error summary. The bundled element outputs
 the summary, body, and optional submit button. Ordinary `open()` / `close()` calls
 do not invoke this part.
@@ -247,14 +247,14 @@ do not invoke this part.
 | `$templateData` | The form's application-owned presentation data. |
 | `$parent` | Callback that resumes normal theme lookup for this part. |
 
-Put the shared element at `form/control.php` inside your configured theme; ordinary
+Put the shared element at `form/layout.php` inside your configured theme; ordinary
 `render()` calls then require no template option. The root `control.php` in that
 theme still wraps individual fields. Normal theme lookup supports method-specific
-and variant overrides, for example `form/patch/control.php` and
-`form/variants/compact/control.php`.
+and variant overrides, for example `form/patch/layout.php` and
+`form/variants/compact/layout.php`.
 
 For an exceptional per-form selection, use `options['template']` or
-`options['templates']['control']`. These overrides also work as binding defaults.
+`options['templates']['layout']`. These overrides also work as binding defaults.
 
 The plugin outputs the opening before this layout and generates protection fields
 and closing markup afterward. The blueprint owns validation-bearing controls;

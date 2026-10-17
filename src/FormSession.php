@@ -63,9 +63,9 @@ class FormSession
      *
      * A null blueprint uses binding defaults; without defaults the body is empty.
      * A null label translates Submit at rendering time; false omits the button.
-     * The form/control element receives the buffered body, summary, submit label,
+     * The form/layout element receives the buffered body, summary, submit label,
      * and submitOptions while the session remains open for custom action buttons.
-     * Select it with options['template'] or templates['control']; blueprint layouts
+     * Select it with options['template'] or templates['layout']; blueprint layouts
      * continue to arrange the fields inside the body.
      * Returns all markup without echoing. Exceptions retain the existing lifecycle
      * state at the failed step; retry a complete form using a new session.
@@ -86,7 +86,7 @@ class FormSession
         $summary = $summary === null ? '' : $this->errorSummary($summary);
         $state = $this->lifecycle->assertOpen();
         $html .= $this->rendering->renderer->render(
-            'control',
+            'layout',
             new RenderNode(
                 'form',
                 $state->method,
