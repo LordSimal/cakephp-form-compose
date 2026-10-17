@@ -68,7 +68,8 @@ echo $this->Form->render('article', $article, submit: 'Save article');
 ```
 
 Use an [application-owned complete-form layout](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
-for custom wrappers and action buttons. The plugin buffers the blueprint and places
+in the configured theme’s `form/control.php` for shared wrappers and action buttons.
+Forms discover it without a per-call template option. The plugin buffers the blueprint and places
 the summary before it, so application templates can echo one `render()` call.
 
 For explicit opening and closing, select the blueprint when binding and call

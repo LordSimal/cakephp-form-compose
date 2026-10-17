@@ -247,10 +247,14 @@ do not invoke this part.
 | `$templateData` | The form's application-owned presentation data. |
 | `$parent` | Callback that resumes normal theme lookup for this part. |
 
-Select an explicit element with `options['template']` or
-`options['templates']['control']`. These options also work as binding defaults.
-Normal theme lookup supports method-specific and variant overrides, for example
-`form/patch/control.php` and `form/variants/compact/control.php`.
+Put the shared element at `form/control.php` inside your configured theme; ordinary
+`render()` calls then require no template option. The root `control.php` in that
+theme still wraps individual fields. Normal theme lookup supports method-specific
+and variant overrides, for example `form/patch/control.php` and
+`form/variants/compact/control.php`.
+
+For an exceptional per-form selection, use `options['template']` or
+`options['templates']['control']`. These overrides also work as binding defaults.
 
 The plugin outputs the opening before this layout and generates protection fields
 and closing markup afterward. The blueprint owns validation-bearing controls;

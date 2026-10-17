@@ -388,14 +388,15 @@ binding to retry a failed complete-form rendering.
 
 ### Application-owned complete-form layouts
 
-Select a `form/control` element when you need custom action buttons or wrappers
-around the summary and blueprint body:
+Put `form/control.php` in the configured theme when you need shared action buttons
+or wrappers around the summary and blueprint body. Complete-form rendering finds
+it automatically:
 
 ```php
 <?= $this->Form->render(
     'article',
     $article,
-    options: ['template' => 'form/layouts/editor', 'errorSummary' => true],
+    options: ['errorSummary' => true],
     submit: 'Save article',
 ) ?>
 ```
@@ -408,7 +409,8 @@ scope `form`, the effective method as its type, and part `control`.
 
 Blueprint templates continue to arrange fields and embeds inside `$body`.
 Complete-form templates place that prepared body and summary and render action
-buttons. See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
+buttons. Use `options['template']` or `options['templates']['control']` for a
+per-form exception; shared layout selection belongs in the theme. See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
 and [template contract](./template-reference.md#complete-form-layouts).
 
 ## errorSummary() {#error-summary}

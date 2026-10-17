@@ -44,16 +44,16 @@ never emitted as a form attribute.
 ## Keep custom layouts and actions without manual buffering
 
 Use complete-form `render()` when the summary belongs above a blueprint's fields.
-Select an application-owned form layout through the usual `template` option:
+Put the shared complete-form layout in your configured theme as `form/control.php`.
+For example, with `new Theme(layers: ['form/themes/daisy'])`, the element lives at
+`templates/element/form/themes/daisy/form/control.php`. [Configure the theme once](./themes.md#select-theme)
+when loading the helper; each form then discovers the layout automatically:
 
 ```php
 <?= $this->Form->render(
     'article',
     $article,
-    options: [
-        'template' => 'form/layouts/editor',
-        'errorSummary' => true,
-    ],
+    options: ['errorSummary' => true],
     submit: 'Save article',
 ) ?>
 ```
@@ -62,7 +62,7 @@ The plugin renders the blueprint into `$body` first, builds `$summary` from the
 controls that actually rendered, then invokes the form layout. Your page template
 needs no `$opening`, `$body`, or `$summary` variables.
 
-```php [templates/element/form/layouts/editor.php]
+```php [templates/element/form/themes/daisy/form/control.php]
 <?php
 declare(strict_types=1);
 
@@ -96,11 +96,16 @@ then generates final protection fields and closes the form. Opening and closing
 remain the plugin's responsibility. Keep validation-bearing controls in the
 blueprint body so the prepared summary describes all of them.
 
-The two layouts have separate responsibilities: the blueprint's `#[Form(...,
-template: ...)]` element arranges fields and embeds; the complete form's
-`options['template']` element arranges the prepared body, summary, and actions.
-The same element can be selected with `templates['control']`, or through a theme's
-`form/control.php`. See [form layout variables](./template-reference.md#complete-form-layouts).
+The blueprint's `#[Form(..., template: ...)]` element arranges fields and embeds;
+the theme's `form/control.php` arranges the prepared body, summary, and actions.
+Within a theme, the root `control.php` wraps one field; the nested
+`form/control.php` lays out the complete form.
+
+For an exceptional per-form override, pass
+`options: ['template' => 'form/layouts/special-editor', 'errorSummary' => true]`.
+`templates['control']` is the equivalent part override. Shared layouts belong in
+the theme so ordinary `render()` calls need no template selection. See
+[form layout variables](./template-reference.md#complete-form-layouts).
 
 ## Place a summary manually
 
