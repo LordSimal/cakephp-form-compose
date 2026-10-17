@@ -240,6 +240,8 @@ to report additional emitted IDs for duplicate checks too.
 `FormSession` accepts an optional fifth `ErrorSummaryRenderer` dependency. Its
 protected `attributes()` prepares the summary/heading bags; inject a subclass
 through the helper's `createSession()` to specialize this behavior. The
-`InputRegistry` constructor accepts an optional second `FeedbackRegistry`, which
-shares its existing snapshot/rollback transaction. Preserve that coordination in
+`InputRegistry` constructor accepts an optional second `FeedbackRegistry` and
+third `FeedbackReferences`, which share its existing snapshot/rollback transaction.
+The latter checks generated help/error references against rendered or registered
+IDs at form closing. Preserve that coordination in
 application subclasses. Summary metadata stays separate from Cake form protection.

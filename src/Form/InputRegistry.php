@@ -32,6 +32,7 @@ class InputRegistry
     public function __construct(
         protected readonly FormProtection $protection,
         public readonly FeedbackRegistry $feedback = new FeedbackRegistry(),
+        public readonly FeedbackReferences $references = new FeedbackReferences(),
     ) {
     }
 
@@ -88,6 +89,14 @@ class InputRegistry
     }
 
     /**
+     * Validate generated feedback associations against committed presentation IDs.
+     */
+    public function assertFeedback(): void
+    {
+        $this->references->assertResolved($this->rendered);
+    }
+
+    /**
      * Commit inputs only after the outermost layout succeeds, or restore the snapshot.
      *
      * @param \Closure(): string $render Definition or control-batch rendering operation.
@@ -97,6 +106,7 @@ class InputRegistry
         $rendered = $this->rendered;
         $pending = $this->pending;
         $feedback = $this->feedback->entries();
+        $references = $this->references->expectations();
         $this->depth++;
         try {
             $html = $render();
@@ -107,6 +117,7 @@ class InputRegistry
             $this->rendered = $rendered;
             $this->pending = $pending;
             $this->feedback->restore($feedback);
+            $this->references->restore($references);
             throw $throwable;
         } finally {
             $this->depth--;

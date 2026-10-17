@@ -12,6 +12,19 @@ for a walkthrough, or jump directly to [field options](./field-options.md).
 
 All rendering methods return HTML strings; they do not echo automatically.
 
+## registerFeedback() {#register-feedback}
+
+`$form->registerFeedback($field, 'help', $attributes = [])` registers a handwritten
+help element after it is emitted with `$field->attributes('help', $attributes)`.
+Use `'errors'` for handwritten errors. It requires an open session and reserves
+the configured ID without rendering or registering submitted inputs. Do not also
+render that element with `help()` or `errors()`.
+
+Closing verifies generated input descriptions have rendered or registered targets.
+A missing target throws `LogicException` and leaves the session open for correction.
+Application-owned descriptions pointing to unrelated elements remain the
+application's responsibility. See [field composition](./field-parts.md#preserve-feedback-and-accessible-names).
+
 ## postButton() and postLink() {#post-actions}
 
 Helper shortcuts create independent protected action forms:

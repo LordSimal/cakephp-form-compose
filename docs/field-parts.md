@@ -60,13 +60,32 @@ and part methods. A bound field is a snapshot; resolve it again if its inputs ch
 
 Render enabled help and error parts so generated `aria-describedby` references
 have matching elements. When deliberately omitting them, configure `help => false`
-or `errors => false` during field resolution. When suppressing a label, provide
+or `errors => false` during field resolution. `close()` rejects generated feedback
+references whose targets have not been rendered or registered, and leaves the
+form open so missing parts can be rendered before retrying. Parts may appear
+before or after their input. Reading attributes alone registers nothing.
+
+To show errors only in a summary, keep error presentation enabled and omit the
+input's descriptions explicitly with `input(['aria-describedby' => null])`.
+Application-owned `aria-describedby` references to other elements remain your
+responsibility. When suppressing a label, provide
 an accessible name, such as `attributes => ['aria-label' => 'Article title']`.
 
 Radio and multi-checkbox controls use a fieldset and legend around their inputs.
 Preserve those group semantics when writing a custom control element. Render
 an input only once per ID; do not call both `control()` and `input()` for the
 same bound field.
+
+Handwritten feedback uses the same configured identities:
+
+```php
+<p<?= (string)$title->attributes('help') ?>><?= $title->state->helpText() ?></p>
+<?php $form->registerFeedback($title, 'help'); ?>
+```
+
+Call `$form->registerFeedback($title, 'help')` or use `'errors'` after emitting the matching
+element instead of calling that part's rendering method. Registration reserves
+the part ID, participates in render rollback, and adds no submitted fields.
 
 ## Write a native input by hand
 

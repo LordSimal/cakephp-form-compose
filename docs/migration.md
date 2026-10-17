@@ -52,3 +52,10 @@ retain submission registration, or follow the explicit
 [handwritten input contract](./field-reference.md#register). Hiding a field in a
 blueprint or layout controls presentation; authorize and validate submitted data
 in the application as usual.
+
+Custom layouts must render enabled help and error elements referenced by their
+inputs. `close()` now rejects missing generated feedback targets. For handwritten
+feedback, use `$form->registerFeedback($field, 'help')` or `'errors'` after emitting
+the element with its prepared attributes. To deliberately omit inline
+descriptions while keeping summary errors, pass `['aria-describedby' => null]`
+to `input()` and to `register()` for handwritten inputs.

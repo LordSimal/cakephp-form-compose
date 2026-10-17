@@ -82,6 +82,7 @@ class BoundField
                 ? $this->fieldType->inputIds($this, $bag)
                 : [];
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag), $ids);
+            $this->lifecycle->inputs->references->record($this, $bag, $this->fieldType, $ids);
             $this->lifecycle->inputs->feedback->record(
                 $this->state->id,
                 FeedbackEntry::field($this, $this->fieldType, $bag),
@@ -109,6 +110,7 @@ class BoundField
         $bag = $this->attributes('input', $attributes);
         $this->lifecycle->inputs->render(function () use ($bag): string {
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
+            $this->lifecycle->inputs->references->record($this, $bag);
             $this->lifecycle->inputs->feedback->record(
                 $this->state->id,
                 FeedbackEntry::field($this, null, $bag),

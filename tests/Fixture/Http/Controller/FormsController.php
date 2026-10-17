@@ -143,6 +143,24 @@ class FormsController extends Controller
     }
 
     /**
+     * Compose inputs with both rendered and handwritten accessible feedback.
+     */
+    public function composition(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext(['errors' => ['title' => ['invalid' => 'Review the title']]]));
+        $field = $form->field('title', ['help' => 'Use a descriptive title', 'value' => 'Example']);
+        $html = $form->open(['url' => '/forms/save']) . $field->label() . $field->input();
+        $html .= '<p' . (string)$field->attributes('help') . '>Use a descriptive title</p>';
+        $form->registerFeedback($field, 'help');
+        $html .= $field->errors() . $form->submit('Save composition') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
+    }
+
+    /**
      * Share the application-owned starter theme across HTTP fixture actions.
      */
     protected function createTheme(): Theme

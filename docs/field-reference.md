@@ -99,6 +99,9 @@ echo $title->errors(['class' => 'feedback']);
 ```
 
 Render enabled feedback to preserve the input's generated ARIA relationships.
+`close()` checks these generated references against rendered or registered part
+IDs. It throws `LogicException` for missing targets and leaves the form open for
+correction. Explicit external descriptions are application-owned.
 Configure help/error IDs through field `partAttributes`; local ID overrides on
 `help()` and `errors()` are rejected. Rendered part IDs join the session's
 duplicate-ID checks. A complete control commits its input registrations only
@@ -143,6 +146,14 @@ Use it once, after emitting the input. The
 [handwritten input example](./field-parts.md#write-a-native-input-by-hand) shows
 escaping, attributes, and registration together. A control that submits different
 names needs a custom field type with matching `submissions()`.
+
+For handwritten feedback, emit a `help` or `errors` element using
+`attributes($part)`, then call `$form->registerFeedback($field, 'help')` or use
+`'errors'`. This reserves the configured part ID without rendering
+or registering submitted fields. Other part names are rejected. Do not also call
+the part's rendering method. Pass the same local attributes to inspection and
+registration; help/error identity overrides remain configured through
+`partAttributes`.
 
 ## renderInput() {#render-input}
 
