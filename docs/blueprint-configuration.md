@@ -88,8 +88,10 @@ container substitutions fail instead of silently dropping fields.
 
 `FormComposePlugin::bootstrap()` registers the `formCompose` resolver collection
 only when the application has not already configured it. The defaults scan both
-direct and nested PHP files under `src/Form/`, including `src/Form/Field/`, in the application
-and loaded plugins, using the standard `_cake_core_` cache and file validation.
+direct and nested PHP files under `src/Form/`, including `src/Form/Field/`, in the
+application and loaded plugins. In production, metadata uses CakePHP 6's `_cake_attributes_`
+cache without source-file validation. In debug mode, persistent caching is
+disabled so new and changed declarations are discovered on the next request.
 Plugin blueprint aliases should be qualified, for example `#[Form('Blog.edit')]`.
 Duplicate form aliases and duplicate custom-type aliases are rejected within
 their respective registries.
@@ -99,14 +101,15 @@ or cache settings:
 
 ```php
 use Cake\AttributeResolver\AttributeResolver;
+use Cake\Core\Configure;
 
 AttributeResolver::setConfig('formCompose', [
     'paths' => [
         'src/Form/*.php', 'src/Form/**/*.php',
         'src/Admin/Form/*.php', 'src/Admin/Form/**/*.php',
     ],
-    'cache' => '_cake_core_',
-    'validateFiles' => true,
+    'cache' => Configure::read('debug') ? false : '_cake_attributes_',
+    'validateFiles' => false,
 ]);
 ```
 
@@ -118,8 +121,8 @@ For a separately configured collection, inject
 `new BlueprintFactory($container, collection: 'myForms')` as the helper option.
 The factory consumes existing configuration and never creates it.
 
-Clear discovery metadata after adding, removing, or renaming declarations during
-deployment with `AttributeResolver::clear('formCompose')`; warming uses
+Clear discovery metadata after changing declarations during deployment with
+`AttributeResolver::clear('formCompose')`; warming uses
 `AttributeResolver::warm('formCompose')`. File validation alone does not discover
 new files or guarantee invalidation in a running process. The factory retains no
 alias index, so it observes the resolver's refreshed collection after clearing.

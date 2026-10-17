@@ -48,7 +48,7 @@ ConnectionManager::setConfig('default', [
     'database' => ':memory:',
 ]);
 
-Cache::setConfig('_cake_core_', ['className' => ArrayEngine::class]);
+Cache::setConfig('_cake_attributes_', ['className' => ArrayEngine::class]);
 Cache::setConfig('_cake_model_', ['className' => ArrayEngine::class]);
 
 Cache::setConfig('_cake_translations_', ['className' => ArrayEngine::class]);

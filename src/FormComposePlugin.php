@@ -6,6 +6,7 @@ namespace FormCompose;
 use Cake\AttributeResolver\AttributeResolver;
 use Cake\Container\ContainerInterface;
 use Cake\Core\BasePlugin;
+use Cake\Core\Configure;
 use Cake\Core\PluginApplicationInterface;
 use FormCompose\Blueprint\BlueprintFactory;
 
@@ -29,8 +30,8 @@ class FormComposePlugin extends BasePlugin
         if (AttributeResolver::getConfig('formCompose') === null) {
             AttributeResolver::setConfig('formCompose', [
                 'paths' => ['src/Form/*.php', 'src/Form/**/*.php'],
-                'cache' => '_cake_core_',
-                'validateFiles' => true,
+                'cache' => Configure::read('debug') ? false : '_cake_attributes_',
+                'validateFiles' => false,
             ]);
         }
     }

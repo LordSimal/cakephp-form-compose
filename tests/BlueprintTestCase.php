@@ -22,7 +22,7 @@ abstract class BlueprintTestCase extends FormTestCase
         parent::setUp();
         AttributeResolver::setConfig('testBlueprints', [
             'paths' => ['tests/Fixture/Blueprint/Valid/*.php'],
-            'cache' => '_cake_core_',
+            'cache' => '_cake_attributes_',
             'validateFiles' => true,
         ]);
         AttributeResolver::clear('testBlueprints');
