@@ -8,6 +8,7 @@ use Cake\Http\Response;
 use Cake\Routing\Attribute\Get;
 use Cake\Routing\Attribute\Route;
 use Cake\Routing\Attribute\Scope;
+use Cake\View\Helper\HtmlHelper;
 use Cake\View\View;
 use FormCompose\View\Helper\FormHelper;
 
@@ -43,12 +44,19 @@ class ActionsController extends Controller
         ]);
         $html .= $helper->postLink('Confirm link', '/actions/save', [
             'method' => 'patch',
-            'data' => ['version' => 7, 'requestSubmit' => 'locked'],
+            'data' => [
+                'version' => 7,
+                'requestSubmit' => 'locked',
+                'dispatchEvent' => 'locked',
+                'isConnected' => 'locked',
+            ],
             'confirm' => 'Proceed with <record>?',
             'form' => ['id' => 'link-action'],
         ]);
         $html .= $helper->postButton('Confirm button', '/actions/save', [
             'confirm' => 'Proceed with button?',
+            'name' => 'intent',
+            'value' => 'delete',
             'form' => ['id' => 'confirm-action'],
         ]);
         $parent = $helper->bind(null, ['url' => '/actions/save', 'id' => 'parent-form']);
@@ -67,6 +75,55 @@ class ActionsController extends Controller
         ]);
         $html .= $parent->submit('Save parent') . $parent->close() . $view->fetch('actions');
 
+        return $this->page($view, $html);
+    }
+
+    /**
+     * Load the enhancement on a host page with no initial action markup.
+     */
+    #[Get('/dynamic')]
+    public function dynamic(): Response
+    {
+        $view = new View($this->getRequest()->withAttribute('cspScriptNonce', 'fixture-actions'));
+        $manual = $this->getRequest()->getQuery('manual') === '1';
+        new FormHelper($view, ['autoActionScript' => !$manual]);
+        if ($manual) {
+            $htmlHelper = $view->loadHelper('Html');
+            assert($htmlHelper instanceof HtmlHelper, 'The fixture uses CakePHP HtmlHelper.');
+            $htmlHelper->script('FormCompose.actions', ['block' => 'script', 'defer' => true]);
+        }
+
+        return $this->page($view, '<div id="fragments"></div>');
+    }
+
+    /**
+     * Return protected markup for innerHTML insertion, with explicit per-fragment IDs.
+     */
+    #[Get('/fragment')]
+    public function fragment(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $id = (int)$this->getRequest()->getQuery('id', '1');
+        $html = $helper->postLink('Dynamic link ' . $id, '/actions/save', [
+            'method' => 'delete',
+            'data' => ['version' => $id],
+            'confirm' => 'Delete dynamic record?',
+            'form' => ['id' => 'dynamic-link-' . $id],
+        ]);
+        $html .= $helper->postButton('Dynamic button ' . $id, '/actions/save', [
+            'confirm' => 'Delete dynamic record?',
+            'data' => ['version' => $id],
+            'form' => ['id' => 'dynamic-button-' . $id],
+        ]);
+
+        return $this->getResponse()->withType('html')->withStringBody($html);
+    }
+
+    /**
+     * Render a layout with Cake's script block under a nonce-only script policy.
+     */
+    protected function page(View $view, string $html): Response
+    {
         return $this->getResponse()
             ->withType('html')
             ->withHeader(
@@ -74,7 +131,11 @@ class ActionsController extends Controller
                 "default-src 'self'; script-src 'nonce-fixture-actions'; object-src 'none'",
             )
             ->withStringBody(
-                '<!DOCTYPE html><html><head><title>Actions</title></head><body>' . $html . '</body></html>',
+                '<!DOCTYPE html><html><head><title>Actions</title>'
+                    . $view->fetch('script')
+                    . '</head><body>'
+                    . $html
+                    . '</body></html>',
             );
     }
 

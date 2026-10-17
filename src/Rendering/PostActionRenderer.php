@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
-use Cake\Routing\Asset;
 use Cake\View\View;
 use Closure;
 use FormCompose\Form\PostAction;
@@ -14,13 +13,11 @@ use FormCompose\FormSession;
  * Builds independent protected action forms through the helper's binding factory.
  *
  * Form sessions own hidden inputs, tokens, and button submissions. This service
- * places complete forms inline or in view blocks and renders link/script parts.
- * Override trigger() or script() via FormHelper::createPostActionRenderer().
+ * places complete forms inline or in view blocks and renders link parts.
+ * Override trigger() via FormHelper::createPostActionRenderer().
  */
 class PostActionRenderer
 {
-    protected bool $scriptRendered = false;
-
     /**
      * Retain the view and ordinary binding entry point, preserving session overrides.
      *
@@ -55,13 +52,12 @@ class PostActionRenderer
         $inside = $kind === 'button' && $action->block === null;
         $html .= $inside ? $trigger : '';
         $html .= $form->close();
-        $script = $kind === 'link' || $action->confirm !== null ? $this->script($action, $rendering) : '';
         if ($action->block !== null) {
             $this->view->append($action->block, $html);
             $html = '';
         }
 
-        return $html . ($inside ? '' : $trigger) . $script;
+        return $html . ($inside ? '' : $trigger);
     }
 
     /**
@@ -97,33 +93,5 @@ class PostActionRenderer
             ['form' => $form, 'label' => $label, 'attributes' => $attributes],
             $presentation,
         ));
-    }
-
-    /**
-     * Emit one deferred external enhancement, preserving CSP nonces and asset routing.
-     */
-    protected function script(PostAction $action, RenderContext $rendering): string
-    {
-        if ($this->scriptRendered) {
-            return '';
-        }
-
-        $attributes = $rendering
-            ->theme
-            ->attributes('action.script', 'default')
-            ->merge([
-                'src' => Asset::scriptUrl('FormCompose.actions', ['theme' => $this->view->getTheme()]),
-                'defer' => true,
-                'nonce' => $this->view->getRequest()->getAttribute('cspScriptNonce'),
-            ]);
-        $html = $rendering->renderer->render('script', new RenderNode(
-            'action',
-            'default',
-            ['attributes' => $attributes],
-            $action->options,
-        ));
-        $this->scriptRendered = true;
-
-        return $html;
     }
 }
