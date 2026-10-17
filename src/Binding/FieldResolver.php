@@ -71,6 +71,7 @@ class FieldResolver
             'name' => $name,
             'id' => $id,
             'messages' => $conventions->messages($path),
+            'requiredMessage' => $conventions->requiredMessage($path),
             'constraints' => Constraints::resolve($this->binding->context, $path, $type, $options),
             'options' => $options,
         ]);

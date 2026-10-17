@@ -211,7 +211,9 @@ configuration whose text should be evaluated at field resolution.
 Context text-length limits supply `maxlength`. Numeric schema types supply `step`
 (`any` for decimals/floats, `1` for integers). Put additional browser constraints,
 such as `min`, `max`, `step`, `maxlength`, or `pattern`, in `attributes` to override
-or extend the prepared input attributes. Server-side validation remains in CakePHP.
+or extend the prepared input attributes. Server-side validation remains in CakePHP. The context's required-validation
+text is available separately as `$field->state->requiredMessage`; templates can
+use it for optional enhancements without automatic inline JavaScript.
 
 For `multicheckbox`, `required` describes the group requirement in field state;
 it does not emit `required` on each checkbox, which would require every choice.

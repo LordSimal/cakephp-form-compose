@@ -21,6 +21,7 @@ resolved state with independently renderable parts. See
 | `type` | `string` | Inferred or explicit field type. |
 | `value` | `mixed` | Resolved value, before native rendering formats it. |
 | `messages` | `list<string>` | Flattened context validation messages. |
+| `requiredMessage` | `?string` | Required-validation text supplied by the CakePHP context, or null. Plain text for application templates and enhancements. |
 | `constraints` | `array<string, mixed>` | Inferred/explicit browser constraints. |
 | `options` | `array<string, mixed>` | Merged field configuration. |
 
@@ -37,6 +38,26 @@ $hasErrors = $title->state->hasErrors();
 | `hasErrors(): bool` | Whether messages exist and error rendering is enabled. |
 | `labelText(): string` | Escaped generated/configured label, preserving trusted `Html`. |
 | `helpText(): string` | Escaped configured help, preserving trusted `Html`. |
+
+`requiredMessage` is context metadata, separate from the effective `required`
+constraint. It remains available when a field override makes the control optional,
+hidden, or disabled. Native input rendering does not attach inline event handlers
+or replace browser validation messages. An application can opt into its own
+progressive enhancement using an escaped data attribute:
+
+```php
+// Inside an open form.
+$field = $form->field('name');
+$message = $field->attributes()->has('required')
+    ? $field->state->requiredMessage
+    : null;
+echo $field->input(['data-required-message' => $message]);
+```
+
+Keep the value as text and let attribute rendering escape it. Server-side
+validation stays in the existing CakePHP validator. Association selectors use the
+validated association property; nested and scoped bindings use their matching
+context paths.
 
 The snapshot does not track subsequent entity or request changes. Resolve a new
 bound field when you need a new snapshot.

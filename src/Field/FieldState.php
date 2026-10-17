@@ -19,13 +19,14 @@ final readonly class FieldState
     /**
      * Capture field identity, value, configuration, constraints, and validation feedback.
      *
-     * @param array{name: string, id: string, messages: list<string>, constraints: array<string, mixed>, options: array<string, mixed>} $data Presentation metadata.
+     * @param array{name: string, id: string, messages: list<string>, requiredMessage: ?string, constraints: array<string, mixed>, options: array<string, mixed>} $data Presentation metadata.
      */
     public function __construct(public string $path, public string $type, public mixed $value, array $data)
     {
         $this->name = $data['name'];
         $this->id = $data['id'];
         $this->messages = $data['messages'];
+        $this->requiredMessage = $data['requiredMessage'];
         $this->constraints = $data['constraints'];
         $this->options = $data['options'];
     }
@@ -36,6 +37,9 @@ final readonly class FieldState
 
     /** @var list<string> */
     public array $messages;
+
+    /** Context required-validation text; check effective required state before enhancing validity. */
+    public ?string $requiredMessage;
 
     /** @var array<string, mixed> */
     public array $constraints;

@@ -82,6 +82,14 @@ class FieldConventions
     }
 
     /**
+     * Read the context's required-validation text for the actual validated property.
+     */
+    public function requiredMessage(string $path): ?string
+    {
+        return $this->binding->context->getRequiredMessage(FieldPath::association($path) ?? $path);
+    }
+
+    /**
      * Discover an iterable choice list without overriding explicit choices or input types.
      *
      * @param array<string, mixed> $options Merged field configuration.
