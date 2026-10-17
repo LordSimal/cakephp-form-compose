@@ -68,6 +68,18 @@ class TemporalTest extends FormTestCase
                 '14:23:45.123',
                 ['attributes' => ['step' => 'any']],
             ],
+            'time interval above one second' => [
+                'time',
+                new Time('00:00:01.500000'),
+                '00:00:01.500',
+                ['attributes' => ['step' => '1.5', 'min' => '00:00:00']],
+            ],
+            'datetime interval above one second' => [
+                'datetime-local',
+                new DateTimeImmutable('2026-10-15 00:00:02.500'),
+                '2026-10-15T00:00:02.500',
+                ['attributes' => ['step' => 2.5, 'min' => '2026-10-15T00:00:00']],
+            ],
             'local attributes determine precision' => [
                 'time',
                 new DateTimeImmutable('2026-10-15 14:23:45.123456'),
@@ -98,6 +110,37 @@ class TemporalTest extends FormTestCase
         ]);
         static::assertSame('2026-10-16T01:23:45', $this->xpath($html)->evaluate('string(//input/@value)'));
         static::assertSame('2026-10-15T23:23:45+00:00', $value->format('c'));
+        $form->close();
+    }
+
+    public function testDateTimeObjectsRetainTheirNonTemporalTextRepresentation(): void
+    {
+        $form = $this->helper()->bind();
+        $html =
+            $form->open()
+            . $form->control('sample', [
+                'type' => 'text',
+                'value' => new DateTimeImmutable('2026-10-15 14:23:45'),
+            ])
+            . $form->close();
+        static::assertSame(
+            '2026-10-15T14:23:45',
+            $this->xpath($html)->evaluate('string(//input[@name="sample"]/@value)'),
+        );
+    }
+
+    public function testLocalInputStepOverridesDetermineFractionalPrecision(): void
+    {
+        $form = $this->helper()->bind();
+        $form->open();
+
+        $field = $form->field('sample', [
+            'type' => 'time',
+            'value' => new Time('00:00:02.500000'),
+            'attributes' => ['step' => 1],
+        ]);
+        $html = $field->input(['step' => '2.5']);
+        static::assertSame('00:00:02.500', $this->xpath($html)->evaluate('string(//input/@value)'));
         $form->close();
     }
 

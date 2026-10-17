@@ -49,7 +49,7 @@ final class TemporalValue
         $value = TemporalTimezone::convert($value, $timezone);
         /** @var mixed $step */
         $step = $attributes->values['step'] ?? null;
-        $fractional = $step === 'any' || (is_numeric($step) && (float)$step > 0 && (float)$step < 1);
+        $fractional = $step === 'any' || (is_numeric($step) && (float)$step > 0 && fmod((float)$step, 1.0) !== 0.0);
         $seconds = $fractional ? 's.v' : 's';
         $formats = [
             'date' => 'Y-m-d',

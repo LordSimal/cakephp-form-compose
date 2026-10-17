@@ -8,7 +8,10 @@ test('Cake temporal values survive browser normalization and a protected submiss
   }));
   expect(state).toEqual({
     valid: true,
-    values: { day: '2026-10-15', clock: '14:23:45', instant: '2026-10-15T14:23:45.123', week: '2026-W53' },
+    values: {
+      day: '2026-10-15', clock: '14:23:45', instant: '2026-10-15T14:23:45.123', week: '2026-W53',
+      fractional_clock: '00:00:01.500', fractional_instant: '2026-10-15T00:00:02.5',
+    },
   });
   await page.getByRole('button', { name: 'Save temporal' }).click();
   await expect(page).toHaveURL('/forms/save');

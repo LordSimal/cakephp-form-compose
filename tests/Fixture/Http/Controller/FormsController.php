@@ -114,14 +114,26 @@ class FormsController extends Controller
                 'day' => ['type' => 'date'],
                 'clock' => ['type' => 'time'],
                 'instant' => ['type' => 'datetimefractional'],
+                'fractional_clock' => ['type' => 'time'],
+                'fractional_instant' => ['type' => 'datetime'],
             ],
             'data' => [
                 'day' => new Date('2026-10-15'),
                 'clock' => new Time('14:23:45'),
                 'instant' => new DateTimeImmutable('2026-10-15 14:23:45.123'),
+                'fractional_clock' => new Time('00:00:01.500000'),
+                'fractional_instant' => new DateTimeImmutable('2026-10-15 00:00:02.500'),
             ],
         ]));
-        $html = $form->open(['url' => '/forms/save']) . $form->controls(['day', 'clock', 'instant']);
+        $html =
+            $form->open(['url' => '/forms/save'])
+            . $form->controls([
+                'day',
+                'clock',
+                'instant',
+                'fractional_clock' => ['attributes' => ['step' => '1.5', 'min' => '00:00:00']],
+                'fractional_instant' => ['attributes' => ['step' => '2.5', 'min' => '2026-10-15T00:00:00']],
+            ]);
         $html .= $form->control('week', ['type' => 'week', 'value' => new Date('2027-01-01')]);
         $html .= $form->submit('Save temporal') . $form->close();
 

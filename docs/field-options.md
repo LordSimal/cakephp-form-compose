@@ -108,8 +108,9 @@ and are not parsed or converted again. Invalid strings are never replaced with
 the current date.
 
 Time and datetime inputs default to `step="1"` so nonzero seconds remain valid.
-Fractional datetime schema types default to `step="0.001"`. Fractional steps or
-`step="any"` format object values with milliseconds; precision beyond milliseconds
+Fractional datetime schema types default to `step="0.001"`. Positive non-integer
+steps, including intervals above one second such as `step="1.5"`, and `step="any"`
+format object values with milliseconds; precision beyond milliseconds
 cannot be represented by native browser inputs. Override `attributes['step']`
 to choose another interval or remove the attribute with null.
 
