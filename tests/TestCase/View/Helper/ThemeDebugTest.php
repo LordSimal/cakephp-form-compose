@@ -18,7 +18,7 @@ use RuntimeException;
  */
 class ThemeDebugTest extends FormTestCase
 {
-    public function testDebugCommentsAreOptInAndStrippingThemPreservesExactMarkup(): void
+    public function testDebugCommentsAreOptInAndPreserveMarkupApartFromInterElementWhitespace(): void
     {
         $outputs = [];
         foreach ([false, true] as $enabled) {
@@ -37,7 +37,12 @@ class ThemeDebugTest extends FormTestCase
         static::assertStringNotContainsString('FormCompose BEGIN', $outputs[0]);
         static::assertStringContainsString('part: native', $outputs[1]);
         static::assertStringContainsString('part: composite', $outputs[1]);
-        static::assertSame($outputs[0], preg_replace('/<!-- FormCompose .*?-->/s', '', $outputs[1]));
+        $withoutComments = preg_replace('/<!-- FormCompose .*?-->/s', '', $outputs[1]);
+        static::assertIsString($withoutComments);
+        static::assertSame(
+            preg_replace('/>\s+</', '><', trim($outputs[0])),
+            preg_replace('/>\s+</', '><', trim($withoutComments)),
+        );
         $comments = [];
         preg_match_all('/<!-- FormCompose .*?-->/s', $outputs[1], $comments);
         $trace = implode('', $comments[0]);

@@ -202,7 +202,8 @@ lookup:
   MISS forms/application/email/label
   MISS forms/application/label
   MISS FormCompose.form/base/email/label
-  MATCH FormCompose.form/base/label -->
+  MATCH FormCompose.form/base/label
+-->
 <label for="form-compose-1-email">Email</label>
 <!-- FormCompose END part=label -->
 ```
@@ -211,6 +212,9 @@ lookup:
 selected element. The list contains only candidates actually attempted, in order,
 and stops at the winner. A requested `variant` appears in the metadata and is
 tried before the type-specific and generic candidates within each layer.
+Comment boundaries and rendered parts are separated by newlines for readable
+page source. Debug mode therefore adds formatting whitespace between elements;
+control values remain unchanged.
 
 Element names are CakePHP identifiers, not absolute filesystem paths.
 `forms/application/email/control` normally maps to

@@ -35,6 +35,8 @@ class ThemeDebugTest extends FormTestCase
             $html,
         );
         static::assertStringContainsString('element: FormCompose.form/base/label', $html);
+        static::assertStringContainsString("\n-->\n<label", $html);
+        static::assertStringEndsWith("\n<!-- FormCompose END part=label -->\n", $html);
         static::assertStringContainsString('<!-- FormCompose END part=label -->', $html);
         $form->close();
     }
@@ -49,8 +51,8 @@ class ThemeDebugTest extends FormTestCase
         $html = $form->control('email', ['type' => 'email', 'variant' => 'compact']);
         static::assertStringContainsString('MATCH themes/application/variants/compact/control', $html);
         static::assertStringNotContainsString('MISS themes/application/email/control', $html);
-        static::assertStringContainsString(
-            '<aside data-variant="compact"><!-- FormCompose PARENT --><!-- FormCompose BEGIN',
+        static::assertMatchesRegularExpression(
+            '/<aside data-variant="compact">\s*<!-- FormCompose PARENT -->\s*<!-- FormCompose BEGIN/',
             $html,
         );
         static::assertStringContainsString('source: layer themes/library', $html);
@@ -69,8 +71,8 @@ class ThemeDebugTest extends FormTestCase
 
         $html = $form->control('title', ['template' => 'widgets/parent']);
         static::assertStringStartsWith(
-            "<!-- FormCompose BEGIN\nscope: field\npart: control\ntype: text\nfield: title\n"
-                . "source: explicit override\nelement: widgets/parent -->",
+            "\n<!-- FormCompose BEGIN\nscope: field\npart: control\ntype: text\nfield: title\n"
+                . "source: explicit override\nelement: widgets/parent\n-->\n",
             $html,
         );
         static::assertStringContainsString('MATCH themes/application/control', $html);

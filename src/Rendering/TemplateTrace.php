@@ -29,7 +29,7 @@ final readonly class TemplateTrace
     }
 
     /**
-     * Wrap successful markup without adding whitespace or making empty parts nonempty.
+     * Put diagnostic boundaries on separate lines while keeping empty parts empty.
      */
     public function wrap(string $html, RenderNode $node): string
     {
@@ -59,7 +59,11 @@ final readonly class TemplateTrace
             }
         }
 
-        return $this->comment($lines) . $html . $this->comment(['FormCompose END part=' . $this->part]);
+        $separator = str_ends_with($html, "\n") ? '' : "\n";
+
+        return (
+            "\n" . $this->comment($lines) . $html . $separator . $this->comment(['FormCompose END part=' . $this->part])
+        );
     }
 
     /**
@@ -78,6 +82,10 @@ final readonly class TemplateTrace
             $lines,
         );
 
-        return '<!-- ' . implode("\n", $lines) . ' -->';
+        if (count($lines) === 1) {
+            return '<!-- ' . $lines[0] . " -->\n";
+        }
+
+        return '<!-- ' . implode("\n", $lines) . "\n-->\n";
     }
 }

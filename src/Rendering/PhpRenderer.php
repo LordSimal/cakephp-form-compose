@@ -101,7 +101,7 @@ class PhpRenderer implements RendererInterface
     {
         $html = $this->layered($part, $node, $start);
 
-        return $this->themeDebug && $html !== '' ? '<!-- FormCompose PARENT -->' . $html : $html;
+        return $this->themeDebug && $html !== '' ? "\n<!-- FormCompose PARENT -->\n" . $html : $html;
     }
 
     /**
