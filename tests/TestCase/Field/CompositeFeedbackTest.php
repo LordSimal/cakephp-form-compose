@@ -149,4 +149,37 @@ class CompositeFeedbackTest extends FormTestCase
         );
         static::assertSame(2.0, $this->xpath($html)->evaluate('count(//input[@type="date"])'));
     }
+
+    public function testHiddenChildrenKeepNativeFeedbackSemanticsWhenRenderedIndependently(): void
+    {
+        $form = $this->helper()->bind(null, ['types' => ['settings' => new ConfiguredType([
+            'id' => ['type' => 'hidden', 'value' => 42],
+        ])]]);
+        $field = $form->field('settings', ['type' => 'settings', 'help' => 'Visible group help']);
+        $html = $form->open() . $field->inputs['id']->input() . $form->close();
+        static::assertStringNotContainsString('aria-describedby', $html);
+        static::assertStringContainsString('name="settings[id]"', $html);
+    }
+
+    public function testCompositeElementReceivesWrapperAttributesWhileChildrenKeepConstraints(): void
+    {
+        $form = $this->helper()->bind(null, ['types' => ['range' => new DateRangeType()]]);
+        $field = $form->field('period', [
+            'type' => 'range',
+            'disabled' => true,
+            'readonly' => true,
+            'required' => true,
+            'attributes' => ['class' => 'date-range', 'data-controller' => 'calendar', 'min' => '2026-01-01'],
+        ]);
+        $html = $form->open() . $field->control() . $form->close();
+        $xpath = $this->xpath($html);
+        static::assertSame($field->state->id, $xpath->evaluate('string(//fieldset/div/@id)'));
+        static::assertSame('date-range', $xpath->evaluate('string(//fieldset/div/@class)'));
+        static::assertSame('calendar', $xpath->evaluate('string(//fieldset/div/@data-controller)'));
+        static::assertSame(
+            0.0,
+            $xpath->evaluate('count(//div/@name | //div/@required | //div/@disabled | //div/@readonly | //div/@min)'),
+        );
+        static::assertSame(2.0, $xpath->evaluate('count(//input[@disabled][@readonly])'));
+    }
 }

@@ -32,9 +32,7 @@ declare(strict_types=1);
  * @var array<string, \FormCompose\Field\BoundField> $inputs
  */
 ?>
-<div<?= (string)$attributes->replace([
-    'name' => null, 'required' => null, 'disabled' => null, 'readonly' => null,
-])->merge(['class' => 'date-range']) ?>>
+<div<?= $attributes->merge(['class' => 'date-range']) ?>>
     <div class="date-range-start">
         <?= $inputs['start']->label() ?>
         <?= $inputs['start']->input() ?>
@@ -50,9 +48,24 @@ declare(strict_types=1);
 
 :::
 
-The outer control renders a fieldset, legend, group help, and group errors. The
-`composite` element arranges its inputs. Classes here are application styling
-hooks; FormCompose requires no CSS framework or JavaScript.
+A **composite field** is a reusable group of bound child inputs. The default
+`control` template renders an actual HTML `<fieldset>` with a `<legend>`, group
+help, and group errors. Your `composite` element supplies the inner layout:
+
+```html
+<fieldset>
+    <legend>Your stay</legend>
+    <div class="date-range">
+        <!-- Arrival and departure fields -->
+    </div>
+    <!-- Group help and errors -->
+</fieldset>
+```
+
+Change `composite` to arrange the children; change `control` to replace the outer
+structure. With another outer structure, provide suitable accessible group naming
+and customize the `label` part if a `<legend>` no longer fits. Classes here are
+application styling hooks; FormCompose requires no CSS framework or JavaScript.
 
 ## Register a type with AsFieldType
 
@@ -161,8 +174,9 @@ supports its own variants, templates, attributes, and `templateData`.
 `templates['control']` selects the entire outer control. Outer elements can use
 `$field->inputs` to access children. Keep the parent legend and feedback appropriate
 to your HTML structure. Preserve the supplied wrapper ID when rendering the body.
-The prepared input bag includes a name and constraints for child propagation;
-remove native-only attributes from a non-input wrapper, as shown above.
+The composite element receives wrapper-ready `$attributes`: its ID, classes, ARIA
+references, and integration attributes. Input-only attributes are filtered by
+`CompositeType`; disabled and readonly state still reaches the child inputs.
 
 Without an explicit element, the normal theme lookup applies to `composite`, for
 example `date-range/composite.php` or `variants/compact/composite.php`. A type may
@@ -180,7 +194,7 @@ the normal native contracts. A failed enclosing render rolls back registrations,
 feedback, focus targets, and reserved IDs together.
 
 The parent uses a legend. Child labels target their actual inputs. Parent help
-and errors are included in child ARIA descriptions, alongside each child's own
+and errors are included in visible child ARIA descriptions, alongside each child's own
 feedback. Group messages exclude nested child error trees, so summaries do not
 duplicate those errors. The group summary targets the first declared child that
 actually emitted an eligible control; omitted, hidden, disabled, and empty choice
@@ -242,9 +256,7 @@ declare(strict_types=1);
  * @var array<string, \FormCompose\Field\BoundField> $inputs
  */
 ?>
-<div<?= (string)$attributes->replace([
-    'name' => null, 'required' => null, 'disabled' => null, 'readonly' => null,
-])->merge(['class' => 'money-fields']) ?>>
+<div<?= $attributes->merge(['class' => 'money-fields']) ?>>
     <div class="money-amount"><?= $inputs['amount']->control() ?></div>
     <div class="money-currency"><?= $inputs['currency']->control() ?></div>
 </div>

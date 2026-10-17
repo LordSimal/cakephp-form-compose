@@ -5,7 +5,7 @@ declare(strict_types=1);
  * @var array<string, \FormCompose\Field\BoundField> $inputs
  */
 ?>
-<div<?= (string)$attributes->replace(['name' => null, 'required' => null, 'readonly' => null, 'disabled' => null]) ?>>
+<div<?= (string)$attributes ?>>
     <?php foreach ($inputs as $input): ?>
         <?= $input->control() ?>
     <?php endforeach; ?>

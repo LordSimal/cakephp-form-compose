@@ -76,7 +76,7 @@ class BoundField
         $attributes = $this->createFieldAttributes()->resolve($this->state, $part, $extra);
 
         return $part === 'input' && $this->parent instanceof self
-            ? InheritedAttributes::resolve($this->parent->inputAttributes, $attributes)
+            ? InheritedAttributes::resolve($this->parent->inputAttributes, $attributes, $this->state)
             : $attributes;
     }
 

@@ -18,6 +18,38 @@ abstract class CompositeType extends SingleInputType implements ErrorTargetProvi
     protected string $part = 'composite';
 
     /**
+     * Give the element wrapper-ready attributes; children retain input constraints.
+     */
+    public function render(BoundField $field, Attributes $attributes): string
+    {
+        $wrapper = new Attributes(array_diff_key($attributes->values, array_flip([
+            'name',
+            'required',
+            'disabled',
+            'readonly',
+            'multiple',
+            'maxlength',
+            'minlength',
+            'min',
+            'max',
+            'step',
+            'pattern',
+            'placeholder',
+            'autocomplete',
+            'accept',
+            'capture',
+            'size',
+            'list',
+            'form',
+            'rows',
+            'cols',
+            'wrap',
+        ])));
+
+        return parent::render($field, $wrapper);
+    }
+
+    /**
      * Declare children relative to the parent context path and submitted name.
      *
      * @return array<string, array<string, mixed>> Relative paths mapped to field options.

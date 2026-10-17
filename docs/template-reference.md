@@ -397,6 +397,7 @@ text. Attribute values always go through the attribute bag's escaping.
 
 Both receive `$templateData` and `$parent()`, and support normal layers, variants,
 and explicit `templates` overrides. Outer control elements can access children
-through `$field->inputs`. Composite wrappers retain their supplied ID and feedback
-attributes; remove input-only attributes such as `name` and `required` from a div.
+through `$field->inputs`. Composite bodies receive wrapper-ready attributes with their supplied ID and
+feedback references. `CompositeType` filters input-only attributes before rendering
+the body, while child inputs retain their effective constraints.
 The type declaration supplies semantics, and the PHP element owns layout.

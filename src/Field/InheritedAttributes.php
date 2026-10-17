@@ -16,9 +16,11 @@ final class InheritedAttributes
     /**
      * Combine inherited feedback with a child's own prepared input attributes.
      */
-    public static function resolve(Attributes $parent, Attributes $child): Attributes
+    public static function resolve(Attributes $parent, Attributes $child, FieldState $state): Attributes
     {
-        $feedback = array_intersect_key($parent->values, array_flip(['aria-describedby', 'aria-invalid']));
+        $feedback = $state->type === 'hidden'
+            ? []
+            : array_intersect_key($parent->values, array_flip(['aria-describedby', 'aria-invalid']));
         $attributes = new Attributes($feedback)->merge($child->values);
         foreach (['disabled', 'readonly'] as $constraint) {
             if (!$parent->has($constraint)) {
