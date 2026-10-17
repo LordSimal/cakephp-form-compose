@@ -20,6 +20,9 @@ use RuntimeException;
  */
 class PhpRenderer implements RendererInterface
 {
+    /** @var int Active render calls; restored after success or failure. */
+    protected int $renderDepth = 0;
+
     /**
      * Use the Cake view to render elements from the selected theme.
      */
@@ -35,20 +38,25 @@ class PhpRenderer implements RendererInterface
      */
     public function render(string $part, RenderNode $node): string
     {
-        /** @var array<string, string> $templates */
-        $templates = $node->options['templates'] ?? [];
-        if (isset($templates[$part])) {
-            $element = $templates[$part];
-            $html = $this->element($element, $node, fn(): string => $this->renderParent($part, $node));
+        $this->renderDepth++;
+        try {
+            /** @var array<string, string> $templates */
+            $templates = $node->options['templates'] ?? [];
+            if (isset($templates[$part])) {
+                $element = $templates[$part];
+                $html = $this->element($element, $node, fn(): string => $this->renderParent($part, $node));
 
-            return $this->debug($html, $part, $node, [
-                'source' => 'explicit override',
-                'element' => $element,
-                'lookup' => [],
-            ]);
+                return $this->debug($html, $part, $node, [
+                    'source' => 'explicit override',
+                    'element' => $element,
+                    'lookup' => [],
+                ]);
+            }
+
+            return $this->layered($part, $node);
+        } finally {
+            $this->renderDepth--;
         }
-
-        return $this->layered($part, $node);
     }
 
     /**
@@ -99,9 +107,17 @@ class PhpRenderer implements RendererInterface
      */
     protected function renderParent(string $part, RenderNode $node, int $start = 0): string
     {
-        $html = $this->layered($part, $node, $start);
+        $this->renderDepth++;
+        try {
+            $html = $this->layered($part, $node, $start);
+            $indent = str_repeat('  ', max(0, $this->renderDepth - 1));
 
-        return $this->themeDebug && $html !== '' ? "\n<!-- FormCompose PARENT -->\n" . $html : $html;
+            return $this->themeDebug && $html !== ''
+                ? "\n" . $indent . "<!-- FormCompose PARENT -->\n" . $html
+                : $html;
+        } finally {
+            $this->renderDepth--;
+        }
     }
 
     /**
@@ -112,7 +128,11 @@ class PhpRenderer implements RendererInterface
     protected function debug(string $html, string $part, RenderNode $node, array $details): string
     {
         return $this->themeDebug
-            ? new TemplateTrace($part, $details['element'], $details['source'], $details['lookup'])->wrap($html, $node)
+            ? new TemplateTrace($part, $details['element'], $details['source'], $details['lookup'])->wrap(
+                $html,
+                $node,
+                max(0, $this->renderDepth - 1),
+            )
             : $html;
     }
 }

@@ -30,8 +30,10 @@ final readonly class TemplateTrace
 
     /**
      * Put diagnostic boundaries on separate lines while keeping empty parts empty.
+     *
+     * @param non-negative-int $depth Render nesting level; only comments are indented.
      */
-    public function wrap(string $html, RenderNode $node): string
+    public function wrap(string $html, RenderNode $node, int $depth = 0): string
     {
         if ($html === '') {
             return $html;
@@ -42,6 +44,25 @@ final readonly class TemplateTrace
         $field = $node->variables['field'] ?? null;
         if ($field instanceof BoundField) {
             $lines[] = 'field: ' . $field->state->path;
+        }
+
+        if ($node->scope === 'form' && $this->part === 'hidden') {
+            /** @var mixed $attributes */
+            $attributes = $node->variables['attributes'] ?? null;
+            /** @var mixed $name */
+            $name = $attributes instanceof Attributes ? $attributes->values['name'] ?? null : null;
+            if (is_string($name)) {
+                $lines[] = 'field: ' . $name;
+                $purpose = match ($name) {
+                    '_csrfToken' => 'CSRF protection',
+                    '_method' => 'HTTP method override',
+                    '_Token[fields]' => 'Form protection signature',
+                    '_Token[unlocked]' => 'Form protection unlocked fields',
+                    '_Token[debug]' => 'Form protection diagnostics',
+                    default => 'Internal form input',
+                };
+                $lines[] = 'purpose: ' . $purpose;
+            }
         }
 
         /** @var mixed $variant */
@@ -59,10 +80,15 @@ final readonly class TemplateTrace
             }
         }
 
+        $indent = str_repeat('  ', $depth);
         $separator = str_ends_with($html, "\n") ? '' : "\n";
 
         return (
-            "\n" . $this->comment($lines) . $html . $separator . $this->comment(['FormCompose END part=' . $this->part])
+            "\n"
+                . $this->comment($lines, $indent)
+                . $html
+                . $separator
+                . $this->comment(['FormCompose END part=' . $this->part], $indent)
         );
     }
 
@@ -71,7 +97,7 @@ final readonly class TemplateTrace
      *
      * @param list<string> $lines Diagnostic lines without values or template variables.
      */
-    private function comment(array $lines): string
+    private function comment(array $lines, string $indent): string
     {
         $lines = array_map(
             static fn(string $line): string => str_replace(
@@ -83,9 +109,9 @@ final readonly class TemplateTrace
         );
 
         if (count($lines) === 1) {
-            return '<!-- ' . $lines[0] . " -->\n";
+            return $indent . '<!-- ' . $lines[0] . " -->\n";
         }
 
-        return '<!-- ' . implode("\n", $lines) . "\n-->\n";
+        return $indent . '<!-- ' . implode("\n" . $indent, $lines) . "\n" . $indent . "-->\n";
     }
 }

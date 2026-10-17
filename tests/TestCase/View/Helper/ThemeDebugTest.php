@@ -151,6 +151,16 @@ class ThemeDebugTest extends FormTestCase
         $comments = [];
         preg_match_all('/<!-- FormCompose .*?-->/s', $html, $comments);
         $trace = implode('', $comments[0]);
+        foreach ([
+            ['_csrfToken',       'CSRF protection'],
+            ['_method',          'HTTP method override'],
+            ['_Token[fields]',   'Form protection signature'],
+            ['_Token[unlocked]', 'Form protection unlocked fields'],
+            ['_Token[debug]',    'Form protection diagnostics'],
+        ] as [$name, $purpose]) {
+            static::assertStringContainsString('field: ' . $name . "\n  purpose: " . $purpose, $trace);
+        }
+
         static::assertStringNotContainsString($csrf, $trace);
         static::assertStringNotContainsString('locked-private-value', $trace);
         static::assertStringNotContainsString('Submitted title', $trace);
@@ -189,6 +199,7 @@ class ThemeDebugTest extends FormTestCase
 
         $html = $opening . $form->control('period', ['type' => 'range']) . $form->close();
         static::assertStringNotContainsString('widgets/failure', $html);
+        static::assertMatchesRegularExpression('/^<!-- FormCompose BEGIN\nscope: field\npart: control/m', $html);
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//input[@name="period[start]"])'));
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//input[@name="period[end]"])'));
     }

@@ -7,6 +7,7 @@ use Closure;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderNode;
+use FormCompose\Rendering\TemplateTrace;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\FormTestCase;
 use RuntimeException;
@@ -59,6 +60,11 @@ class ThemeDebugTest extends FormTestCase
         static::assertStringContainsString('MATCH themes/library/control', $html);
         static::assertStringContainsString('element: FormCompose.form/base/control', $html);
         static::assertSame(2, substr_count($html, '<!-- FormCompose PARENT -->'));
+        static::assertStringContainsString("\n  <!-- FormCompose PARENT -->\n", $html);
+        static::assertStringContainsString("\n    <!-- FormCompose PARENT -->\n", $html);
+        static::assertStringContainsString("\n  <!-- FormCompose BEGIN\n  scope: field", $html);
+        static::assertStringContainsString("\n    <!-- FormCompose BEGIN\n    scope: field", $html);
+        static::assertStringEndsWith("\n<!-- FormCompose END part=control -->\n", $html);
         $form->close();
     }
 
@@ -144,16 +150,61 @@ class ThemeDebugTest extends FormTestCase
         $field = $helper->bind()->field('title');
         $node = RenderNode::field($field, new Attributes());
         $this->expectOutputString('');
-        try {
-            $renderer->render('missing', $node);
-            static::fail('Expected missing template lookup to throw.');
-        } catch (RuntimeException $runtimeException) {
-            static::assertSame('No template for field part: missing', $runtimeException->getMessage());
+        foreach ([[], ['templates' => ['missing' => 'widgets/parent']]] as $options) {
+            try {
+                $renderer->render('missing', new RenderNode('field', 'text', $node->variables, $options));
+                static::fail('Expected missing template lookup to throw.');
+            } catch (RuntimeException $runtimeException) {
+                static::assertSame('No template for field part: missing', $runtimeException->getMessage());
+            }
         }
 
         $html = $renderer->render('label', $node);
         static::assertStringNotContainsString('missing', $html);
+        static::assertStringStartsWith("\n<!-- FormCompose BEGIN\nscope: field", $html);
         static::assertStringContainsString('MATCH FormCompose.form/base/label', $html);
+    }
+
+    public function testNestedCommentsFollowRenderDepthAndSiblingsReturnToTheSameDepth(): void
+    {
+        $helper = $this->helper();
+        $form = $helper->bind(renderer: new PhpRenderer($helper->getView(), themeDebug: true));
+        $form->open();
+
+        $first = $form->control('title');
+        $second = $form->control('subtitle');
+        foreach ([$first, $second] as $html) {
+            static::assertStringStartsWith("\n<!-- FormCompose BEGIN\nscope: field\npart: control", $html);
+            static::assertStringContainsString("\n  <!-- FormCompose BEGIN\n  scope: field\n  part: input", $html);
+            static::assertStringContainsString(
+                "\n    <!-- FormCompose BEGIN\n    scope: field\n    part: native",
+                $html,
+            );
+            static::assertStringContainsString("\n    <!-- FormCompose END part=native -->\n", $html);
+            static::assertStringEndsWith("\n<!-- FormCompose END part=control -->\n", $html);
+        }
+
+        $form->close();
+    }
+
+    public function testInternalMetadataUsesOnlyTheNameAndHandlesApplicationInfrastructure(): void
+    {
+        $trace = new TemplateTrace('hidden', 'custom/hidden', 'explicit override');
+        $html = $trace->wrap('<input>', new RenderNode('form', 'hidden', [
+            'attributes' => new Attributes(['name' => "custom--name\nspoof", 'value' => 'secret-value']),
+        ]));
+        static::assertStringContainsString('field: custom&#45;&#45;name\\nspoof', $html);
+        static::assertStringContainsString('purpose: Internal form input', $html);
+        static::assertStringNotContainsString('secret-value', $html);
+        foreach ([
+            [],
+            ['attributes' => new Attributes()],
+            ['attributes' => new Attributes(['name' => 123])],
+        ] as $variables) {
+            $html = $trace->wrap('<input>', new RenderNode('form', 'hidden', $variables));
+            static::assertStringNotContainsString('field:', $html);
+            static::assertStringNotContainsString('purpose:', $html);
+        }
     }
 
     public function testRendererSubclassElementOverridesStillRunWithDiagnosticsEnabled(): void
