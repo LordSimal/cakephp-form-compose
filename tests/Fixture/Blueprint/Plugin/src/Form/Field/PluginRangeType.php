@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace FormCompose\Test\Fixture\Blueprint\Plugin\src\Field;
+namespace FormCompose\Test\Fixture\Blueprint\Plugin\src\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
 use FormCompose\Test\Fixture\Blueprint\Valid\DiscoveredRangeType;

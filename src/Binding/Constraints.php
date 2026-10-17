@@ -38,6 +38,16 @@ final class Constraints
             $constraints['step'] = in_array($context->type($path), ['decimal', 'float'], true) ? 'any' : '1';
         }
 
+        if (in_array($type, ['time', 'datetime-local'], true)) {
+            $constraints['step'] = in_array(
+                $context->type($path),
+                ['datetimefractional', 'timestampfractional', 'timestamptimezone'],
+                true,
+            )
+                ? '0.001'
+                : '1';
+        }
+
         if ($type === 'hidden' || (isset($constraints['disabled']) && $constraints['disabled'] !== false)) {
             $constraints['required'] = false;
         }

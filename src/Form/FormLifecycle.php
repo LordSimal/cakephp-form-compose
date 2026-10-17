@@ -122,7 +122,9 @@ class FormLifecycle
      */
     public function tokens(): array
     {
-        $fields = $this->protection->fields($this->assertOpen());
+        $state = $this->assertOpen();
+        $this->inputs->assertFeedback();
+        $fields = $this->protection->fields($state);
         $this->phase = FormPhase::Finalizing;
 
         return $fields;

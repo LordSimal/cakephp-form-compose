@@ -33,6 +33,7 @@ class HandwrittenSummaryTest extends FormTestCase
                 ])
             . '>';
         $field->register();
+        $body .= $field->errors();
         $summary = $form->errorSummary();
         static::assertStringContainsString('Status: Choose one', $summary);
         static::assertStringNotContainsString('<a ', $summary);
@@ -68,6 +69,8 @@ class HandwrittenSummaryTest extends FormTestCase
         }
 
         $field->register();
+        $field->errors();
+
         $summary = $form->errorSummary();
         static::assertStringContainsString('Status: Choose one', $summary);
         static::assertStringNotContainsString('<a ', $summary);

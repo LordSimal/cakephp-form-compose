@@ -110,7 +110,7 @@ class FormSessionCompositionTest extends CompositionTestCase
         $form = $helper->bind(new ArrayContext(['data' => ['post' => ['author' => ['first_name' => 'Deep']]]]));
         $html = $form->open() . $form->definition(EnvelopeForm::class) . $form->close();
         static::assertStringContainsString('name="post[author][first_name]"', $html);
-        static::assertStringContainsString('id="form-compose-1-post-author-first_name"', $html);
+        static::assertStringContainsString('id="form-compose-1-post.author.first_name"', $html);
         static::assertStringContainsString('value="Deep"', $html);
         static::assertSame('Deep', $this->probe->calls[0]['context']->context->val('first_name'));
         static::assertSame($helper->getView()->getRequest(), $this->probe->calls[0]['context']->request);
@@ -127,7 +127,7 @@ class FormSessionCompositionTest extends CompositionTestCase
         static::assertStringContainsString('name="author[id]"', $html);
         static::assertNotNull($form->binding->definition);
         static::assertFalse($form->binding->definition->has('author.email'));
-        static::assertSame('text', $form->field('author.email')->state->type);
+        static::assertSame('email', $form->field('author.email')->state->type);
     }
 
     public function testDefinitionThemeFallbackAndPerCallOverrides(): void

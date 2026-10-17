@@ -38,7 +38,7 @@ forwarded to the input as HTML attributes.
 | --- | --- | --- |
 | `type` | `string` | Inferred from conventions and context; overrides inference. Native HTML input types, `textarea`, `select`, `radio`, `multicheckbox`, or a registered custom type. |
 | `name` | `string` | Bracket notation derived from the path: `comments.0.body` becomes `comments[0][body]`. Overrides the submitted name, not the context lookup path. |
-| `id` | `string` | Binding ID plus the path with dots replaced by hyphens. Set a unique explicit ID for repeated presentations. |
+| `id` | `string` | Binding ID plus the path; dots are retained and literal hyphens become `:2d`. Set a unique explicit ID for repeated presentations. |
 
 Paths must be nonempty dot-separated segments containing letters, digits,
 underscores, or hyphens. Names must use valid bracket notation. IDs must be
@@ -46,12 +46,56 @@ nonempty and unique among rendered elements in the session, including choices,
 feedback, and configured container IDs. Type names must begin with a lowercase
 letter and contain only lowercase letters, digits, underscores, or hyphens.
 
+Generated field IDs distinguish `author.name` from `author-name` and reserve
+hyphens for feedback and choice suffixes. Read IDs from `$field->state->id`;
+use `document.getElementById()` or `CSS.escape()` with JavaScript selectors.
+Explicit IDs remain application-owned and must be unique.
+
 ### Type inference
 
 Explicit `type` wins. Before schema inference, conventional association selectors
 (`tags._ids`) become multiple selects, context primary keys become hidden inputs,
-and foreign-key paths ending in `_id` become selects. An explicit `options` list,
-or a discovered conventional choice list, also infers a select.
+and foreign-key paths ending in `_id` become selects. Other fields whose final
+path segment is `password` or `passwd` infer a password input, including nested
+paths. Password inference takes precedence over choice-list discovery and never
+prefills the input from request, context, default, or explicit values. An explicit
+`type` still wins. Configure helper or binding `passwordFields` to replace these
+terminal names; include the defaults when adding application-specific names.
+After password and choice conventions, terminal `email` infers `email`, and
+`tel`, `telephone`, or `phone` infer `tel`, including nested paths. Names are exact
+and case-sensitive: `email_address` and `cellphone` do not match. Other fields use
+the binding's schema `typeMap`, falling back to `text` for unmapped types.
+
+Configure mappings once on the helper or override individual entries per binding:
+
+```php
+$this->Compose->setConfig('typeMap', [
+    'money' => 'currency',
+    'json' => 'textarea',
+]);
+$form = $this->Compose->bind($invoice, [
+    'types' => ['currency' => $currencyType],
+]);
+echo $form->open();
+echo $form->control('total'); // money schema uses the registered currency control.
+echo $form->close();
+```
+
+Explicit `['type' => 'number']` still overrides the mapping. A binding option such
+as `['typeMap' => ['money' => 'number']]` overrides the schema mapping for one form.
+Mapping overrides merge in this order: native defaults, helper configuration, binding options. They do not
+change schema types, constraints, values, or submitted names. Association,
+primary-key, password, choice, and email/telephone conventions take precedence
+over schema mappings. Map values must be valid native control names or registered
+aliases; malformed maps fail at binding time. Types may still be registered
+without a schema mapping and selected explicitly.
+
+Native non-choice controls do not consume choice iterators or reserve choice IDs,
+even when their configuration includes `options`.
+For other fields, an explicit `options` list, or a discovered
+conventional choice list, infers a select. Registered CakePHP `enum-*` schema types
+discover their backed enum class before view-variable choices. Explicit `options`
+and non-choice `type` overrides remain authoritative.
 
 | Context type | Control type |
 | --- | --- |
@@ -70,6 +114,7 @@ or a discovered conventional choice list, also infers a select.
 | `value` | `mixed` | Absent: resolve from binding sources. When supplied, wins even when null, false, zero, or an empty string. |
 | `default` | `mixed` | `null`. Used when no configured source supplies a value; also passed to context lookup. |
 | `schemaDefault` | `bool` | `true`. Passed to the context to control schema defaults. |
+| `timezone` | `string`, `DateTimeZone`, or `null` | `null`. For temporal inputs, convert date/time objects or integer Unix timestamps to this timezone without changing the original object. Date-only and time-only objects reject timezone conversion. |
 
 Source order belongs to binding [`valueSources`](./form-reference.md#binding-options),
 not to individual fields. The default order is request data, then context.
@@ -88,6 +133,22 @@ echo $form->control('reviewed_at', ['value' => null]);
 `default` fills missing values; `value` deliberately overrides found values.
 Password and file inputs never prefill values. Date/time objects use native HTML
 formats; false becomes `'0'` when rendered as a native scalar.
+
+Native `date`, `month`, `week`, `time`, and `datetime-local` inputs format PHP
+date/time objects and CakePHP `Date` and `Time` objects without localized strings.
+Week values use the ISO week year. Date-only objects support date/month/week;
+time-only objects support time. Integer Unix timestamps use UTC unless `timezone`
+is configured. Strings, including submitted values, must already use the native
+input format and pass through unchanged: they represent local wall-clock values
+and are not parsed or converted again. Invalid strings are never replaced with
+the current date.
+
+Time and datetime inputs default to `step="1"` so nonzero seconds remain valid.
+Fractional datetime schema types default to `step="0.001"`. Positive non-integer
+steps, including intervals above one second such as `step="1.5"`, and `step="any"`
+format object values with milliseconds; precision beyond milliseconds
+cannot be represented by native browser inputs. Override `attributes['step']`
+to choose another interval or remove the attribute with null.
 
 ## Labels and feedback
 
@@ -150,7 +211,9 @@ configuration whose text should be evaluated at field resolution.
 Context text-length limits supply `maxlength`. Numeric schema types supply `step`
 (`any` for decimals/floats, `1` for integers). Put additional browser constraints,
 such as `min`, `max`, `step`, `maxlength`, or `pattern`, in `attributes` to override
-or extend the prepared input attributes. Server-side validation remains in CakePHP.
+or extend the prepared input attributes. Server-side validation remains in CakePHP. The context's required-validation
+text is available separately as `$field->state->requiredMessage`; templates can
+use it for optional enhancements without automatic inline JavaScript.
 
 For `multicheckbox`, `required` describes the group requirement in field state;
 it does not emit `required` on each checkbox, which would require every choice.
@@ -168,7 +231,7 @@ echo $form->control('reading_minutes', [
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |
-| `options` | `iterable` or backed enum class name | Conventional view-variable choices when available, otherwise `[]`. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](./choices.md#backed-enums) for labels and selection. |
+| `options` | `iterable` or backed enum class name | Discovered CakePHP schema enum choices, then conventional view-variable choices, otherwise `[]`. Explicit `options` overrides discovery. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](./choices.md#backed-enums) for labels and selection. |
 | `empty` | `bool`, `string`, or `null` | `null`/omitted: prepend a blank option for optional single selects. `true`: prepend a blank label; a string: use that label; `false`: do not prepend. Required and multiple selects have no automatic blank option. |
 | `checkedValue` | Scalar or stringable | `'1'`. Submitted value for a checked single checkbox. |
 | `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |
@@ -244,6 +307,9 @@ instead of an outer control layout. See the [template reference](./template-refe
 for all part names, variables, and lookup rules.
 
 ## Submission protection
+
+For custom controls, see [custom field submission protection](./custom-fields.md#submission-protection),
+including composite children, locked hidden values, and explicit unlocking.
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |

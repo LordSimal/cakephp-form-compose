@@ -13,6 +13,7 @@ use FormCompose\Rendering\ErrorSummaryRenderer;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
+use InvalidArgumentException;
 use Throwable;
 use function Cake\I18n\__;
 
@@ -296,6 +297,26 @@ class FormSession
         $this->lifecycle->assertOpen();
 
         return $this->summaries->render($this, $this->lifecycle->inputs, $options);
+    }
+
+    /**
+     * Register a handwritten feedback element after emitting its prepared attributes.
+     *
+     * Use field->attributes($part) on the element, then registerFeedback($field, $part).
+     * This reserves its configured ID without rendering or registering submissions.
+     * Do not also render that element with the field's help() or errors() method.
+     *
+     * @param array<string, mixed> $attributes Local feedback attributes used in the markup.
+     * @throws \InvalidArgumentException For parts other than help and errors.
+     */
+    public function registerFeedback(BoundField $field, string $part, array $attributes = []): void
+    {
+        if (!in_array($part, ['help', 'errors'], true)) {
+            throw new InvalidArgumentException('Only handwritten help and errors parts can be registered.');
+        }
+
+        $this->lifecycle->assertOpen();
+        $this->lifecycle->inputs->render(static fn(): string => '', $field->attributes($part, $attributes));
     }
 
     /**

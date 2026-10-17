@@ -12,6 +12,19 @@ for a walkthrough, or jump directly to [field options](./field-options.md).
 
 All rendering methods return HTML strings; they do not echo automatically.
 
+## registerFeedback() {#register-feedback}
+
+`$form->registerFeedback($field, 'help', $attributes = [])` registers a handwritten
+help element after it is emitted with `$field->attributes('help', $attributes)`.
+Use `'errors'` for handwritten errors. It requires an open session and reserves
+the configured ID without rendering or registering submitted inputs. Do not also
+render that element with `help()` or `errors()`.
+
+Closing verifies generated input descriptions have rendered or registered targets.
+A missing target throws `LogicException` and leaves the session open for correction.
+Application-owned descriptions pointing to unrelated elements remain the
+application's responsibility. See [field composition](./field-parts.md#preserve-feedback-and-accessible-names).
+
 ## postButton() and postLink() {#post-actions}
 
 Helper shortcuts create independent protected action forms:
@@ -67,15 +80,22 @@ See [blueprint defaults and manual layouts](./definitions.md#select-defaults-for
 
 | Option | Type | Default and effect |
 | --- | --- | --- |
-| `id` | `string` | Generated `form-compose-N` within the helper. Also prefixes generated input IDs. Set explicit unique IDs when needed. |
+| `id` | `string` | Generated `form-compose-N` across FormCompose helpers sharing the same Cake view. Also prefixes generated input IDs. Set explicit unique IDs when needed. |
 | `context` | `array` | `[]`. Additional options passed to CakePHP's context factory; not used when `$data` is already a context. |
 | `valueSources` | Nonempty list of `data`, `context`, `query` | `['data', 'context']`. Field value lookup order. |
+| `passwordFields` | List of terminal field names | Inherits helper configuration, normally `['password', 'passwd']`. Replaces the names that infer password inputs, including nested paths. An empty list disables name-based inference; explicit password controls never prefill values. |
+| `typeMap` | Map of schema names to control aliases | Inherits helper overrides. Binding entries override matching helper entries; native defaults remain for other schema types. |
 | `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
 | `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
 | Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
 
+Form IDs are reserved at binding time for the owning Cake view.
+Automatic IDs skip explicit reservations; duplicate explicit form IDs throw
+`LogicException`. A separate Cake view starts an independent sequence. Form IDs
+must be nonempty and contain no whitespace.
+
 The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
-Likewise context, types, and value sources are binding settings, not opening
+Likewise context, types, type mappings, password field names, and value sources are binding settings, not opening
 settings. See [Fields and values](./usage.md#data-and-value-sources).
 
 ### Helper configuration
@@ -85,6 +105,8 @@ Set these with `addHelper()` or the helper's `setConfig()` before binding:
 | Setting | Value and default |
 | --- | --- |
 | `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
+| `passwordFields` | Defaults to `['password', 'passwd']`. A list of terminal names, such as `['password', 'passwd', 'passphrase', 'password_confirmation']`. Each binding snapshots this list; its own `passwordFields` option replaces the helper default. Explicit field types and primary-key conventions take precedence. |
+| `typeMap` | Additional schema-to-control mappings, default `[]`. Each binding snapshots helper overrides over the native defaults; its own entries override matching keys. Reset helper overrides with `setConfig('typeMap')`. |
 | `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
 | `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
 
@@ -98,6 +120,23 @@ $this->addHelper('Form', [
 
 See [blueprint services](./blueprint-configuration.md#inject-application-services)
 for supplying this view variable from the application container.
+
+Password names can be configured without a helper subclass:
+
+```php
+$this->Form->setConfig('passwordFields', ['password', 'passwd', 'passphrase']);
+$form = $this->Form->bind($account, [
+    'passwordFields' => ['password', 'passwd', 'new_password'],
+]);
+```
+
+Helper settings use CakePHP's normal array merging. To replace the helper list
+instead of extending it, call `setConfig('passwordFields', $names, false)`.
+Binding options always replace the inherited list.
+Lists use exact, case-sensitive terminal names rather than full paths or patterns.
+For example, `new_password` matches `account.new_password`. Changing helper
+configuration affects future bindings; a binding override does not change the
+helper default. Password-name configuration is never emitted as a form attribute.
 
 See [Create a theme](./themes.md#select-theme) for configuring
 an application theme in `AppView`. Helper configuration is local to that instance;

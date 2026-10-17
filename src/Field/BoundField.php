@@ -7,9 +7,9 @@ use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\FieldAttributes;
+use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RendererInterface;
 use FormCompose\Rendering\RenderNode;
-use FormCompose\Rendering\Theme;
 
 /**
  * Provides the rendering API for one resolved field in a form session.
@@ -27,15 +27,42 @@ use FormCompose\Rendering\Theme;
  */
 class BoundField
 {
+    /** @var array<string, \FormCompose\Field\BoundField> Child fields, resolved without registration. */
+    public array $inputs {
+        get => $this->children->resolve($this, $this->fieldType);
+    }
+
+    /** The successful emitted focus target, or null before rendering. */
+    public ?string $focusTarget {
+        get => $this->lifecycle->inputs->target($this->state->id);
+    }
+
+    protected ?Attributes $activeAttributes = null;
+
+    /** @internal Effective attributes while rendering this input's children. */
+    public Attributes $inputAttributes {
+        get => $this->activeAttributes ?? $this->attributes();
+    }
+
+    /** The shared rendering pipeline used by custom field types. */
+    public RendererInterface $renderer {
+        get => $this->rendering->renderer;
+    }
+
+    /** The enclosing composite field, when this field is a declared child. */
+    public ?BoundField $parent {
+        get => $this->children->parent;
+    }
+
     /**
      * Compose immutable state, rendering, and a submission contract.
      */
     public function __construct(
         public readonly FieldState $state,
         protected readonly FormLifecycle $lifecycle,
-        protected readonly RendererInterface $renderer,
-        protected readonly Theme $theme,
+        protected readonly RenderContext $rendering,
         protected readonly FieldTypeInterface $fieldType,
+        protected readonly FieldChildren $children,
     ) {
     }
 
@@ -46,7 +73,11 @@ class BoundField
      */
     public function attributes(string $part = 'input', array $extra = []): Attributes
     {
-        return $this->createFieldAttributes()->resolve($this->state, $part, $extra);
+        $attributes = $this->createFieldAttributes()->resolve($this->state, $part, $extra);
+
+        return $part === 'input' && $this->parent instanceof self
+            ? InheritedAttributes::resolve($this->parent->inputAttributes, $attributes, $this->state)
+            : $attributes;
     }
 
     /**
@@ -77,11 +108,20 @@ class BoundField
         $bag = $this->attributes('input', $attributes);
 
         return $this->lifecycle->inputs->render(function () use ($bag): string {
-            $html = $this->renderer->render('input', RenderNode::field($this, $bag));
+            $previous = $this->activeAttributes;
+            $this->activeAttributes = $bag;
+            try {
+                $html = $this->renderer->render('input', RenderNode::field($this, $bag));
+            } finally {
+                $this->activeAttributes = $previous;
+            }
+
             $ids = $this->fieldType instanceof InputIdentityProviderInterface
                 ? $this->fieldType->inputIds($this, $bag)
                 : [];
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag), $ids);
+            $this->lifecycle->inputs->references->record($this, $bag, $this->fieldType, $ids);
+            $this->lifecycle->inputs->recordTarget($this, $this->fieldType, $bag);
             $this->lifecycle->inputs->feedback->record(
                 $this->state->id,
                 FeedbackEntry::field($this, $this->fieldType, $bag),
@@ -109,6 +149,7 @@ class BoundField
         $bag = $this->attributes('input', $attributes);
         $this->lifecycle->inputs->render(function () use ($bag): string {
             $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag));
+            $this->lifecycle->inputs->references->record($this, $bag);
             $this->lifecycle->inputs->feedback->record(
                 $this->state->id,
                 FeedbackEntry::field($this, null, $bag),
@@ -180,6 +221,6 @@ class BoundField
      */
     protected function createFieldAttributes(): FieldAttributes
     {
-        return new FieldAttributes($this->theme);
+        return new FieldAttributes($this->rendering->theme);
     }
 }

@@ -29,7 +29,7 @@ class DefinitionViewTest extends CompositionTestCase
         ]);
         static::assertStringContainsString('name="author[first_name]"', $html);
         static::assertStringContainsString('name="author[last_name]"', $html);
-        static::assertStringContainsString('id="form-compose-1-author-first_name"', $html);
+        static::assertStringContainsString('id="form-compose-1-author.first_name"', $html);
         static::assertStringContainsString('Given &lt;name&gt;', $html);
         static::assertStringContainsString('Family name', $html);
         static::assertStringContainsString('Use &lt;given&gt; name.', $html);

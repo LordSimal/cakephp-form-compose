@@ -5,6 +5,7 @@ namespace FormCompose\Field;
 
 use Closure;
 use FormCompose\Rendering\Attributes;
+use LogicException;
 
 /**
  * Constructs one discovered field type only when a form actually uses it.
@@ -21,8 +22,20 @@ class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterfac
      *
      * @param \Closure(): \FormCompose\Field\FieldTypeInterface $factory Type construction.
      */
-    public function __construct(protected readonly Closure $factory)
+    public function __construct(protected readonly Closure $factory, public readonly bool $composite = false)
     {
+    }
+
+    /**
+     * Resolve child declarations only when a composite's children are requested.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function inputs(BoundField $field): array
+    {
+        $type = $this->resolve();
+
+        return $type instanceof CompositeType ? $type->inputs($field) : [];
     }
 
     /**
@@ -72,6 +85,11 @@ class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterfac
      */
     protected function resolve(): FieldTypeInterface
     {
-        return $this->instance ??= ($this->factory)();
+        $type = $this->instance ?? ($this->factory)();
+        if ($this->composite !== $type instanceof CompositeType) {
+            throw new LogicException('A discovered field type must preserve its declared composite contract.');
+        }
+
+        return $this->instance = $type;
     }
 }

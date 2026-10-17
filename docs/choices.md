@@ -49,6 +49,17 @@ This renders a select with one option per case, in declaration order. There is
 no need to call `Status::cases()`. Each option submits the case's backing value;
 labels default to humanized case names (`InReview` becomes `In Review`).
 
+When the CakePHP schema uses `EnumType::from(Status::class)`, the enum class is
+discovered automatically. `$form->control('status')` then renders the select
+without repeating `options`. Explicit `radio` and `multicheckbox` types also use
+discovered enum choices. Discovery works for nested association paths and scoped
+blueprints, and takes precedence over conventional view-variable lists.
+
+Explicit `options` always wins, including an empty list or null to opt out of
+discovery. Explicit non-choice types keep their type and do not discover choices.
+This uses CakePHP's registered `enum-*` database types; application validation
+still controls which submitted values are accepted.
+
 ### Custom enum labels
 
 Implement CakePHP's `EnumLabelInterface` when cases need application-owned labels
@@ -126,8 +137,8 @@ echo $form->control('status', [
 Existing placeholder rules apply, including retaining a case with an empty-string
 backing value instead of adding another blank option. Integer zero remains a real
 choice. Pure enums are rejected because they have no backing value to submit.
-Enum choice sources are explicit; ORM enum column types do not automatically
-populate choices.
+Explicit `options` overrides automatic schema discovery, including when selecting
+a subset of enum cases.
 
 Blueprint field attributes accept the same configuration:
 

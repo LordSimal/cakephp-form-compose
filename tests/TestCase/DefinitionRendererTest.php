@@ -39,9 +39,9 @@ class DefinitionRendererTest extends CompositionTestCase
         static::assertStringContainsString('Explicit email', $html);
         static::assertStringContainsString('name="author[email]"', $html);
         static::assertStringContainsString('value="author@example.test"', $html);
-        static::assertStringContainsString('for="form-compose-1-author-email"', $html);
+        static::assertStringContainsString('for="form-compose-1-author.email"', $html);
         static::assertStringContainsString('aria-invalid="true"', $html);
-        static::assertStringContainsString('id="form-compose-1-author-email-errors"', $html);
+        static::assertStringContainsString('id="form-compose-1-author.email-errors"', $html);
         static::assertStringContainsString('&lt;Invalid email&gt;', $html);
         static::assertStringContainsString('&lt;Work&gt; email', $html);
     }

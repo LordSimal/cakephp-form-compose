@@ -92,7 +92,7 @@ class ErrorSummaryTest extends FormTestCase
         $summary = $form->errorSummary();
         static::assertSame(1, substr_count($summary, 'Fix row two'));
         static::assertSame(1, substr_count($summary, 'Add another'));
-        static::assertStringContainsString('href="#form-compose-1-comments-2-body"', $summary);
+        static::assertStringContainsString('href="#form-compose-1-comments.2.body"', $summary);
         static::assertStringContainsString('Comments: Add another', $summary);
         $form->close();
     }
@@ -165,6 +165,7 @@ class ErrorSummaryTest extends FormTestCase
         $form->open();
         $input = '<input' . (string)$field->attributes() . '>';
         $field->register();
+        $input .= $field->errors();
         $summary = $form->errorSummary();
         static::assertStringContainsString('id="form-compose-1-title"', $input);
         static::assertSame(1, substr_count($summary, 'Fix handwritten title'));

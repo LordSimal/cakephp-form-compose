@@ -71,7 +71,7 @@ class FieldIdentityTest extends FormTestCase
         $form->open();
         $form->control('field', $options);
         $this->expectException(LogicException::class);
-        $form->control('field-' . $part);
+        $form->control('field-' . $part, ['id' => 'form-compose-1-field-' . $part]);
     }
 
     /**
@@ -96,7 +96,7 @@ class FieldIdentityTest extends FormTestCase
     {
         $form = $this->helper()->bind();
         $form->open();
-        $form->control('email-help');
+        $form->control('email-help', ['id' => 'form-compose-1-email-help']);
         try {
             $form->control('email', ['help' => 'Colliding help']);
             static::fail('Expected a feedback identity collision.');

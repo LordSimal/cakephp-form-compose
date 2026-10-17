@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use Closure;
+use FormCompose\Field\BoundField;
+use FormCompose\Field\FieldTypeInterface;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Security\FormProtection;
 use LogicException;
@@ -24,6 +26,9 @@ class InputRegistry
     /** @var list<\FormCompose\Field\Submission> Inputs staged until the outermost render succeeds. */
     protected array $pending = [];
 
+    /** @var array<string, ?string> Successful control targets, included in render rollback. */
+    protected array $targets = [];
+
     protected int $depth = 0;
 
     /**
@@ -32,6 +37,7 @@ class InputRegistry
     public function __construct(
         protected readonly FormProtection $protection,
         public readonly FeedbackRegistry $feedback = new FeedbackRegistry(),
+        public readonly FeedbackReferences $references = new FeedbackReferences(),
     ) {
     }
 
@@ -43,6 +49,22 @@ class InputRegistry
         if (isset($this->rendered[$id])) {
             throw new LogicException('An input with this ID has already been rendered: ' . $id);
         }
+    }
+
+    /**
+     * Retain successful focus targets even when the field has no errors.
+     */
+    public function recordTarget(BoundField $field, FieldTypeInterface $type, Attributes $attributes): void
+    {
+        $this->targets[$field->state->id] = FeedbackEntry::target($field, $type, $attributes);
+    }
+
+    /**
+     * Read a successful target without rendering or registering anything.
+     */
+    public function target(string $id): ?string
+    {
+        return $this->targets[$id] ?? null;
     }
 
     /**
@@ -88,6 +110,14 @@ class InputRegistry
     }
 
     /**
+     * Validate generated feedback associations against committed presentation IDs.
+     */
+    public function assertFeedback(): void
+    {
+        $this->references->assertResolved($this->rendered);
+    }
+
+    /**
      * Commit inputs only after the outermost layout succeeds, or restore the snapshot.
      *
      * @param \Closure(): string $render Definition or control-batch rendering operation.
@@ -97,6 +127,8 @@ class InputRegistry
         $rendered = $this->rendered;
         $pending = $this->pending;
         $feedback = $this->feedback->entries();
+        $references = $this->references->expectations();
+        $targets = $this->targets;
         $this->depth++;
         try {
             $html = $render();
@@ -107,6 +139,8 @@ class InputRegistry
             $this->rendered = $rendered;
             $this->pending = $pending;
             $this->feedback->restore($feedback);
+            $this->references->restore($references);
+            $this->targets = $targets;
             throw $throwable;
         } finally {
             $this->depth--;

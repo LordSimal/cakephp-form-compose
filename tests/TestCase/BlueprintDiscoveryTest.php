@@ -12,7 +12,7 @@ use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormComposePlugin;
 use FormCompose\Test\BlueprintTestCase;
 use FormCompose\Test\Fixture\Blueprint\BlueprintFormHelper;
-use FormCompose\Test\Fixture\Blueprint\Plugin\src\Field\PluginRangeType;
+use FormCompose\Test\Fixture\Blueprint\Plugin\src\Form\Field\PluginRangeType;
 use FormCompose\Test\Fixture\Blueprint\Valid\ConditionalForm;
 use FormCompose\Test\Fixture\Blueprint\Valid\DiscoveredRangeType;
 use FormCompose\Test\Fixture\Blueprint\Valid\ProfileChoices;
@@ -140,7 +140,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         ]));
         AttributeResolver::drop('testBlueprints');
         AttributeResolver::setConfig('testBlueprints', [
-            'paths' => ['src/Form/*.php', 'src/Form/**/*.php', 'src/Field/*.php', 'src/Field/**/*.php'],
+            'paths' => ['src/Form/*.php', 'src/Form/**/*.php'],
             'cache' => false,
         ]);
         $factory = new BlueprintFactory(collection: 'testBlueprints');

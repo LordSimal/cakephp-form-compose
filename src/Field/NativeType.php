@@ -123,6 +123,10 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, 
      */
     protected function prepareChoices(BoundField $field, Attributes $attributes): array
     {
+        if (!in_array($field->state->type, ['select', 'radio', 'multicheckbox'], true)) {
+            return [];
+        }
+
         /** @var iterable<array-key, mixed>|class-string<\BackedEnum> $options */
         $options = $field->state->options['options'] ?? [];
 

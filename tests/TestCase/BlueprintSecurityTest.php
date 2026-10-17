@@ -125,7 +125,7 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $html .= $form->definition('conditional');
         $html .= $form->definition(BillingAddressForm::class);
         $html .= $form->control('period', ['type' => 'date-range']);
-        static::assertSame('text', $form->field('email')->state->type);
+        static::assertSame('email', $form->field('email')->state->type);
         $html .= $form->close();
         $data = [
             'email' => 'user@example.test',

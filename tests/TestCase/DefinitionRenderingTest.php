@@ -60,7 +60,7 @@ class DefinitionRenderingTest extends FormTestCase
             $first->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
             $second->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
         );
-        static::assertSame('text', $first->field('email')->state->type);
+        static::assertSame('email', $first->field('email')->state->type);
         static::assertSame([], $first->field('email')->state->options);
         static::assertSame([], $second->field('email')->state->options);
     }

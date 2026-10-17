@@ -19,13 +19,15 @@ final readonly class FieldState
     /**
      * Capture field identity, value, configuration, constraints, and validation feedback.
      *
-     * @param array{name: string, id: string, messages: list<string>, constraints: array<string, mixed>, options: array<string, mixed>} $data Presentation metadata.
+     * @param array{name: string, id: string, messages: list<string>, requiredMessage: ?string, composite: bool, constraints: array<string, mixed>, options: array<string, mixed>} $data Presentation metadata.
      */
     public function __construct(public string $path, public string $type, public mixed $value, array $data)
     {
         $this->name = $data['name'];
         $this->id = $data['id'];
         $this->messages = $data['messages'];
+        $this->requiredMessage = $data['requiredMessage'];
+        $this->composite = $data['composite'];
         $this->constraints = $data['constraints'];
         $this->options = $data['options'];
     }
@@ -34,8 +36,13 @@ final readonly class FieldState
 
     public string $id;
 
+    public bool $composite;
+
     /** @var list<string> */
     public array $messages;
+
+    /** Context required-validation text; check effective required state before enhancing validity. */
+    public ?string $requiredMessage;
 
     /** @var array<string, mixed> */
     public array $constraints;
@@ -48,7 +55,7 @@ final readonly class FieldState
      */
     public function grouped(): bool
     {
-        return in_array($this->type, ['radio', 'multicheckbox'], true);
+        return $this->composite || in_array($this->type, ['radio', 'multicheckbox'], true);
     }
 
     /**

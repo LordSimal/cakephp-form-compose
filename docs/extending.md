@@ -11,43 +11,9 @@ submission behavior, renderer implementations, and service subclasses.
 
 ## Custom field types
 
-Implement `FieldTypeInterface` to render a custom control and return its submitted
-names as `Submission` objects. Register it using
-`bind($entity, ['types' => ['date-range' => $rangeType]])`, then request
-`['type' => 'date-range']` on a field. Alternatively, mark the implementation with
-`#[AsFieldType('date-range')]` for [automatic discovery](./blueprint-configuration.md#discover-custom-field-types).
-Explicit `types` registrations override discovered types. A complete
-[date-range implementation](./blueprint-configuration.md#discover-custom-field-types)
-shows rendering, disabled state, accessible names, and both submitted inputs.
-
-Discovered types are constructed lazily when first rendered or explicitly
-registered. Each binding reuses its own type instance. Ordinary binding and field
-inspection do not instantiate unused types or require their constructor services.
-
-::: info Describe the inputs your control submits
-`render()` must return escaped markup without changing security state.
-`submissions()` must describe exactly the successful inputs emitted, respecting
-`disabled` and other submission behavior. Use `Submission($name, value: $value)`
-for a hidden value that must remain locked. Explicit unlocking is available with
-`locked: false`. Presentation templates cannot infer these semantics from HTML.
-:::
-
-Composite controls can also implement `InputIdentityProviderInterface`:
-
-```php
-public function inputIds(BoundField $field, Attributes $attributes): array
-{
-    return [$field->state->id . '-end'];
-}
-```
-
-Return additional DOM IDs emitted by `render()`, excluding the bound field's main
-ID, which is already tracked. This method must not render or register anything.
-The session checks these identities alongside native choice and feedback IDs;
-a collision rolls back the complete control's pending registrations. Existing
-`FieldTypeInterface` implementations remain valid without this optional interface.
-Templates must preserve the supplied identities; arbitrary handwritten HTML is
-the application's responsibility.
+The [custom field types guide](./custom-fields.md) covers `#[AsFieldType]`,
+`CompositeType`, `SingleInputType`, and advanced `FieldTypeInterface` contracts.
+It includes complete application examples with PHP layouts and submission behavior.
 
 ## Custom renderers
 
@@ -79,7 +45,7 @@ to the normal form-building API:
 | --- | --- |
 | `FormHelper` | `createSession()` selects the session returned by `bind()` |
 | `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
-| `FieldResolver` | `inferType()` and factories for bound fields, field types, value resolution, and field conventions |
+| `FieldResolver` | `inferType()` and factories for bound fields, field types, child resolution, values, and field conventions |
 | `FieldConventions` | `choices()`, `resolve()`, and `messages()` specialize choice discovery and association defaults |
 | `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
 | `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
@@ -229,7 +195,7 @@ public function errorTarget(BoundField $field, Attributes $attributes): ?string
 
 Return an actual emitted control ID without `#`, or null to show an unlinked
 message. An empty string is rejected. The method must not render, register, or
-consume choice iterators. Existing types without this interface use their main
+consume choice iterators. Types without this interface use their main
 field ID; hidden and disabled controls remain unlinked. Discovered lazy types
 forward the contract through the same resolved instance.
 
@@ -240,6 +206,8 @@ to report additional emitted IDs for duplicate checks too.
 `FormSession` accepts an optional fifth `ErrorSummaryRenderer` dependency. Its
 protected `attributes()` prepares the summary/heading bags; inject a subclass
 through the helper's `createSession()` to specialize this behavior. The
-`InputRegistry` constructor accepts an optional second `FeedbackRegistry`, which
-shares its existing snapshot/rollback transaction. Preserve that coordination in
+`InputRegistry` constructor accepts an optional second `FeedbackRegistry` and
+third `FeedbackReferences`, which share its existing snapshot/rollback transaction.
+The latter checks generated help/error references against rendered or registered
+IDs at form closing. Preserve that coordination in
 application subclasses. Summary metadata stays separate from Cake form protection.

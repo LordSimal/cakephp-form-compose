@@ -4,16 +4,26 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Http\Controller;
 
 use Cake\Controller\Controller;
+use Cake\Database\Type\EnumType;
 use Cake\Http\Response;
+use Cake\I18n\Date;
+use Cake\I18n\Time;
+use Cake\Routing\Attribute\Get;
+use Cake\Routing\Attribute\Post;
+use Cake\Routing\Attribute\Scope;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
+use DateTimeImmutable;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
+use FormCompose\Test\Fixture\Enum\Priority;
+use FormCompose\Test\Fixture\Enum\PublicationStatus;
 use FormCompose\View\Helper\FormHelper;
 
 /**
  * Exercises application-owned markup and real Cake form protection over HTTP.
  */
+#[Scope('/forms')]
 class FormsController extends Controller
 {
     /**
@@ -29,6 +39,7 @@ class FormsController extends Controller
     /**
      * Render representative native controls using the documented starter theme.
      */
+    #[Get('')]
     public function index(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
@@ -101,6 +112,87 @@ class FormsController extends Controller
     }
 
     /**
+     * Render temporal objects for browser normalization and protected round trips.
+     */
+    #[Get('/temporal')]
+    public function temporal(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext([
+            'schema' => [
+                'day' => ['type' => 'date'],
+                'clock' => ['type' => 'time'],
+                'instant' => ['type' => 'datetimefractional'],
+                'fractional_clock' => ['type' => 'time'],
+                'fractional_instant' => ['type' => 'datetime'],
+            ],
+            'data' => [
+                'day' => new Date('2026-10-15'),
+                'clock' => new Time('14:23:45'),
+                'instant' => new DateTimeImmutable('2026-10-15 14:23:45.123'),
+                'fractional_clock' => new Time('00:00:01.500000'),
+                'fractional_instant' => new DateTimeImmutable('2026-10-15 00:00:02.500'),
+            ],
+        ]));
+        $html =
+            $form->open(['url' => '/forms/save'])
+            . $form->controls([
+                'day',
+                'clock',
+                'instant',
+                'fractional_clock' => ['attributes' => ['step' => '1.5', 'min' => '00:00:00']],
+                'fractional_instant' => ['attributes' => ['step' => '2.5', 'min' => '2026-10-15T00:00:00']],
+            ]);
+        $html .= $form->control('week', ['type' => 'week', 'value' => new Date('2027-01-01')]);
+        $html .= $form->submit('Save temporal') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
+    }
+
+    /**
+     * Compose inputs with both rendered and handwritten accessible feedback.
+     */
+    #[Get('/composition')]
+    public function composition(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext(['errors' => ['title' => ['invalid' => 'Review the title']]]));
+        $field = $form->field('title', ['help' => 'Use a descriptive title', 'value' => 'Example']);
+        $html = $form->open(['url' => '/forms/save']) . $field->label() . $field->input();
+        $html .= '<p' . (string)$field->attributes('help') . '>Use a descriptive title</p>';
+        $form->registerFeedback($field, 'help');
+        $html .= $field->errors() . $form->submit('Save composition') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
+    }
+
+    /**
+     * Discover schema enum choices for native select and radio submissions.
+     */
+    #[Get('/enums')]
+    public function enums(): Response
+    {
+        $helper = new FormHelper(new View($this->getRequest()));
+        $form = $helper->bind(new ArrayContext([
+            'schema' => [
+                'status' => ['type' => EnumType::from(PublicationStatus::class)],
+                'priority' => ['type' => EnumType::from(Priority::class)],
+            ],
+            'data' => ['status' => PublicationStatus::Published, 'priority' => Priority::Normal],
+        ]));
+        $html = $form->open(['url' => '/forms/save']) . $form->controls(['status', 'priority' => ['type' => 'radio']]);
+        $html .= $form->submit('Save enums') . $form->close();
+
+        return $this->getResponse()
+            ->withType('html')
+            ->withStringBody('<!DOCTYPE html><html><body>' . $html . '</body></html>');
+    }
+
+    /**
      * Share the application-owned starter theme across HTTP fixture actions.
      */
     protected function createTheme(): Theme
@@ -120,6 +212,7 @@ class FormsController extends Controller
     /**
      * Return only submissions accepted by CSRF and FormProtectionComponent.
      */
+    #[Post('/save')]
     public function save(): Response
     {
         $this->getRequest()->allowMethod(['post']);
