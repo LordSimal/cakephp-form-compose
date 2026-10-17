@@ -27,7 +27,7 @@ abstract class CompositionTestCase extends BlueprintTestCase
         AttributeResolver::drop('testBlueprints');
         AttributeResolver::setConfig('testBlueprints', [
             'paths' => ['tests/Fixture/Blueprint/Valid/*.php', 'tests/Fixture/Composition/*.php'],
-            'cache' => '_cake_core_',
+            'cache' => '_cake_attributes_',
             'validateFiles' => true,
         ]);
         AttributeResolver::clear('testBlueprints');

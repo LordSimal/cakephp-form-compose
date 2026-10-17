@@ -125,7 +125,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $factory = new BlueprintFactory(collection: 'testBlueprints');
         static::assertTrue($factory->definition('profile', $this->context())->has('email'));
         AttributeResolver::drop('testBlueprints');
-        AttributeResolver::setConfig('testBlueprints', ['paths' => [], 'cache' => '_cake_core_']);
+        AttributeResolver::setConfig('testBlueprints', ['paths' => [], 'cache' => '_cake_attributes_']);
         static::assertTrue($factory->definition('profile', $this->context())->has('email'));
         AttributeResolver::clear('testBlueprints');
         $this->expectException(InvalidArgumentException::class);
