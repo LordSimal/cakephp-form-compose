@@ -7,6 +7,7 @@ use Closure;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderNode;
+use FormCompose\Rendering\TemplateTrace;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\FormTestCase;
 use RuntimeException;
@@ -35,6 +36,8 @@ class ThemeDebugTest extends FormTestCase
             $html,
         );
         static::assertStringContainsString('element: FormCompose.form/base/label', $html);
+        static::assertStringContainsString("\n-->\n<label", $html);
+        static::assertStringEndsWith("\n<!-- FormCompose END part=label -->\n", $html);
         static::assertStringContainsString('<!-- FormCompose END part=label -->', $html);
         $form->close();
     }
@@ -49,14 +52,19 @@ class ThemeDebugTest extends FormTestCase
         $html = $form->control('email', ['type' => 'email', 'variant' => 'compact']);
         static::assertStringContainsString('MATCH themes/application/variants/compact/control', $html);
         static::assertStringNotContainsString('MISS themes/application/email/control', $html);
-        static::assertStringContainsString(
-            '<aside data-variant="compact"><!-- FormCompose PARENT --><!-- FormCompose BEGIN',
+        static::assertMatchesRegularExpression(
+            '/<aside data-variant="compact">\s*<!-- FormCompose PARENT -->\s*<!-- FormCompose BEGIN/',
             $html,
         );
         static::assertStringContainsString('source: layer themes/library', $html);
         static::assertStringContainsString('MATCH themes/library/control', $html);
         static::assertStringContainsString('element: FormCompose.form/base/control', $html);
         static::assertSame(2, substr_count($html, '<!-- FormCompose PARENT -->'));
+        static::assertStringContainsString("\n  <!-- FormCompose PARENT -->\n", $html);
+        static::assertStringContainsString("\n    <!-- FormCompose PARENT -->\n", $html);
+        static::assertStringContainsString("\n  <!-- FormCompose BEGIN\n  scope: field", $html);
+        static::assertStringContainsString("\n    <!-- FormCompose BEGIN\n    scope: field", $html);
+        static::assertStringEndsWith("\n<!-- FormCompose END part=control -->\n", $html);
         $form->close();
     }
 
@@ -69,8 +77,8 @@ class ThemeDebugTest extends FormTestCase
 
         $html = $form->control('title', ['template' => 'widgets/parent']);
         static::assertStringStartsWith(
-            "<!-- FormCompose BEGIN\nscope: field\npart: control\ntype: text\nfield: title\n"
-                . "source: explicit override\nelement: widgets/parent -->",
+            "\n<!-- FormCompose BEGIN\nscope: field\npart: control\ntype: text\nfield: title\n"
+                . "source: explicit override\nelement: widgets/parent\n-->\n",
             $html,
         );
         static::assertStringContainsString('MATCH themes/application/control', $html);
@@ -142,16 +150,77 @@ class ThemeDebugTest extends FormTestCase
         $field = $helper->bind()->field('title');
         $node = RenderNode::field($field, new Attributes());
         $this->expectOutputString('');
-        try {
-            $renderer->render('missing', $node);
-            static::fail('Expected missing template lookup to throw.');
-        } catch (RuntimeException $runtimeException) {
-            static::assertSame('No template for field part: missing', $runtimeException->getMessage());
+        foreach ([[], ['templates' => ['missing' => 'widgets/parent']]] as $options) {
+            try {
+                $renderer->render('missing', new RenderNode('field', 'text', $node->variables, $options));
+                static::fail('Expected missing template lookup to throw.');
+            } catch (RuntimeException $runtimeException) {
+                static::assertSame('No template for field part: missing', $runtimeException->getMessage());
+            }
         }
 
         $html = $renderer->render('label', $node);
         static::assertStringNotContainsString('missing', $html);
+        static::assertStringStartsWith("\n<!-- FormCompose BEGIN\nscope: field", $html);
         static::assertStringContainsString('MATCH FormCompose.form/base/label', $html);
+    }
+
+    public function testNestedCommentsFollowRenderDepthAndSiblingsReturnToTheSameDepth(): void
+    {
+        $helper = $this->helper();
+        $form = $helper->bind(renderer: new PhpRenderer($helper->getView(), themeDebug: true));
+        $form->open();
+
+        $first = $form->control('title');
+        $second = $form->control('subtitle');
+        foreach ([$first, $second] as $html) {
+            static::assertStringStartsWith("\n<!-- FormCompose BEGIN\nscope: field\npart: control", $html);
+            static::assertStringContainsString("\n  <!-- FormCompose BEGIN\n  scope: field\n  part: input", $html);
+            static::assertStringContainsString(
+                "\n    <!-- FormCompose BEGIN\n    scope: field\n    part: native",
+                $html,
+            );
+            static::assertStringContainsString("\n  -->\n  <label", $html);
+            static::assertStringContainsString("\n    -->\n    <input", $html);
+            static::assertStringContainsString("\n    <!-- FormCompose END part=native -->\n", $html);
+            static::assertStringEndsWith("\n<!-- FormCompose END part=control -->\n", $html);
+        }
+
+        $form->close();
+    }
+
+    public function testTagAlignmentPreservesMultilineControlContentAndNestedTraces(): void
+    {
+        $trace = new TemplateTrace('native', 'custom/native', 'explicit override');
+        $node = new RenderNode('field', 'textarea', []);
+        $content = "First line\n  Keep these spaces\nLast line\n";
+        $html = $trace->wrap('  <textarea>' . $content . '</textarea>', $node, 2);
+        static::assertStringContainsString("\n    -->\n    <textarea>" . $content . '</textarea>', $html);
+        static::assertSame($content, $this->xpath($html)->evaluate('string(//textarea)'));
+        $nested = $trace->wrap($html, $node, 1);
+        static::assertStringContainsString($html, $nested);
+        static::assertStringContainsString("\n  -->\n\n    <!-- FormCompose BEGIN", $nested);
+        static::assertStringContainsString("\n  -->\nPlain text\n", $trace->wrap('Plain text', $node, 1));
+    }
+
+    public function testInternalMetadataUsesOnlyTheNameAndHandlesApplicationInfrastructure(): void
+    {
+        $trace = new TemplateTrace('hidden', 'custom/hidden', 'explicit override');
+        $html = $trace->wrap('<input>', new RenderNode('form', 'hidden', [
+            'attributes' => new Attributes(['name' => "custom--name\nspoof", 'value' => 'secret-value']),
+        ]));
+        static::assertStringContainsString('field: custom&#45;&#45;name\\nspoof', $html);
+        static::assertStringContainsString('purpose: Internal form input', $html);
+        static::assertStringNotContainsString('secret-value', $html);
+        foreach ([
+            [],
+            ['attributes' => new Attributes()],
+            ['attributes' => new Attributes(['name' => 123])],
+        ] as $variables) {
+            $html = $trace->wrap('<input>', new RenderNode('form', 'hidden', $variables));
+            static::assertStringNotContainsString('field:', $html);
+            static::assertStringNotContainsString('purpose:', $html);
+        }
     }
 
     public function testRendererSubclassElementOverridesStillRunWithDiagnosticsEnabled(): void

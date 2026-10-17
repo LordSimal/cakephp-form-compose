@@ -202,7 +202,8 @@ lookup:
   MISS forms/application/email/label
   MISS forms/application/label
   MISS FormCompose.form/base/email/label
-  MATCH FormCompose.form/base/label -->
+  MATCH FormCompose.form/base/label
+-->
 <label for="form-compose-1-email">Email</label>
 <!-- FormCompose END part=label -->
 ```
@@ -211,6 +212,13 @@ lookup:
 selected element. The list contains only candidates actually attempted, in order,
 and stops at the winner. A requested `variant` appears in the metadata and is
 tried before the type-specific and generic candidates within each layer.
+Comment boundaries and rendered parts are separated by newlines for readable
+page source. Debug mode therefore adds formatting whitespace between elements;
+control values remain unchanged. Comments use two spaces per render nesting level,
+including `$parent()` delegation. This reflects the rendering hierarchy rather
+than the surrounding page's HTML indentation. The first HTML tag of each part
+aligns with its comments. Lines inside controls and existing nested traces stay
+unchanged, preserving multiline textarea values and other content.
 
 Element names are CakePHP identifiers, not absolute filesystem paths.
 `forms/application/email/control` normally maps to
@@ -229,8 +237,30 @@ The example ties it to CakePHP's debug setting; you can enable it explicitly wit
 `$this->Form->setConfig('themeDebug', true)`. Configuration affects future bindings
 and standalone action calls. Existing sessions retain their setting.
 
-Diagnostics contain template identifiers and field paths, without values,
-attributes, labels, validation messages, `templateData`, or security tokens.
+Infrastructure inputs also show their `field` name and `purpose`: CSRF protection
+(`_csrfToken`), HTTP method override (`_method`), and the form-protection signature,
+unlocked fields, and diagnostics (`_Token[fields]`, `_Token[unlocked]`, and
+`_Token[debug]`). Their template lookup remains visible. For example, a hidden
+CSRF input rendered inside the form opening includes:
+
+```html
+  <!-- FormCompose BEGIN
+  scope: form
+  part: hidden
+  type: hidden
+  field: _csrfToken
+  purpose: CSRF protection
+  source: layer FormCompose.form/base
+  element: FormCompose.form/base/form/hidden
+  lookup:
+    MISS FormCompose.form/base/form/hidden/hidden
+    MATCH FormCompose.form/base/form/hidden
+  -->
+```
+
+Diagnostics contain template identifiers, field names, and infrastructure purposes,
+without values, other attributes, labels, validation messages, `templateData`, or
+security tokens. Token values and hashes are never repeated in comments.
 Empty parts remain empty, and template exceptions still propagate normally.
 Inspection methods that do not render templates produce no comments. Handwritten
 markup and ordinary CakePHP elements called directly by application templates do
