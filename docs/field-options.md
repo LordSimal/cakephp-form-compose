@@ -50,8 +50,12 @@ letter and contain only lowercase letters, digits, underscores, or hyphens.
 
 Explicit `type` wins. Before schema inference, conventional association selectors
 (`tags._ids`) become multiple selects, context primary keys become hidden inputs,
-and foreign-key paths ending in `_id` become selects. An explicit `options` list,
-or a discovered conventional choice list, also infers a select.
+and foreign-key paths ending in `_id` become selects. Other fields whose final
+path segment is `password` or `passwd` infer a password input, including nested
+paths. Password inference takes precedence over choice-list discovery and never
+prefills the input from request, context, default, or explicit values. An explicit
+`type` still wins. For other fields, an explicit `options` list, or a discovered
+conventional choice list, infers a select.
 
 | Context type | Control type |
 | --- | --- |
