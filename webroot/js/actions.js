@@ -1,36 +1,20 @@
 /**
- * FormCompose action enhancement (no dependencies).
+ * Delegated POST links and confirmation, including dynamically inserted actions.
  *
- * Load once on the host page, including pages whose actions arrive later via AJAX.
- * FormHelper registers a deferred FormCompose.actions asset in Cake's `script`
- * view block by default; render `$this->fetch('script')` in the layout. Set helper
- * option `autoActionScript` to false to load this file yourself or replace it.
- * Delegated listeners handle newly inserted markup without initialization calls.
- * Repeated inclusion installs no additional listeners.
+ * FormHelper registers this script in Cake's `script` view block; render
+ * `$this->fetch('script')` in the layout. Set `autoActionScript` to false for
+ * manual loading or replacement behavior. Repeated inclusion is safe.
  *
- * Links with data-form-compose-action="form-id" request submission of that form.
- * Forms with data-form-compose-confirm="Message" use window.confirm by default.
- * To supply a custom synchronous or asynchronous dialog, listen on the form or
- * document for the bubbling, cancelable `formcompose:confirm` event:
+ * Replace window.confirm with a custom dialog:
  *
  * document.addEventListener('formcompose:confirm', event => {
- *   const { message, form, submitter, respondWith } = event.detail;
+ *   const { message, respondWith } = event.detail;
  *   respondWith(myDialog(message)); // boolean or Promise<boolean>
  * });
  *
- * Call respondWith() synchronously during event dispatch, exactly once. A second
- * or late call throws InvalidStateError. Only true approves; false, rejection,
- * or another resolved value cancels. preventDefault() cancels regardless of the
- * response. Returning a promise from the listener alone does not claim the event.
- * Without a response or cancellation the native confirmation dialog is used.
- *
- * While confirmation is pending, repeated submissions of that form are ignored.
- * Paused/canceled submits do not reach later submit listeners; approval resumes
- * via native requestSubmit(), preserving validation, the original submitter
- * (null for action links), and ordinary submit handlers. Removed forms or removed,
- * reassociated, disabled, or no longer submittable controls are not resumed.
- * Confirmation runs once per attempt.
- * Native buttons need no JavaScript to submit; confirmation and links do.
+ * Call respondWith() once during dispatch: only true approves; rejection cancels.
+ * preventDefault() cancels outright. Unclaimed events use window.confirm.
+ * See docs/post-actions.md for the full loading and event contracts.
  */
 (() => {
   const installed = Symbol.for('FormCompose.actions');
