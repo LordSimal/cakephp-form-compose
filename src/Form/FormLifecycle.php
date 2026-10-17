@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use FormCompose\Binding\FormBinding;
-use FormCompose\Field\BoundField;
+use FormCompose\Form\Field\BoundField;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Theme;
 use FormCompose\Security\FormProtection;
@@ -95,7 +95,7 @@ class FormLifecycle
     /**
      * Commit the actual submitted names only after an input renderer has succeeded.
      *
-     * @param list<\FormCompose\Field\Submission> $submissions Actual submitted inputs.
+     * @param list<\FormCompose\Form\Field\Submission> $submissions Actual submitted inputs.
      * @param list<string> $ids Additional IDs emitted by the field type.
      */
     public function register(BoundField $field, array $submissions, array $ids = []): void

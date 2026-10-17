@@ -5,9 +5,9 @@ namespace FormCompose\Rendering;
 
 use Cake\View\View;
 use Closure;
+use FormCompose\Form\FormSession;
 use FormCompose\Form\PostAction;
 use FormCompose\Form\PostActionSubmission;
-use FormCompose\FormSession;
 
 /**
  * Builds independent protected action forms through the helper's binding factory.
@@ -21,7 +21,7 @@ class PostActionRenderer
     /**
      * Retain the view and ordinary binding entry point, preserving session overrides.
      *
-     * @param \Closure(array<string, mixed>, \FormCompose\Rendering\RenderContext): \FormCompose\FormSession $bind Session factory.
+     * @param \Closure(array<string, mixed>, \FormCompose\Rendering\RenderContext): \FormCompose\Form\FormSession $bind Session factory.
      */
     public function __construct(protected readonly View $view, protected readonly Closure $bind)
     {

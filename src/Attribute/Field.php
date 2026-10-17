@@ -5,9 +5,9 @@ namespace FormCompose\Attribute;
 
 use Attribute;
 use Closure;
-use FormCompose\Field\FieldDefinition;
+use FormCompose\Form\Field\FieldDefinition;
+use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
-use FormCompose\Translated;
 
 /**
  * Declares one ordered field on a form blueprint, independently of bound values.
@@ -29,8 +29,8 @@ final readonly class Field
      *
      * Keep existing positional arguments while exposing named presentation shorthand.
      *
-     * @param string|\FormCompose\Rendering\Html|\FormCompose\Translated|false|null|\Closure():(string|\FormCompose\Rendering\Html|\FormCompose\Translated|false|null) $label Label or deferred text.
-     * @param string|\FormCompose\Rendering\Html|\FormCompose\Translated|false|null|\Closure():(string|\FormCompose\Rendering\Html|\FormCompose\Translated|false|null) $help Help or deferred text.
+     * @param string|\FormCompose\Rendering\Html|\FormCompose\Form\Field\Translated|false|null|\Closure():(string|\FormCompose\Rendering\Html|\FormCompose\Form\Field\Translated|false|null) $label Label or deferred text.
+     * @param string|\FormCompose\Rendering\Html|\FormCompose\Form\Field\Translated|false|null|\Closure():(string|\FormCompose\Rendering\Html|\FormCompose\Form\Field\Translated|false|null) $help Help or deferred text.
      * @param array<string, mixed> $options Additional field options.
      * @param array<string, string>|null $templates Field part overrides.
      * @param array<string, mixed>|null $templateData Application-owned template variables.

@@ -5,7 +5,7 @@ namespace FormCompose\Test\TestCase\Binding;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\RepeatedErrors;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\FormContext;
 use FormCompose\Test\FormTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 

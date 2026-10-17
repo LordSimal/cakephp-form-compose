@@ -7,7 +7,7 @@ use Cake\Form\FormProtector;
 use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
-use FormCompose\BlueprintView;
+use FormCompose\Blueprint\BlueprintView;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Authoring\BillingInputsForm;
 use FormCompose\Test\Fixture\Composition\PostForm;

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 
 /** @var FormSession $form */
 echo $form->submit('Partial action');

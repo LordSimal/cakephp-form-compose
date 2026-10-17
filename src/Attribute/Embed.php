@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Attribute;
 
 use Attribute;
-use FormCompose\Field\FieldDefinition;
+use FormCompose\Form\Field\FieldDefinition;
 use InvalidArgumentException;
 
 /**

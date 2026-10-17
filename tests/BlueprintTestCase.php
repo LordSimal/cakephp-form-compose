@@ -7,7 +7,7 @@ use Cake\AttributeResolver\AttributeResolver;
 use Cake\Core\Plugin;
 use Cake\Http\ServerRequest;
 use Cake\View\Form\ArrayContext;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Isolates real resolver metadata and plugin registrations for discovery tests.

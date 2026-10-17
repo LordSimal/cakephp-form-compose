@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldTypeInterface;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldTypeInterface;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Test\Fixture\RangeType;
 
@@ -26,7 +26,7 @@ class DiscoveredRangeType implements FieldTypeInterface
     /**
      * Describe both names independently of discovery and rendering.
      *
-     * @return list<\FormCompose\Field\Submission>
+     * @return list<\FormCompose\Form\Field\Submission>
      */
     public function submissions(BoundField $field, Attributes $attributes): array
     {

@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Blueprint;
 
+use FormCompose\Blueprint\BlueprintBuilder;
 use FormCompose\Blueprint\BlueprintCompiler;
+use FormCompose\Blueprint\FormContext;
+use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedCompiler;
-use FormCompose\BlueprintBuilder;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\FormContext;
-use FormCompose\FormDefinition;
-use FormCompose\RepeatedDefinition;
+use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Form\Field\FieldDefinition;
 
 /**
  * Demonstrates replacing compiler collaborators without changing the binding API.

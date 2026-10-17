@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Enum;
 
 use FormCompose\Attribute\Field;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Configures enum choices through both public blueprint authoring paths.

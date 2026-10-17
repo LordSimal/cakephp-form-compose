@@ -19,7 +19,7 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('comment')]
 #[Field('id')]
@@ -38,7 +38,7 @@ namespace App\Form;
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('post')]
 #[Field('title')]
@@ -101,8 +101,8 @@ The element receives keyed, scoped `BlueprintView` instances as `$rows` and a
 <?php
 use FormCompose\Rendering\Html;
 /**
- * @var array<int|string, \FormCompose\BlueprintView> $rows
- * @var \FormCompose\RepeatedView $embed
+ * @var array<int|string, \FormCompose\Blueprint\BlueprintView> $rows
+ * @var \FormCompose\Blueprint\RepeatedView $embed
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array{heading: string} $templateData
  */
@@ -154,7 +154,7 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
 }
 ```
 
-Import `FormCompose\BlueprintBuilder` and `FormCompose\FormContext` in that class.
+Import `FormCompose\Blueprint\BlueprintBuilder` and `FormCompose\Blueprint\FormContext` in that class.
 Row hooks run once before the parent hook, including rows declared with
 attributes. They can read relative values using `$context->value('body')`, which
 honors binding value sources; `$context->path` exposes the absolute row mount.

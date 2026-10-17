@@ -2,7 +2,7 @@
 declare(strict_types=1);
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var array<string, \FormCompose\Field\BoundField> $inputs
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  */
 ?>
 <div<?= (string)$attributes->merge(['class' => 'money-fields']) ?>>

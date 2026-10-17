@@ -4,7 +4,7 @@ declare(strict_types=1);
 use FormCompose\Rendering\Html;
 
 /**
- * @var \FormCompose\FormSession $form
+ * @var \FormCompose\Form\FormSession $form
  * @var string $body
  * @var string $summary
  * @var string|\FormCompose\Rendering\Html|false $submit

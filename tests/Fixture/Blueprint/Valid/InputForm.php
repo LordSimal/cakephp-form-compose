@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
 use FormCompose\Attribute\Field;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Supplies native choice, file and disabled configuration through class declarations.

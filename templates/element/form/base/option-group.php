@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 /**
- * @var \FormCompose\Field\Choice $choice
+ * @var \FormCompose\Form\Field\Choice $choice
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var \Closure(\FormCompose\Field\Choice): string $renderChoice
+ * @var \Closure(\FormCompose\Form\Field\Choice): string $renderChoice
  */
 ?>
 <optgroup<?= (string)$attributes->replace(['label' => $choice->label]) ?>>

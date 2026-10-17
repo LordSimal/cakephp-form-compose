@@ -5,7 +5,7 @@ namespace FormCompose\Test\Fixture\Blueprint\Plugin\src\Form\Admin;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Ensures recursive discovery includes nested plugin form declarations.

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * @var \FormCompose\Field\BoundField $field
+ * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';

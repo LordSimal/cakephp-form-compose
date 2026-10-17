@@ -5,7 +5,7 @@ namespace FormCompose\Binding;
 
 use Cake\Http\ServerRequest;
 use Cake\View\Form\ContextInterface;
-use FormCompose\FormDefinition;
+use FormCompose\Blueprint\FormDefinition;
 use InvalidArgumentException;
 
 /**

@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use Closure;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldTypeInterface;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldTypeInterface;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Security\FormProtection;
 use LogicException;
@@ -23,7 +23,7 @@ class InputRegistry
     /** @var array<string, true> Rendered identities, including staged inputs. */
     protected array $rendered = [];
 
-    /** @var list<\FormCompose\Field\Submission> Inputs staged until the outermost render succeeds. */
+    /** @var list<\FormCompose\Form\Field\Submission> Inputs staged until the outermost render succeeds. */
     protected array $pending = [];
 
     /** @var array<string, ?string> Successful control targets, included in render rollback. */
@@ -70,7 +70,7 @@ class InputRegistry
     /**
      * Record actual submissions after a field renders successfully.
      *
-     * @param list<\FormCompose\Field\Submission> $submissions Actual submitted inputs.
+     * @param list<\FormCompose\Form\Field\Submission> $submissions Actual submitted inputs.
      * @param list<string> $ids Additional emitted IDs beyond the field's main ID.
      */
     public function register(string $id, array $submissions, array $ids = []): void

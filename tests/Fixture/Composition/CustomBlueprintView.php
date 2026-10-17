@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition;
 
-use FormCompose\BlueprintView;
+use FormCompose\Blueprint\BlueprintView;
 
 /**
  * Adds application layout behavior while keeping scoped field resolution intact.

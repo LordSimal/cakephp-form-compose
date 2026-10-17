@@ -5,7 +5,7 @@ namespace FormCompose\Test\Fixture\Blueprint\Plugin\src\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Mimics a loaded plugin exporting a namespaced form alias from its src/Form tree.

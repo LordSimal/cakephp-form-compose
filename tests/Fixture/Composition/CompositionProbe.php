@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition;
 
-use FormCompose\FormContext;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Records shared DI and hook ordering while each blueprint instance remains isolated.
  */
 class CompositionProbe
 {
-    /** @var list<array{name: string, context: \FormCompose\FormContext}> */
+    /** @var list<array{name: string, context: \FormCompose\Blueprint\FormContext}> */
     public array $calls = [];
 
     /**

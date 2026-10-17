@@ -163,7 +163,7 @@ to choose another interval or remove the attribute with null.
 are escaped. `errors` toggles presentation; it does not replace validation messages.
 For radios and multi-checkboxes, the label is a group legend.
 
-`FormCompose\Translated` stores a source message, formatting arguments, domain,
+`FormCompose\Form\Field\Translated` stores a source message, formatting arguments, domain,
 and context, then translates through CakePHP when the field is resolved. Use it
 for translated text in attributes:
 
@@ -175,7 +175,7 @@ for translated text in attributes:
 )]
 ```
 
-Import `FormCompose\Attribute\Field` and `FormCompose\Translated` for this example.
+Import `FormCompose\Attribute\Field` and `FormCompose\Form\Field\Translated` for this example.
 Translated text is escaped normally. Plain strings are used as supplied.
 
 Label/help closures take no arguments and return `string`, `Html`, `Translated`,

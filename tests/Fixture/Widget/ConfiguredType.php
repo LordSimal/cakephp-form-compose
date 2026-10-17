@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Widget;
 
-use FormCompose\Field\BoundField;
-use FormCompose\Field\CompositeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
 
 /**
  * Exercises native child protocols without replacing the actual rendering pipeline.

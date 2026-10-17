@@ -4,7 +4,7 @@ declare(strict_types=1);
 use FormCompose\Rendering\Html;
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var array<string, \FormCompose\Field\BoundField> $inputs
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  * @var array{caption?: string} $templateData
  */
 ?>

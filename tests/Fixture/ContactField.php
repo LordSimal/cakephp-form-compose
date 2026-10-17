@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture;
 
-use FormCompose\Field\BoundField;
+use FormCompose\Form\Field\BoundField;
 
 /**
  * Adds contact metadata to labels rendered by both complete and composed controls.

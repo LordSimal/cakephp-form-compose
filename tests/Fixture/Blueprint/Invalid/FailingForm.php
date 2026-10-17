@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Blueprint\Invalid;
 
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 use RuntimeException;
 
 /**

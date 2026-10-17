@@ -5,7 +5,7 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
-use FormCompose\FormSession;
+use FormCompose\Form\FormSession;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\View\Helper\FormHelper;
 

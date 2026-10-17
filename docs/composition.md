@@ -26,7 +26,7 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('author', template: 'forms/author')]
 #[Field('first_name', label: 'First name')]
@@ -42,7 +42,7 @@ Its layout only arranges the child fields:
 ```php [templates/element/forms/author.php]
 <?php
 /**
- * @var \FormCompose\BlueprintView $form
+ * @var \FormCompose\Blueprint\BlueprintView $form
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
@@ -69,7 +69,7 @@ namespace App\Form;
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('post', template: 'forms/post')]
 #[Field('title')]
@@ -83,7 +83,7 @@ class PostForm extends FormBlueprint
 The parent layout chooses where to render its compiled child:
 
 ```php [templates/element/forms/post.php]
-<?php /** @var \FormCompose\BlueprintView $form */ ?>
+<?php /** @var \FormCompose\Blueprint\BlueprintView $form */ ?>
 <?= $form->control('title') ?>
 <?= $form->embedded('author') ?>
 <?= $form->control('body') ?>
@@ -132,7 +132,7 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
 }
 ```
 
-Import `FormCompose\BlueprintBuilder` and `FormCompose\FormContext` in that class.
+Import `FormCompose\Blueprint\BlueprintBuilder` and `FormCompose\Blueprint\FormContext` in that class.
 `remove('author')` removes the entire embedded subtree.
 
 The element receives a scoped `BlueprintView` as `$form`. Its paths are relative

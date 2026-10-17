@@ -29,7 +29,7 @@ fields in one control:
 declare(strict_types=1);
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var array<string, \FormCompose\Field\BoundField> $inputs
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  */
 ?>
 <div<?= $attributes->merge(['class' => 'date-range']) ?>>
@@ -79,8 +79,8 @@ declare(strict_types=1);
 namespace App\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\CompositeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
 use function Cake\I18n\__;
 
 #[AsFieldType('date-range')]
@@ -255,7 +255,7 @@ Registering only the composite parent does not register its children. Use either
 A `FieldTypeInterface` implementation returns records such as:
 
 ```php
-use FormCompose\Field\Submission;
+use FormCompose\Form\Field\Submission;
 
 new Submission('period[start]');
 new Submission('record_id', value: '42');
@@ -285,8 +285,8 @@ declare(strict_types=1);
 namespace App\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\CompositeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
 use function Cake\I18n\__;
 
 #[AsFieldType('money')]
@@ -318,7 +318,7 @@ class MoneyType extends CompositeType
 declare(strict_types=1);
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
- * @var array<string, \FormCompose\Field\BoundField> $inputs
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  */
 ?>
 <div<?= $attributes->merge(['class' => 'money-fields']) ?>>
@@ -355,7 +355,7 @@ declare(strict_types=1);
 namespace App\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
-use FormCompose\Field\SingleInputType;
+use FormCompose\Form\Field\SingleInputType;
 
 #[AsFieldType('markdown')]
 class MarkdownType extends SingleInputType
@@ -404,7 +404,7 @@ use native composite children or implement the lower-level contract.
 
 ## Custom submission protocols
 
-Implement `FormCompose\Field\FieldTypeInterface` when the base classes do not
+Implement `FormCompose\Form\Field\FieldTypeInterface` when the base classes do not
 represent your protocol:
 
 - `render(BoundField $field, Attributes $attributes): string` returns escaped markup.

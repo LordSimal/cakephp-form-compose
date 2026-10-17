@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Repeat;
 
 use FormCompose\Attribute\EmbedMany;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Exercises cycle detection at a real requested repeated occurrence.

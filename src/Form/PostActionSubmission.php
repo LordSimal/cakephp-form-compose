@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use Cake\Utility\Hash;
-use FormCompose\Field\FieldDefinition;
-use FormCompose\Field\NativeValue;
+use FormCompose\Form\Field\FieldDefinition;
+use FormCompose\Form\Field\NativeValue;
 use InvalidArgumentException;
 
 /**

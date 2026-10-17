@@ -5,8 +5,8 @@ namespace FormCompose\Test\Fixture;
 
 use FormCompose\Binding\FieldResolver;
 use FormCompose\Binding\ValueResolver;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\FieldState;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldState;
 use FormCompose\Form\FormLifecycle;
 
 /**

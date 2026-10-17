@@ -48,7 +48,7 @@ namespace App\Form;
 
 use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 #[Form('article')]
 #[Field('title', label: 'Article title', help: 'Displayed above the article.')]

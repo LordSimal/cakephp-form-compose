@@ -47,7 +47,7 @@ class FormProtection
     /**
      * Register only successful rendered inputs and explicit locked hidden values.
      *
-     * @param list<\FormCompose\Field\Submission> $submissions Actual submitted inputs.
+     * @param list<\FormCompose\Form\Field\Submission> $submissions Actual submitted inputs.
      */
     public function register(array $submissions): void
     {

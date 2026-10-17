@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Blueprint;
 
+use FormCompose\Blueprint\FormContext;
 use FormCompose\Blueprint\RepeatedCompiler;
-use FormCompose\FormContext;
 
 /**
  * Selects application row keys while retaining the shared validation boundary.

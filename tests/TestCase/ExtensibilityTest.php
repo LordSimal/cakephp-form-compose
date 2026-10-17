@@ -5,9 +5,9 @@ namespace FormCompose\Test\TestCase;
 
 use Closure;
 use FormCompose\Binding\FormBinding;
-use FormCompose\Field\BoundField;
-use FormCompose\Field\Choice;
-use FormCompose\Field\NativeType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\Choice;
+use FormCompose\Form\Field\NativeType;
 use FormCompose\Form\FormConstruction;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Attributes;

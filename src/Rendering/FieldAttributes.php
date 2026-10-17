@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
-use FormCompose\Field\FieldState;
+use FormCompose\Form\Field\FieldState;
 use InvalidArgumentException;
 
 /**

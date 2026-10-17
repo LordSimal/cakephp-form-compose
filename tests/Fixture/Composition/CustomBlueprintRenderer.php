@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition;
 
-use FormCompose\BlueprintRenderer;
-use FormCompose\BlueprintView;
-use FormCompose\FormDefinition;
-use FormCompose\FormSession;
+use FormCompose\Blueprint\BlueprintRenderer;
+use FormCompose\Blueprint\BlueprintView;
+use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Form\FormSession;
 
 /**
  * Supplies an application-specific scoped view through the public renderer dependency.

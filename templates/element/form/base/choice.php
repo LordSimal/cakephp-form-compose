@@ -2,7 +2,7 @@
 declare(strict_types=1);
 use FormCompose\Rendering\Html;
 /**
- * @var \FormCompose\Field\Choice $choice
+ * @var \FormCompose\Form\Field\Choice $choice
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>

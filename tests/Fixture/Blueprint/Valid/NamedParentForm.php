@@ -6,9 +6,9 @@ namespace FormCompose\Test\Fixture\Blueprint\Valid;
 use FormCompose\Attribute\Embed;
 use FormCompose\Attribute\EmbedMany;
 use FormCompose\Attribute\Form;
-use FormCompose\BlueprintBuilder;
-use FormCompose\FormBlueprint;
-use FormCompose\FormContext;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 /**
  * Exercises alias selection through named attribute and builder arguments.

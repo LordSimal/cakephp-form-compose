@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Composition\Invalid;
 
 use FormCompose\Attribute\Embed;
-use FormCompose\FormBlueprint;
+use FormCompose\Blueprint\FormBlueprint;
 
 /**
  * Closes the static composition cycle without requiring discovery aliases.
