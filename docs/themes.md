@@ -171,6 +171,76 @@ groups when replacing it. A type-specific element is useful for layouts that
 only make sense for one control type, such as the email icon above.
 :::
 
+## Debug template selection
+
+Enable `themeDebug` on the helper to see which PHP elements rendered and why they
+were selected. For example, in `AppView::initialize()`:
+
+```php
+use Cake\Core\Configure;
+use FormCompose\Rendering\Theme;
+
+$this->addHelper('Form', [
+    'className' => 'FormCompose.Form',
+    'theme' => new Theme(['forms/application']),
+    'themeDebug' => Configure::read('debug'),
+]);
+```
+
+Render controls normally. Inspect page source or comment nodes in the browser's
+developer tools. For an email control, its label portion might look like this:
+
+```html
+<!-- FormCompose BEGIN
+scope: field
+part: label
+type: email
+field: email
+source: layer FormCompose.form/base
+element: FormCompose.form/base/label
+lookup:
+  MISS forms/application/email/label
+  MISS forms/application/label
+  MISS FormCompose.form/base/email/label
+  MATCH FormCompose.form/base/label -->
+<label for="form-compose-1-email">Email</label>
+<!-- FormCompose END part=label -->
+```
+
+`MISS` entries explain why an override did not match; `MATCH` identifies the
+selected element. The list contains only candidates actually attempted, in order,
+and stops at the winner. A requested `variant` appears in the metadata and is
+tried before the type-specific and generic candidates within each layer.
+
+Element names are CakePHP identifiers, not absolute filesystem paths.
+`forms/application/email/control` normally maps to
+`templates/element/forms/application/email/control.php`. Plugin identifiers such
+as `FormCompose.form/base/label` use CakePHP's plugin element resolution, including
+application overrides of plugin elements.
+
+Explicit `template` or `templates` overrides show `source: explicit override`.
+When an element calls `$parent()`, a `FormCompose PARENT` comment precedes a nested
+trace showing where lookup resumed. Nested parts also get their own boundaries:
+an input can pass through `input.php`, then `select/native.php`, then individual
+option elements. This helps identify the part to override.
+
+`themeDebug` defaults to `false` and enables comments only when set to `true`.
+The example ties it to CakePHP's debug setting; you can enable it explicitly with
+`$this->Form->setConfig('themeDebug', true)`. Configuration affects future bindings
+and standalone action calls. Existing sessions retain their setting.
+
+Diagnostics contain template identifiers and field paths, without values,
+attributes, labels, validation messages, `templateData`, or security tokens.
+Empty parts remain empty, and template exceptions still propagate normally.
+Inspection methods that do not render templates produce no comments. Handwritten
+markup and ordinary CakePHP elements called directly by application templates do
+not receive their own FormCompose trace.
+
+The helper setting configures its default `PhpRenderer`. A renderer supplied with
+`renderer:` keeps its own behavior. To enable tracing on an explicitly constructed
+PHP renderer, use `new PhpRenderer($view, $theme, themeDebug: true)` and import
+`FormCompose\Rendering\PhpRenderer`.
+
 ## Share a theme or add a variant
 
 A layer can also point to another plugin's elements, for example

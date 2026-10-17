@@ -42,7 +42,9 @@ class FormsController extends Controller
     #[Get('')]
     public function index(): Response
     {
-        $helper = new FormHelper(new View($this->getRequest()));
+        $helper = new FormHelper(new View($this->getRequest()), [
+            'themeDebug' => $this->getRequest()->getQuery('themeDebug') === '1',
+        ]);
         $form = $helper->bind(
             $this->createContext(),
             theme: $this->createTheme(),

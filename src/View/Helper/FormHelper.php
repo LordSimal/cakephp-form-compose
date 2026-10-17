@@ -44,6 +44,7 @@ class FormHelper extends Helper
      */
     protected array $defaultConfig = [
         'theme' => 'Base',
+        'themeDebug' => false,
         'passwordFields' => FormBinding::DEFAULT_PASSWORD_FIELDS,
         'typeMap' => [],
         'autoActionScript' => true,
@@ -90,7 +91,12 @@ class FormHelper extends Helper
             $url,
             $options,
             'button',
-            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
+            RenderContext::forView(
+                $this->getView(),
+                $this->resolveTheme($theme),
+                $renderer,
+                themeDebug: $this->getConfig('themeDebug') === true,
+            ),
         );
     }
 
@@ -112,7 +118,12 @@ class FormHelper extends Helper
             $url,
             $options,
             'link',
-            RenderContext::forView($this->getView(), $this->resolveTheme($theme), $renderer),
+            RenderContext::forView(
+                $this->getView(),
+                $this->resolveTheme($theme),
+                $renderer,
+                themeDebug: $this->getConfig('themeDebug') === true,
+            ),
         );
     }
 
@@ -184,7 +195,13 @@ class FormHelper extends Helper
 
         return $this->createSession(
             new FormBinding($context, $view->getRequest(), $id, $options, $compiled),
-            RenderContext::forView($view, $theme, $renderer, $types),
+            RenderContext::forView(
+                $view,
+                $theme,
+                $renderer,
+                $types,
+                themeDebug: $this->getConfig('themeDebug') === true,
+            ),
             $factory,
         );
     }
