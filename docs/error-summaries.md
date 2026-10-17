@@ -41,10 +41,84 @@ The session version supports the same option. A local `errorSummary => false`
 overrides a true binding default. This setting is consumed internally and is
 never emitted as a form attribute.
 
+## Keep custom layouts and actions without manual buffering
+
+Use complete-form `render()` when the summary belongs above a blueprint's fields.
+Put the shared complete-form layout in your configured theme as `form/layout.php`.
+For example, with `new Theme(layers: ['form/themes/daisy'])`, the element lives at
+`templates/element/form/themes/daisy/form/layout.php`. [Configure the theme once](./themes.md#select-theme)
+when loading the helper; each form then discovers the layout automatically:
+
+```php
+<?= $this->Form->render(
+    'article',
+    $article,
+    options: ['errorSummary' => true],
+    submit: 'Save article',
+) ?>
+```
+
+The plugin renders the blueprint into `$body` first, builds `$summary` from the
+controls that actually rendered, then invokes the form layout. Your page template
+needs no `$opening`, `$body`, or `$summary` variables.
+
+::: info Two templates, two jobs
+The blueprint's `#[Form(..., template: ...)]` arranges fields and embeds inside
+`$body`. The theme's `form/layout.php` arranges that prepared body, the summary,
+and actions for the complete form.
+:::
+
+```php [templates/element/form/themes/daisy/form/layout.php]
+<?php
+declare(strict_types=1);
+
+/**
+ * @var \FormCompose\FormSession $form
+ * @var string $body
+ * @var string $summary
+ * @var string|\FormCompose\Rendering\Html|false $submit
+ * @var array<string, mixed> $submitOptions
+ */
+?>
+<?= $summary ?>
+<div class="form-body">
+    <?= $body ?>
+</div>
+<div class="form-actions">
+    <?= $form->submit(__('Check server validation'), ['formnovalidate' => true]) ?>
+    <?php if ($submit !== false): ?>
+        <?= $form->submit($submit, $submitOptions) ?>
+    <?php endif; ?>
+</div>
+```
+
+`$body` and `$summary` are prepared HTML; output them directly, once each. The
+summary is an empty string when disabled or when there are no eligible errors.
+`$submit` is the requested text/trusted HTML label, a translated default Submit
+label, or `false`. `$submitOptions` contains the caller's button options.
+
+The session stays open while the layout renders its action buttons. The plugin
+then generates final protection fields and closes the form. Opening and closing
+remain the plugin's responsibility. Within a theme, the root `control.php` wraps
+one field; the nested `form/layout.php` lays out the complete form.
+
+::: warning Keep validation controls in the blueprint body
+The automatic summary is prepared from controls rendered in `$body`. Controls
+added later by the complete-form layout won't be included in that summary.
+:::
+
+For an exceptional per-form override, pass
+`options: ['template' => 'form/layouts/special-editor', 'errorSummary' => true]`.
+`templates['layout']` is the equivalent part override. Shared layouts belong in
+the theme so ordinary `render()` calls need no template selection. See
+[form layout variables](./template-reference.md#complete-form-layouts).
+
 ## Place a summary manually
 
-Render or buffer the controls first so their actual labels, errors, and target
-IDs are known. Then output the summary where needed:
+The low-level `open()` / `control()` / `close()` API emits each part immediately.
+Its `errorSummary()` can describe only controls rendered so far. For a summary
+above handwritten controls, buffer those controls first so their actual labels,
+errors, and target IDs are known:
 
 ```php
 $form = $this->Form->bind($post);
@@ -61,7 +135,9 @@ echo $form->submit('Save post');
 echo $form->close();
 ```
 
-An early call sees only controls rendered so far. Merely calling `field()` or
+A summary below the controls can be echoed directly after them, without a body
+buffer. For blueprint forms, the complete-form layout above handles this ordering
+inside the plugin. Merely calling `field()` or
 inspecting attributes does not add feedback. A successfully registered handwritten
 input also contributes its errors through the normal `register()` contract.
 Handwritten registrations contribute unlinked messages: configured types and

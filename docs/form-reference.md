@@ -93,6 +93,7 @@ supplied renderers keep their own diagnostics. See [debug template selection](./
 | `passwordFields` | List of terminal field names | Inherits helper configuration, normally `['password', 'passwd']`. Replaces the names that infer password inputs, including nested paths. An empty list disables name-based inference; explicit password controls never prefill values. |
 | `typeMap` | Map of schema names to control aliases | Inherits helper overrides. Binding entries override matching helper entries; native defaults remain for other schema types. |
 | `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
+| `template` / `templates['layout']` | Element name / part map | Select the complete-form layout used by `render()`. It receives the buffered body, summary, and action configuration; never emitted as HTML attributes. |
 | `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
 | Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
 
@@ -175,9 +176,10 @@ echo $form->open(['class' => 'article-editor', 'method' => 'patch']);
 | `method` | `string` | Overrides the method chosen through `type`. Accepts GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS, case-insensitively. |
 | `enctype` | `string` | Omitted, or `multipart/form-data` when `type` is `file`. |
 | `encoding` | `string` | `App.encoding`, otherwise `UTF-8`; emitted as lowercase `accept-charset`. |
-| `templates` | `array<string, string>` | Overrides `open`, `close`, or infrastructure `hidden` elements. |
+| `template` | `string` | Selects the complete-form `layout` part for `render()`. |
+| `templates` | `array<string, string>` | Overrides complete-form `layout`, `open`, `close`, or infrastructure `hidden` elements. |
 | `variant` | `string` | Named variant for form templates; omitted by default. |
-| `templateData` | `array<string, mixed>` | `[]`. Data for opening, closing, and infrastructure hidden-input templates. |
+| `templateData` | `array<string, mixed>` | `[]`. Data for the complete-form layout, opening, closing, and infrastructure hidden-input templates. |
 | Other HTML attributes | Attribute values | For example `class`, `novalidate`, and `data-*`, supplied directly in this array. |
 
 GET renders `method="get"`; other effective methods render `method="post"`.
@@ -383,6 +385,37 @@ echo $form->render(submit: 'Save article');
 The session's explicit blueprint stays local and does not replace defaults.
 Without an explicit or selected blueprint, the body is empty. Use a fresh
 binding to retry a failed complete-form rendering.
+
+### Application-owned complete-form layouts
+
+Put `form/layout.php` in the configured theme when you need shared action buttons
+or wrappers around the summary and blueprint body. Complete-form rendering finds
+it automatically:
+
+```php
+<?= $this->Form->render(
+    'article',
+    $article,
+    options: ['errorSummary' => true],
+    submit: 'Save article',
+) ?>
+```
+
+The plugin buffers the blueprint, prepares its summary, renders the selected form
+layout with the session still open, then closes the form. The layout receives
+`$form`, `$state`, `$body`, `$summary`, `$submit`, `$submitOptions`, `$templateData`,
+and `$parent`. This uses the shared PHP template system; a custom renderer receives
+scope `form`, the effective method as its type, and part `layout`.
+
+::: info Keep the two template choices separate
+`#[Form(template: ...)]` chooses the blueprint body layout. `form/layout.php`
+chooses the complete-form presentation used by `render()`, including the summary
+and actions. The theme supplies that layout automatically. For a one-form
+exception, use `options['template']` or `options['templates']['layout']`.
+
+See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
+and [template contract](./template-reference.md#complete-form-layouts).
+:::
 
 ## errorSummary() {#error-summary}
 

@@ -19,6 +19,7 @@ Both use the same field options, PHP templates, binding, and submission protecti
 | Package reusable form configuration | A `FormBlueprint` class |
 | Add fields or choices for the current request | The blueprint's `configure()` hook |
 | Arrange a reusable form or child section | A PHP blueprint layout |
+| Place a summary and custom actions around a blueprint | Complete-form `render()` with a `form/layout` template |
 
 ## Keep local configuration inline
 
@@ -65,6 +66,11 @@ fields and layout, add a button, and close the form:
 ```php
 echo $this->Form->render('article', $article, submit: 'Save article');
 ```
+
+Use an [application-owned complete-form layout](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
+in the configured theme’s `form/layout.php` for shared wrappers and action buttons.
+Forms discover it without a per-call template option. The plugin buffers the blueprint and places
+the summary before it, so application templates can echo one `render()` call.
 
 For explicit opening and closing, select the blueprint when binding and call
 `blueprint()` inside the open form:

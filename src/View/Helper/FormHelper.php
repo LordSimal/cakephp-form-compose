@@ -131,6 +131,8 @@ class FormHelper extends Helper
      * Bind and render a complete form using a blueprint class or alias.
      *
      * Includes a translated Submit button unless a label or false is supplied.
+     * A form/layout template arranges the prepared body, summary, and actions;
+     * options['template'] selects an application element for that complete layout.
      * Uses bind() and the returned session's render(), preserving application overrides.
      * For a custom theme or renderer, use bind(...)->render() instead.
      *
