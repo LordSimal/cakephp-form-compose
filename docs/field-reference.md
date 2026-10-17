@@ -167,7 +167,10 @@ summary; it does not infer focus targets from configured choices or custom types
 Use it once, after emitting the input. The
 [handwritten input example](./field-parts.md#write-a-native-input-by-hand) shows
 escaping, attributes, and registration together. A control that submits different
-names needs a custom field type with matching `submissions()`.
+names needs a custom field type with matching
+[`submissions()` records](./custom-fields.md#low-level-submission-records).
+For a composite, register each actual child; registering the parent does not
+register its declared children.
 
 For handwritten feedback, emit a `help` or `errors` element using
 `attributes($part)`, then call `$form->registerFeedback($field, 'help')` or use

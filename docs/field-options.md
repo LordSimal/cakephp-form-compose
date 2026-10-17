@@ -308,6 +308,9 @@ for all part names, variables, and lookup rules.
 
 ## Submission protection
 
+For custom controls, see [custom field submission protection](./custom-fields.md#submission-protection),
+including composite children, locked hidden values, and explicit unlocking.
+
 | Option | Type | Default and behavior |
 | --- | --- | --- |
 | `secure` | `bool` | `true`. Includes the native input in tamper protection; hidden values are also locked to their rendered value. `false` explicitly unlocks that submitted field. |

@@ -184,18 +184,11 @@ set `protected ?string $template = 'forms/fields/date-range';` to provide its ow
 default element. A local `templates['composite']` override wins. `$parent()` resumes
 normal theme lookup. Presentation data remains available as `$templateData`.
 
-### Registration and accessibility
-
-Only child `input()` or explicit `register()` calls register submissions. Declaring
-or inspecting `$field->inputs` registers nothing. A layout may omit a child; the
-omitted name is not added to form protection. Child hidden values, checkbox
-fallbacks, multiple selections, file/multipart checks, and duplicate IDs retain
-the normal native contracts. A failed enclosing render rolls back registrations,
-feedback, focus targets, and reserved IDs together.
+### Accessibility
 
 The parent uses a legend. Child labels target their actual inputs. Parent help
-and errors are included in visible child ARIA descriptions, alongside each child's own
-feedback. Group messages exclude nested child error trees, so summaries do not
+and errors are included in visible child ARIA descriptions, alongside each
+child's own feedback. Group messages exclude nested child error trees, so summaries do not
 duplicate those errors. The group summary targets the first declared child that
 actually emitted an eligible control; omitted, hidden, disabled, and empty choice
 controls do not become focus targets.
@@ -203,10 +196,82 @@ controls do not become focus targets.
 Parent disabled and readonly state applies to every child, including local
 `$field->input(['disabled' => true])` overrides. A child cannot re-enable a disabled
 parent. Required status comes from each child's metadata or options: a required
-parent does not make every child required. `secure`, `errors`, and `templateData`
-provide inherited defaults that children can override. Child ARIA attributes can
+parent does not make every child required. `errors` and `templateData` provide
+inherited defaults that children can override. Child ARIA attributes can
 explicitly remove inherited references with null. Render the referenced parent
 feedback even when rendering its children independently.
+
+## Submission protection
+
+FormCompose's counterpart to a CakePHP widget's `secureFields()` is
+`FieldTypeInterface::submissions()`. It returns `Submission` records describing the
+actual submitted names, optional locked values, and explicit unlocking. These
+records feed CakePHP's `FormProtector` when the application enables form protection;
+FormCompose does not introduce a separate token-validation system.
+
+| Authoring contract | Who describes the submissions? |
+| --- | --- |
+| `CompositeType` | Each rendered child; the composite parent contributes no submitted input of its own. |
+| `SingleInputType` | The base class registers one editable name, excluding disabled controls and respecting `secure: false`. |
+| `FieldTypeInterface` | Your `submissions()` implementation must describe the inputs emitted by your renderer. |
+
+### Composite children register themselves
+
+Inside a composite element, rendering the date-range inputs registers their names:
+
+```php
+<?= $inputs['start']->input() ?>
+<?= $inputs['end']->input() ?>
+```
+
+This protects `period[start]` and `period[end]`. The composite author does not need
+to implement `secureFields()` or override `submissions()`. Child `control()` calls
+also render and register their inputs.
+
+| Child behavior | Registration result |
+| --- | --- |
+| Render an ordinary enabled input | Its name is expected; its editable value can change. |
+| Render a native hidden input | Its name and rendered value are protected. |
+| Render a disabled input | No submission is registered; its name is not automatically unlocked. |
+| Declare or inspect a child without rendering it | No submission is registered and no name is unlocked. |
+| Render a child configured with `secure => false` | Its name is explicitly unlocked, allowing omission or changed values. |
+| Fail during an enclosing composite layout | Pending registrations roll back together with feedback, focus targets, and reserved IDs. |
+
+For example, if the element renders only `start`, `period[end]` is not expected.
+Posting that omitted name fails ordinary form protection unless the application
+has explicitly unlocked it. Declaring a child is not permission to submit it.
+The parent's `secure` option supplies a default for its children; an explicit child
+option wins. Native checkbox fallbacks, multiple selections, and file/multipart
+checks and duplicate-ID checks retain their normal contracts.
+
+Handwritten HTML is not inspected for input names. Register each actual child
+using [`$inputs['start']->register()`](./field-reference.md#register) after emitting
+its markup, passing the same local input attributes, especially `disabled`.
+Registering only the composite parent does not register its children. Use either
+`input()`/`control()` or handwritten markup plus `register()` for a given child.
+
+### Low-level submission records
+
+A `FieldTypeInterface` implementation returns records such as:
+
+```php
+use FormCompose\Field\Submission;
+
+new Submission('period[start]');
+new Submission('record_id', value: '42');
+new Submission('optional', locked: false);
+```
+
+The first protects the expected field name while allowing its value to change.
+The second also locks the value to `'42'`, as required for a hidden record ID.
+The third explicitly unlocks the name. The default `locked: true` protects the
+field structure; it locks the value only when a non-null `value` is supplied.
+
+Return no submissions for disabled inputs and report only the inputs actually
+emitted. Registration happens after rendering succeeds; keep rendering free of
+direct security mutations. Form protection checks the submitted structure and
+locked values. Application validators still decide whether editable values, such
+as arrival and departure dates, are valid.
 
 ## Example: amount and currency
 
@@ -345,13 +410,10 @@ represent your protocol:
 - `render(BoundField $field, Attributes $attributes): string` returns escaped markup.
 - `submissions(BoundField $field, Attributes $attributes): array` describes exactly
   the successful inputs as `Submission` objects, respecting disabled state.
-- Use `new Submission($name, value: $value)` for a locked hidden value, or
-  `new Submission($name, locked: false)` for an explicitly unlocked name.
 
-Keep rendering free of direct security mutation. FormCompose registers the
-reported submissions after successful rendering; it does not infer them from HTML.
-Implement `InputIdentityProviderInterface::inputIds()` to report additional emitted
-IDs, excluding the root field ID. Implement
+The [submission protection section](#submission-protection) explains the records,
+disabled inputs, and registration timing. Implement
+`InputIdentityProviderInterface::inputIds()` to report additional emitted IDs, excluding the root field ID. Implement
 `ErrorTargetProviderInterface::errorTarget()` to report the actual emitted focus
 ID, or null for an unlinked summary entry. Neither method should render or register
 anything. Hidden and disabled roots remain unlinked.
