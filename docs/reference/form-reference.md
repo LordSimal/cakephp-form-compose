@@ -154,6 +154,10 @@ one input-registration transaction, so a later layout failure rolls back earlier
 sections too.
 An explicit selection stays local to this occurrence. `at: 'author'` scopes it
 to that context path. Layout presentation uses the shared fluent methods.
+With several selected blueprints, presentation overrides apply to each one.
+A shared occurrence `id` is rejected before rendering; use a surrounding wrapper
+or configure separate blueprint IDs. A single selection or explicit local
+occurrence still accepts `attributes(['id' => 'details'])`.
 
 ## embedMany() {#embed-many}
 

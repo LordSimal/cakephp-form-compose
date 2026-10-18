@@ -31,6 +31,12 @@ Inside that open session, `$form->blueprint()` renders all selected blueprints;
 `$form->blueprint('other')` renders only that local occurrence and leaves the
 binding's selection unchanged.
 
+Presentation overrides on `$form->blueprint()` apply to each selected blueprint.
+Shared classes are supported, but a shared `id` is rejected when more than one
+blueprint is selected. Put a group ID on surrounding HTML, or give each blueprint
+its own ID in its layout configuration or explicit rendering call. Null and false
+IDs are omitted normally.
+
 The selections must declare distinct field and embed paths. Collisions,
 including selecting the same nonempty blueprint twice, fail during binding
 before the form opens. Use nested embeds for independent copies under different
