@@ -69,12 +69,9 @@ Create this file in the selected layer:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
@@ -282,12 +279,9 @@ Start with a generic control element:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>

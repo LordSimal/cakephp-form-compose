@@ -43,15 +43,11 @@ arranges the prepared `$summary`, `$body`, and buttons. Configure that layout wi
 ```php
 <?php
 
-use FormCompose\Configuration\ButtonConfig;
-use FormCompose\Form\FormSession;
-use FormCompose\Rendering\Html;
-
-/** @var FormSession $form */
+/** @var \FormCompose\Form\FormSession $form */
 /** @var string $body */
 /** @var string $summary */
-/** @var string|Html|false $submit */
-/** @var ButtonConfig $submitConfig */
+/** @var string|\FormCompose\Rendering\Html|false $submit */
+/** @var \FormCompose\Configuration\ButtonConfig $submitConfig */
 ?>
 <?= $summary ?>
 <div class="form-body">

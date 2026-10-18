@@ -70,15 +70,12 @@ $form->embedMany('comments', 'comment')->template('forms/comments');
 ```php
 <?php
 
-use FormCompose\Blueprint\BlueprintView;
-use FormCompose\Blueprint\RepeatedView;
-use FormCompose\Rendering\Attributes;
 use FormComposeHtml;
 use Rendering\Html;
 
-/** @var RepeatedView $embed */
-/** @var array<int|string, BlueprintView> $rows */
-/** @var Attributes $attributes */
+/** @var \FormCompose\Blueprint\RepeatedView $embed */
+/** @var array<int|string, \FormCompose\Blueprint\BlueprintView> $rows */
+/** @var \FormCompose\Rendering\Attributes $attributes */
 ?>
 <section<?= (string)$attributes ?>>
     <h2><?= Html::text($embed->label()) ?></h2>

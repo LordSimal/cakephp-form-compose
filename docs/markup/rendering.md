@@ -62,12 +62,9 @@ second tab to see the file it renders:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes ?>>

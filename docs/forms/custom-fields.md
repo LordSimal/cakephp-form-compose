@@ -27,12 +27,9 @@ fields in one control:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var Attributes $attributes
- * @var array<string, BoundField> $inputs
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  */
 ?>
 <div<?= $attributes->merge(['class' => 'date-range']) ?>>
@@ -351,12 +348,9 @@ class MoneyType extends CompositeType
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var Attributes $attributes
- * @var array<string, BoundField> $inputs
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
  */
 ?>
 <div<?= $attributes->merge(['class' => 'money-fields']) ?>>
@@ -407,12 +401,11 @@ class MarkdownType extends SingleInputType
 <?php
 declare(strict_types=1);
 
-use FormCompose\Rendering\Attributes;
 use FormComposeHtml;
 use Rendering\Html;
 
 /**
- * @var Attributes $attributes
+ * @var \FormCompose\Rendering\Attributes $attributes
  * @var string $value
  */
 ?>

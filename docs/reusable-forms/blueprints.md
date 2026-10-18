@@ -95,11 +95,8 @@ The layout receives a scoped `BlueprintView`:
 ```php
 <?php
 
-use FormCompose\Blueprint\BlueprintView;
-use FormCompose\Rendering\Attributes;
-
-/** @var BlueprintView $form */
-/** @var Attributes $attributes */
+/** @var \FormCompose\Blueprint\BlueprintView $form */
+/** @var \FormCompose\Rendering\Attributes $attributes */
 ?>
 <section<?= (string)$attributes ?>>
     <div class="article-content">

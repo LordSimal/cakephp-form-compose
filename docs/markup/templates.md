@@ -35,12 +35,9 @@ the path shown in the second tab:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes->merge(['class' => 'email-field']) ?>>
@@ -82,12 +79,9 @@ echo $form->control('email')
 <?php
 declare(strict_types=1);
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
 <p<?= (string)$attributes->merge(['class' => 'email-hint']) ?>>

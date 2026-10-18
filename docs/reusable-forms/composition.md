@@ -42,11 +42,8 @@ class AuthorForm extends FormBlueprint
 ```php
 <?php
 
-use FormCompose\Blueprint\BlueprintView;
-use FormCompose\Rendering\Attributes;
-
-/** @var BlueprintView $form */
-/** @var Attributes $attributes */
+/** @var \FormCompose\Blueprint\BlueprintView $form */
+/** @var \FormCompose\Rendering\Attributes $attributes */
 ?>
 <section<?= (string)$attributes ?>>
     <?= $form->controls(['name', 'email']) ?>

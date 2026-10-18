@@ -200,11 +200,8 @@ the buffered body once and do not open or close another form.
 ```php
 <?php
 
-use FormCompose\Configuration\ButtonConfig;
-use FormCompose\Form\FormSession;
-
-/** @var FormSession $form */
-/** @var ButtonConfig $submitConfig */
+/** @var \FormCompose\Form\FormSession $form */
+/** @var \FormCompose\Configuration\ButtonConfig $submitConfig */
 ?>
 <?= $summary ?>
 <section<?= (string)$attributes ?>><?= $body ?></section>

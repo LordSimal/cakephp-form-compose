@@ -65,12 +65,9 @@ echo $form->control('email')->type('email')->template('forms/email')->help('Use 
 ```php [templates/element/forms/email.php]
 <?php
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Rendering\Attributes;
-
 /**
- * @var BoundField $field
- * @var Attributes $attributes
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
