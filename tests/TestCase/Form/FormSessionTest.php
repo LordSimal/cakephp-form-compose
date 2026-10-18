@@ -160,6 +160,60 @@ class FormSessionTest extends CompositionTestCase
         $this->assertCannotRenderAgain($complete);
     }
 
+    public function testUnlockedCollectionsAllowRowChangesWithoutUnlockingOtherFieldsOrForms(): void
+    {
+        $helper = $this->helper(attributes: ['formTokenData' => []]);
+        $form = $helper->form()->url('/team')->bind();
+        $html = $form->open();
+        $form->unlock('members');
+        $html .= $form->control('members.0.id')->type('hidden')->value('1')->render();
+        $html .= $form->control('team_id')->type('hidden')->value('7')->render();
+        $html .= $form->close();
+        $session = $helper->getView()->getRequest()->getSession()->id();
+        $data = ['team_id' => '7', '_Token' => $this->tokens($html)];
+        static::assertTrue(new FormProtector()->validate($data, '/team', $session));
+        $data['members'] = [['id' => '2'], ['id' => '3']];
+        static::assertTrue(new FormProtector()->validate($data, '/team', $session));
+        static::assertFalse(new FormProtector()->validate($data + ['injected' => 'extra'], '/team', $session));
+        $data['team_id'] = '8';
+        static::assertFalse(new FormProtector()->validate($data, '/team', $session));
+
+        $other = $helper->form()->url('/team')->bind();
+        $otherHtml =
+            $other->open() . $other->control('members.0.id')->type('hidden')->value('1')->render() . $other->close();
+        $otherData = ['members' => [['id' => '2']], '_Token' => $this->tokens($otherHtml)];
+        static::assertFalse(new FormProtector()->validate($otherData, '/team', $session));
+    }
+
+    public function testUnlockRequiresAnOpenSession(): void
+    {
+        $form = $this->helper()->bind();
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected an open form; current phase is Pending.');
+        $form->unlock('members');
+    }
+
+    public function testUnlockRejectsAClosedSession(): void
+    {
+        $form = $this->helper()->bind();
+        $form->open();
+        $form->close();
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Expected an open form; current phase is Closed.');
+        $form->unlock('members');
+    }
+
+    public function testUnlockDoesNotEnableProtectionOnAnUnprotectedForm(): void
+    {
+        $form = $this->helper()->bind();
+        $html = $form->open();
+        $form->unlock('members');
+        $html .= $form->control('members.0.name')->render();
+        $html .= $form->close();
+        static::assertStringNotContainsString('_Token[', $html);
+        static::assertStringContainsString('name="members[0][name]"', $html);
+    }
+
     public function testFailedCompleteRenderingDoesNotEchoOrAutomaticallyClose(): void
     {
         $helper = $this->helper();

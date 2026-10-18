@@ -149,6 +149,18 @@ class FormSession
     }
 
     /**
+     * Allow an explicitly named field or collection to change outside the rendered input set.
+     *
+     * Call after open() and before close(), using CakePHP dot paths such as comments.
+     * Unlocking a collection permits added, removed, or changed descendants; validate
+     * and authorize their submitted values in the application as usual.
+     */
+    public function unlock(string $path): void
+    {
+        $this->lifecycle->unlock($path);
+    }
+
+    /**
      * Resolve a field snapshot without emitting markup or registering submissions.
      *
      */
