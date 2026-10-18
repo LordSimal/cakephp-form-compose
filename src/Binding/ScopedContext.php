@@ -14,14 +14,15 @@ use Cake\View\Form\ContextInterface;
  * those of the original binding; no data or validation lifecycle is introduced.
  * Subclasses can specialize path() when supplying a custom FormContext.
  */
-class ScopedContext extends ContextAdapter
+class ScopedContext implements ContextInterface
 {
     /**
      * Retain the original context and one validated mount path.
      */
-    public function __construct(ContextInterface $context, protected readonly string $prefix)
-    {
-        parent::__construct($context);
+    public function __construct(
+        protected readonly ContextInterface $context,
+        protected readonly string $prefix,
+    ) {
     }
 
     /**
@@ -104,5 +105,39 @@ class ScopedContext extends ContextAdapter
     protected function path(string $field): string
     {
         return $this->prefix . '.' . $field;
+    }
+
+    /**
+     * Resolve values without changing null, false, zero, or default semantics.
+     *
+     * @param array<string, mixed> $options Cake value resolution options.
+     */
+    public function val(string $field, array $options = []): mixed
+    {
+        return $this->context->val($this->path($field), $options);
+    }
+
+    /**
+     * Read the abstract type at the mounted path.
+     */
+    public function type(string $field): ?string
+    {
+        return $this->context->type($this->path($field));
+    }
+
+    /**
+     * Check errors at the mounted path.
+     */
+    public function hasError(string $field): bool
+    {
+        return $this->context->hasError($this->path($field));
+    }
+
+    /**
+     * Read errors at the mounted path.
+     */
+    public function error(string $field): array
+    {
+        return $this->context->error($this->path($field));
     }
 }

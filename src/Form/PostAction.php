@@ -32,10 +32,10 @@ final readonly class PostAction
             throw new InvalidArgumentException('Post actions must render a button or a link.');
         }
 
-        $this->block = PostActionOptions::block($config->block);
-        $this->confirm = PostActionOptions::confirm($config->confirm);
+        $this->block = $this->normalizeBlock($config->block);
+        $this->confirm = $config->confirm === '' ? null : $config->confirm;
         $presentation = $config->presentation;
-        PostActionOptions::trigger($presentation->attributes);
+        PostActionSubmission::attributes($presentation->attributes);
         $attributes = $presentation->attributes;
         $form = $config
             ->form
@@ -64,5 +64,17 @@ final readonly class PostAction
         $this->form = $form;
         $this->data = PostActionSubmission::data($config->data);
         $this->presentation = $presentation;
+    }
+
+    /**
+     * Select inline output or a CakePHP view block.
+     */
+    private function normalizeBlock(?string $block): ?string
+    {
+        if ($block !== null && trim($block) === '') {
+            throw new InvalidArgumentException('The block name must be a nonempty string.');
+        }
+
+        return $block;
     }
 }

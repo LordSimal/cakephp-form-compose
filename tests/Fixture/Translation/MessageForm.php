@@ -6,10 +6,11 @@ namespace FormCompose\Test\Fixture\Translation;
 use FormCompose\Blueprint\BlueprintBuilder;
 use FormCompose\Blueprint\FormBlueprint;
 use FormCompose\Blueprint\FormContext;
-use FormCompose\Form\Field\Translated;
+use function Cake\I18n\__d;
+use function Cake\I18n\__dx;
 
 /**
- * Supplies locale-independent attribute metadata with context and arguments.
+ * Translates blueprint text through CakePHP during configuration.
  */
 class MessageForm extends FormBlueprint
 {
@@ -17,7 +18,7 @@ class MessageForm extends FormBlueprint
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->add('title')
-            ->label(new Translated('Article title {0}', ['<public>'], domain: 'form-compose-tests', context: 'heading'))
-            ->help(new Translated('Shown publicly', domain: 'form-compose-tests'));
+            ->label(__dx('form-compose-tests', 'heading', 'Article title {0}', '<public>'))
+            ->help(__d('form-compose-tests', 'Shown publicly'));
     }
 }

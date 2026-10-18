@@ -9,7 +9,7 @@ use FormCompose\Form\Field\NativeValue;
 use InvalidArgumentException;
 
 /**
- * Validates action submission methods, form identities, and explicit locked payloads.
+ * Validates action submission methods, identities, trigger attributes, and locked payloads.
  *
  * PostAction validates this configuration before its renderer opens a form. The
  * resulting fields are rendered as locked hidden controls through the session.
@@ -91,6 +91,32 @@ final class PostActionSubmission
         foreach (array_keys($data) as $field) {
             if (array_intersect($parts, explode('.', $field)) !== []) {
                 throw new InvalidArgumentException('Action button names cannot overlap locked data paths.');
+            }
+        }
+    }
+
+    /**
+     * Preserve trigger presentation while rejecting submission overrides.
+     *
+     * @param array<string, mixed> $attributes Trigger attributes without managed submission overrides.
+     */
+    public static function attributes(array $attributes): void
+    {
+        foreach ([
+            'type',
+            'name',
+            'value',
+            'disabled',
+            'form',
+            'href',
+            'formaction',
+            'formmethod',
+            'formenctype',
+            'formnovalidate',
+            'data-form-compose-action',
+        ] as $key) {
+            if (array_key_exists($key, $attributes)) {
+                throw new InvalidArgumentException('The ' . $key . ' action attribute is managed by FormCompose.');
             }
         }
     }

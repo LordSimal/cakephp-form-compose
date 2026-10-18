@@ -11,9 +11,6 @@ use FormCompose\Rendering\Attributes;
  */
 final class PresentationConfig
 {
-    use PresentationReplacementTrait;
-    use PresentationTemplatesTrait;
-
     /** @var array{attributes?: array<string, mixed>, partAttributes?: array<string, array<string, mixed>>, templates?: array<string, string>, templateData?: array<string, mixed>, variant?: ?string} Explicit presentation values. */
     private readonly array $values;
 
@@ -136,5 +133,41 @@ final class PresentationConfig
     public static function builder(): self
     {
         return new self();
+    }
+
+    /** Select the primary control template. */
+    public function template(string $element): self
+    {
+        return $this->partTemplate('control', $element);
+    }
+
+    /** Select an explicit template for one part. */
+    public function partTemplate(string $part, string $element): self
+    {
+        return $this->templates([$part => $element]);
+    }
+
+    /** @param array<string, mixed> $attributes Replace configured input/wrapper attributes. */
+    public function replaceAttributes(array $attributes): self
+    {
+        return $this->merge($this->layer(['attributes' => $attributes], ['attributes' => true]));
+    }
+
+    /** @param array<string, mixed> $attributes Replace one configured part's attributes. */
+    public function replacePartAttributes(string $part, array $attributes): self
+    {
+        return $this->merge($this->layer(['partAttributes' => [$part => $attributes]], ['part:' . $part => true]));
+    }
+
+    /** @param array<string, string> $templates Replace the configured part-to-element map. */
+    public function replaceTemplates(array $templates): self
+    {
+        return $this->merge($this->layer(['templates' => $templates], ['templates' => true]));
+    }
+
+    /** @param array<string, mixed> $data Replace application-owned template variables. */
+    public function replaceTemplateData(array $data): self
+    {
+        return $this->merge($this->layer(['templateData' => $data], ['templateData' => true]));
     }
 }

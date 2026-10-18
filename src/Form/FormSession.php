@@ -49,8 +49,6 @@ use Throwable;
  * ```
  *
  * Keep complete-form and batch shortcuts alongside the explicit session operations.
- *
- * @mago-expect lint:too-many-methods
  */
 class FormSession
 {

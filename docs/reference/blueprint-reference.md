@@ -50,12 +50,12 @@ parent declarations. Duplicate field/embed paths fail; use `field()` to edit or
 `remove()` followed by a new declaration for an intentional replacement.
 Cycles and collisions across embedded children also fail.
 
-## Translated text
+## Translation
 
-`FormCompose\Form\Field\Translated` retains message, arguments, domain, and context
-until field resolution. Label/help closures accept no arguments and return
-string, Html, Translated, false, or null. Ordinary runtime translation calls in
-hooks are the usual choice for labels and choices. See
+Call CakePHP's translation functions in hooks for labels, help, and choices.
+Set the locale before binding or compiling a blueprint. For reusable configs
+that evaluate text later, label/help closures accept no arguments and return
+string, Html, false, or null. See
 [translating blueprints](/blueprints#translate-a-blueprint).
 
 ## configure() and BlueprintBuilder

@@ -5,7 +5,6 @@ namespace FormCompose\Binding;
 
 use Closure;
 use FormCompose\Configuration\FieldConfig;
-use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
 use InvalidArgumentException;
 
@@ -13,7 +12,7 @@ use InvalidArgumentException;
  * Resolves deferred label/help options before FieldResolver creates immutable state.
  *
  * Keeps application text callbacks separate from field binding and rendering.
- * Only label and help resolve Translated values or callbacks; other options
+ * Only label and help resolve callbacks; other options
  * retain their own contracts.
  *
  * @internal Used after blueprint defaults and per-call options merge.
@@ -41,16 +40,11 @@ final class FieldText
                     && $text !== false
                     && !is_string($text)
                     && !$text instanceof Html
-                    && !$text instanceof Translated
                 ) {
                     throw new InvalidArgumentException(
-                        'The ' . $key . ' closure must return a string, Html, Translated, false, or null.',
+                        'The ' . $key . ' closure must return a string, Html, false, or null.',
                     );
                 }
-            }
-
-            if ($text instanceof Translated) {
-                $text = $text->translate();
             }
 
             $config = $key === 'label' ? $config->label($text) : $config->help($text);

@@ -127,8 +127,8 @@ format milliseconds. Set or clear the step through `attributes(['step' => ...])`
 
 | Setter | Behavior |
 | --- | --- |
-| `label(string\|Html\|Translated\|Closure\|false\|null)` | Null infers a humanized label; false suppresses it. Groups use a legend. |
-| `help(string\|Html\|Translated\|Closure\|false\|null)` | Nonempty text renders associated help; false/null omit it. |
+| `label(string\|Html\|Closure\|false\|null)` | Null infers a humanized label; false suppresses it. Groups use a legend. |
+| `help(string\|Html\|Closure\|false\|null)` | Nonempty text renders associated help; false/null omit it. |
 | `errors(bool = true)` | Enable inline feedback, summary entries, and generated error descriptions. |
 
 Ordinary text is escaped; trusted HTML requires `FormCompose\Rendering\Html`.
@@ -142,9 +142,10 @@ echo $form->control('email')
     ->help(__('We keep this private.'));
 ```
 
-Deferred `Translated` values and zero-argument closures are available for reusable
-configs. They resolve once per field snapshot after overrides merge. Closures
-return string, Html, Translated, false, or null. See [translation timing](/blueprints#translate-a-blueprint).
+Use zero-argument label/help closures when a reusable config must evaluate text
+later. They resolve once per field snapshot after overrides merge and return
+string, Html, false, or null. Call CakePHP's translation functions inside the
+closure for deferred translation. See [translation timing](/blueprints#translate-a-blueprint).
 
 ## Constraints and state
 
