@@ -46,7 +46,7 @@ never emitted as a form attribute.
 Use complete-form `render()` when the summary belongs above a blueprint's fields.
 Put the shared complete-form layout in your configured theme as `form/layout.php`.
 For example, with `new Theme(layers: ['form/themes/daisy'])`, the element lives at
-`templates/element/form/themes/daisy/form/layout.php`. [Configure the theme once](./themes.md#select-theme)
+`templates/element/form/themes/daisy/form/layout.php`. [Configure the theme once](/themes#select-theme)
 when loading the helper; each form then discovers the layout automatically:
 
 ```php
@@ -111,7 +111,7 @@ For an exceptional per-form override, pass
 `options: ['template' => 'form/layouts/special-editor', 'errorSummary' => true]`.
 `templates['layout']` is the equivalent part override. Shared layouts belong in
 the theme so ordinary `render()` calls need no template selection. See
-[form layout variables](./template-reference.md#complete-form-layouts).
+[form layout variables](/template-reference#complete-form-layouts).
 
 ## Place a summary manually
 
@@ -216,5 +216,5 @@ that ID. No JavaScript, autofocus, or focus-management runtime is added. Native
 fragment links navigate to the prepared controls.
 
 For composite controls, implement the optional
-[error target contract](./extending.md#custom-summary-targets) when the main field
+[error target contract](/extending#custom-summary-targets) when the main field
 ID is not the appropriate focus target.

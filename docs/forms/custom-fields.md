@@ -109,7 +109,7 @@ Discovery reads metadata without constructing types. A discovered type is
 constructed when its rendering, registration, or composite children are first
 requested, and reused within that binding. Inspecting the root field's state or
 attributes does not construct it. Constructors can receive services through the
-[configured BlueprintFactory and application container](./blueprint-configuration.md).
+[configured BlueprintFactory and application container](/blueprint-configuration).
 Keep per-field state on the bound fields; a type instance can serve several fields.
 
 Explicit instances override discovered aliases:
@@ -123,7 +123,7 @@ $form = $this->Form->bind($booking, [
 ```
 
 Clear or warm discovery metadata during deployment as described in
-[discovery and cache configuration](./blueprint-configuration.md#discovery-and-cache-configuration).
+[discovery and cache configuration](/blueprint-configuration#discovery-and-cache-configuration).
 
 ## Choose an authoring contract
 
@@ -133,7 +133,7 @@ Clear or warm discovery metadata during deployment as described in
 | `SingleInputType` | A Markdown editor or another editable scalar widget | A PHP element that emits one input with the supplied name and ID. |
 | `FieldTypeInterface` | A control with its own submission protocol | Rendering, exact successful submissions, and optional identity/focus metadata. |
 
-Use [themes](./themes.md) for markup or JavaScript enhancements to an existing
+Use [themes](/themes) for markup or JavaScript enhancements to an existing
 native input. Native controls already handle passwords, files, checkbox fallbacks,
 and choices. A new alias is useful when a widget has reusable semantics beyond
 those presentation changes.
@@ -248,7 +248,7 @@ option wins. Native checkbox fallbacks, multiple selections, file/multipart chec
 and duplicate-ID checks retain their normal contracts.
 
 Handwritten HTML is not inspected for input names. Register each actual child
-using [`$inputs['start']->register()`](./field-reference.md#register) after emitting
+using [`$inputs['start']->register()`](/field-reference#register) after emitting
 its markup, passing the same local input attributes, especially `disabled`.
 Registering only the composite parent does not register its children. Use either
 `input()`/`control()` or handwritten markup plus `register()` for a given child.
@@ -423,5 +423,5 @@ anything. Hidden and disabled roots remain unlinked.
 
 Use `$field->renderer->render($part, $node)` with a `RenderNode` when preparing
 custom parts. Preserve its `templateData` and supplied identities. The
-[template reference](./template-reference.md) describes lookup and prepared locals;
-[service extensions](./extending.md) covers replacing rendering or binding services.
+[template reference](/template-reference) describes lookup and prepared locals;
+[service extensions](/extending) covers replacing rendering or binding services.

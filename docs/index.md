@@ -72,12 +72,12 @@ $title = $form->field('title');
 
 :::
 
-Start with [how rendering works](./rendering.md), select
-[your own templates](./templates.md), share them with a [theme](./themes.md),
-or offer named presentations with [variants](./variants.md).
-Use optional [reusable forms](./reusable-forms.md) to share field configuration.
+Start with [how rendering works](/rendering), select
+[your own templates](/templates), share them with a [theme](/themes),
+or offer named presentations with [variants](/variants).
+Use optional [reusable forms](/reusable-forms) to share field configuration.
 CakePHP continues to supply values, validation metadata, routing, and submission
 protection. No CSS framework or JavaScript runtime is required.
 
-[Why FormCompose?](./why.md) · [Your first form](./getting-started.md) ·
-[All control options](./field-options.md)
+[Why FormCompose?](/why) · [Your first form](/getting-started) ·
+[All control options](/field-options)

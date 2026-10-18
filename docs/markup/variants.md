@@ -11,7 +11,7 @@ You create those files and their styling. Setting the option alone does not
 make a field smaller or add a CSS class.
 
 Use variants when the same theme needs several presentations, such as ordinary
-fields and compact fields. Use an [explicit template](./templates.md) when you
+fields and compact fields. Use an [explicit template](/templates) when you
 want to select a particular element by its full name.
 
 ## 1. Create the variant element
@@ -87,7 +87,7 @@ The email field uses `variants/compact/control.php`, adding the `compact-field`
 wrapper and side-by-side layout. The name field uses the ordinary control layout.
 Both keep their normal values, validation feedback, and submission behavior.
 
-If you already [configured this theme on the helper](./themes.md#select-theme),
+If you already [configured this theme on the helper](/themes#select-theme),
 you can omit the `theme:` argument.
 
 ## 3. Understand what gets selected
@@ -138,7 +138,7 @@ plugin layer:
 
 An application `control.php` wins over a shared plugin's compact variant. If you
 want the shared variant to be reachable, avoid a generic control override in the
-earlier layer, or delegate with [`$parent()`](./themes.md#share-and-layer-themes).
+earlier layer, or delegate with [`$parent()`](/themes#share-and-layer-themes).
 Explicit `template` or `templates` selections take priority over this entire
 search for the selected part.
 
@@ -185,6 +185,6 @@ Check that the form uses the theme containing your file, that the file path
 matches the requested scope and part, and that no explicit override or earlier
 layer wins. A variant needs its own markup or classes to change the presentation.
 
-Enable [template debugging](./theme-debug.md) to see every attempted candidate and
-the element that matched. See the [lookup reference](./template-reference.md#lookup-order)
+Enable [template debugging](/theme-debug) to see every attempted candidate and
+the element that matched. See the [lookup reference](/template-reference#lookup-order)
 for the complete rules.

@@ -7,8 +7,8 @@ description: Signatures, options, return values, and lifecycle contracts for the
 
 `$this->Form` is `FormCompose\View\Helper\FormHelper`. Its `bind()` method returns
 a `FormCompose\Form\FormSession`, called `$form` throughout these docs. These objects
-have different jobs and methods. Follow [Your first form](./getting-started.md)
-for a walkthrough, or jump directly to [field options](./field-options.md).
+have different jobs and methods. Follow [Your first form](/getting-started)
+for a walkthrough, or jump directly to [field options](/field-options).
 
 All rendering methods return HTML strings; they do not echo automatically.
 
@@ -23,7 +23,7 @@ render that element with `help()` or `errors()`.
 Closing verifies generated input descriptions have rendered or registered targets.
 A missing target throws `LogicException` and leaves the session open for correction.
 Application-owned descriptions pointing to unrelated elements remain the
-application's responsibility. See [field composition](./field-parts.md#preserve-feedback-and-accessible-names).
+application's responsibility. See [field composition](/field-parts#preserve-feedback-and-accessible-names).
 
 ## postButton() and postLink() {#post-actions}
 
@@ -40,7 +40,7 @@ Both accept a label, URL, options, and optional named `theme` and `renderer`.
 `postLink()` permits an omitted URL and requires JavaScript. `postButton()` is
 native; optional `confirm` adds confirmation with a native dialog or an application
 event handler. `block` buffers the
-independent form outside a parent form. See [POST buttons and links](./post-actions.md)
+independent form outside a parent form. See [POST buttons and links](/post-actions)
 for signatures, options, asset handling, and template contracts.
 
 ## bind() {#bind}
@@ -75,13 +75,13 @@ blueprint class name or discovered alias. It installs field defaults without
 rendering fields or their collection layout. After opening, call `blueprint()`
 to render the selected blueprint, or call `control()` for each field you want to
 arrange manually. Session `render()` renders the complete selected form.
-See [blueprint defaults and manual layouts](./reusable-forms.md#select-defaults-for-the-whole-binding).
+See [blueprint defaults and manual layouts](/reusable-forms#select-defaults-for-the-whole-binding).
 
 Helper option `themeDebug` defaults to `false`. Set it to `true` when loading the
 helper or through `setConfig()` to annotate default PHP rendering with HTML
 comments describing template lookup. It is a helper setting, rather than a binding
 or HTML attribute option. Existing sessions retain their setting, and explicitly
-supplied renderers keep their own diagnostics. See [Debug template selection](./theme-debug.md).
+supplied renderers keep their own diagnostics. See [Debug template selection](/theme-debug).
 
 ### Binding options
 
@@ -104,7 +104,7 @@ must be nonempty and contain no whitespace.
 
 The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
 Likewise context, types, type mappings, password field names, and value sources are binding settings, not opening
-settings. See [Fields and values](./usage.md#data-and-value-sources).
+settings. See [Fields and values](/usage#data-and-value-sources).
 
 ### Helper configuration
 
@@ -116,7 +116,7 @@ Set these with `addHelper()`. Binding settings can also use the helper's
 | `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
 | `passwordFields` | Defaults to `['password', 'passwd']`. A list of terminal names, such as `['password', 'passwd', 'passphrase', 'password_confirmation']`. Each binding snapshots this list; its own `passwordFields` option replaces the helper default. Explicit field types and primary-key conventions take precedence. |
 | `typeMap` | Additional schema-to-control mappings, default `[]`. Each binding snapshots helper overrides over the native defaults; its own entries override matching keys. Reset helper overrides with `setConfig('typeMap')`. |
-| `autoActionScript` | Boolean, true by default. Registers the deferred `FormCompose.actions` asset in the `script` view block when the helper initializes, including pages with no initial actions. Render `$this->fetch('script')` in the layout. Set false before initialization to load or replace the behavior yourself. See [loading and dynamic fragments](./post-actions.md#load-the-enhancement). |
+| `autoActionScript` | Boolean, true by default. Registers the deferred `FormCompose.actions` asset in the `script` view block when the helper initializes, including pages with no initial actions. Render `$this->fetch('script')` in the layout. Set false before initialization to load or replace the behavior yourself. See [loading and dynamic fragments](/post-actions#load-the-enhancement). |
 | `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
 | `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
 
@@ -128,7 +128,7 @@ $this->addHelper('Form', [
 ]);
 ```
 
-See [blueprint services](./blueprint-configuration.md#inject-application-services)
+See [blueprint services](/blueprint-configuration#inject-application-services)
 for supplying this view variable from the application container.
 
 Password names can be configured without a helper subclass:
@@ -148,7 +148,7 @@ For example, `new_password` matches `account.new_password`. Changing helper
 configuration affects future bindings; a binding override does not change the
 helper default. Password-name configuration is never emitted as a form attribute.
 
-See [Create a theme](./themes.md#select-theme) for configuring
+See [Create a theme](/themes#select-theme) for configuring
 an application theme in `AppView`. Helper configuration is local to that instance;
 changing `theme` affects future bindings and action calls, while existing sessions
 retain their selected theme. Per-call overrides never modify the configured default.
@@ -178,7 +178,7 @@ echo $form->open(['class' => 'article-editor', 'method' => 'patch']);
 | `encoding` | `string` | `App.encoding`, otherwise `UTF-8`; emitted as lowercase `accept-charset`. |
 | `template` | `string` | Selects the complete-form `layout` part for `render()`. |
 | `templates` | `array<string, string>` | Overrides complete-form `layout`, `open`, `close`, or infrastructure `hidden` elements. |
-| `variant` | `string` | Named variant for form templates; omitted by default. Does not select variants on fields or buttons. See [Use variants](./variants.md). |
+| `variant` | `string` | Named variant for form templates; omitted by default. Does not select variants on fields or buttons. See [Use variants](/variants). |
 | `templateData` | `array<string, mixed>` | `[]`. Data for the complete-form layout, opening, closing, and infrastructure hidden-input templates. |
 | Other HTML attributes | Attribute values | For example `class`, `novalidate`, and `data-*`, supplied directly in this array. |
 
@@ -187,7 +187,7 @@ Methods other than GET/POST add `_method`. A request CSRF token is included for
 non-GET forms. Final tamper-protection fields are rendered at `close()`.
 
 Use plural `templates` for form elements. Singular `template` is a field/blueprint
-shorthand, not a form-opening option. See [template reference](./template-reference.md#form-and-button-templates)
+shorthand, not a form-opening option. See [template reference](/template-reference#form-and-button-templates)
 when customizing infrastructure markup.
 
 ## control() {#control}
@@ -198,7 +198,7 @@ public function control(string $field, array $options = []): string;
 
 Resolves a field and renders its complete presentation using its control element.
 Hidden fields render only their input part. Requires an open session when its
-input renders. Accepts every option in [Field options](./field-options.md).
+input renders. Accepts every option in [Field options](/field-options).
 
 ```php
 echo $form->control('title', [
@@ -239,7 +239,7 @@ public function field(string $field, array $options = []): BoundField;
 ```
 
 Returns a resolved snapshot without HTML or input-registration side effects.
-It may be called before opening. Uses the same [options](./field-options.md) and
+It may be called before opening. Uses the same [options](/field-options) and
 configuration precedence as `control()`.
 
 ```php
@@ -248,7 +248,7 @@ $title = $form->field('title', ['help' => 'Displayed above the article.']);
 echo $title->label(), $title->input(), $title->help(), $title->errors();
 ```
 
-See [Bound fields](./field-reference.md) for state and part methods.
+See [Bound fields](/field-reference) for state and part methods.
 
 ## blueprint() {#blueprint}
 
@@ -271,9 +271,9 @@ echo $form->blueprint('author', at: 'author');
 
 Strings resolve a blueprint locally; they do not replace binding defaults. `at`
 mounts relative field paths at a context path. `$options` are
-[blueprint presentation options](./blueprint-reference.md#presentation-options),
+[blueprint presentation options](/blueprint-reference#presentation-options),
 not field options. Rendering shares the session's theme and submission registry.
-See [layouts and composition](./composition.md) for examples.
+See [layouts and composition](/composition) for examples.
 
 ## embedMany() {#embed-many}
 
@@ -290,7 +290,7 @@ Render rows at an association path inside the open session. Null `keys` infers
 original keys using binding value sources; `[]` renders no rows. Options select
 the repeated wrapper and collection-owned error presentation. Use layout `embeddedMany()` to render already compiled rows while preserving
 their hook results and parent adjustments.
-See [Repeated embeds](./repeated-embeds.md) for layouts and blank-row selection.
+See [Repeated embeds](/repeated-embeds) for layouts and blank-row selection.
 
 ## submit() {#submit}
 
@@ -313,7 +313,7 @@ echo $form->submit('Save article', [
 | --- | --- |
 | `type` | `submit`. Use `button` or `reset` for other native button behavior. |
 | `templates` | `[]`. The `control` key selects the button element. |
-| `variant` | Omitted. Selects a [button template variant](./variants.md#buttons-and-form-layouts-have-their-own-variants). |
+| `variant` | Omitted. Selects a [button template variant](/variants#buttons-and-form-layouts-have-their-own-variants). |
 | `templateData` | `[]`. Application data scoped to the button element. |
 | HTML attributes | For example `class`, `disabled`, `name`, and `value`; escaped on output. |
 
@@ -413,8 +413,8 @@ chooses the complete-form presentation used by `render()`, including the summary
 and actions. The theme supplies that layout automatically. For a one-form
 exception, use `options['template']` or `options['templates']['layout']`.
 
-See the [complete layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
-and [template contract](./template-reference.md#complete-form-layouts).
+See the [complete layout example](/error-summaries#keep-custom-layouts-and-actions-without-manual-buffering)
+and [template contract](/template-reference#complete-form-layouts).
 :::
 
 ## errorSummary() {#error-summary}
@@ -438,7 +438,7 @@ field inspection does not register feedback. Summary rendering registers no inpu
 
 Complete-form `render()` supports `options: ['errorSummary' => true]` or an
 options array in place of true. It renders the buffered controls after the summary.
-Local false overrides binding opt-in. See [Error summaries](./error-summaries.md)
+Local false overrides binding opt-in. See [Error summaries](/error-summaries)
 for scope, target selection, custom elements, and manual placement.
 
 ## hiddenFields() {#hidden-fields}

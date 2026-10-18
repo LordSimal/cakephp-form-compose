@@ -39,9 +39,9 @@ $title = $form->field('title', [
 attributes for that part; field behavior such as `type` or `value` belongs in the
 options passed to `field()`.
 
-Use an [explicit control template](./templates.md) to select this structure on
-individual controls, or a [theme element](./themes.md) to make it a shared default.
-Use a [blueprint layout](./blueprints.md#keep-control-of-the-layout) when arranging a reusable collection
+Use an [explicit control template](/templates) to select this structure on
+individual controls, or a [theme element](/themes) to make it a shared default.
+Use a [blueprint layout](/blueprints#keep-control-of-the-layout) when arranging a reusable collection
 of fields rather than the internal structure of one field.
 
 ## Inspect state without rendering
@@ -54,7 +54,7 @@ $attributes = $title->attributes();
 ```
 
 State and attribute inspection have no rendering or security-registration side
-effects. The [bound-field reference](./field-reference.md) lists all state properties
+effects. The [bound-field reference](/field-reference) lists all state properties
 and part methods. A bound field is a snapshot; resolve it again if its inputs change.
 
 ## Preserve feedback and accessible names
@@ -118,5 +118,5 @@ If adding local attributes such as `disabled`, pass the same array to both
 This example is for a scalar text value. Other controls have additional native
 semantics: file/password values are never prefilled, choices need selected state,
 and checkboxes/multiple selections may need fallbacks. For a composite input or a
-non-native value representation, implement a [custom field type](./extending.md#custom-field-types)
+non-native value representation, implement a [custom field type](/extending#custom-field-types)
 that describes its actual submitted names.

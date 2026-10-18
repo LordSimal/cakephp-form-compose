@@ -182,4 +182,4 @@ a failed row or wrapper rolls back its pending registrations. Dynamic browser
 add/remove controls and a repeater submission protocol are outside this API.
 
 Rendered row errors and direct collection errors also participate in optional
-[error summaries](./error-summaries.md), respecting `errors => false`.
+[error summaries](/error-summaries), respecting `errors => false`.

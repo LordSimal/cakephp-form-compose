@@ -7,9 +7,9 @@ description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with Ca
 
 FormCompose uses CakePHP's entity context to resolve associated values, schemas,
 and validation metadata. The usual field paths work with both `control()` and
-`field()`, including inside [reusable blueprints](./reusable-forms.md).
+`field()`, including inside [reusable blueprints](/reusable-forms).
 
-For basic select, radio, and checkbox syntax, start with [Choice controls](./choices.md).
+For basic select, radio, and checkbox syntax, start with [Choice controls](/choices).
 
 ::: info Your application owns association data
 Load the associated records you want to edit before binding the entity. Supply
@@ -86,8 +86,8 @@ echo $form->control('tags._ids', [
 ```
 
 Here `$availableTags` is an application-supplied iterable choice list. The explicit
-list replaces discovery for this field. All ordinary [field options](./field-options.md)
-and [template overrides](./usage.md#choose-a-template-for-one-control) still apply.
+list replaces discovery for this field. All ordinary [field options](/field-options)
+and [template overrides](/usage#choose-a-template-for-one-control) still apply.
 
 Explicit types are preserved. An inferred `._ids` control defaults to a multiple
 select; if you specify `type => 'select'` yourself, also specify `multiple => true`
@@ -151,7 +151,7 @@ Multiple selects and checkbox groups include a hidden empty-selection fallback.
 Clearing a selection therefore submits `tags[_ids]` as an empty string instead of
 leaving the field absent. Submitted empty arrays, empty strings, and null values
 do not restore previously selected IDs. Explicit `value` and configured
-[value-source ordering](./usage.md#data-and-value-sources) keep their usual precedence.
+[value-source ordering](/usage#data-and-value-sources) keep their usual precedence.
 
 Form protection tracks the rendered nested names and hidden primary keys.
 Inspecting a field registers no submission, and disabled inputs do not become
@@ -167,7 +167,7 @@ ORM. Definitions, templates, and form sessions do not load or persist associatio
 For a blueprint declared with `#[Form('author')]`, use `#[Embed('author', 'author')]`
 to compose it, or render it with `$form->blueprint('author', at: 'author')`.
 The child keeps its own PHP layout and relative field names. See
-[nested blueprints and layouts](./composition.md#compose-an-association).
+[nested blueprints and layouts](/composition#compose-an-association).
 
-Use [repeated embeds](./repeated-embeds.md) to render a reusable child blueprint
+Use [repeated embeds](/repeated-embeds) to render a reusable child blueprint
 for every row of a loaded or submitted association.

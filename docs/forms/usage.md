@@ -5,9 +5,9 @@ description: Configure controls, resolve values, render validation feedback, and
 
 # Fields and values
 
-Continue from [your first form](./getting-started.md). Examples that use `$form`
+Continue from [your first form](/getting-started). Examples that use `$form`
 assume an open session unless they show the complete lifecycle. For the complete
-option list, keep [Field options](./field-options.md) alongside this guide.
+option list, keep [Field options](/field-options) alongside this guide.
 
 ## Complete controls
 
@@ -27,7 +27,7 @@ echo $form->control('published', ['type' => 'checkbox']);
 Otherwise schema metadata supplies types: booleans become checkboxes, text becomes
 a textarea, numbers become numeric inputs, and date/time columns get native date
 or time inputs. Primary keys default to hidden fields. Explicit choice lists
-infer a select. See [type inference](./field-options.md#type-inference) for the full mapping.
+infer a select. See [type inference](/field-options#type-inference) for the full mapping.
 
 ### Render several controls
 
@@ -49,7 +49,7 @@ separate calls when you need sections or grids.
 Each binding owns its form lifecycle and input registry. Open once, render all
 inputs, then close once. Rendered input IDs must be unique; explicit form IDs
 must also be unique across the page. You can inspect a field before opening,
-but inputs require an open form. See the [session reference](./form-reference.md#lifecycle-and-failures)
+but inputs require an open form. See the [session reference](/form-reference#lifecycle-and-failures)
 for invalid calls and retry behavior.
 
 ## Data and value sources
@@ -72,7 +72,7 @@ This is useful for deliberate overrides; ordinary edit fields usually should use
 the bound value. Request lookup distinguishes missing keys from null, false, zero,
 and empty strings. A context's null result falls through to the next source or
 default, following CakePHP context semantics. See the
-[value options](./field-options.md#values) for `default` and `schemaDefault`.
+[value options](/field-options#values) for `default` and `schemaDefault`.
 
 ### Search forms
 
@@ -140,7 +140,7 @@ Disabling help or errors also removes their generated ARIA references. With a
 custom layout, render the enabled feedback parts so those references have targets.
 
 Trusted label, help, and button markup requires an explicit
-[`Html` object](./template-reference.md#trusted-markup). Validation, authorization,
+[`Html` object](/template-reference#trusted-markup). Validation, authorization,
 and saving remain in the application.
 
 ## Choose a template for one control
@@ -152,35 +152,35 @@ echo $form->control('title', ['template' => 'forms/article-title']);
 ```
 
 This renders `templates/element/forms/article-title.php`. Continue with
-[Use your own templates](./templates.md) for the matching PHP element, individual
+[Use your own templates](/templates) for the matching PHP element, individual
 part overrides, and custom presentation data.
 
-For shared defaults, [create a theme](./themes.md). To offer named presentations
-within a theme, [use variants](./variants.md). [How rendering works](./rendering.md)
+For shared defaults, [create a theme](/themes). To offer named presentations
+within a theme, [use variants](/variants). [How rendering works](/rendering)
 explains how those choices fit together.
 
 ### Pass data to a template
 
 Use `templateData` to supply custom values to the element and that field's parts.
 These values stay in `$templateData`; they do not become HTML attributes. See the
-[worked example](./templates.md#pass-custom-presentation-data) and
-[scope reference](./template-reference.md#template-data).
+[worked example](/templates#pass-custom-presentation-data) and
+[scope reference](/template-reference#template-data).
 
 ## Association fields
 
 Use CakePHP paths such as `author_id`, `tags._ids`, and `comments.0.body`.
-[Association fields](./associations.md) explains choice discovery, nested records,
+[Association fields](/associations) explains choice discovery, nested records,
 and validation feedback. For ordinary select and checkbox options, see
-[Choice controls](./choices.md).
+[Choice controls](/choices).
 
 ## Composing field parts
 
 Use `$form->field()` when arranging a label, input, help, and errors independently.
-Follow [Compose field parts](./field-parts.md) for a complete example and handwritten
+Follow [Compose field parts](/field-parts) for a complete example and handwritten
 input registration.
 
 ## Reusable forms
 
-When form configuration repeats, extract a [blueprint](./blueprints.md).
-[Reusable forms](./reusable-forms.md) explains when to keep configuration inline and
+When form configuration repeats, extract a [blueprint](/blueprints).
+[Reusable forms](/reusable-forms) explains when to keep configuration inline and
 when to introduce a class. Both render through the controls and templates shown here.

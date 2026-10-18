@@ -6,8 +6,8 @@ description: Blueprint declarations, runtime builder operations, configuration o
 # Blueprint reference
 
 Author local forms with inline controls and reusable forms with
-[blueprints](./blueprints.md). Use [Reusable forms](./reusable-forms.md) to choose a
-starting point and [Nested blueprints](./composition.md) for embedded sections.
+[blueprints](/blueprints). Use [Reusable forms](/reusable-forms) to choose a
+starting point and [Nested blueprints](/composition) for embedded sections.
 Validation and persistence stay in CakePHP.
 
 ## Presentation options
@@ -19,13 +19,13 @@ These options apply to `presentation()` and local
 | --- | --- | --- |
 | `template` | Nonempty `string` | Explicit layout element; shorthand for `templates['control']`. |
 | `templates` | `array<string, string>` | `[]`. The `control` key selects the layout element. |
-| `variant` | `string` | Omitted. Requests `blueprint/variants/{name}/control.php`; scoped to this layout. See [Use variants](./variants.md). |
+| `variant` | `string` | Omitted. Requests `blueprint/variants/{name}/control.php`; scoped to this layout. See [Use variants](/variants). |
 | `attributes` | `array<string, mixed>` | `[]`. Wrapper attributes supplied to the layout; the bundled layout has no wrapper. |
 | `templateData` | `array<string, mixed>` | `[]`. Data scoped to this layout, not inherited by fields or children. |
 
 Local options replace matching top-level definition options. Conflicting singular
 and plural control template selections fail. Without an explicit layout, the theme
-renders fields and embeds in order. See [blueprint templates](./template-reference.md#blueprint-layouts).
+renders fields and embeds in order. See [blueprint templates](/template-reference#blueprint-layouts).
 
 ## Blueprint declarations
 
@@ -63,9 +63,9 @@ public function __construct(
 
 Repeatable class attribute for ordered field configuration. Non-null shorthand
 arguments override matching `options` keys. The options array accepts every
-[built-in field option](./field-options.md). Label/help closures take no arguments
+[built-in field option](/field-options). Label/help closures take no arguments
 and return `string`, `Html`, `Translated`, `false`, or `null`; they run once per
-field resolution after configuration merging. See [translation options](./blueprints.md#translate-a-blueprint)
+field resolution after configuration merging. See [translation options](/blueprints#translate-a-blueprint)
 for PHP 8.5 attribute syntax and locale timing.
 
 ### Embed
@@ -75,7 +75,7 @@ public function __construct(string $path, string $blueprint, array $options = []
 ```
 
 Repeatable class attribute mounting a child blueprint class or discovered alias
-at a relative path. See [embedding an association](./composition.md#compose-an-association).
+at a relative path. See [embedding an association](/composition#compose-an-association).
 
 ### AsFieldType
 
@@ -84,7 +84,7 @@ public function __construct(string $name);
 ```
 
 Registers a custom `FieldTypeInterface` class under a discovered alias. See the
-[custom field type example](./blueprint-configuration.md#discover-custom-field-types).
+[custom field type example](/blueprint-configuration#discover-custom-field-types).
 
 ### Declaration behavior
 
@@ -126,7 +126,7 @@ Construction stores metadata without translating. Field resolution calls
 locale. Formatting arguments use CakePHP's message formatting. Results remain
 ordinary text and are escaped when rendered. The object does not cache translated
 results or implement implicit string conversion. See
-[translation behavior and extraction limitations](./blueprints.md#translate-a-blueprint).
+[translation behavior and extraction limitations](/blueprints#translate-a-blueprint).
 
 ## configure() and BlueprintBuilder
 
@@ -160,7 +160,7 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
 Unknown targets and duplicates fail. Use the builder supplied to `configure()` so
 embeds resolve through the application factory with the correct scoped context.
 The builder's required collaborators and `build()` snapshot belong to
-[compiler integration](./extending.md#subclassing-services).
+[compiler integration](/extending#subclassing-services).
 
 ## FormContext
 
@@ -214,10 +214,10 @@ Readonly `definition` holds the local compiled collection; `path` holds its moun
 Unknown names throw `InvalidArgumentException`. `field()` also throws for removed
 fields, so guard optional manual parts with `has()`. Outer session `control()` can
 still explicitly request fields omitted from a blueprint: removal is presentation,
-not authorization. See [conditional layouts](./composition.md#conditional-fields-and-parent-overrides).
+not authorization. See [conditional layouts](/composition#conditional-fields-and-parent-overrides).
 For value checks and request access, see
-[blueprint layout inspection](./blueprints.md#inspect-values-and-field-configuration)
-and [request lookups](./blueprints.md#read-request-data-in-a-layout).
+[blueprint layout inspection](/blueprints#inspect-values-and-field-configuration)
+and [request lookups](/blueprints#read-request-data-in-a-layout).
 
 ## BlueprintFactory
 
@@ -231,8 +231,8 @@ public function types(array $overrides = []): array;
 
 The first compiles a class/alias without rendering; the second resolves custom
 field types with explicit instances taking precedence. See
-[services and discovery](./blueprint-configuration.md) for construction and cache
-configuration, and [service extensions](./extending.md#subclassing-services) for
+[services and discovery](/blueprint-configuration) for construction and cache
+configuration, and [service extensions](/extending#subclassing-services) for
 factory overrides.
 
 ## Repeated blueprints and occurrence options

@@ -46,9 +46,9 @@ form. PHP elements render the parts you call; successful input
 rendering registers submitted fields. Form opening and closing prepare method,
 CSRF, and form-protection fields when needed.
 
-[Blueprints](./blueprints.md) supply optional configuration, and
-[blueprint layouts](./blueprints.md#keep-control-of-the-layout) arrange fields;
-[embedded blueprints](./composition.md) compose related sections. They
+[Blueprints](/blueprints) supply optional configuration, and
+[blueprint layouts](/blueprints#keep-control-of-the-layout) arrange fields;
+[embedded blueprints](/composition) compose related sections. They
 use this same rendering flow. Validation and persistence stay in your existing
 CakePHP application layers.
 
@@ -87,7 +87,7 @@ echo $form->control('email', [
 :::
 
 Move the hint, add another wrapper, or include an icon element here. Every call
-using this element gets the change. A [theme](./themes.md) can apply it across
+using this element gets the change. A [theme](/themes) can apply it across
 forms without repeating the `template` option.
 
 ::: info Adopting FormCompose
@@ -95,9 +95,9 @@ This is a separate form-building API for CakePHP 6. Existing FormHelper calls an
 custom widgets need to be ported. The API is still evolving.
 :::
 
-[Build your first form](./getting-started.md) ·
-[Follow a control from data to HTML](./rendering.md) ·
-[Look up control options](./field-options.md)
+[Build your first form](/getting-started) ·
+[Follow a control from data to HTML](/rendering) ·
+[Look up control options](/field-options)
 
 <style>
 .formcompose-architecture {

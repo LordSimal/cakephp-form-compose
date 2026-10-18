@@ -10,7 +10,7 @@ an author inside a post. Each child keeps relative field paths and its own layou
 while sharing the enclosing form's session and submission protection.
 
 For arranging the fields of one blueprint, start with
-[blueprint layouts](./blueprints.md#keep-control-of-the-layout). This page focuses
+[blueprint layouts](/blueprints#keep-control-of-the-layout). This page focuses
 on mounting child blueprints and rendering their layouts together.
 
 ## Define a reusable child {#select-a-layout}
@@ -113,7 +113,7 @@ For a standalone section, mount the same blueprint directly:
 echo $form->blueprint('author', at: 'author');
 ```
 
-Explicit indexed paths such as `comments.0.author` work too. For multiple rows, use [EmbedMany](./repeated-embeds.md), which expands row keys
+Explicit indexed paths such as `comments.0.author` work too. For multiple rows, use [EmbedMany](/repeated-embeds), which expands row keys
 without introducing a browser repeater lifecycle.
 
 ## Conditional fields and parent overrides
@@ -151,7 +151,7 @@ to this collection, and it can only render configured fields or embedded childre
 <?php endif; ?>
 ```
 
-See the [scoped layout API](./blueprint-reference.md#blueprintview) for all
+See the [scoped layout API](/blueprint-reference#blueprintview) for all
 methods and how removed fields differ from unknown paths.
 
 Unknown names raise `InvalidArgumentException`, so typos are visible. Guard
@@ -213,7 +213,7 @@ references, and incompatible field/embed declarations are errors.
 All layouts share the enclosing form's lifecycle and submission registry.
 Membership checks and configuration register nothing. If a layout fails, its
 staged input registrations are rolled back; previously rendered controls remain
-registered. See [lifecycle and failures](./form-reference.md#lifecycle-and-failures).
+registered. See [lifecycle and failures](/form-reference#lifecycle-and-failures).
 
 CakePHP owns association marshalling, validation, and persistence. Embedding a
 form does not load associations or authorize submitted changes.

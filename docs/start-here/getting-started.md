@@ -10,8 +10,8 @@ templates. You will render an article editing form, add field options, and see
 how a control connects to an application-owned PHP element.
 
 For the motivation and a side-by-side markup example, read
-[Why FormCompose?](./why.md). For a method or option lookup, use the
-[API reference](./form-reference.md).
+[Why FormCompose?](/why). For a method or option lookup, use the
+[API reference](/form-reference).
 
 ## Requirements
 
@@ -24,7 +24,7 @@ For the motivation and a side-by-side markup example, read
 FormCompose provides its own form-building API. When adopting it, port existing
 core FormHelper calls and widgets to this API. It is not a drop-in replacement
 for every core method or option.
-See [Migrate a core form](./migration.md) for the main API and option differences.
+See [Migrate a core form](/migration) for the main API and option differences.
 :::
 
 ## Install the plugin
@@ -128,7 +128,7 @@ echo $form->control('title', [
 
 `label` and `help` configure field presentation. `attributes` supplies HTML
 attributes for the input. To style the wrapper or label, use `partAttributes`.
-[Field options](./field-options.md) lists the supported options, defaults, and
+[Field options](/field-options) lists the supported options, defaults, and
 where each applies.
 
 ## Show validation feedback
@@ -146,14 +146,14 @@ FormCompose does not validate or save the entity. Browser attributes such as
 
 | You want to… | Read |
 | --- | --- |
-| Set values, types, upload files, or build a search form | [Fields and values](./usage.md) |
-| Render selects, radio buttons, or checkboxes | [Choice controls](./choices.md) |
-| Understand which PHP element renders a control | [How rendering works](./rendering.md) |
-| Arrange one field's parts in the view | [Compose field parts](./field-parts.md) |
-| Replace one field's markup with a PHP element | [Use your own templates](./templates.md) |
-| Reuse markup across forms | [Create a theme](./themes.md) |
-| Offer compact or other named presentations | [Use variants](./variants.md) |
-| Reuse field configuration across screens | [Reusable forms](./reusable-forms.md) |
+| Set values, types, upload files, or build a search form | [Fields and values](/usage) |
+| Render selects, radio buttons, or checkboxes | [Choice controls](/choices) |
+| Understand which PHP element renders a control | [How rendering works](/rendering) |
+| Arrange one field's parts in the view | [Compose field parts](/field-parts) |
+| Replace one field's markup with a PHP element | [Use your own templates](/templates) |
+| Reuse markup across forms | [Create a theme](/themes) |
+| Offer compact or other named presentations | [Use variants](/variants) |
+| Reuse field configuration across screens | [Reusable forms](/reusable-forms) |
 
 Start with ordinary controls. Blueprints are an optional layer you
 can add when configuration repeats.

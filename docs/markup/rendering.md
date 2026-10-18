@@ -98,23 +98,23 @@ then render `native.php`, with type-specific files such as `select/native.php`
 and `textarea/native.php`.
 
 Change `control.php` to rearrange the field. Change native parts when you need to
-change the actual input markup. See [field template contracts](./template-reference.md#field-templates).
+change the actual input markup. See [field template contracts](/template-reference#field-templates).
 :::
 
 ## Choose how to customize
 
 | You want to… | Use | Continue with |
 | --- | --- | --- |
-| Add classes or integration attributes | `attributes` for the input; `partAttributes` for its surrounding parts | [Field attributes](./field-options.md#attributes) |
-| Arrange one field directly in a view | `field()`, then its part methods | [Compose field parts](./field-parts.md) |
-| Select a particular PHP file for a field or part | `template` or `templates` | [Use your own templates](./templates.md) |
-| Apply shared markup and attribute defaults | A `Theme` | [Create a theme](./themes.md) |
-| Choose a named presentation such as compact | `variant` and matching theme files | [Use variants](./variants.md) |
-| Find out why a file was selected | `themeDebug` | [Debug template selection](./theme-debug.md) |
+| Add classes or integration attributes | `attributes` for the input; `partAttributes` for its surrounding parts | [Field attributes](/field-options#attributes) |
+| Arrange one field directly in a view | `field()`, then its part methods | [Compose field parts](/field-parts) |
+| Select a particular PHP file for a field or part | `template` or `templates` | [Use your own templates](/templates) |
+| Apply shared markup and attribute defaults | A `Theme` | [Create a theme](/themes) |
+| Choose a named presentation such as compact | `variant` and matching theme files | [Use variants](/variants) |
+| Find out why a file was selected | `themeDebug` | [Debug template selection](/theme-debug) |
 
-For a first customization, start with [one explicit template](./templates.md).
+For a first customization, start with [one explicit template](/templates).
 When that markup should become the default across forms, move it into a
-[theme layer](./themes.md). Add [variants](./variants.md) when callers need a
+[theme layer](/themes). Add [variants](/variants) when callers need a
 choice of presentations within that theme.
 
 ## Field layout and form layout
@@ -136,7 +136,7 @@ Types, variants, and explicit overrides can select more specific files. Each
 rendered part performs its own lookup.
 
 Blueprints are optional reusable field configuration; their controls use this
-same rendering system. See [blueprint layouts](./blueprints.md#keep-control-of-the-layout)
-and [complete-form layouts](./template-reference.md#complete-form-layouts) when
+same rendering system. See [blueprint layouts](/blueprints#keep-control-of-the-layout)
+and [complete-form layouts](/template-reference#complete-form-layouts) when
 you need those larger structures. Preserve the supplied method, CSRF, and
 protection inputs when replacing form opening or closing elements.

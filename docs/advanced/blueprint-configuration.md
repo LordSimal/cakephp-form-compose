@@ -5,7 +5,7 @@ description: Inject blueprint services, configure discovery, and manage declarat
 
 # Blueprint services and discovery
 
-Start with [form blueprints](./blueprints.md) to declare and render fields. This
+Start with [form blueprints](/blueprints) to declare and render fields. This
 page covers application services and deployment configuration. Static blueprints
 with no constructor dependencies need no additional container wiring.
 
@@ -134,7 +134,7 @@ alias index, so it observes the resolver's refreshed collection after clearing.
 ## Discover custom field types
 
 Put application controls in `src/Form/Field/` under `App\Form\Field`, and mark them
-with `#[AsFieldType('your-type')]`. The dedicated [custom field types guide](./custom-fields.md)
+with `#[AsFieldType('your-type')]`. The dedicated [custom field types guide](/custom-fields)
 explains discovery, `CompositeType`, `SingleInputType`, and lower-level contracts,
 with date-range, amount/currency, and Markdown editor examples.
 

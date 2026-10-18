@@ -26,7 +26,7 @@ optional when all routes to the action already enforce it.
 
 Both shortcuts inherit the helper's configured `theme`. Pass a `Theme` instance
 to override it for one call, or `theme: 'Base'` to force the bundled markup.
-See [theme configuration](./themes.md#select-theme).
+See [theme configuration](/themes#select-theme).
 
 ## Render a link or request confirmation
 

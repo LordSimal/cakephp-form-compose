@@ -14,7 +14,7 @@
  *
  * Call respondWith() once during dispatch: only true approves; rejection cancels.
  * preventDefault() cancels outright. Unclaimed events use window.confirm.
- * See docs/post-actions.md for the full loading and event contracts.
+ * See docs/forms/post-actions.md for the full loading and event contracts.
  */
 (() => {
   const installed = Symbol.for('FormCompose.actions');

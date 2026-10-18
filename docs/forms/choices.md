@@ -7,7 +7,7 @@ description: Build select lists, radio groups, single checkboxes, and multiple s
 
 These examples replace controls inside an open form. Selection comes from the
 bound value; use field `value` only when intentionally overriding it. See
-[Field options](./field-options.md#choices-and-fallbacks) for defaults.
+[Field options](/field-options#choices-and-fallbacks) for defaults.
 
 ## A select list
 
@@ -164,7 +164,7 @@ class ArticleForm extends FormBlueprint
 }
 ```
 
-See [blueprints](./blueprints.md) for binding and rendering examples.
+See [blueprints](/blueprints) for binding and rendering examples.
 
 ## Groups and attributes on individual choices
 
@@ -258,7 +258,7 @@ echo $form->control('topics', [
 These are alternative presentations of the same field. Both submit selected
 values under `topics[]`; `['php', 'testing']` selects PHP and Testing.
 For ORM associations, use paths such as `tags._ids` and read the
-[association guide](./associations.md).
+[association guide](/associations).
 
 A required checkbox group does not add HTML `required` to each choice: that
 would force the user to select every box. Enforce “choose at least one” with

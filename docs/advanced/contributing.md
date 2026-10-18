@@ -98,17 +98,32 @@ Verify the built HTML and `sitemap.xml` when changing metadata configuration.
 The site teaches CakePHP developers who are new to FormCompose. Keep the homepage
 short and connect a control call to its PHP element before detailed setup.
 
-- **Start here** explains the problem, walks through a minimal article form, and
-  introduces the rendering model. Keep optional configuration out of the first form.
-- **Build forms** contains focused recipes for values, choices, associations,
-  field parts, and themes.
-- **Reusable forms** explains reusable configuration, attributed blueprints, and nested
-  layouts together. Keep reuse optional and explain each object's responsibility.
-- **API reference** owns complete signatures, return values, options, defaults,
-  precedence, and failure contracts. Guides link to this material rather than
-  repeating full tables.
-- **Advanced and project** contains custom controls, service extensions, blueprint
-  injection/discovery, and contributor setup.
+Source directories mirror the sidebar groups. Keep `docs/index.md` as the homepage;
+put other pages in the section that owns the topic:
+
+| Sidebar section | Source directory | Content |
+| --- | --- | --- |
+| Start here | `docs/start-here/` | The problem, first form, and migration. Keep optional configuration out of the first form. |
+| Build your forms | `docs/forms/` | Recipes for values, choices, associations, custom field types, error summaries, and POST actions. |
+| Markup and styling | `docs/markup/` | The rendering model, field parts, templates, themes, variants, and template debugging. |
+| Reusable forms | `docs/reusable-forms/` | Reusable configuration, blueprints, nested layouts, and repeated embeds. Keep reuse optional. |
+| API reference | `docs/reference/` | Complete signatures, return values, options, defaults, precedence, and failure contracts. |
+| Advanced and project | `docs/advanced/` | Service extensions, blueprint injection/discovery, and contributor setup. |
+
+Guides link to the reference for complete contracts rather than repeating its
+tables. Keep configuration, resolved state, and rendering responsibilities clear.
+
+### Source paths and published URLs
+
+VitePress `rewrites` in `docs/.vitepress/config.ts` map these source paths to the
+existing public routes. For example, `docs/markup/variants.md` is still published
+at `/variants.html`. Internal links use published routes such as
+`/variants#layers-take-priority-before-specificity`, independently of the source
+directory. VitePress adds the repository base path and `.html` extension.
+
+When adding a page, put it in the matching directory, add its rewrite, and add
+its sidebar entry. When moving a page, update its rewrite's source path and keep
+the destination stable. GitHub edit links use the actual source file path.
 
 Use an article form for the introductory walkthrough and focused examples for
 other tasks. Label files, identify assumed application variables, and include

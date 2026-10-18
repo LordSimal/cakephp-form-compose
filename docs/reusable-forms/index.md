@@ -67,7 +67,7 @@ fields and layout, add a button, and close the form:
 echo $this->Form->render('article', $article, submit: 'Save article');
 ```
 
-Use an [application-owned complete-form layout](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering)
+Use an [application-owned complete-form layout](/error-summaries#keep-custom-layouts-and-actions-without-manual-buffering)
 in the configured theme’s `form/layout.php` for shared wrappers and action buttons.
 Forms discover it without a per-call template option. The plugin buffers the blueprint and places
 the summary before it, so application templates can echo one `render()` call.
@@ -119,6 +119,6 @@ Calling `blueprint()` without an argument reuses the blueprint selected at
 binding, without running its hook again. Render each control once: use the
 blueprint layout or arrange its fields manually.
 
-Continue with [Form blueprints](./blueprints.md) for runtime fields, choices, and
-layouts, [Nested blueprints](./composition.md) for child sections, and
-[Repeated embeds](./repeated-embeds.md) for associated rows.
+Continue with [Form blueprints](/blueprints) for runtime fields, choices, and
+layouts, [Nested blueprints](/composition) for child sections, and
+[Repeated embeds](/repeated-embeds) for associated rows.

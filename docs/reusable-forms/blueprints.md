@@ -9,7 +9,7 @@ A blueprint is a PHP class that declares reusable form configuration. Attributes
 supply static field configuration; an optional `configure()` hook changes it for
 the current binding. Values, validation, and saving stay in their existing layers.
 
-Read [Reusable forms](./reusable-forms.md#choose-the-right-layer) to choose between
+Read [Reusable forms](/reusable-forms#choose-the-right-layer) to choose between
 inline controls, a blueprint, and a layout. Use blueprints when
 a reusable named class helps; inline controls remain a complete form-building API.
 
@@ -118,7 +118,7 @@ existing binding defaults. Binding alone emits no markup. Individual `control()`
 calls render only their requested fields; `blueprint()` renders the selected
 blueprint through its collection layout.
 
-You can also [use selected defaults for individual fields](./reusable-forms.md#select-defaults-for-the-whole-binding).
+You can also [use selected defaults for individual fields](/reusable-forms#select-defaults-for-the-whole-binding).
 For a reusable blueprint's field arrangement, prefer its own PHP layout below.
 
 ### Form and button options {#complete-form-shortcut}
@@ -138,7 +138,7 @@ echo $this->Form->render(
 Omitted `submit` uses a translated **Submit** label; `submit: false` omits the
 button. For a custom theme or renderer, bind first, then call `$form->render()`.
 File controls still require a multipart form. Both signatures and retry behavior
-are in the [complete-form reference](./form-reference.md#render).
+are in the [complete-form reference](/form-reference#render).
 
 ## Keep control of the layout {#keep-control-of-the-layout}
 
@@ -200,11 +200,11 @@ This is a layout for the collection. Each `control()` still uses its own field
 control template for the label, input, help, and errors. Without a selected
 layout, the bundled element renders fields in declaration order without a wrapper.
 
-The [scoped layout API](./blueprint-reference.md#blueprintview) lists available
-methods. The [presentation reference](./blueprint-reference.md#presentation-options)
+The [scoped layout API](/blueprint-reference#blueprintview) lists available
+methods. The [presentation reference](/blueprint-reference#presentation-options)
 covers per-render overrides, wrapper attributes, variants, and template data.
 To embed another blueprint and position its layout, continue with
-[Nested blueprints](./composition.md).
+[Nested blueprints](/composition).
 
 ### Inspect values and field configuration
 
@@ -238,7 +238,7 @@ In the layout above, replace `controls(['title', 'body'])` with this fragment:
 <?= $form->control('body') ?>
 ```
 
-The value follows the form's configured [value-source rules](./usage.md#data-and-value-sources).
+The value follows the form's configured [value-source rules](/usage#data-and-value-sources).
 The explicit empty check preserves valid values such as zero. `state->options`
 contains merged field configuration; `attributes()` includes theme defaults and
 resolved input metadata too. Read a custom attribute with, for example,
@@ -248,8 +248,8 @@ Resolving the field and inspecting its state or attributes renders nothing and
 registers no submitted inputs. Here `control()` renders the title once, after
 inspection. Using the `help` option keeps the conditional hint associated with
 its input through the normal feedback markup and ARIA attributes.
-See [bound-field state](./field-reference.md#state) and
-[attribute inspection](./field-reference.md#attributes) for the full APIs.
+See [bound-field state](/field-reference#state) and
+[attribute inspection](/field-reference#attributes) for the full APIs.
 
 ### Read request data in a layout
 
@@ -476,7 +476,7 @@ for an immediate control call.
 
 For enum choices, implement CakePHP's `EnumLabelInterface` and translate in
 `label()`, or use `EnumLabelTrait` with CakePHP's `Label` attributes. See
-[backed enum choices](./choices.md#backed-enums). `Translated` and text closures
+[backed enum choices](/choices#backed-enums). `Translated` and text closures
 are resolved only for field `label` and `help`, not as ordinary choice labels.
 Validation messages stay in CakePHP's validation and application layers.
 
@@ -498,17 +498,17 @@ calls remain discoverable by CakePHP's normal extractor.
 Inherited declarations establish defaults, then the concrete `configure()` hook
 runs. Per-call field options override those defaults.
 Nested option arrays are replaced as whole values. See
-[configuration precedence](./blueprint-reference.md#configuration-order) for
+[configuration precedence](/blueprint-reference#configuration-order) for
 inheritance, hook lifetime, and failure contracts.
 
-All ordinary [field options](./field-options.md) are available through
+All ordinary [field options](/field-options) are available through
 `#[Field(..., options: [...])]`. The
-[attribute reference](./blueprint-reference.md#blueprint-declarations) lists
+[attribute reference](/blueprint-reference#blueprint-declarations) lists
 shorthand arguments and how explicit nulls work.
 
 ## Application services and discovery
 
 When a blueprint needs repository or application services in its constructor,
 configure the helper with the application's factory. Follow
-[Blueprint services and discovery](./blueprint-configuration.md) for injection,
+[Blueprint services and discovery](/blueprint-configuration) for injection,
 alias discovery, custom field types, and deployment cache management.

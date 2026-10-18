@@ -5,13 +5,13 @@ description: Add custom field types, renderers, and service subclasses to FormCo
 
 # Custom controls and service extensions
 
-Use [a theme](./themes.md) to change markup, or consult the
-[template reference](./template-reference.md) for element contracts. This guide covers custom
+Use [a theme](/themes) to change markup, or consult the
+[template reference](/template-reference) for element contracts. This guide covers custom
 submission behavior, renderer implementations, and service subclasses.
 
 ## Custom field types
 
-The [custom field types guide](./custom-fields.md) covers `#[AsFieldType]`,
+The [custom field types guide](/custom-fields) covers `#[AsFieldType]`,
 `CompositeType`, `SingleInputType`, and advanced `FieldTypeInterface` contracts.
 It includes complete application examples with PHP layouts and submission behavior.
 

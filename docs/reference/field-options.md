@@ -117,7 +117,7 @@ non-choice `type` overrides remain authoritative.
 | `schemaDefault` | `bool` | `true`. Passed to the context to control schema defaults. |
 | `timezone` | `string`, `DateTimeZone`, or `null` | `null`. For temporal inputs, convert date/time objects or integer Unix timestamps to this timezone without changing the original object. Date-only and time-only objects reject timezone conversion. |
 
-Source order belongs to binding [`valueSources`](./form-reference.md#binding-options),
+Source order belongs to binding [`valueSources`](/form-reference#binding-options),
 not to individual fields. The default order is request data, then context.
 
 ::: info A submitted null is still a submitted value
@@ -167,7 +167,7 @@ to choose another interval or remove the attribute with null.
 | `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
 
 `Html` means `FormCompose\Rendering\Html`, the explicit
-[trusted-markup wrapper](./template-reference.md#trusted-markup). Ordinary strings
+[trusted-markup wrapper](/template-reference#trusted-markup). Ordinary strings
 are escaped. `errors` toggles presentation; it does not replace validation messages.
 For radios and multi-checkboxes, the label is a group legend.
 
@@ -191,7 +191,7 @@ Label/help closures take no arguments and return `string`, `Html`, `Translated`,
 and per-call options merge; a returned message is translated in that resolution. Returned strings are escaped; false suppresses the part; null uses
 the inferred label or omits help. Other return types throw
 `InvalidArgumentException`. Reading or rendering an already resolved field reuses
-its text. See [translating blueprints](./blueprints.md#translate-a-blueprint) for
+its text. See [translating blueprints](/blueprints#translate-a-blueprint) for
 attribute syntax, locale timing, and runtime configuration examples.
 
 In a template, call translation functions directly:
@@ -239,7 +239,7 @@ echo $form->control('reading_minutes', [
 
 | Option | Type | Default and behavior |
 | --- | --- | --- |
-| `options` | `iterable` or backed enum class name | Discovered CakePHP schema enum choices, then conventional view-variable choices, otherwise `[]`. Explicit `options` overrides discovery. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](./choices.md#backed-enums) for labels and selection. |
+| `options` | `iterable` or backed enum class name | Discovered CakePHP schema enum choices, then conventional view-variable choices, otherwise `[]`. Explicit `options` overrides discovery. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](/choices#backed-enums) for labels and selection. |
 | `empty` | `bool`, `string`, or `null` | `null`/omitted: prepend a blank option for optional single selects. `true`: prepend a blank label; a string: use that label; `false`: do not prepend. Required and multiple selects have no automatic blank option. |
 | `checkedValue` | Scalar or stringable | `'1'`. Submitted value for a checked single checkbox. |
 | `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |
@@ -257,7 +257,7 @@ blank option; zero and false retain their own selection. The blank value is an
 empty string in the HTTP request; CakePHP's normal marshalling handles nullable
 associations. A select with no enabled options and no fallback registers no
 submitted name, matching the browser. Group and per-choice data shapes are
-demonstrated in [Choice controls](./choices.md).
+demonstrated in [Choice controls](/choices).
 
 Checkbox selection compares the bound scalar value with `checkedValue`. To
 explicitly override its checked attribute, use `attributes => ['checked' => true]`
@@ -306,18 +306,18 @@ call cannot invalidate the input's already resolved association.
 | --- | --- | --- |
 | `template` | Nonempty `string` | Omitted. Explicit CakePHP element for the complete control. Shorthand for `templates['control']`. |
 | `templates` | `array<string, string>` | `[]`. Part-to-element overrides, such as `input`, `help`, or `native`. |
-| `variant` | `string` | Omitted. Requests alternative templates in `variants/{name}/` before type-specific and generic files within each layer. See [Use variants](./variants.md). |
+| `variant` | `string` | Omitted. Requests alternative templates in `variants/{name}/` before type-specific and generic files within each layer. See [Use variants](/variants). |
 | `templateData` | `array<string, mixed>` | `[]`. Application data available to this field's control and all its parts. |
 
 Element names omit `.php`. Conflicting `template` and `templates['control']`
 values throw `InvalidArgumentException`. Hidden controls render their input part
-instead of an outer control layout. Follow [Use your own templates](./templates.md)
-for worked examples, or the [template reference](./template-reference.md)
+instead of an outer control layout. Follow [Use your own templates](/templates)
+for worked examples, or the [template reference](/template-reference)
 for all part names, variables, and lookup rules.
 
 ## Submission protection
 
-For custom controls, see [custom field submission protection](./custom-fields.md#submission-protection),
+For custom controls, see [custom field submission protection](/custom-fields#submission-protection),
 including composite children, locked hidden values, and explicit unlocking.
 
 | Option | Type | Default and behavior |
@@ -325,9 +325,9 @@ including composite children, locked hidden values, and explicit unlocking.
 | `secure` | `bool` | `true`. Includes the native input in tamper protection; hidden values are also locked to their rendered value. `false` explicitly unlocks that submitted field. |
 
 Use the default for ordinary controls. A custom control describes its actual
-submitted names through its [field type](./extending.md#custom-field-types).
+submitted names through its [field type](/extending#custom-field-types).
 Inspecting fields registers nothing; successful input rendering performs
-registration. Handwritten inputs must use [`register()`](./field-reference.md#register).
+registration. Handwritten inputs must use [`register()`](/field-reference#register).
 
 ## Configuration precedence
 
@@ -340,7 +340,7 @@ Matching top-level option keys are replaced. Nested arrays such as `attributes`,
 `templates`, and `templateData` are replaced as whole values at this stage. This
 is separate from the subsequent attribute-bag merging described above.
 Blueprint declaration and hook precedence is documented in the
-[blueprint reference](./blueprint-reference.md#configuration-order).
+[blueprint reference](/blueprint-reference#configuration-order).
 
 Malformed core `attributes`, `partAttributes`, `templates`, and choice `options`
 bags fail during field resolution with `InvalidArgumentException`. Attribute and

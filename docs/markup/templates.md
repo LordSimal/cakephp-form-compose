@@ -9,8 +9,8 @@ Use `template` when you want a field to render a specific PHP element. It select
 the complete control layout: the wrapper around the label, input, help, and
 errors. The field's value and input type still come from normal binding.
 
-For a shared default selected automatically, use a [theme](./themes.md).
-For a named alternative inside a theme, use a [variant](./variants.md).
+For a shared default selected automatically, use a [theme](/themes).
+For a named alternative inside a theme, use a [variant](/variants).
 
 ## Select a control element
 
@@ -119,7 +119,7 @@ different elements for `template` and `templates['control']` throws
 `control` arranges the complete field. `input` is the input rendering hook;
 `native` is the standard input markup it ultimately renders. Hidden fields
 bypass the control layout, so customize their input parts instead.
-The [template reference](./template-reference.md#field-templates) lists all parts.
+The [template reference](/template-reference#field-templates) lists all parts.
 :::
 
 ## Pass custom presentation data
@@ -147,7 +147,7 @@ replace `$field`. The same bag is available to this field's parts. Escape its
 values when outputting them.
 
 Form, button, and blueprint data have separate scopes. See
-[template data](./template-reference.md#template-data) for replacement rules and
+[template data](/template-reference#template-data) for replacement rules and
 the complete scope table.
 
 ## Reuse the layout automatically
@@ -158,5 +158,5 @@ this email layout the default for all email fields, move it to
 `new Theme(['forms/application'])`. Callers can then use just
 `control('email', ['type' => 'email'])`.
 
-Continue with [Create a theme](./themes.md) for that setup, or
-[Use variants](./variants.md) to offer several named layouts.
+Continue with [Create a theme](/themes) for that setup, or
+[Use variants](/variants) to offer several named layouts.

@@ -6,7 +6,7 @@ description: Move an existing CakePHP FormHelper form to FormCompose while retai
 # Migrate a core form
 
 Migrate one form at a time. Load FormCompose under the `Compose` alias alongside
-core `Form` as shown in [Your first form](./getting-started.md#load-the-helper).
+core `Form` as shown in [Your first form](/getting-started#load-the-helper).
 Keep your controller's authorization, `patchEntity()`, validation, and saving.
 
 ::: code-group
@@ -39,17 +39,17 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 | Validation feedback | The existing CakePHP context supplies errors and constraints; `help` and `errors` parts associate with the input |
 | Reusable form configuration | Optional blueprints; templates still own layout |
 | CSRF, method overrides, tamper protection | Keep CakePHP middleware and FormProtectionComponent enabled; input rendering registers submitted names |
-| `postButton()` / `postLink()` | Helper shortcuts create independent protected forms; use `block` inside another form. See [POST actions](./post-actions.md). |
+| `postButton()` / `postLink()` | Helper shortcuts create independent protected forms; use `block` inside another form. See [POST actions](/post-actions). |
 
 FormCompose does not forward arbitrary top-level field options as HTML attributes
 or implement every core helper convenience method. Check the
-[field option reference](./field-options.md) when porting options. For grids,
-icons, or error wrappers, start with [a PHP theme](./themes.md), rather than porting
+[field option reference](/field-options) when porting options. For grids,
+icons, or error wrappers, start with [a PHP theme](/themes), rather than porting
 core widget subclasses or string-template substitutions.
 
 Preserve configured names and IDs in custom markup. Render `$field->input()` to
 retain submission registration, or follow the explicit
-[handwritten input contract](./field-reference.md#register). Hiding a field in a
+[handwritten input contract](/field-reference#register). Hiding a field in a
 blueprint or layout controls presentation; authorize and validate submitted data
 in the application as usual.
 

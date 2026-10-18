@@ -6,10 +6,10 @@ description: Look up field, form, and button elements, their variables, layer pr
 # Template reference
 
 Use this page to look up exact paths, variables, and APIs. For a first example,
-start with [How rendering works](./rendering.md), then follow
-[Use your own templates](./templates.md), [Create a theme](./themes.md), or
-[Use variants](./variants.md). For control configuration, see
-[Field options](./field-options.md).
+start with [How rendering works](/rendering), then follow
+[Use your own templates](/templates), [Create a theme](/themes), or
+[Use variants](/variants). For control configuration, see
+[Field options](/field-options).
 
 All paths below are relative to a theme layer, such as
 `templates/element/forms/application/`.
@@ -38,7 +38,7 @@ every layer is absent, rendering throws `RuntimeException`.
 
 ::: info Layer order comes first
 A generic file in an earlier layer wins over a variant or type-specific file in
-a later layer. See the [worked layer example](./variants.md#layers-take-priority-before-specificity).
+a later layer. See the [worked layer example](/variants#layers-take-priority-before-specificity).
 :::
 
 Form, button, and blueprint paths have scope prefixes. A primary submit button tries:
@@ -70,7 +70,7 @@ $form->control('email', [
 
 Here the control uses `templates/element/forms/special-email.php`. Use CakePHP
 element names without `.php`, including plugin-qualified names such as
-`MyDesignSystem.forms/email`. [Use your own templates](./templates.md)
+`MyDesignSystem.forms/email`. [Use your own templates](/templates)
 shows the call and a complete element together.
 
 Plural `templates` maps individual parts to elements. For a field's outer
@@ -132,7 +132,7 @@ echo $form->control('email', [
 ]);
 ```
 
-The [template guide](./templates.md#pass-custom-presentation-data) shows the call and
+The [template guide](/templates#pass-custom-presentation-data) shows the call and
 its PHP element together. No custom keys are extracted into local variables:
 `$templateData['field']` is ordinary custom data and cannot replace `$field`.
 The same applies to `$attributes`, `$parent`, and other prepared variables.
@@ -282,7 +282,7 @@ For an exceptional per-form selection, use `options['template']` or
 The plugin outputs the opening before this layout and generates protection fields
 and closing markup afterward. The blueprint owns validation-bearing controls;
 the form layout arranges their prepared HTML and renders actions. See the
-[complete-form layout example](./error-summaries.md#keep-custom-layouts-and-actions-without-manual-buffering).
+[complete-form layout example](/error-summaries#keep-custom-layouts-and-actions-without-manual-buffering).
 
 ## Blueprint layouts
 
@@ -302,8 +302,8 @@ The bundled default renders ordered fields and embeds without a wrapper.
 Use theme defaults keyed by `blueprint.control` for layout attributes. The default
 layout adds no element, so a custom wrapper must emit `$attributes` when needed.
 Selecting a layout does not forward its data to individual controls or children.
-See [blueprint layouts](./blueprints.md#keep-control-of-the-layout) for a complete
-class/element example, and [nested blueprints](./composition.md) for child layouts.
+See [blueprint layouts](/blueprints#keep-control-of-the-layout) for a complete
+class/element example, and [nested blueprints](/composition) for child layouts.
 
 ## Repeated-embed layouts
 
@@ -318,7 +318,7 @@ on its wrapper to preserve configured attributes and duplicate-ID checks.
 
 Use a normal `foreach` for row wrappers and `$row->render()` for each child's own
 layout. There is no `row` template part. See the
-[complete repeated layout example](./repeated-embeds.md#arrange-rows-with-a-php-element).
+[complete repeated layout example](/repeated-embeds#arrange-rows-with-a-php-element).
 
 ## Error-summary elements
 
@@ -329,7 +329,7 @@ and `$templateData`. An entry exposes `label` (text or trusted `Html`), `message
 
 The default section and heading IDs are associated with `aria-labelledby` and
 checked for collisions. Preserve those supplied attributes in custom markup.
-See the [complete summary element](./error-summaries.md#customize-the-summary-element).
+See the [complete summary element](/error-summaries#customize-the-summary-element).
 
 ## POST action templates
 
@@ -337,7 +337,7 @@ Standalone action buttons use `button/control.php`; action links use
 `action/control.php`. Both receive `$form`, `$label`, `$attributes`, and
 `$templateData`. Preserve the supplied trigger associations in custom markup.
 The external action script is registered through CakePHP's HTML helper and the
-`script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](./post-actions.md#options-and-presentation).
+`script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](/post-actions#options-and-presentation).
 
 ## Attributes
 
@@ -447,7 +447,7 @@ text. Attribute values always go through the attribute bag's escaping.
 
 ## Custom widget bodies
 
-[Custom field types](./custom-fields.md) use two additional field body parts:
+[Custom field types](/custom-fields) use two additional field body parts:
 
 | Part | Prepared locals | Contract |
 | --- | --- | --- |

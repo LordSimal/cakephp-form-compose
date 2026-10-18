@@ -7,8 +7,8 @@ description: Inspect themeDebug comments to find the selected template, follow l
 
 When a template change has no visible effect, inspect which file actually won.
 The `themeDebug` setting adds lookup information as HTML comments around rendered
-parts. It works with [themes](./themes.md), [variants](./variants.md), and
-[explicit templates](./templates.md).
+parts. It works with [themes](/themes), [variants](/variants), and
+[explicit templates](/templates).
 
 ## Enable debug comments
 

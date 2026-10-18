@@ -12,7 +12,7 @@ supply the remaining parts.
 
 A **layer** is one directory in the theme's search list. A **variant** is an
 optional named presentation inside those directories. If these terms are new,
-start with [How rendering works](./rendering.md).
+start with [How rendering works](/rendering).
 
 This example gives email controls an icon beside the input. It changes their
 presentation while keeping their bound values, feedback, and submission behavior.
@@ -95,7 +95,7 @@ use their base elements.
 ::: tip Change just one control
 For an individual field, pass `['template' => 'forms/special-email']` to
 `control()`. This directly selects `templates/element/forms/special-email.php`
-without changing the theme. [Use your own templates](./templates.md)
+without changing the theme. [Use your own templates](/templates)
 shows a complete example and how to replace individual parts.
 :::
 
@@ -228,7 +228,7 @@ Here `$parent()` renders the control from the **next layer**, starting with
 Calling it from a variant also moves to the next layer; it does not try the
 current layer's type-specific or generic control.
 
-In an [explicit template override](./templates.md), `$parent()` starts normal
+In an [explicit template override](/templates), `$parent()` starts normal
 lookup from the first theme layer instead. This lets an exceptional element
 wrap the themed presentation.
 
@@ -239,13 +239,13 @@ inside this theme. Create `variants/compact/control.php` in a layer; fields
 requesting that variant try it before that layer's type-specific and generic
 files. Other fields keep their ordinary layout.
 
-Follow [Use variants](./variants.md) for a complete file, control call, styling,
+Follow [Use variants](/variants) for a complete file, control call, styling,
 and fallback explanation.
 
 ## Debug template selection
 
 Enable `themeDebug` to see attempted candidates and the selected element in page
-source. Follow [Debug template selection](./theme-debug.md) for configuration,
+source. Follow [Debug template selection](/theme-debug) for configuration,
 an annotated trace, and renderer details.
 
 ## Use your CSS framework
@@ -256,9 +256,9 @@ FormCompose's base theme supplies plain semantic HTML.
 
 For Tailwind, write complete class names and include your theme element files in
 source scanning. Integration attributes such as `x-model` and `data-*` can be
-passed through [field attributes](./field-options.md#attributes). For the complete
+passed through [field attributes](/field-options#attributes). For the complete
 `Theme`, attribute-bag, and trusted-markup APIs, see the
-[template reference](./template-reference.md#theme-api).
+[template reference](/template-reference#theme-api).
 
 ## A complete starter theme
 

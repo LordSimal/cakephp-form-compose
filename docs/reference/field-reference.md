@@ -7,7 +7,7 @@ description: Inspect BoundField state and look up rendering, attribute, and hand
 
 `$form->field()` returns a `FormCompose\Form\Field\BoundField`. It connects immutable
 resolved state with independently renderable parts. See
-[Compose field parts](./field-parts.md) for a full view example.
+[Compose field parts](/field-parts) for a full view example.
 
 ## state
 
@@ -64,7 +64,7 @@ The snapshot does not track subsequent entity or request changes. Resolve a new
 bound field when you need a new snapshot.
 
 For a practical condition combining values, field options, and attributes, see
-[inspection inside a blueprint layout](./blueprints.md#inspect-values-and-field-configuration).
+[inspection inside a blueprint layout](/blueprints#inspect-values-and-field-configuration).
 
 ## control() {#control}
 
@@ -90,7 +90,7 @@ public function input(array $attributes = []): string;
 
 Renders the input element, then registers the field type's actual submitted inputs.
 Requires an open session and an unused input ID. Attributes augment this input's
-prepared bag; behavior and identity belong in [field options](./field-options.md).
+prepared bag; behavior and identity belong in [field options](/field-options).
 
 ```php
 echo $title->input(['class' => 'wide', 'autocomplete' => 'off']);
@@ -147,8 +147,8 @@ $bag = $title->attributes('input', ['class' => 'wide']);
 Cast the bag to a string inside your input tag to emit the attributes.
 
 Input bags reject identity/behavior keys including `name`, `id`, `type`, and
-`value`. See [attribute options](./field-options.md#attributes) for precedence and
-the full reserved-key list, and the [attribute-bag API](./template-reference.md#attribute-bag-api)
+`value`. See [attribute options](/field-options#attributes) for precedence and
+the full reserved-key list, and the [attribute-bag API](/template-reference#attribute-bag-api)
 for merging and serialization.
 
 ## register() {#register}
@@ -165,10 +165,10 @@ If the field has errors, registration adds an unlinked entry to an optional erro
 summary; it does not infer focus targets from configured choices or custom types.
 
 Use it once, after emitting the input. The
-[handwritten input example](./field-parts.md#write-a-native-input-by-hand) shows
+[handwritten input example](/field-parts#write-a-native-input-by-hand) shows
 escaping, attributes, and registration together. A control that submits different
 names needs a custom field type with matching
-[`submissions()` records](./custom-fields.md#low-level-submission-records).
+[`submissions()` records](/custom-fields#low-level-submission-records).
 For a composite, register each actual child; registering the parent does not
 register its declared children.
 
@@ -196,7 +196,7 @@ handles registration after successful rendering.
 ```
 
 Application views normally call `input()` instead. See the
-[template reference](./template-reference.md#standard-input-markup) for native
+[template reference](/template-reference#standard-input-markup) for native
 markup and choice parts.
 
 ## Composite children
@@ -209,4 +209,4 @@ or registering inputs. Each child supports the same state and field-part API.
 `$field->focusTarget` is null until an eligible input renders successfully, then
 contains its actual focus ID. Failed enclosing layouts roll that metadata back.
 Custom types can use `$field->renderer` to render parts through the shared pipeline.
-See [Custom field types](./custom-fields.md) for complete declarations and layouts.
+See [Custom field types](/custom-fields) for complete declarations and layouts.
