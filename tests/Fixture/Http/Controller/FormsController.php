@@ -18,6 +18,7 @@ use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Rendering\Theme;
+use FormCompose\Test\Fixture\Authoring\EmailForm;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
 use FormCompose\Test\Fixture\Authoring\LayoutForm;
 use FormCompose\Test\Fixture\Enum\Priority;
@@ -113,10 +114,11 @@ class FormsController extends Controller
     {
         $helper = new FormHelper(new View($this->getRequest()), ['themeDebug' => true]);
         $html = $helper->form(new ArrayContext([
-            'defaults' => ['id' => 42, 'title' => 'A complete form'],
+            'defaults' => ['id' => 42, 'title' => 'A complete form', 'email' => 'editor@example.test'],
             'errors' => ['title' => ['invalid' => 'Review the title']],
         ]))
             ->blueprint(LayoutForm::class)
+            ->blueprint(EmailForm::class)
             ->url('/forms/save')
             ->multipart()
             ->partTemplate('layout', 'forms/editor')

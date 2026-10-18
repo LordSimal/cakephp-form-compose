@@ -107,21 +107,23 @@ trait FormBindingSettingsTrait
         return $this->changed('context', $value);
     }
 
-    /** The configured blueprint setting. */
-    public ?string $blueprint {
+    /** @var list<string> Blueprint aliases or classes in rendering order. */
+    public array $blueprints {
         get {
             /** @var mixed $value */
-            $value = $this->values['blueprint'] ?? null;
-            assert($value === null || is_string($value), 'Typed configuration must retain its declared value type.');
+            $value = $this->values['blueprints'] ?? [];
+            assert(is_array($value), 'Typed configuration must retain its declared value type.');
+
+            /** @var list<string> $value */
 
             return $value;
         }
     }
 
-    /** Return configuration with an explicit blueprint setting. */
+    /** Append a blueprint without changing this config; null clears the selection. */
     public function blueprint(?string $value): static
     {
-        return $this->changed('blueprint', $value);
+        return $this->changed('blueprints', $value === null ? [] : [...$this->blueprints, $value]);
     }
 
     /** The configured theme setting. */

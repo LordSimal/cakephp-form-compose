@@ -133,7 +133,7 @@ export default defineConfig({
         items: [
           { text: 'Reusable forms', link: '/reusable-forms' },
           { text: 'Form blueprints', link: '/blueprints' },
-          { text: 'Nested blueprints', link: '/composition' },
+          { text: 'Blueprint composition', link: '/composition' },
           { text: 'Repeated embeds', link: '/repeated-embeds' },
         ],
       },

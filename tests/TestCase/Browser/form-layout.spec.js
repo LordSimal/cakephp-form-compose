@@ -12,6 +12,7 @@ test('complete layouts place a finished summary before fields with working focus
   await page.getByRole('link', { name: 'Title: Review the title' }).click();
   await expect(page.getByLabel('Title', { exact: true })).toBeFocused();
   await expect(page.getByLabel('Title', { exact: true })).toHaveValue('A complete form');
+  await expect(page.getByLabel('Default email', { exact: true })).toHaveValue('editor@example.test');
 });
 
 for (const [label, intent] of [['Check', 'check'], ['Save complete form', 'save']]) {
@@ -23,7 +24,7 @@ for (const [label, intent] of [['Check', 'check'], ['Save complete form', 'save'
     await page.getByRole('button', { name: label, exact: true }).click();
     await expect(page).toHaveURL('/forms/save');
     const data = JSON.parse(await page.locator('body').innerText());
-    expect(data).toMatchObject({ id: '42', title: 'A complete form', intent });
+    expect(data).toMatchObject({ id: '42', title: 'A complete form', email: 'editor@example.test', intent });
     expect(data).toHaveProperty('attachment');
     expect(data).not.toHaveProperty('_Token');
   });

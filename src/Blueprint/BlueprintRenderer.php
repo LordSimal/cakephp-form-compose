@@ -8,8 +8,10 @@ use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\InputRegistry;
+use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
+use InvalidArgumentException;
 use LogicException;
 
 /**
@@ -25,6 +27,35 @@ class BlueprintRenderer
      */
     public function __construct(protected readonly RenderContext $rendering)
     {
+    }
+
+    /**
+     * Render an ordered composition while preserving each blueprint's layout and session extensions.
+     *
+     * An empty selection still passes an empty definition through the configured theme.
+     * The caller owns the enclosing registration transaction so a failed layout rolls back all sections.
+     *
+     * @param list<\FormCompose\Blueprint\FormDefinition> $definitions Compiled selections.
+     * @throws \InvalidArgumentException When a shared occurrence ID would be applied to several blueprints.
+     */
+    public function renderAll(
+        FormSession $session,
+        array $definitions,
+        ?string $path,
+        PresentationConfig $presentation,
+    ): string {
+        if (count($definitions) > 1 && new Attributes($presentation->attributes)->has('id')) {
+            throw new InvalidArgumentException(
+                'An occurrence ID cannot be applied to multiple blueprints; assign an ID to each blueprint separately.',
+            );
+        }
+
+        $html = '';
+        foreach ($definitions ?: [new FormDefinition([])] as $definition) {
+            $html .= $session->renderDefinition($definition, $path, $presentation);
+        }
+
+        return $html;
     }
 
     /**
