@@ -16,6 +16,7 @@ use Cake\View\View;
 use DateTimeImmutable;
 use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\EmailForm;
@@ -50,11 +51,13 @@ class FormsController extends Controller
         $helper = new FormHelper(new View($this->getRequest()), [
             'themeDebug' => $this->getRequest()->getQuery('themeDebug') === '1',
         ]);
-        $form = $helper->form($this->createContext())
-            ->theme($this->createTheme())
-            ->url('/forms/save')
-            ->multipart()
-            ->bind();
+        $form = $helper->bind(
+            $this->createContext(),
+            config: FormConfig::builder()
+                ->theme($this->createTheme())
+                ->url('/forms/save')
+                ->multipart(),
+        );
         $opening = $form->open();
         $html = $form->control('id')->type('hidden')->value(42)->render();
         $html .= $form->control('empty_select')

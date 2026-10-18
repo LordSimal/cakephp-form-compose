@@ -69,7 +69,7 @@ the edit form while placing its independent form after it:
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>

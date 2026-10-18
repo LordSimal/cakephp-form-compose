@@ -7,6 +7,7 @@ use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Configuration\ButtonConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
@@ -15,6 +16,7 @@ use FormCompose\Test\Fixture\Authoring\NameForm;
 use FormCompose\Test\Fixture\Authoring\WebsiteForm;
 use FormCompose\Test\Fixture\Composition\PostForm;
 use FormCompose\Test\Fixture\ContactFormHelper;
+use FormCompose\Test\Fixture\ContactFormSession;
 use FormCompose\View\Helper\FormHelper;
 use InvalidArgumentException;
 
@@ -23,6 +25,65 @@ use InvalidArgumentException;
  */
 class FormHelperTest extends CompositionTestCase
 {
+    public function testDirectBindingRendersAManuallyArrangedForm(): void
+    {
+        $helper = $this->helper(['title' => '<Edited>']);
+        $form = $helper->bind(new ArrayContext(['data' => ['title' => 'Original', 'status' => 'draft']]));
+        $html =
+            $form->open()
+            . $form->control('title')->render()
+            . $form->control('body')->type('textarea')->render()
+            . $form->control('status')->choices(['draft' => 'Draft', 'published' => 'Published'])->render()
+            . $form->submit('Save article')->render()
+            . $form->close();
+        $xpath = $this->xpath($html);
+
+        static::assertTrue($xpath->evaluate('boolean(//input[@name="title"][@value="<Edited>"])'));
+        static::assertTrue($xpath->evaluate('boolean(//textarea[@name="body"])'));
+        static::assertTrue($xpath->evaluate('boolean(//select[@name="status"]/option[@value="draft"][@selected])'));
+        static::assertStringContainsString('&lt;Edited&gt;', $html);
+        static::assertStringContainsString('>Save article</button>', $html);
+        static::assertSame(1, substr_count($html, '<form '));
+        static::assertSame(1, substr_count($html, '</form>'));
+    }
+
+    public function testDirectBindingAppliesConfigurationWithoutLeakingIntoTheNextSession(): void
+    {
+        $helper = $this->helper();
+        $config = FormConfig::builder()
+            ->url('/articles/update')
+            ->method('patch')
+            ->multipart()
+            ->attributes(['class' => 'article-form']);
+        $first = $helper->bind(config: $config);
+        $second = $helper->bind();
+        $firstHtml = $first->open() . $first->control('title')->render() . $first->close();
+        $secondHtml = $second->open() . $second->control('title')->render() . $second->close();
+
+        static::assertStringContainsString('action="/articles/update"', $firstHtml);
+        static::assertStringContainsString('class="article-form"', $firstHtml);
+        static::assertStringContainsString('enctype="multipart/form-data"', $firstHtml);
+        static::assertStringContainsString('name="_method" value="PATCH"', $firstHtml);
+        static::assertStringContainsString('id="form-compose-1-title"', $firstHtml);
+        static::assertStringContainsString('id="form-compose-2-title"', $secondHtml);
+        static::assertStringNotContainsString('/articles/update', $secondHtml);
+        static::assertStringNotContainsString('article-form', $secondHtml);
+        static::assertStringNotContainsString('multipart/form-data', $secondHtml);
+        static::assertStringNotContainsString('name="_method"', $secondHtml);
+        static::assertSame('patch', $config->method);
+    }
+
+    public function testDirectBindingUsesTheApplicationSessionExtension(): void
+    {
+        $helper = new ContactFormHelper($this->helper()->getView());
+        $form = $helper->bind();
+        static::assertInstanceOf(ContactFormSession::class, $form);
+        $html = $form->open() . $form->control('website')->render() . $form->close();
+        static::assertStringContainsString('type="url"', $html);
+        static::assertStringContainsString('value="https://example.test"', $html);
+        static::assertStringContainsString('data-contact-label', $html);
+    }
+
     public function testClassRenderingCompilesEachBlueprintOnceWithItsLayoutAndContext(): void
     {
         $html = $this->helper(attributes: ['stripParentEmail' => true])

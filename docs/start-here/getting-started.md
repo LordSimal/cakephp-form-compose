@@ -68,7 +68,7 @@ record loading and submission handler.
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
@@ -78,13 +78,13 @@ $form = $this->Form->form($article)->bind();
 <?= $form->close() ?>
 ```
 
-- `form($article)->bind()` prepares a form using the article's values and metadata.
+- `bind($article)` prepares a form using the article's values and metadata.
 - `open()` starts the form. Each `control()` includes its label, input, and errors.
 - `submit()` adds the button; `close()` finishes the form and protection fields.
 
 The form submits to the current URL. New entities use POST; existing entities use
-PUT through CakePHP's method override. To choose another destination, configure
-`url(['action' => 'edit', $article->id])` before `bind()`.
+PUT through CakePHP's method override. For a different destination or method,
+configure a fluent builder before binding; see [form configuration](/form-reference#bind).
 
 Keep CakePHP's CSRF middleware and FormProtectionComponent configured in your
 application. Loading the helper does not enable them.

@@ -14,7 +14,7 @@ resolve a field and place its parts yourself.
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 $title = $form->field('title')
     ->help('Displayed above the article.')
     ->resolve();

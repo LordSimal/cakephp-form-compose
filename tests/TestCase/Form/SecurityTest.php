@@ -8,6 +8,7 @@ use Dom\Element;
 use Dom\NodeList;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Test\Fixture\FailOnceRenderer;
@@ -33,7 +34,7 @@ class SecurityTest extends FormTestCase
             ->add(new FieldDefinition('active', FieldConfig::builder()->type('checkbox')))
             ->add(new FieldDefinition('comments.0.body'));
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->form()->url('/articles/save')->bind();
+        $form = $helper->bind(config: new FormConfig(url: '/articles/save'));
         $form->field($contact->field('unused')->path)
             ->apply($contact->field('unused')->config)
             ->resolve()
@@ -85,7 +86,7 @@ class SecurityTest extends FormTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
-        $form = $helper->form()->url('/articles/save')->bind();
+        $form = $helper->bind(config: new FormConfig(url: '/articles/save'));
         $unused = $form->field('never_rendered')->resolve();
         $unused->attributes();
 

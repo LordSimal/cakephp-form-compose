@@ -17,7 +17,7 @@ Choose the version matching your form. The blueprint tab assumes the
 
 ```php [Manual form]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
 <?php $body = $form->controls(['title', 'body'])->render(); ?>
