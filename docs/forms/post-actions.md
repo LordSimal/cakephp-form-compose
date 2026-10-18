@@ -130,7 +130,10 @@ use FormCompose\Configuration\FormConfig;
 <?= $this->Form
     ->postLink(label: 'Delete', url: ['action' => 'delete', $article->id])
     ->method('delete')
-    ->form(FormConfig::builder()->id('delete-article-' . $article->id)) ?>
+    ->form(
+        FormConfig::builder()
+            ->id('delete-article-' . $article->id),
+    ) ?>
 ```
 
 If the same record appears more than once, include a unique occurrence identifier
@@ -219,7 +222,10 @@ optional button registration cannot unlock the hidden payload.
 Use `block` to put the independent action form outside the surrounding form:
 
 ```php
-<?php $form = $this->Form->form($article)->bind(); ?>
+<?php
+$form = $this->Form->form($article)
+    ->bind();
+?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
 <?= $this->Form
@@ -242,7 +248,9 @@ form at the call site, so call it outside other forms.
 
 ## Options and presentation
 
-Both methods return `ActionBuilder`. Optional `config: $actionConfig` accepts an
+`postLink()` returns `ActionBuilder`. `postButton()` returns `PostButtonBuilder`,
+which adds native button `name()`, `value()`, and `disabled()` setters.
+Optional `config: $actionConfig` accepts an
 immutable `ActionConfig` or an inline `ActionConfig::builder()` chain. The helper
 captures builders immediately; `config()` is only needed for an explicit snapshot.
 
@@ -250,15 +258,26 @@ captures builders immediately; `config()` is only needed for an explicit snapsho
 | --- | --- |
 | `method(string)` | POST, PUT, PATCH, or DELETE; overrides the nested form method. |
 | `data(array)` | Nested locked hidden payload. |
-| `form(FormConfig)` | Typed configuration of the independent form. Its URL is controlled by the action URL argument. |
+| `form(FormConfig|FormConfigBuilder)` | Typed configuration of the independent form. Its URL is controlled by the action URL argument. |
 | `block(?string)` | Inline for null; a nonempty CakePHP view block name otherwise. |
 | `confirm(?string)` | Confirmation text; null or empty string disables it. |
-| `attributes(array)` | Attributes on the visible button/link, including optional button name/value. |
+| `attributes(array)` | Presentation attributes on the visible button/link. |
+| `name(?string)`, `value(mixed)`, `disabled(bool = true)` | Post buttons only: optional submitted identity and native disabled state. |
 | `template()`, `partTemplate()`, `variant()`, `templateData()` | Shared trigger presentation. |
 
 Omitting the URL for `postLink()` uses the current request target. Managed
 attributes such as `href`, `formaction`, and `formmethod` cannot redirect the
-protected action. Supplied labels are escaped unless wrapped in `Html`.
+protected action. Set button name, value, and disabled state with typed setters;
+those keys are rejected in `attributes()`. An action configuration containing
+button-only state is also rejected by `postLink()`. Supplied labels are escaped unless wrapped in `Html`.
+
+```php
+<?= $this->Form
+    ->postButton(label: 'Archive', url: ['action' => 'archive', $article->id])
+    ->name('intent')
+    ->value('archive')
+    ->disabled($article->archived) ?>
+```
 
 Post buttons reuse `button/control.php` and its `button` attribute defaults. Links
 use the `action` scope's `control` part, with `action.control` attribute defaults.

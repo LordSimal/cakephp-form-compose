@@ -11,9 +11,13 @@ for setup and [field configuration](/field-options) for every method.
 ## Complete controls
 
 ```php
-echo $form->control('title')->label('Article title');
-echo $form->control('body')->type('textarea')->attributes(['rows' => 12]);
-echo $form->control('published')->type('checkbox');
+echo $form->control('title')
+    ->label('Article title');
+echo $form->control('body')
+    ->type('textarea')
+    ->attributes(['rows' => 12]);
+echo $form->control('published')
+    ->type('checkbox');
 ```
 
 Schema and path conventions infer native types unless overridden. See
@@ -25,8 +29,11 @@ arrange its label, input, help, and errors.
 ```php
 echo $form->controls([
     'title',
-    $form->control('body')->type('textarea')->attributes(['rows' => 12]),
-    $form->control('published')->type('checkbox'),
+    $form->control('body')
+        ->type('textarea')
+        ->attributes(['rows' => 12]),
+    $form->control('published')
+        ->type('checkbox'),
 ]);
 ```
 
@@ -50,8 +57,11 @@ Default value lookup is explicit `value()`, submitted request data, context, the
 null counts as found; a context null falls through, following CakePHP semantics.
 
 ```php
-echo $form->control('title')->value('Preview title');
-echo $form->control('summary')->default('No summary yet')->schemaDefault(false);
+echo $form->control('title')
+    ->value('Preview title');
+echo $form->control('summary')
+    ->default('No summary yet')
+    ->schemaDefault(false);
 ```
 
 Use `value()` for deliberate overrides; ordinary edit fields should use binding.
@@ -69,7 +79,9 @@ $form = $this->Form
     ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('q')->type('search')->label('Search articles') ?>
+<?= $form->control('q')
+    ->type('search')
+    ->label('Search articles') ?>
 <?= $form->submit('Search') ?>
 <?= $form->close() ?>
 ```
@@ -77,9 +89,16 @@ $form = $this->Form
 ### Upload files
 
 ```php
-<?php $form = $this->Form->form($article)->multipart()->bind(); ?>
+<?php
+$form = $this->Form
+    ->form($article)
+    ->multipart()
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('attachment')->type('file')->attributes(['accept' => 'application/pdf']) ?>
+<?= $form->control('attachment')
+    ->type('file')
+    ->attributes(['accept' => 'application/pdf']) ?>
 <?= $form->submit('Upload') ?>
 <?= $form->close() ?>
 ```
@@ -107,7 +126,8 @@ Validation, authorization, and persistence remain in the application.
 ## Choose a template for one control
 
 ```php
-echo $form->control('title')->template('forms/article-title');
+echo $form->control('title')
+    ->template('forms/article-title');
 ```
 
 This selects `templates/element/forms/article-title.php`. See
@@ -127,9 +147,18 @@ Use paths such as `author_id`, `tags._ids`, and `comments.0.body`. See
 
 ## Composing field parts
 
-Use `$form->field('title')->help(...)->resolve()` for an immutable `BoundField`.
-Render its parts with fluent local presentation, for example
-`$title->input()->attributes(['class' => 'title-input'])`. See [field parts](/field-parts).
+Configure a field builder, then call `resolve()` for an immutable `BoundField`.
+Render its parts with fluent local presentation:
+
+```php
+$title = $form->field('title')
+    ->help('Use a descriptive title.')
+    ->resolve();
+echo $title->input()
+    ->attributes(['class' => 'title-input']);
+```
+
+See [field parts](/field-parts).
 
 ## Reusable forms
 

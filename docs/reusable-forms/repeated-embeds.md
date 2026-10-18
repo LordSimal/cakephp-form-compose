@@ -16,22 +16,20 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Attribute\Form;
-use Blueprint\BlueprintBuilder;
-use Blueprint\FormBlueprint;
-use Blueprint\FormContext;
-use FormComposeBlueprintBuilder;
-use FormComposeForm;
-use FormComposeFormBlueprint;
-use FormComposeFormContext;
+use FormCompose\Attribute\Form;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 #[Form('comment')]
 class CommentForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->add('id')->type('hidden');
-        $form->add('body')->type('textarea');
+        $form->add('id')
+            ->type('hidden');
+        $form->add('body')
+            ->type('textarea');
     }
 }
 ```
@@ -40,7 +38,8 @@ In the parent article blueprint's hook:
 
 ```php
 $form->add('title');
-$form->embedMany('comments', 'comment')->label('Comments');
+$form->embedMany('comments', 'comment')
+    ->label('Comments');
 ```
 
 Null keys infer rows from the configured binding value sources. A submitted
@@ -52,7 +51,8 @@ rows. Each row hook sees its own scoped context; paths submit as
 
 ```php
 // Parent blueprint hook: explicit order, preserving sparse keys.
-$form->embedMany('comments', 'comment')->keys([2, 7, 'new_row']);
+$form->embedMany('comments', 'comment')
+    ->keys([2, 7, 'new_row']);
 ```
 
 `keys([])` compiles no rows. Keys must be unique valid path segments. Selecting
@@ -64,18 +64,20 @@ only supplies a presentation—it does not create or save an entity.
 Select a collection layout in the parent hook:
 
 ```php
-$form->embedMany('comments', 'comment')->template('forms/comments');
+$form->embedMany('comments', 'comment')
+    ->template('forms/comments');
 ```
 
 ```php
 <?php
 
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
-/** @var \FormCompose\Blueprint\RepeatedView $embed */
-/** @var array<int|string, \FormCompose\Blueprint\BlueprintView> $rows */
-/** @var \FormCompose\Rendering\Attributes $attributes */
+/**
+ * @var \FormCompose\Blueprint\RepeatedView $embed
+ * @var array<int|string, \FormCompose\Blueprint\BlueprintView> $rows
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
 ?>
 <section<?= (string)$attributes ?>>
     <h2><?= Html::text($embed->label()) ?></h2>
@@ -98,13 +100,16 @@ row errors remain on their bound fields.
 Inside an open session, a new repeated occurrence can be configured directly:
 
 ```php
-echo $form->embedMany('comments', 'comment')->keys([2, 7])->label('Comments');
+echo $form->embedMany('comments', 'comment')
+    ->keys([2, 7])
+    ->label('Comments');
 ```
 
 Inside a blueprint layout, render the already compiled occurrence:
 
 ```php
-<?= $form->embeddedMany('comments')->attributes(['class' => 'comments']) ?>
+<?= $form->embeddedMany('comments')
+    ->attributes(['class' => 'comments']) ?>
 ```
 
 Layout presentation does not recompile rows. Configure keys in the declaration

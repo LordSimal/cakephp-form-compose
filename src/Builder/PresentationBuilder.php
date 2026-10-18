@@ -31,14 +31,8 @@ class PresentationBuilder
     public function apply(PresentationConfig|self $config): static
     {
         $this->configuration = $this->configuration->merge(PresentationConfig::capture($config));
-        $this->changed();
 
         return $this;
-    }
-
-    /** Specialize attached authoring behavior without changing snapshot semantics. */
-    protected function changed(): void
-    {
     }
 
     /** Read the presentation currently being authored. */
@@ -47,11 +41,10 @@ class PresentationBuilder
         return $this->configuration;
     }
 
-    /** Store a new snapshot before notifying an attached layout declaration. */
+    /** Store a new presentation snapshot. */
     protected function updatePresentation(PresentationConfig $presentation): static
     {
         $this->configuration = $presentation;
-        $this->changed();
 
         return $this;
     }

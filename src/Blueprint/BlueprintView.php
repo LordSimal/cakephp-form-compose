@@ -121,12 +121,6 @@ class BlueprintView
                 $this->definition->index->repeats[$path] ?? throw new InvalidArgumentException('Unknown repeated embed: '
                     . $path);
 
-            if ($config->keys !== null && $config->keys !== $repeat->keys) {
-                throw new InvalidArgumentException(
-                    'Select repeated row keys in the blueprint declaration before binding.',
-                );
-            }
-
             return $this->session->renderRepeated($this->qualify($path), $repeat, $config);
         });
     }

@@ -9,6 +9,8 @@ use FormCompose\Builder\FormConfigBuilder;
 /** Immutable action configuration captured before binding or rendering. */
 final class ActionConfig extends Configuration
 {
+    use ButtonStateTrait;
+
     /** The configured method setting. */
     public ?string $method {
         get {

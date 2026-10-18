@@ -26,16 +26,11 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use AppStatusChoices;
-use Attribute\Form;
-use Blueprint\BlueprintBuilder;
-use Blueprint\FormBlueprint;
-use Blueprint\FormContext;
-use FormComposeBlueprintBuilder;
-use FormComposeForm;
-use FormComposeFormBlueprint;
-use FormComposeFormContext;
-use Service\StatusChoices;
+use App\Service\StatusChoices;
+use FormCompose\Attribute\Form;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
 
 #[Form('article')]
 class ArticleForm extends FormBlueprint
@@ -47,7 +42,8 @@ class ArticleForm extends FormBlueprint
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->add('title');
-        $form->add('status')->choices($this->statuses->all());
+        $form->add('status')
+            ->choices($this->statuses->all());
     }
 }
 ```
@@ -56,9 +52,7 @@ Then add a factory argument to a controller action and pass it alongside your
 existing view data:
 
 ```php [Controller action]
-use Blueprint\BlueprintFactory;
-
-use FormComposeBlueprintFactory;
+use FormCompose\Blueprint\BlueprintFactory;
 
 public function edit(BlueprintFactory $blueprints): void
 {
@@ -80,7 +74,7 @@ $this->addHelper('Form', [
 Alternatively, set the option on the existing helper before binding:
 `$this->Form->setConfig('blueprintFactory', $blueprints)`.
 
-Now `$this->Form->form($article)->blueprint('article')->render()` uses the injected service
+Now rendering a form with `blueprint('article')` uses the injected service
 when compiling that blueprint.
 
 CakePHP 6 autowires concrete dependencies. Register interfaces, scalar arguments,
@@ -110,10 +104,8 @@ does not reconfigure the collection that the plugin already registered.
 For example, change the paths or cache settings like this:
 
 ```php
-use AttributeResolver\AttributeResolver;
-use CakeAttributeResolver;
-use CakeConfigure;
-use Core\Configure;
+use Cake\AttributeResolver\AttributeResolver;
+use Cake\Core\Configure;
 
 AttributeResolver::setConfig('formCompose', [
     'paths' => [

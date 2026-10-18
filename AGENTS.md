@@ -106,6 +106,8 @@ Composer scripts resolve dependency binaries from `vendor/bin`. For direct execu
 - Keep the README concise and link to the documentation site. The site owns the full explanation: show the problem and a control call connected to its PHP element before detailed setup, recipes, and reference material.
 - Keep the homepage short, with a few tabbed code examples. Put conceptual explanations, recipes, and detailed contracts in the guides and reference pages.
 - Prefer built-in navigation, local search, code groups, callouts, and details blocks over custom Vue components when they meet the need.
+- Format chained calls in documentation examples with each call after the first on its own indented line.
+- Group consecutive template variable annotations in one multiline docblock, including in documentation examples.
 - Write CSS examples as multiline rule blocks with one declaration per line.
 - Run `npm ci` and `npm run docs:build` for documentation-site changes. Fix broken links rather than disabling VitePress's link checks.
 - Keep the repository Pages base path configured, and publish only from `main`. Pull requests must build the site without deploying it.

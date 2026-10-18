@@ -9,6 +9,8 @@ use FormCompose\Blueprint\RepeatedDefinition;
 /** Stages a repeated child, selecting final keys before compiling any row hooks. */
 class RepeatedBlueprintBuilder extends EmbedConfigBuilder
 {
+    use RowSelectionTrait;
+
     protected ?RepeatedDefinition $compiled = null;
 
     /** @var list<int|string>|null Last compiled row selection. */
@@ -37,7 +39,7 @@ class RepeatedBlueprintBuilder extends EmbedConfigBuilder
     /** Reuse compiled rows until the explicit row selection changes. */
     protected function compiled(): RepeatedDefinition
     {
-        $keys = $this->config()->keys;
+        $keys = $this->selectedKeys;
         if ($this->compiled instanceof RepeatedDefinition && $this->compiledKeys === $keys) {
             return $this->compiled;
         }

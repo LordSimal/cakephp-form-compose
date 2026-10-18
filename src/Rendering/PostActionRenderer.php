@@ -6,7 +6,6 @@ namespace FormCompose\Rendering;
 use Cake\View\View;
 use Closure;
 use FormCompose\Configuration\ActionConfig;
-use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\PostAction;
@@ -77,12 +76,8 @@ class PostActionRenderer
         $presentation = $action->presentation;
         $attributes = $presentation->attributes;
         if ($action->kind === 'button') {
-            PostActionSubmission::button($action->data, $attributes['name'] ?? null);
-            $config = new ButtonConfig(
-                name: isset($attributes['name']) ? (string)$attributes['name'] : null,
-                value: $attributes['value'] ?? null,
-            )->withDisabled(($attributes['disabled'] ?? false) !== false)
-                ->withPresentation($presentation->withAttributes(['form' => $form->binding->id]));
+            PostActionSubmission::button($action->data, $action->button->name);
+            $config = $action->button->withPresentation($presentation->withAttributes(['form' => $form->binding->id]));
 
             return $form->submit($label, $config)->render();
         }

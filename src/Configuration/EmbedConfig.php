@@ -9,25 +9,6 @@ use FormCompose\Rendering\Html;
 /** Immutable embed configuration captured before binding or rendering. */
 final class EmbedConfig extends Configuration
 {
-    /** @var list<int|string>|null Configured keys data. */
-    public ?array $keys {
-        get {
-            /** @var mixed $value */
-            $value = $this->values['keys'] ?? null;
-            assert($value === null || is_array($value), 'Typed configuration must retain its declared value type.');
-
-            /** @var list<int|string>|null $value */
-
-            return $value;
-        }
-    }
-
-    /** @param list<int|string>|null $value Configured keys data. */
-    public function withKeys(?array $value): static
-    {
-        return $this->changed('keys', $value);
-    }
-
     /** The configured label setting. */
     public string|Html|null $label {
         get {
@@ -67,12 +48,11 @@ final class EmbedConfig extends Configuration
 
     /** Initialize common named settings without losing explicit null values. */
     public function __construct(
-        array|Unspecified|null $keys = Unspecified::Value,
         string|Html|Unspecified|null $label = Unspecified::Value,
         bool|Unspecified $errors = Unspecified::Value,
     ) {
         parent::__construct(array_filter(
-            ['keys' => $keys, 'label' => $label, 'errors' => $errors],
+            ['label' => $label, 'errors' => $errors],
             static fn(mixed $value): bool => $value !== Unspecified::Value,
         ));
     }

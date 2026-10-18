@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Builder;
 
+use FormCompose\Configuration\ActionConfig;
 use FormCompose\Configuration\ButtonConfig;
 
 /**
@@ -11,38 +12,12 @@ use FormCompose\Configuration\ButtonConfig;
  */
 class ButtonConfigBuilder extends ConfigurationBuilder
 {
+    use ButtonStateMethodsTrait;
+
     /** Set type on this mutable builder. */
     public function type(string $value): static
     {
         $this->configuration = $this->config()->withType($value);
-        $this->changed();
-
-        return $this;
-    }
-
-    /** Set name on this mutable builder. */
-    public function name(?string $value): static
-    {
-        $this->configuration = $this->config()->withName($value);
-        $this->changed();
-
-        return $this;
-    }
-
-    /** Set value on this mutable builder. */
-    public function value(mixed $value): static
-    {
-        $this->configuration = $this->config()->withValue($value);
-        $this->changed();
-
-        return $this;
-    }
-
-    /** Set disabled on this mutable builder. */
-    public function disabled(bool $value = true): static
-    {
-        $this->configuration = $this->config()->withDisabled($value);
-        $this->changed();
 
         return $this;
     }
@@ -65,5 +40,18 @@ class ButtonConfigBuilder extends ConfigurationBuilder
         $this->applyConfig(ButtonConfig::capture($config));
 
         return $this;
+    }
+
+    /** Read native button state from its configuration domain. */
+    protected function buttonConfig(): ButtonConfig
+    {
+        return $this->config();
+    }
+
+    /** Store native button state in its configuration domain. */
+    protected function updateButtonConfig(ButtonConfig|ActionConfig $config): void
+    {
+        assert($config instanceof ButtonConfig, 'Button updates must preserve the configuration domain.');
+        $this->configuration = $config;
     }
 }

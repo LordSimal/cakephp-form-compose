@@ -27,8 +27,7 @@ renders it. `field()` returns a `FieldBuilder`; call `resolve()` for an immutabl
 ### Reuse configuration
 
 ```php
-use Configuration\FieldConfig;
-use FormComposeFieldConfig;
+use FormCompose\Configuration\FieldConfig;
 
 $emailConfig = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email address'))
     ->required()
@@ -36,7 +35,8 @@ $emailConfig = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email
     ->config();
 
 echo $form->control('email', config: $emailConfig);
-echo $form->control('billing.email', config: $emailConfig)->label('Billing email');
+echo $form->control('billing.email', config: $emailConfig)
+    ->label('Billing email');
 ```
 
 The constructor names common settings (`type`, `label`, `help`); the builder
@@ -49,18 +49,18 @@ it immediately. Later edits to that builder cannot change an existing field
 specification, control, or form configuration. For example:
 
 ```php
-use Configuration\FieldConfig;
-use Form\Field\FieldSpec;
-use FormComposeFieldConfig;
-use FormComposeFieldSpec;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\FieldSpec;
 
 $currency = new FieldSpec(
     'currency',
-    FieldConfig::builder()->label('Currency')->choices(['EUR' => 'Euro', 'USD' => 'US dollar']),
+    FieldConfig::builder()
+        ->label('Currency')
+        ->choices(['EUR' => 'Euro', 'USD' => 'US dollar']),
 );
 ```
 
-Ordinary controls use direct chains: `$form->control('currency')->choices(...)`.
+Ordinary controls accept `choices()` directly on their fluent builder.
 Parts render when echoed: `<?= $field->input() ?>`. Explicit `render()` is useful
 when assigning HTML to a variable; it is unnecessary inside echo/short echo tags.
 Immutable config `with…()` methods return new configs rather than mutating them.
@@ -135,10 +135,11 @@ Ordinary text is escaped; trusted HTML requires `FormCompose\Rendering\Html`.
 Call CakePHP translation functions in templates or blueprint hooks:
 
 ```php
-use I18n\__;
-use function Cake__;
+use function Cake\I18n\__;
 
-echo $form->control('email')->label(__('Email address'))->help(__('We keep this private.'));
+echo $form->control('email')
+    ->label(__('Email address'))
+    ->help(__('We keep this private.'));
 ```
 
 Deferred `Translated` values and zero-argument closures are available for reusable

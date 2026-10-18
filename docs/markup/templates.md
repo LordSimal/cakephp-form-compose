@@ -20,7 +20,10 @@ the path shown in the second tab:
 ::: code-group
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->form($user)->bind(); ?>
+<?php
+$form = $this->Form->form($user)
+    ->bind();
+?>
 <?= $form->open() ?>
 <?= $form->control('email')
     ->type('email')
@@ -124,7 +127,10 @@ Use `templateData` for values your element needs. Here the decoration becomes
 configurable:
 
 ```php [Inside an open form]
-echo $form->control('email')->type('email')->template('forms/email')->templateData(['prefix' => '@']);
+echo $form->control('email')
+    ->type('email')
+    ->template('forms/email')
+    ->templateData(['prefix' => '@']);
 ```
 
 In the email element, add `use FormCompose\Rendering\Html;` after
@@ -147,8 +153,12 @@ the complete scope table.
 An explicit template is selected wherever you pass its element name. To make
 this email layout the default for all email fields, move it to
 `templates/element/forms/application/email/control.php` and configure
-`new Theme(['forms/application'])`. Callers can then use just
-`control('email')->type('email')`.
+`new Theme(['forms/application'])`. Callers can then use:
+
+```php
+echo $form->control('email')
+    ->type('email');
+```
 
 Continue with [Create a theme](/themes) for that setup, or
 [Use variants](/variants) to offer several named layouts.

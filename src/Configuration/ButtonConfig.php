@@ -8,6 +8,8 @@ use FormCompose\Builder\ButtonConfigBuilder;
 /** Immutable button configuration captured before binding or rendering. */
 final class ButtonConfig extends Configuration
 {
+    use ButtonStateTrait;
+
     /** The configured type setting. */
     public string $type {
         get {
@@ -23,53 +25,6 @@ final class ButtonConfig extends Configuration
     public function withType(string $value): static
     {
         return $this->changed('type', $value);
-    }
-
-    /** The configured name setting. */
-    public ?string $name {
-        get {
-            /** @var mixed $value */
-            $value = $this->values['name'] ?? null;
-            assert($value === null || is_string($value), 'Typed configuration must retain its declared value type.');
-
-            return $value;
-        }
-    }
-
-    /** Return configuration with an explicit name setting. */
-    public function withName(?string $value): static
-    {
-        return $this->changed('name', $value);
-    }
-
-    /** The configured value setting. */
-    public mixed $value {
-        get {
-            return $this->values['value'] ?? null;
-        }
-    }
-
-    /** Return configuration with an explicit value setting. */
-    public function withValue(mixed $value): static
-    {
-        return $this->changed('value', $value);
-    }
-
-    /** The configured disabled setting. */
-    public bool $disabled {
-        get {
-            /** @var mixed $value */
-            $value = $this->values['disabled'] ?? false;
-            assert(is_bool($value), 'Typed configuration must retain its declared value type.');
-
-            return $value;
-        }
-    }
-
-    /** Return configuration with an explicit disabled setting. */
-    public function withDisabled(bool $value): static
-    {
-        return $this->changed('disabled', $value);
     }
 
     /** Initialize common named settings without losing explicit null values. */

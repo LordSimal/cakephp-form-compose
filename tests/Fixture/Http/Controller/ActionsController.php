@@ -57,7 +57,8 @@ class ActionsController extends Controller
         $html .= $helper->postButton(label: 'Confirm button', url: '/actions/save')
             ->confirm('Proceed with button?')
             ->form(FormConfig::builder()->id('confirm-action')->config())
-            ->attributes(['name' => 'intent', 'value' => 'delete'])
+            ->name('intent')
+            ->value('delete')
             ->render();
         $parent = $helper->form()->url('/actions/save')->id('parent-form')->bind();
         $html .=

@@ -31,9 +31,13 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 ::: code-group
 
 ```php [templates/Articles/edit.php]
-<?php $form = $this->Form->form($article)->bind(); ?>
+<?php
+$form = $this->Form->form($article)
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('title')->template('forms/article-title') ?>
+<?= $form->control('title')
+    ->template('forms/article-title') ?>
 <?= $form->control('body') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
@@ -57,8 +61,10 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 
 ```php [Arrange parts directly in the view]
 <?php
-$form = $this->Form->form($article)->bind();
-$title = $form->field('title')->resolve();
+$form = $this->Form->form($article)
+    ->bind();
+$title = $form->field('title')
+    ->resolve();
 ?>
 <?= $form->open() ?>
 <section class="article-title">

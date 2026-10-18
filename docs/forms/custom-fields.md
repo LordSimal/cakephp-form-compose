@@ -12,7 +12,10 @@ fields in one control:
 ::: code-group
 
 ```php [templates/Bookings/edit.php]
-<?php $form = $this->Form->form($booking)->bind(); ?>
+<?php
+$form = $this->Form->form($booking)
+    ->bind();
+?>
 <?= $form->open() ?>
 <?= $form->control('period')
     ->type('date-range')
@@ -76,21 +79,14 @@ Put application types in `src/Form/Field/`, using the `App\Form\Field` namespace
 <?php
 declare(strict_types=1);
 
-namespace AppField;
+namespace App\Form\Field;
 
-use Attribute\AsFieldType;
-use Configuration\FieldConfig;
-use Form\Field;
-use Form\Field\BoundField;
-use Form\Field\CompositeType;
-use Form\Field\FieldSpec;
-use FormComposeAsFieldType;
-use FormComposeField\BoundField;
-use FormComposeField\CompositeType;
-use FormComposeField\FieldSpec;
-use FormComposeFieldConfig;
-use I18n\__;
-use function Cake__;
+use FormCompose\Attribute\AsFieldType;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldSpec;
+use function Cake\I18n\__;
 
 #[AsFieldType('date-range')]
 class DateRangeType extends CompositeType
@@ -101,8 +97,18 @@ class DateRangeType extends CompositeType
     public function inputs(BoundField $field): array
     {
         return [
-            new FieldSpec('start', FieldConfig::builder()->type('date')->label(__('Arrival'))),
-            new FieldSpec('end', FieldConfig::builder()->type('date')->label(__('Departure'))),
+            new FieldSpec(
+                'start',
+                FieldConfig::builder()
+                    ->type('date')
+                    ->label(__('Arrival')),
+            ),
+            new FieldSpec(
+                'end',
+                FieldConfig::builder()
+                    ->type('date')
+                    ->label(__('Departure')),
+            ),
         ];
     }
 }
@@ -124,10 +130,12 @@ Keep per-field state on the bound fields; a type instance can serve several fiel
 Explicit instances override discovered aliases:
 
 ```php
-use AppDateRangeType;
-use Form\Field\DateRangeType;
+use App\Form\Field\DateRangeType;
 
-$form = $this->Form->form($booking)->types(['date-range' => new DateRangeType()])->bind();
+$form = $this->Form
+    ->form($booking)
+    ->types(['date-range' => new DateRangeType()])
+    ->bind();
 ```
 
 Clear or warm discovery metadata during deployment as described in
@@ -206,7 +214,7 @@ actually emitted an eligible control; omitted, hidden, disabled, and empty choic
 controls do not become focus targets.
 
 Parent disabled and readonly state applies to every child, including local
-`$field->input()->attributes(['disabled' => true])` overrides. A child cannot re-enable a disabled
+`attributes(['disabled' => true])` overrides on the input builder. A child cannot re-enable a disabled
 parent. Required status comes from each child's metadata or explicit settings: a required
 parent does not make every child required. `errors` and `templateData` provide
 inherited defaults that children can override. Child ARIA attributes can
@@ -270,8 +278,7 @@ Registering only the composite parent does not register its children. Use either
 A `FieldTypeInterface` implementation returns records such as:
 
 ```php
-use Form\Field\Submission;
-use FormComposeSubmission;
+use FormCompose\Form\Field\Submission;
 
 new Submission('period[start]');
 new Submission('record_id', value: '42');
@@ -298,21 +305,14 @@ which currencies and amounts are allowed:
 <?php
 declare(strict_types=1);
 
-namespace AppField;
+namespace App\Form\Field;
 
-use Attribute\AsFieldType;
-use Configuration\FieldConfig;
-use Form\Field;
-use Form\Field\BoundField;
-use Form\Field\CompositeType;
-use Form\Field\FieldSpec;
-use FormComposeAsFieldType;
-use FormComposeField\BoundField;
-use FormComposeField\CompositeType;
-use FormComposeField\FieldSpec;
-use FormComposeFieldConfig;
-use I18n\__;
-use function Cake__;
+use FormCompose\Attribute\AsFieldType;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldSpec;
+use function Cake\I18n\__;
 
 #[AsFieldType('money')]
 class MoneyType extends CompositeType
@@ -361,7 +361,9 @@ declare(strict_types=1);
 
 ```php
 // Inside an open form; zero is a real value.
-echo $form->control('price')->type('money')->value(['amount' => 0, 'currency' => 'EUR']);
+echo $form->control('price')
+    ->type('money')
+    ->value(['amount' => 0, 'currency' => 'EUR']);
 
 // Submits price[amount] and price[currency].
 ```
@@ -382,13 +384,10 @@ submission contract while the element emits an ordinary textarea:
 <?php
 declare(strict_types=1);
 
-namespace AppField;
+namespace App\Form\Field;
 
-use Attribute\AsFieldType;
-use Form\Field;
-use Form\Field\SingleInputType;
-use FormComposeAsFieldType;
-use FormComposeField\SingleInputType;
+use FormCompose\Attribute\AsFieldType;
+use FormCompose\Form\Field\SingleInputType;
 
 #[AsFieldType('markdown')]
 class MarkdownType extends SingleInputType
@@ -401,8 +400,7 @@ class MarkdownType extends SingleInputType
 <?php
 declare(strict_types=1);
 
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
@@ -418,7 +416,9 @@ use Rendering\Html;
 :::
 
 ```php
-echo $form->control('body')->type('markdown')->label('Article body');
+echo $form->control('body')
+    ->type('markdown')
+    ->label('Article body');
 ```
 
 Your optional editor integration can find `data-editor="markdown"` and enhance

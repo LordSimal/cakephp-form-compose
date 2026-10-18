@@ -62,7 +62,9 @@ Use `template()` to select the complete field control element. It takes
 priority over variant and layer lookup:
 
 ```php
-echo $form->control('email')->type('email')->template('forms/special-email');
+echo $form->control('email')
+    ->type('email')
+    ->template('forms/special-email');
 ```
 
 Here the control uses `templates/element/forms/special-email.php`. Use CakePHP
@@ -140,11 +142,15 @@ button HTML attributes before rendering.
 For example, form and button elements can use separate configuration:
 
 ```php
-$form = $this->Form->form($article)->templateData(['layout' => 'stacked'])->bind();
+$form = $this->Form
+    ->form($article)
+    ->templateData(['layout' => 'stacked'])
+    ->bind();
 
 echo $form->open();
 echo $form->control('title');
-echo $form->submit('Save')->templateData(['icon' => 'save']);
+echo $form->submit('Save')
+    ->templateData(['icon' => 'save']);
 echo $form->close();
 ```
 
@@ -355,11 +361,10 @@ Configure input identity and behavior, such as `name`, `id`, `type`, `value`, an
 
 ## Theme API
 
-`FormCompose\Rendering\Theme` is immutable. Select it with `form($data)->theme($theme)` before binding:
+`FormCompose\Rendering\Theme` is immutable. Pass it to the form builder's `theme($theme)` method before binding:
 
 ```php
-use FormComposeTheme;
-use Rendering\Theme;
+use FormCompose\Rendering\Theme;
 
 $theme = new Theme(
     layers: ['forms/application'],
@@ -369,7 +374,10 @@ $theme = new Theme(
         'blueprint.control' => ['class' => 'form-section'],
     ],
 );
-$form = $this->Form->form($article)->theme($theme)->bind();
+$form = $this->Form
+    ->form($article)
+    ->theme($theme)
+    ->bind();
 ```
 
 `new Theme(array $layers = [], array $defaults = [])` stores readonly `layers`
@@ -397,8 +405,7 @@ cast to a string. It includes a leading space when attributes are present, so
 | `__toString(): string` | Escaped attributes; false/null omitted, true emitted as a bare name. |
 
 ```php
-use FormComposeAttributes;
-use Rendering\Attributes;
+use FormCompose\Rendering\Attributes;
 
 $attributes = new Attributes(['class' => 'field', 'required' => true]);
 $wide = $attributes->merge(['class' => ['wide' => true, 'hidden' => false]]);
@@ -419,8 +426,7 @@ The bag does not resolve conflicting CSS utilities.
 labels, help, or button content. It does not sanitize HTML.
 
 ```php
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
 // Inside an open form.
 echo $form->submit(new Html('<strong>Save article</strong>'));

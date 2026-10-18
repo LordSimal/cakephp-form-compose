@@ -27,7 +27,8 @@ class PostActionSecurityTest extends FormTestCase
             ->method('delete')
             ->data(['record' => ['id' => 42], 'version' => 0, 'records' => [2 => ['id' => 12]]])
             ->block('actions')
-            ->attributes(['name' => 'intent', 'value' => 'remove'])
+            ->name('intent')
+            ->value('remove')
             ->render();
         $parentHtml .= $parent->close();
         $actionHtml = $helper->getView()->fetch('actions');
@@ -66,19 +67,19 @@ class PostActionSecurityTest extends FormTestCase
         return [
             'exact payload' => [ActionConfig::builder()
                 ->data(['version' => 1])
-                ->attributes(['name' => 'version'])
+                ->name('version')
                 ->config()],
             'nested leaf' => [ActionConfig::builder()
                 ->data(['record' => ['id' => 42]])
-                ->attributes(['name' => 'id'])
+                ->name('id')
                 ->config()],
             'nested path' => [ActionConfig::builder()
                 ->data(['record' => ['id' => 42]])
-                ->attributes(['name' => 'record[id]'])
+                ->name('record[id]')
                 ->config()],
-            'method field' => [ActionConfig::builder()->attributes(['name' => '_method'])->config()],
-            'CSRF field' => [ActionConfig::builder()->attributes(['name' => '_csrfToken'])->config()],
-            'token field' => [ActionConfig::builder()->attributes(['name' => '_Token[fields]'])->config()],
+            'method field' => [ActionConfig::builder()->name('_method')->config()],
+            'CSRF field' => [ActionConfig::builder()->name('_csrfToken')->config()],
+            'token field' => [ActionConfig::builder()->name('_Token[fields]')->config()],
         ];
     }
 

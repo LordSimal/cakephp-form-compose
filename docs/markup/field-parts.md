@@ -5,26 +5,32 @@ description: Resolve immutable field state, configure renderable parts, and regi
 
 # Compose field parts
 
-Use `control()` for a complete themed field. Use `field()->resolve()` when the
+Use `control()` for a complete themed field. Resolve a `field()` builder when the
 view arranges label, input, help, and errors independently.
 
 ## Arrange a field in the view
 
 ```php
 <?php
-$form = $this->Form->form($article)->bind();
-$title = $form->field('title')->help('Displayed above the article.')->resolve();
+$form = $this->Form->form($article)
+    ->bind();
+$title = $form->field('title')
+    ->help('Displayed above the article.')
+    ->resolve();
 ?>
 <?= $form->open() ?>
 <section class="article-title">
-    <?= $title->label()->attributes(['class' => 'title-label']) ?>
+    <?= $title->label()
+        ->attributes(['class' => 'title-label']) ?>
     <div class="title-input-shell">
-        <?= $title->input()->attributes(['class' => 'title-input', 'data-controller' => 'title']) ?>
+        <?= $title->input()
+            ->attributes(['class' => 'title-input', 'data-controller' => 'title']) ?>
     </div>
     <?= $title->help() ?>
     <?= $title->errors() ?>
 </section>
-<?= $form->control('body')->type('textarea') ?>
+<?= $form->control('body')
+    ->type('textarea') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
@@ -38,7 +44,8 @@ field builder before resolution.
 ## Inspect state without rendering
 
 ```php
-$title = $form->field('title')->resolve();
+$title = $form->field('title')
+    ->resolve();
 $currentTitle = $title->state->value;
 $messages = $title->state->messages;
 $attributes = $title->attributes();
@@ -56,7 +63,13 @@ missing generated feedback targets and leaves the form open for a corrected retr
 Parts may precede or follow their input.
 
 For errors shown only in a summary, keep errors enabled and explicitly remove
-input descriptions with `input()->attributes(['aria-describedby' => null])`.
+input descriptions on the input builder:
+
+```php
+echo $field->input()
+    ->attributes(['aria-describedby' => null]);
+```
+
 Application-owned ARIA references remain your responsibility. If hiding a label,
 supply another accessible name such as `attributes(['aria-label' => 'Article title'])`.
 Preserve fieldset/legend semantics for radio and multi-checkbox groups.
@@ -79,10 +92,11 @@ an ordinary scalar text field:
 ```php
 <?php
 
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
-$title = $form->field('title')->type('text')->resolve();
+$title = $form->field('title')
+    ->type('text')
+    ->resolve();
 ?>
 <?= $title->label() ?>
 <input type="text"<?= (string)$title->attributes() ?> value="<?= Html::text((string)$title->state->value) ?>">

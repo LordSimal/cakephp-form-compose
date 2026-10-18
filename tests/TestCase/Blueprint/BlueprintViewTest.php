@@ -111,13 +111,11 @@ class BlueprintViewTest extends CompositionTestCase
         $form = $this->helper()->form()->bind();
         $view = new BlueprintView($form, $definition);
         $form->open();
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Select repeated row keys in the blueprint declaration before binding.');
-        try {
-            $view->embeddedMany('comments')->keys([7])->render();
-        } finally {
-            static::assertStringContainsString('comments[2][body]', $view->embeddedMany('comments')->render());
-            $form->close();
-        }
+        $rows = $view->embeddedMany('comments')->label('Existing comments');
+        static::assertFalse(method_exists($rows, 'keys'));
+        $html = $rows->render();
+        static::assertStringContainsString('comments[2][body]', $html);
+        static::assertSame('Existing comments', $rows->config()->label);
+        $form->close();
     }
 }

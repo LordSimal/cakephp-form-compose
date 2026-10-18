@@ -73,8 +73,7 @@ Select the layer and pass the variant on the field that needs it:
 ```php [templates/Users/edit.php]
 <?php
 
-use FormComposeTheme;
-use Rendering\Theme;
+use FormCompose\Rendering\Theme;
 
 $form = $this->Form
     ->form($user)
@@ -82,7 +81,9 @@ $form = $this->Form
     ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('email')->type('email')->variant('compact') ?>
+<?= $form->control('email')
+    ->type('email')
+    ->variant('compact') ?>
 <?= $form->control('name') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
@@ -158,15 +159,15 @@ under the `button` scope:
 ::: code-group
 
 ```php [Inside an open form]
-echo $form->submit('Save')->variant('primary');
+echo $form->submit('Save')
+    ->variant('primary');
 ```
 
 ```php [templates/element/forms/application/button/variants/primary/control.php]
 <?php
 declare(strict_types=1);
 
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
 ?>
 <button<?= (string)$attributes->merge(['class' => 'button-primary']) ?>>

@@ -27,7 +27,7 @@ calling `$field->label()`, `$field->input()`, `$field->help()`, and
 `$field->errors()`. Those calls render their own elements.
 
 A **bound field** is the `$field` object: resolved data such as the value, ID,
-and errors, plus methods for rendering these parts. Resolving it with `field()->resolve()`
+and errors, plus methods for rendering these parts. Calling `resolve()` on its field builder
 produces no HTML and registers no submitted inputs.
 
 ## Templates, themes, and variants
@@ -51,9 +51,15 @@ second tab to see the file it renders:
 ::: code-group
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->form($user)->bind(); ?>
+<?php
+$form = $this->Form->form($user)
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('email')->type('email')->help('Use your work address.')->template('forms/email') ?>
+<?= $form->control('email')
+    ->type('email')
+    ->help('Use your work address.')
+    ->template('forms/email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -123,7 +129,7 @@ blueprint, error summary, and actions when using `render()`.
 | --- | --- |
 | `$form->control('email')` | `control.php` |
 | `$form->blueprint('article')` | `blueprint/control.php` |
-| `$this->Form->form($article)->blueprint('article')->render()` | `form/layout.php`, between opening and closing markup |
+| `FormBuilder::render()` | `form/layout.php`, between opening and closing markup |
 | `$form->open()` | `form/open.php` |
 | `$form->submit('Save')` | `button/control.php` |
 | `$form->close()` | `form/close.php` |

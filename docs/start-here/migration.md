@@ -20,10 +20,16 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 ```
 
 ```php [FormCompose]
-<?php $form = $this->Compose->form($article)->bind(); ?>
+<?php
+$form = $this->Compose->form($article)
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('title')->attributes(['class' => 'title-input']) ?>
-<?= $form->control('author_id')->choices($authors)->placeholder('No author') ?>
+<?= $form->control('title')
+    ->attributes(['class' => 'title-input']) ?>
+<?= $form->control('author_id')
+    ->choices($authors)
+    ->placeholder('No author') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -32,7 +38,7 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 
 | Existing concern | FormCompose equivalent |
 | --- | --- |
-| `create($entity)` / `end()` | `form($entity)->bind()` then session `open()` / `close()` |
+| `create($entity)` / `end()` | `form($entity)`, then `bind()`, then session `open()` / `close()` |
 | Inline HTML attributes on `control()` | `attributes([...])` for the input, `partAttributes(part, [...])` for other parts |
 | String templates and widgets | Application-owned PHP elements through a `Theme`; custom submission semantics through `FieldTypeInterface` |
 | `empty` select option | `placeholder()` accepts a label, true, false, or null. Optional single selects automatically get a blank choice. |
@@ -58,12 +64,12 @@ inputs. `close()` rejects missing generated feedback targets. For handwritten
 feedback, use `$form->registerFeedback($field, 'help')` or `'errors'` after emitting
 the element with its prepared attributes. To deliberately omit inline
 descriptions while keeping summary errors, pass `['aria-describedby' => null]`
-through `input()->attributes(...)` and to `register()` for handwritten inputs.
+through the input builder's `attributes()` method and to `register()` for handwritten inputs.
 
 ## Migrate earlier FormCompose APIs
 
 This release deliberately removes option bags and field/embed attributes.
-Use `form($data)->...->bind()` instead of helper `bind()`. Configure opening and
+Start with `form($data)`, configure its builder, then call `bind()`. Configure opening and
 complete-form settings before binding. `control()` returns a renderable builder;
 `field()` returns a builder whose `resolve()` captures state. Parts return
 renderable builders too. Use `choices()`, `placeholder()`, and `fallback()` in

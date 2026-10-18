@@ -66,21 +66,14 @@ These three files connect a website-field convention to the public `bind()` API:
 <?php
 declare(strict_types=1);
 
-namespace AppHelper;
+namespace App\View\Helper;
 
-use AppAppFormSession;
-use Binding\FormBinding;
-use Blueprint\BlueprintFactory;
-use Form\AppFormSession;
-use Form\FormSession;
-use FormComposeBlueprintFactory;
-use FormComposeFormBinding;
-use FormComposeFormSession;
-use FormComposeHelper\FormHelper;
-use FormComposeRenderContext;
-use Rendering\RenderContext;
-use View\Helper;
-use View\Helper\FormHelper;
+use App\Form\AppFormSession;
+use FormCompose\Binding\FormBinding;
+use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\Form\FormSession;
+use FormCompose\Rendering\RenderContext;
+use FormCompose\View\Helper\FormHelper;
 
 class AppFormHelper extends FormHelper
 {
@@ -100,10 +93,8 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Binding\FieldResolver;
-use Form\FormSession;
-use FormComposeFieldResolver;
-use FormComposeFormSession;
+use FormCompose\Binding\FieldResolver;
+use FormCompose\Form\FormSession;
 
 class AppFormSession extends FormSession
 {
@@ -120,10 +111,8 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Binding\FieldResolver;
-use Configuration\FieldConfig;
-use FormComposeFieldConfig;
-use FormComposeFieldResolver;
+use FormCompose\Binding\FieldResolver;
+use FormCompose\Configuration\FieldConfig;
 
 class AppFieldResolver extends FieldResolver
 {
@@ -145,13 +134,12 @@ dependency-free blueprints; pass the factory as the optional third constructor a
 Load the helper in `AppView::initialize()`:
 
 ```php
-use AppAppFormHelper;
-use View\Helper\AppFormHelper;
+use App\View\Helper\AppFormHelper;
 
 $this->addHelper('Form', ['className' => AppFormHelper::class]);
 ```
 
-Now `$this->Form->form($entity)->bind()->field('website')->resolve()` infers `url`. Explicit field types
+Now resolving the `website` field through the helper's form builder infers `url`. Explicit field types
 still take priority over type inference. Override `FieldResolver::createFieldConventions()`
 to supply application-specific association or choice-list conventions. The default
 `FieldConventions` uses the binding and the rendering context's optional live

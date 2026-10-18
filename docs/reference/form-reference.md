@@ -12,8 +12,7 @@ CakePHP protection metadata.
 ## form() and bind() {#bind}
 
 ```php
-use Configuration\FormConfig;
-use FormComposeFormConfig;
+use FormCompose\Configuration\FormConfig;
 
 $form = $this->Form
     ->form($article, config: new FormConfig(method: 'patch'))
@@ -111,8 +110,11 @@ renders it. Creating or configuring a control renders nothing. See
 ```php
 echo $form->controls([
     'title',
-    $form->control('body')->type('textarea')->attributes(['rows' => 12]),
-    $form->control('published')->type('checkbox'),
+    $form->control('body')
+        ->type('textarea')
+        ->attributes(['rows' => 12]),
+    $form->control('published')
+        ->type('checkbox'),
 ]);
 ```
 
@@ -125,7 +127,9 @@ Use `new FieldSpec('email', $emailConfig)` for reusable configured lists.
 ## field() {#field}
 
 ```php
-$title = $form->field('title')->help('Visible in article lists.')->resolve();
+$title = $form->field('title')
+    ->help('Visible in article lists.')
+    ->resolve();
 $currentTitle = $title->state->value;
 ```
 
@@ -137,7 +141,8 @@ and attribute inspection render nothing and register no inputs. Use
 ## blueprint() {#blueprint}
 
 ```php
-echo $form->blueprint('article')->template('forms/article');
+echo $form->blueprint('article')
+    ->template('forms/article');
 ```
 
 `blueprint(?string $blueprint = null, ?string $at = null): PartBuilder` renders
@@ -148,17 +153,22 @@ to that context path. Layout presentation uses the shared fluent methods.
 ## embedMany() {#embed-many}
 
 ```php
-echo $form->embedMany('comments', 'comment')->keys([0, 2])->label('Comments');
+echo $form->embedMany('comments', 'comment')
+    ->keys([0, 2])
+    ->label('Comments');
 ```
 
-`embedMany(string $path, string $blueprint, EmbedConfig|EmbedConfigBuilder|null $config = null): EmbedBuilder`
+`embedMany(string $path, string $blueprint, EmbedConfig|EmbedConfigBuilder|null $config = null): RepeatedEmbedBuilder`
 compiles and renders repeated rows at that path. Null keys infer bound keys;
 `[]` renders no rows. See [repeated embeds](/repeated-embeds).
 
 ## submit() {#submit}
 
 ```php
-echo $form->submit('Save')->name('intent')->value('save')->attributes(['class' => 'button']);
+echo $form->submit('Save')
+    ->name('intent')
+    ->value('save')
+    ->attributes(['class' => 'button']);
 ```
 
 `submit(string|Html $label, ButtonConfig|ButtonConfigBuilder|null $config = null): ButtonBuilder` creates
@@ -200,8 +210,10 @@ the buffered body once and do not open or close another form.
 ```php
 <?php
 
-/** @var \FormCompose\Form\FormSession $form */
-/** @var \FormCompose\Configuration\ButtonConfig $submitConfig */
+/**
+ * @var \FormCompose\Form\FormSession $form
+ * @var \FormCompose\Configuration\ButtonConfig $submitConfig
+ */
 ?>
 <?= $summary ?>
 <section<?= (string)$attributes ?>><?= $body ?></section>
@@ -213,7 +225,9 @@ the buffered body once and do not open or close another form.
 ## errorSummary() {#error-summary}
 
 ```php
-echo $form->errorSummary()->title('Please review these fields')->attributes(['class' => 'errors']);
+echo $form->errorSummary()
+    ->title('Please review these fields')
+    ->attributes(['class' => 'errors']);
 ```
 
 `errorSummary(SummaryConfig|SummaryConfigBuilder|null $config = null): SummaryBuilder` renders a summary
@@ -226,7 +240,7 @@ See [error summaries](/error-summaries).
 
 `hiddenFields(array $fields, PresentationConfig $presentation = new PresentationConfig()): string`
 renders internal metadata name/value pairs through the shared hidden element.
-For application fields, prefer `control('record_id')->type('hidden')` so binding,
+For application fields, set `type('hidden')` on a `control('record_id')` builder so binding,
 registration, and protection use the normal field workflow.
 
 ## registerFeedback() {#register-feedback}
@@ -238,8 +252,10 @@ See [handwritten feedback](/field-parts#preserve-feedback-and-accessible-names).
 
 ## postButton() and postLink() {#post-actions}
 
-The helper's standalone actions return `ActionBuilder`. Use `method()`, `data()`,
-`confirm()`, `block()`, `form(FormConfig)`, and common presentation setters.
+`postLink()` returns `ActionBuilder`; `postButton()` returns `PostButtonBuilder`,
+which also exposes native button `name()`, `value()`, and `disabled()` setters.
+Both offer `method()`, `data()`, `confirm()`, `block()`, `form(FormConfig|FormConfigBuilder)`,
+and common presentation setters.
 `block()` takes a nonempty block name or null. See [POST actions](/post-actions)
 for delegated JavaScript, blocks, and protection contracts.
 

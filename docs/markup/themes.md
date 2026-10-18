@@ -27,10 +27,8 @@ declare(strict_types=1);
 
 namespace App\View;
 
-use CakeView;
-use FormComposeTheme;
-use Rendering\Theme;
-use View\View;
+use Cake\View\View;
+use FormCompose\Rendering\Theme;
 
 class AppView extends View
 {
@@ -48,9 +46,13 @@ class AppView extends View
 Forms inherit that theme without repeating it at each binding:
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->form($user)->bind(); ?>
+<?php
+$form = $this->Form->form($user)
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('email')->type('email') ?>
+<?= $form->control('email')
+    ->type('email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -95,7 +97,7 @@ continue to use the base control element, and all parts without overrides still
 use their base elements.
 
 ::: tip Change just one control
-For an individual field, use `control('email')->template('forms/special-email')`. This directly selects `templates/element/forms/special-email.php`
+For an individual field, call `template('forms/special-email')` on its control builder. This directly selects `templates/element/forms/special-email.php`
 without changing the theme. [Use your own templates](/templates)
 shows a complete example and how to replace individual parts.
 :::
@@ -103,7 +105,7 @@ shows a complete example and how to replace individual parts.
 ## 3. Add default classes
 
 Put shared class and attribute defaults in the theme. Replace the `Theme` passed
-to the helper's `theme` setting with this instance, or select it with `form($data)->theme($theme)`
+to the helper's `theme` setting with this instance, or select it with the form builder's `theme($theme)` method
 before binding:
 
 ```php
@@ -122,7 +124,9 @@ and local attributes then merge on top. Add a class or an integration attribute
 for one field like this:
 
 ```php
-echo $form->control('email')->type('email')->attributes(['class' => 'wide', 'x-model' => 'email']);
+echo $form->control('email')
+    ->type('email')
+    ->attributes(['class' => 'wide', 'x-model' => 'email']);
 ```
 
 Its input receives the classes `email-input wide` and the `x-model` attribute.
@@ -138,8 +142,7 @@ this button element adds decorative markup before its label:
 <?php
 declare(strict_types=1);
 
-use FormComposeHtml;
-use Rendering\Html;
+use FormCompose\Rendering\Html;
 
 ?>
 <button<?= (string)$attributes ?>>
@@ -165,15 +168,17 @@ Forms and standalone actions inherit the helper's configured theme. Select a
 `Theme` instance on a form builder for a local override:
 
 ```php
-use FormComposeTheme;
-use Rendering\Theme;
+use FormCompose\Rendering\Theme;
 
 $form = $this->Form
     ->form($user)
     ->theme(new Theme(['forms/compact']))
     ->bind();
 // Or use the bundled markup for this binding:
-$form = $this->Form->form($user)->theme(Theme::base())->bind();
+$form = $this->Form
+    ->form($user)
+    ->theme(Theme::base())
+    ->bind();
 ```
 
 Omitting `theme()` or passing null inherits the helper setting.
@@ -310,8 +315,7 @@ Use the theme in an existing article view:
 ```php [templates/Articles/edit.php]
 <?php
 
-use FormComposeTheme;
-use Rendering\Theme;
+use FormCompose\Rendering\Theme;
 
 $form = $this->Form
     ->form($article)
@@ -329,13 +333,23 @@ $form = $this->Form
     ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('title')->help('Shown in the article list.') ?>
-<?= $form->control('body')->type('textarea') ?>
-<?= $form->control('author_id')->choices($authors)->placeholder('No author') ?>
-<?= $form->control('published')->type('checkbox') ?>
-<?= $form->control('visibility')->type('radio')->choices(['public' => 'Public', 'private' => 'Private']) ?>
-<?= $form->control('topics')->type('multicheckbox')->choices(['php' => 'PHP', 'cakephp' => 'CakePHP']) ?>
-<?= $form->control('attachment')->type('file') ?>
+<?= $form->control('title')
+    ->help('Shown in the article list.') ?>
+<?= $form->control('body')
+    ->type('textarea') ?>
+<?= $form->control('author_id')
+    ->choices($authors)
+    ->placeholder('No author') ?>
+<?= $form->control('published')
+    ->type('checkbox') ?>
+<?= $form->control('visibility')
+    ->type('radio')
+    ->choices(['public' => 'Public', 'private' => 'Private']) ?>
+<?= $form->control('topics')
+    ->type('multicheckbox')
+    ->choices(['php' => 'PHP', 'cakephp' => 'CakePHP']) ?>
+<?= $form->control('attachment')
+    ->type('file') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```

@@ -68,15 +68,17 @@ class InlineConfigurationTest extends CompositionTestCase
         static::assertSame('1', $this->xpath($html)->evaluate('string(//input[@name="version"]/@value)'));
     }
 
-    public function testRepeatedOccurrencesCaptureTheirSelectionBeforeDeferredRendering(): void
+    public function testRepeatedOccurrencesCapturePresentationWhileSelectionRemainsEditable(): void
     {
         $form = $this->helper(['reviewers' => [2 => ['email' => 'reviewer@example.test']]])
             ->form()
             ->bind();
-        $settings = EmbedConfig::builder()->keys([2]);
-        $rows = $form->embedMany('reviewers', 'profile', config: $settings);
-        $settings->keys([7]);
+        $settings = EmbedConfig::builder()->label('Original reviewers');
+        $rows = $form->embedMany('reviewers', 'profile', config: $settings)->keys([7]);
+        $settings->label('Changed reviewers');
+        $rows->keys([2]);
         $html = $form->open() . $rows->render() . $form->close();
+        static::assertSame('Original reviewers', $rows->config()->label);
         static::assertStringContainsString('reviewers[2][email]', $html);
         static::assertStringNotContainsString('reviewers[7]', $html);
     }

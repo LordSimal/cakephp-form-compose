@@ -62,10 +62,13 @@ hooks are the usual choice for labels and choices. See
 ```php
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->add('title')->required();
+    $form->add('title')
+        ->required();
     $form->embed('author', 'author');
-    $form->field('author.email')->label(__('Contact email'));
-    $form->presentation()->template('forms/article');
+    $form->field('author.email')
+        ->label(__('Contact email'));
+    $form->presentation()
+        ->template('forms/article');
 }
 ```
 
@@ -132,11 +135,15 @@ See [services and discovery](/blueprint-configuration).
 
 ## Repeated blueprints and occurrence options
 
-`EmbedConfig::builder()` exposes `keys(?array)`, `label(string|Html|null)`,
+`EmbedConfig::builder()` exposes `label(string|Html|null)`,
 `errors(bool = true)`, and shared presentation methods. `config()` captures a
-snapshot; `apply(EmbedConfig)` overlays one. Native constructors accept keys,
-label, and errors by name. Null keys infer rows; empty keys render no rows.
-Each selected row has its own scoped blueprint hook.
+snapshot; `apply(EmbedConfig)` overlays one. Native constructors accept label
+and errors by name. Row selection belongs to `keys(?array)` on the
+`RepeatedBlueprintBuilder` returned by blueprint `embedMany()` and the
+`RepeatedEmbedBuilder` returned by session `embedMany()`. Null keys infer rows;
+empty keys render no rows. Each selected row has its own scoped blueprint hook.
+`embeddedMany()` on a compiled layout returns `EmbedBuilder`, which only changes
+occurrence presentation and exposes no row-selection method.
 
 `RepeatedView` exposes keyed `rows`, `rows()`, direct `messages`, `hasErrors()`,
 `label()`, and `errors()`. Layouts render collection errors separately from row

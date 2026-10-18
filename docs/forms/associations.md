@@ -33,7 +33,10 @@ $this->set(compact('article', 'authors', 'tags'));
 Then render the fields without repeating conventional choice configuration:
 
 ```php [templates/Articles/edit.php]
-<?php $form = $this->Form->form($article)->bind(); ?>
+<?php
+$form = $this->Form->form($article)
+    ->bind();
+?>
 
 <?= $form->open() ?>
 <?= $form->control('author_id') ?>
@@ -79,7 +82,9 @@ including an empty array. Pass lists directly when using nonconventional foreign
 key names or when you want to avoid name-based discovery:
 
 ```php
-echo $form->control('tags._ids')->choices($availableTags)->label('Choose topics');
+echo $form->control('tags._ids')
+    ->choices($availableTags)
+    ->label('Choose topics');
 ```
 
 Here `$availableTags` is an application-supplied iterable choice list. The explicit
@@ -93,7 +98,8 @@ when needed. `multiple(false)` overrides the inferred multiple-selection default
 For a checkbox group, use the plugin's explicit field type:
 
 ```php
-echo $form->control('tags._ids')->type('multicheckbox');
+echo $form->control('tags._ids')
+    ->type('multicheckbox');
 ```
 
 The group still discovers `$tags`, selects the loaded IDs, and uses “Tags” as its

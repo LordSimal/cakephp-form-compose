@@ -17,25 +17,23 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Attribute\Form;
-use Blueprint\BlueprintBuilder;
-use Blueprint\FormBlueprint;
-use Blueprint\FormContext;
-use FormComposeBlueprintBuilder;
-use FormComposeForm;
-use FormComposeFormBlueprint;
-use FormComposeFormContext;
-use I18n\__;
-use function Cake__;
+use FormCompose\Attribute\Form;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
+use function Cake\I18n\__;
 
 #[Form('article')]
 class ArticleForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->add('title')->label(__('Article title'));
-        $form->add('body')->type('textarea');
-        $form->add('published')->type('checkbox');
+        $form->add('title')
+            ->label(__('Article title'));
+        $form->add('body')
+            ->type('textarea');
+        $form->add('published')
+            ->type('checkbox');
     }
 }
 ```
@@ -63,7 +61,12 @@ echo $this->Form
 Or use the selected defaults while arranging your own view:
 
 ```php
-<?php $form = $this->Form->form($article)->blueprint('article')->bind(); ?>
+<?php
+$form = $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->bind();
+?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
 <?= $form->control('body') ?>
@@ -87,7 +90,8 @@ Configure the complete form on its builder before binding. Use `url()`,
 Add this at the end of the blueprint's `configure()` hook:
 
 ```php
-$form->presentation()->template('forms/article');
+$form->presentation()
+    ->template('forms/article');
 ```
 
 The layout receives a scoped `BlueprintView`:
@@ -95,8 +99,10 @@ The layout receives a scoped `BlueprintView`:
 ```php
 <?php
 
-/** @var \FormCompose\Blueprint\BlueprintView $form */
-/** @var \FormCompose\Rendering\Attributes $attributes */
+/**
+ * @var \FormCompose\Blueprint\BlueprintView $form
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
 ?>
 <section<?= (string)$attributes ?>>
     <div class="article-content">
@@ -117,10 +123,12 @@ order. Each field still uses its own control template.
 ### Inspect values and field configuration
 
 ```php
-$title = $form->field('title')->resolve();
+$title = $form->field('title')
+    ->resolve();
 $value = $title->state->value;
 $showHint = $title->state->config->presentation->templateData['showHint'] ?? false;
-$disabled = $title->attributes()->has('disabled');
+$disabled = $title->attributes()
+    ->has('disabled');
 ```
 
 Resolution and inspection render nothing. For a local change, configure a new
@@ -139,14 +147,17 @@ the effective value after all configured sources and overrides.
 ```php
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->add('title')->label(__('Article title'));
-    $form->add('status')->choices([
-        'draft' => __('Draft'),
-        'review' => __('Ready for review'),
-    ]);
+    $form->add('title')
+        ->label(__('Article title'));
+    $form->add('status')
+        ->choices([
+            'draft' => __('Draft'),
+            'review' => __('Ready for review'),
+        ]);
 
     if ($context->request->getAttribute('canPublish')) {
-        $form->add('published')->type('checkbox');
+        $form->add('published')
+            ->type('checkbox');
     }
 }
 ```
@@ -159,8 +170,8 @@ injection. Declare a field with `add()`; edit an existing/inherited field with
 ### Remove or hide a declared field
 
 Use `remove('published')` after a field is declared, or avoid adding it when the
-condition is false. To hide it while retaining submission, use
-`field('published')->type('hidden')`. Hidden values remain untrusted submissions.
+condition is false. To hide it while retaining submission, set
+`type('hidden')` on the existing `field('published')` builder. Hidden values remain untrusted submissions.
 In layouts, `has()` guards optional wrappers and parts. `control()` for a known
 removed field emits an empty string; unknown paths still fail.
 
@@ -181,17 +192,19 @@ if the locale later changes; resolve a fresh field for the new locale.
 ### Computed text with PHP
 
 ```php
-$form->add('title')->label(
-    $context->request->getAttribute('isAdmin') ? __('Internal title') : __('Article title'),
-);
+$form->add('title')
+    ->label(
+        $context->request->getAttribute('isAdmin') ? __('Internal title') : __('Article title'),
+    );
 ```
 
 ### Translate in runtime configuration and templates
 
 ```php
-$form->add('attachments')->help(
-    static fn(): string => __n('One attachment', '{0} attachments', $count, $count),
-);
+$form->add('attachments')
+    ->help(
+        static fn(): string => __n('One attachment', '{0} attachments', $count, $count),
+    );
 ```
 
 Import `Cake\I18n\__n` for this hook fragment; `$count` comes from your application. Closures return string, trusted
@@ -211,7 +224,7 @@ never marks a message as trusted HTML.
 Inheritance uses normal PHP: call `parent::configure($form, $context)`, then edit,
 remove, or add declarations. The parent occurrence finishes authoring before
 children compile, so repeated `keys()` selects which row hooks run. Qualified
-edits such as `field('author.email')->label(...)` overlay compiled child defaults.
+edits to `field('author.email')`, such as its `label()` setting, overlay compiled child defaults.
 Duplicate declarations fail; use `field()` for edits. Remove an inherited
 declaration before intentionally replacing it with `add()` or `embed()`.
 Per-call configs and fluent edits overlay these compiled defaults.

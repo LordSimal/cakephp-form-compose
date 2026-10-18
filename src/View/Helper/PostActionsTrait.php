@@ -6,6 +6,7 @@ namespace FormCompose\View\Helper;
 use Cake\View\Helper\HtmlHelper;
 use FormCompose\Builder\ActionBuilder;
 use FormCompose\Builder\ActionConfigBuilder;
+use FormCompose\Builder\PostButtonBuilder;
 use FormCompose\Builder\ThemeBuilder;
 use FormCompose\Configuration\ActionConfig;
 use FormCompose\Configuration\FormConfig;
@@ -51,10 +52,10 @@ trait PostActionsTrait
         ActionConfig|ActionConfigBuilder|null $config = null,
         Theme|ThemeBuilder|string|null $theme = null,
         ?RendererInterface $renderer = null,
-    ): ActionBuilder {
+    ): PostButtonBuilder {
         $theme = $theme instanceof ThemeBuilder ? $theme->build() : $theme;
 
-        return new ActionBuilder(fn(ActionConfig $settings): string => ($this->postActions ??=
+        return new PostButtonBuilder(fn(ActionConfig $settings): string => ($this->postActions ??=
             $this->createPostActionRenderer())->render(
             $label,
             $url,

@@ -32,16 +32,10 @@ abstract class ConfigurationBuilder
         /** @var T $updated merge() preserves the concrete configuration domain. */
         $updated = $this->configuration->merge($config);
         $this->configuration = $updated;
-        $this->changed();
     }
 
     /** @return T An immutable snapshot independent of future authoring edits. */
     abstract public function config(): Configuration;
-
-    /** Specialize attached authoring behavior without changing snapshot semantics. */
-    protected function changed(): void
-    {
-    }
 
     /** Read current presentation through the typed configuration boundary. */
     protected function currentPresentation(): PresentationConfig
@@ -49,13 +43,12 @@ abstract class ConfigurationBuilder
         return $this->configuration->presentation;
     }
 
-    /** Capture one presentation update before notifying attached authoring behavior. */
+    /** Capture one presentation update. */
     protected function updatePresentation(PresentationConfig $presentation): static
     {
         /** @var T $updated Presentation changes preserve the configuration domain. */
         $updated = $this->configuration->withPresentation($presentation);
         $this->configuration = $updated;
-        $this->changed();
 
         return $this;
     }

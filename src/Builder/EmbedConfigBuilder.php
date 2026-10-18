@@ -12,20 +12,10 @@ use FormCompose\Rendering\Html;
  */
 class EmbedConfigBuilder extends ConfigurationBuilder
 {
-    /** @param list<int|string>|null $value Configured keys data. */
-    public function keys(?array $value): static
-    {
-        $this->configuration = $this->config()->withKeys($value);
-        $this->changed();
-
-        return $this;
-    }
-
     /** Set label on this mutable builder. */
     public function label(string|Html|null $value): static
     {
         $this->configuration = $this->config()->withLabel($value);
-        $this->changed();
 
         return $this;
     }
@@ -34,7 +24,6 @@ class EmbedConfigBuilder extends ConfigurationBuilder
     public function errors(bool $value = true): static
     {
         $this->configuration = $this->config()->withErrors($value);
-        $this->changed();
 
         return $this;
     }

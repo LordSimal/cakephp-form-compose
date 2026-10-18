@@ -33,7 +33,6 @@ class FormConfigBuilder extends ConfigurationBuilder
     protected function updateFormConfig(FormConfig $config): void
     {
         $this->configuration = $config;
-        $this->changed();
     }
 
     /** Overlay explicitly supplied settings from the same configuration domain. */

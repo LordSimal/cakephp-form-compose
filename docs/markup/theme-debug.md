@@ -16,10 +16,8 @@ Enable `themeDebug` on the helper to see which PHP elements rendered and why the
 were selected. For example, in `AppView::initialize()`:
 
 ```php
-use CakeConfigure;
-use Core\Configure;
-use FormComposeTheme;
-use Rendering\Theme;
+use Cake\Core\Configure;
+use FormCompose\Rendering\Theme;
 
 $this->addHelper('Form', [
     'className' => 'FormCompose.Form',

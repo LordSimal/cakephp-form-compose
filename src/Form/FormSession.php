@@ -15,11 +15,11 @@ use FormCompose\Builder\ButtonBuilder;
 use FormCompose\Builder\ButtonConfigBuilder;
 use FormCompose\Builder\ControlBatch;
 use FormCompose\Builder\ControlBuilder;
-use FormCompose\Builder\EmbedBuilder;
 use FormCompose\Builder\EmbedConfigBuilder;
 use FormCompose\Builder\FieldBuilder;
 use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Builder\PartBuilder;
+use FormCompose\Builder\RepeatedEmbedBuilder;
 use FormCompose\Builder\SummaryBuilder;
 use FormCompose\Builder\SummaryConfigBuilder;
 use FormCompose\Configuration\ButtonConfig;
@@ -278,14 +278,18 @@ class FormSession
         string $path,
         string $blueprint,
         EmbedConfig|EmbedConfigBuilder|null $config = null,
-    ): EmbedBuilder {
-        return new EmbedBuilder(function (EmbedConfig $settings) use ($path, $blueprint): string {
-            $this->lifecycle->assertOpen();
-            $repeat = new RepeatedDefinition($path, $blueprint, $settings->keys, $settings);
-            $compiled = $this->blueprintFactory->repeated($repeat, FormContext::fromBinding($this->binding));
+    ): RepeatedEmbedBuilder {
+        return new RepeatedEmbedBuilder(
+            /** @param list<int|string>|null $keys Selected row keys. */
+            function (EmbedConfig $settings, ?array $keys) use ($path, $blueprint): string {
+                $this->lifecycle->assertOpen();
+                $repeat = new RepeatedDefinition($path, $blueprint, $keys, $settings);
+                $compiled = $this->blueprintFactory->repeated($repeat, FormContext::fromBinding($this->binding));
 
-            return $this->renderRepeated($path, $compiled);
-        }, EmbedConfig::capture($config));
+                return $this->renderRepeated($path, $compiled);
+            },
+            EmbedConfig::capture($config),
+        );
     }
 
     /**

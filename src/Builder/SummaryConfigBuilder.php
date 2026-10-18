@@ -16,7 +16,6 @@ class SummaryConfigBuilder extends ConfigurationBuilder
     public function title(string|Html|null $value): static
     {
         $this->configuration = $this->config()->withTitle($value);
-        $this->changed();
 
         return $this;
     }

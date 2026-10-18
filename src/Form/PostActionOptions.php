@@ -38,11 +38,12 @@ final class PostActionOptions
      */
     public static function trigger(array $options): void
     {
-        if (isset($options['type']) && $options['type'] !== 'submit') {
-            throw new InvalidArgumentException('Post action buttons must use type submit.');
-        }
-
         foreach ([
+            'type',
+            'name',
+            'value',
+            'disabled',
+            'form',
             'href',
             'formaction',
             'formmethod',

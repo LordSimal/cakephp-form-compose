@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use FormCompose\Configuration\ActionConfig;
+use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Configuration\FormConfig;
 use FormCompose\Configuration\PresentationConfig;
 use InvalidArgumentException;
@@ -12,6 +13,8 @@ use InvalidArgumentException;
 final readonly class PostAction
 {
     public FormConfig $form;
+
+    public ButtonConfig $button;
 
     /** @var array<string, mixed> Validated, flattened locked payload. */
     public array $data;
@@ -52,6 +55,12 @@ final readonly class PostAction
             PostActionSubmission::id($form->id);
         }
 
+        if ($kind === 'link' && ($config->name !== null || $config->value !== null || $config->disabled)) {
+            throw new InvalidArgumentException('Button name, value, and disabled settings require a post button.');
+        }
+
+        $this->button = new ButtonConfig(name: $config->name, value: $config->value)->withDisabled($config->disabled)
+            ->withPresentation($presentation);
         $this->form = $form;
         $this->data = PostActionSubmission::data($config->data);
         $this->presentation = $presentation;

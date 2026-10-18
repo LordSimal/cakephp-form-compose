@@ -23,15 +23,17 @@ then places it above the body. Summaries are opt-in and emit nothing without
 eligible errors. Configure a reusable summary snapshot when needed:
 
 ```php
-use Configuration\SummaryConfig;
-use FormComposeSummaryConfig;
+use FormCompose\Configuration\SummaryConfig;
 
 $summary = SummaryConfig::builder()
     ->title('Please review these fields')
     ->attributes(['class' => 'validation-summary'])
     ->config();
 
-echo $this->Form->form($article)->blueprint('article')->errorSummary($summary);
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary($summary);
 ```
 
 ## Keep custom layouts and actions without manual buffering
@@ -43,18 +45,21 @@ arranges the prepared `$summary`, `$body`, and buttons. Configure that layout wi
 ```php
 <?php
 
-/** @var \FormCompose\Form\FormSession $form */
-/** @var string $body */
-/** @var string $summary */
-/** @var string|\FormCompose\Rendering\Html|false $submit */
-/** @var \FormCompose\Configuration\ButtonConfig $submitConfig */
+/**
+ * @var \FormCompose\Form\FormSession $form
+ * @var string $body
+ * @var string $summary
+ * @var string|\FormCompose\Rendering\Html|false $submit
+ * @var \FormCompose\Configuration\ButtonConfig $submitConfig
+ */
 ?>
 <?= $summary ?>
 <div class="form-body">
     <?= $body ?>
 </div>
 <div class="form-actions">
-    <?= $form->submit('Check server validation')->attributes(['formnovalidate' => true]) ?>
+    <?= $form->submit('Check server validation')
+        ->attributes(['formnovalidate' => true]) ?>
     <?php if ($submit !== false): ?>
         <?= $form->submit($submit, config: $submitConfig) ?>
     <?php endif; ?>
@@ -70,10 +75,13 @@ preparation will not appear in that summary. See [layout variables](/template-re
 Rendering, rather than merely creating a builder, records feedback:
 
 ```php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->form($article)
+    ->bind();
 echo $form->open();
-$body = $form->controls(['title', 'body'])->render();
-echo $form->errorSummary()->title('Check your article');
+$body = $form->controls(['title', 'body'])
+    ->render();
+echo $form->errorSummary()
+    ->title('Check your article');
 echo $body;
 echo $form->submit('Save');
 echo $form->close();

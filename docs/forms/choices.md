@@ -29,10 +29,10 @@ needs to distinguish them. Zero is also a real choice value.
 ## Backed enums
 
 ```php
-use AppStatus;
-use Enum\Status;
+use App\Enum\Status;
 
-echo $form->control('status')->choices(Status::class);
+echo $form->control('status')
+    ->choices(Status::class);
 ```
 
 A backed enum class renders all cases in declaration order. Cases submit their
@@ -43,10 +43,8 @@ Explicit `choices([])` or `choices(null)` opts out of discovery.
 ### Custom enum labels
 
 ```php
-use CakeEnumLabelInterface;
-use Database\Type\EnumLabelInterface;
-use I18n\__;
-use function Cake__;
+use Cake\Database\Type\EnumLabelInterface;
+use function Cake\I18n\__;
 
 enum Status: string implements EnumLabelInterface
 {
@@ -69,7 +67,9 @@ ordinary text. Pure enums fail because they have no submitted backing value.
 ### Subsets and multiple selections
 
 ```php
-echo $form->control('status')->type('radio')->choices([Status::Published, Status::Draft]);
+echo $form->control('status')
+    ->type('radio')
+    ->choices([Status::Published, Status::Draft]);
 echo $form->control('allowed_statuses')
     ->type('multicheckbox')
     ->choices(Status::class)
@@ -85,23 +85,23 @@ their type and do not consume choice iterators.
 Simple maps remain convenient data. Use typed configs for choice metadata:
 
 ```php
-use Configuration\ChoiceConfig;
-use Configuration\ChoiceGroupConfig;
-use FormComposeChoiceConfig;
-use FormComposeChoiceGroupConfig;
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\ChoiceGroupConfig;
 
-echo $form->control('audience')->choices([
-    new ChoiceGroupConfig('Public', [
-        'everyone' => 'Everyone',
-        'subscribers' => 'Subscribers',
-    ]),
-    ChoiceGroupConfig::builder('Internal')
-        ->choices([
-            ChoiceConfig::builder('staff', 'Staff')->attributes(['data-tier' => 'internal']),
-            new ChoiceConfig(value: 'legacy', label: 'Legacy team', attributes: ['disabled' => true]),
-        ])
-        ->attributes(['data-group' => 'internal']),
-]);
+echo $form->control('audience')
+    ->choices([
+        new ChoiceGroupConfig('Public', [
+            'everyone' => 'Everyone',
+            'subscribers' => 'Subscribers',
+        ]),
+        ChoiceGroupConfig::builder('Internal')
+            ->choices([
+                ChoiceConfig::builder('staff', 'Staff')
+                    ->attributes(['data-tier' => 'internal']),
+                new ChoiceConfig(value: 'legacy', label: 'Legacy team', attributes: ['disabled' => true]),
+            ])
+            ->attributes(['data-group' => 'internal']),
+    ]);
 ```
 
 Nested maps such as `['Public' => ['everyone' => 'Everyone']]` also create groups.
@@ -129,7 +129,9 @@ every box; enforce minimum selections in CakePHP validation.
 ## A single checkbox
 
 ```php
-echo $form->control('published')->type('checkbox')->label('Publish this article');
+echo $form->control('published')
+    ->type('checkbox')
+    ->label('Publish this article');
 ```
 
 The default checked value is `'1'`; a hidden fallback submits `'0'` when unchecked.
@@ -147,7 +149,9 @@ echo $form->control('approval')
 ## Multiple selections
 
 ```php
-echo $form->control('topics')->multiple()->choices(['php' => 'PHP', 'testing' => 'Testing']);
+echo $form->control('topics')
+    ->multiple()
+    ->choices(['php' => 'PHP', 'testing' => 'Testing']);
 ```
 
 Or use `type('multicheckbox')` instead of a multiple select. Both submit under

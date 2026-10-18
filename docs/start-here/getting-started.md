@@ -85,7 +85,8 @@ controller or your existing application services.
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->form($article)
+    ->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
@@ -95,7 +96,7 @@ $form = $this->Form->form($article)->bind();
 <?= $form->close() ?>
 ```
 
-1. `form($article)->bind()` creates an isolated form session using the entity's CakePHP context.
+1. `form($article)` followed by `bind()` creates an isolated form session using the entity's CakePHP context.
 2. `open()` renders the opening tag and initial method/CSRF inputs.
 3. `control()` renders a complete field: label, input, help, and errors.
 4. `submit()` renders a button. `close()` adds final protection fields and closes

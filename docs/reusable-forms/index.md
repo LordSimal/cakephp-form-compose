@@ -20,16 +20,20 @@ layer that repeats in your application.
 ## Keep local configuration inline
 
 ```php
-echo $form->control('email')->label('Email address')->required();
+echo $form->control('email')
+    ->label('Email address')
+    ->required();
 ```
 
 To share settings without a blueprint:
 
 ```php
-use Configuration\FieldConfig;
-use FormComposeFieldConfig;
+use FormCompose\Configuration\FieldConfig;
 
-$email = FieldConfig::builder()->type('email')->required()->config();
+$email = FieldConfig::builder()
+    ->type('email')
+    ->required()
+    ->config();
 echo $form->control('email', config: $email);
 ```
 
@@ -46,7 +50,10 @@ for the complete class.
 ## Render all declared fields
 
 ```php
-echo $this->Form->form($article)->blueprint('article')->submit('Save');
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->submit('Save');
 ```
 
 The complete form includes opening/closing markup and the default action. Use
@@ -56,7 +63,12 @@ collection; field templates still arrange each individual control.
 ## Use blueprint defaults with a manual layout {#select-defaults-for-the-whole-binding}
 
 ```php
-<?php $form = $this->Form->form($article)->blueprint('article')->bind(); ?>
+<?php
+$form = $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->bind();
+?>
 <?= $form->open() ?>
 <section class="article-main">
     <?= $form->controls(['title', 'body']) ?>
