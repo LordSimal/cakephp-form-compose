@@ -20,10 +20,14 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 ```
 
 ```php [FormCompose]
-<?php $form = $this->Compose->bind($article); ?>
+<?php
+$form = $this->Compose->form($article)->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('title', ['attributes' => ['class' => 'title-input']]) ?>
-<?= $form->control('author_id', ['options' => $authors, 'empty' => 'No author']) ?>
+<?= $form->control('title')->attributes(['class' => 'title-input']) ?>
+<?= $form->control('author_id')
+    ->choices($authors)
+    ->placeholder('No author') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -32,10 +36,10 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 
 | Existing concern | FormCompose equivalent |
 | --- | --- |
-| `create($entity)` / `end()` | `bind($entity)` then session `open()` / `close()` |
-| Inline HTML attributes on `control()` | Nested `attributes` for the input, `partAttributes` for other parts |
+| `create($entity)` / `end()` | `form($entity)`, then `bind()`, then session `open()` / `close()` |
+| Inline HTML attributes on `control()` | `attributes([...])` for the input, `partAttributes(part, [...])` for other parts |
 | String templates and widgets | Application-owned PHP elements through a `Theme`; custom submission semantics through `FieldTypeInterface` |
-| `empty` select option | `empty` accepts a label, true, or false. Optional single selects automatically get a blank choice. |
+| `empty` select option | `placeholder()` accepts a label, true, false, or null. Optional single selects automatically get a blank choice. |
 | Validation feedback | The existing CakePHP context supplies errors and constraints; `help` and `errors` parts associate with the input |
 | Reusable form configuration | Optional blueprints; templates still own layout |
 | CSRF, method overrides, tamper protection | Keep CakePHP middleware and FormProtectionComponent enabled; input rendering registers submitted names |
@@ -58,4 +62,4 @@ inputs. `close()` rejects missing generated feedback targets. For handwritten
 feedback, use `$form->registerFeedback($field, 'help')` or `'errors'` after emitting
 the element with its prepared attributes. To deliberately omit inline
 descriptions while keeping summary errors, pass `['aria-describedby' => null]`
-to `input()` and to `register()` for handwritten inputs.
+through the input builder's `attributes()` method and to `register()` for handwritten inputs.

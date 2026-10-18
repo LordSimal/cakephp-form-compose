@@ -36,10 +36,12 @@ class AssociationSubmissionTest extends AssociationTestCase
     {
         $helper = $this->helper(['tags' => ['_ids' => $submitted]]);
         $helper->getView()->set('tags', ['php' => 'PHP', 'cake' => 'CakePHP', 'css' => 'CSS', 0 => 'Zero']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        static::assertSame($submitted, $form->field('tags._ids')->state->value);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        static::assertSame($submitted, $form->field('tags._ids')->resolve()->state->value);
         $form->open();
-        $html = $form->control('tags._ids');
+        $html = $form->control('tags._ids')->render();
         $form->close();
 
         static::assertSame((float)$selected, $this->xpath($html)->evaluate('count(//option[@selected])'));
@@ -50,36 +52,41 @@ class AssociationSubmissionTest extends AssociationTestCase
     public function testExplicitAndConfiguredValueSourcesRetainTheirPrecedence(): void
     {
         $helper = $this->helper(['tags' => ['_ids' => ['css']]]);
-        $context = $helper->bind($this->article(), [
-            'context' => ['table' => $this->articles],
-            'valueSources' => ['context', 'data'],
-        ]);
-        static::assertSame(['php', 'cake'], $context->field('tags._ids')->state->value);
-        static::assertSame([], $context->field('tags._ids', ['value' => []])->state->value);
+        $context = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->valueSources(['context', 'data'])
+            ->bind();
+        static::assertSame(['php', 'cake'], $context->field('tags._ids')->resolve()->state->value);
+        static::assertSame(
+            [],
+            $context->field('tags._ids')->value([])->resolve()->state->value,
+        );
         $helper->getView()->setRequest($helper->getView()
             ->getRequest()
             ->withQueryParams(['tags' => ['_ids' => ['php']]]));
-        $query = $helper->bind($this->article(), [
-            'context' => ['table' => $this->articles],
-            'valueSources' => ['query', 'context'],
-        ]);
-        static::assertSame(['php'], $query->field('tags._ids')->state->value);
+        $query = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->valueSources(['query', 'context'])
+            ->bind();
+        static::assertSame(['php'], $query->field('tags._ids')->resolve()->state->value);
     }
 
     public function testAssociationFormsProtectNestedFieldsAndLockPrimaryKeys(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $helper->getView()->set('tags', ['php' => 'PHP', 'css' => 'CSS']);
-        $form = $helper->bind($this->article(), [
-            'url' => '/articles/save',
-            'context' => ['table' => $this->articles],
-        ]);
-        $form->field('comments.0.author_id')->attributes();
+        $form = $helper->form($this->article())
+            ->url('/articles/save')
+            ->context(['table' => $this->articles])
+            ->bind();
+        $form->field('comments.0.author_id')->resolve()->attributes();
         $html = $form->open();
-        $html .= $form->control('id') . $form->control('tags._ids');
+        $html .= $form->control('id')->render() . $form->control('tags._ids')->render();
         $html .=
-            $form->control('details.summary') . $form->control('comments.0.id') . $form->control('comments.0.body');
-        $html .= $form->control('tags.0._joinData.priority') . $form->close();
+            $form->control('details.summary')->render()
+            . $form->control('comments.0.id')->render()
+            . $form->control('comments.0.body')->render();
+        $html .= $form->control('tags.0._joinData.priority')->render() . $form->close();
         $data = [
             'id' => '42',
             'tags' => ['_ids' => ['css'], 0 => ['_joinData' => ['priority' => '4']]],
@@ -102,9 +109,14 @@ class AssociationSubmissionTest extends AssociationTestCase
     public function testDisabledAssociationInputsDoNotBecomeProtectedSubmissions(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind($this->article(), ['url' => '/articles/save', 'context' => ['table' => $this->articles]]);
-        $html = $form->open() . $form->control('id');
-        $html .= $form->control('tags._ids', ['disabled' => true]) . $form->close();
+        $form = $helper->form($this->article())
+            ->url('/articles/save')
+            ->context(['table' => $this->articles])
+            ->bind();
+        $html = $form->open() . $form->control('id')->render();
+        $html .=
+            $form->control('tags._ids')->disabled(true)->render()
+            . $form->close();
         $data = ['id' => '42', '_Token' => $this->tokens($html)];
         $protector = new FormProtector();
         $session = $helper->getView()->getRequest()->getSession()->id();
@@ -125,8 +137,10 @@ class AssociationSubmissionTest extends AssociationTestCase
             $this->tags->setDisplayField('name');
             $helper = $this->helper();
             $helper->getView()->set('tags', $this->tags->find('list'));
-            $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-            $html = $form->open() . $form->control('tags._ids') . $form->close();
+            $form = $helper->form($this->article())
+                ->context(['table' => $this->articles])
+                ->bind();
+            $html = $form->open() . $form->control('tags._ids')->render() . $form->close();
             static::assertSame(3.0, $this->xpath($html)->evaluate('count(//option)'));
             static::assertSame(2.0, $this->xpath($html)->evaluate('count(//option[@selected])'));
             static::assertStringContainsString('CakePHP</option>', $html);

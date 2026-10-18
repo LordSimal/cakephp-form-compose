@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\CompositeType;
 use FormCompose\Form\Field\FieldChildren;
@@ -13,13 +14,12 @@ use FormCompose\Form\Field\FieldTypeInterface;
 use FormCompose\Form\Field\NativeType;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\RenderContext;
-use FormCompose\Rendering\TemplateOptions;
 
 /**
  * Builds a BoundField from a context path and merged configuration.
  *
  * Combines compiled blueprint defaults and per-call overrides, normalizes the
- * template shorthand to templates['control'], evaluates deferred label/help text,
+ * typed presentation configuration, evaluates deferred label/help text,
  * infers a control type,
  * applies association conventions, resolves its value, and derives its input
  * name, ID, constraints, and errors.
@@ -37,42 +37,41 @@ class FieldResolver
     }
 
     /**
-     * Bind blueprint defaults and inline options to a field state snapshot.
+     * Bind blueprint defaults and per-call configuration to a field state snapshot.
      *
-     * @param array<string, mixed> $options Explicit field overrides.
      */
     public function resolve(
         string $field,
-        array $options,
+        FieldConfig $config,
         FormLifecycle $lifecycle,
         ?BoundField $parent = null,
     ): BoundField {
         $definition = new FieldDefinition($field);
         $path = $definition->path;
-        $defaults = array_column($this->binding->definition->fields ?? [], 'options', 'path')[$path] ?? [];
+        $defaults = array_column(
+            $this->binding->definition->fields ?? [],
+            'config',
+            'path',
+        )[$path] ?? new FieldConfig();
         $conventions = $this->createFieldConventions();
-        $options = array_replace(
-            $defaults,
-            $options,
-        );
-        FieldOptions::validate($options);
-        $options = FieldText::resolve(TemplateOptions::normalize($conventions->resolve($path, $options)));
+        $config = FieldText::resolve($conventions->resolve($path, $defaults->merge($config)));
         $identity = new FieldIdentity(
             $path,
-            (string)($options['type'] ?? $this->inferType($path, $options)),
+            $config->type ?? $this->inferType($path, $config),
             $this->binding->id,
-            $options,
+            $config,
         );
         $type = $identity->type;
+        $feedback = $this->createContextFeedback();
 
-        $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $options), [
+        $state = new FieldState($path, $type, $this->createValueResolver()->resolve($path, $config), [
             'name' => $identity->name,
             'id' => $identity->id,
-            'messages' => $this->composite($type) ? $conventions->directMessages($path) : $conventions->messages($path),
+            'messages' => $this->composite($type) ? $feedback->directMessages($path) : $feedback->messages($path),
             'composite' => $this->composite($type),
-            'requiredMessage' => $conventions->requiredMessage($path),
-            'constraints' => Constraints::resolve($this->binding->context, $path, $type, $options),
-            'options' => $options,
+            'requiredMessage' => $feedback->requiredMessage($path),
+            'constraints' => Constraints::resolve($this->binding->context, $path, $type, $config),
+            'config' => $config,
         ]);
 
         return $this->createBoundField($state, $lifecycle, $parent);
@@ -81,15 +80,14 @@ class FieldResolver
     /**
      * Map context metadata to useful native controls.
      *
-     * @param array<string, mixed> $options Explicit field options.
      */
-    protected function inferType(string $path, array $options): string
+    protected function inferType(string $path, FieldConfig $config): string
     {
         if (in_array(array_last(explode('.', $path)), $this->binding->passwordFields, true)) {
             return 'password';
         }
 
-        if (isset($options['options'])) {
+        if ($config->choices !== null) {
             return 'select';
         }
 
@@ -125,9 +123,9 @@ class FieldResolver
     protected function createFieldChildren(FormLifecycle $lifecycle, ?BoundField $parent = null): FieldChildren
     {
         return new FieldChildren(
-            fn(string $path, array $options, BoundField $parent): BoundField => $this->resolve(
+            fn(string $path, FieldConfig $config, BoundField $parent): BoundField => $this->resolve(
                 $path,
-                $options,
+                $config,
                 $lifecycle,
                 $parent,
             ),
@@ -165,5 +163,11 @@ class FieldResolver
     protected function createFieldConventions(): FieldConventions
     {
         return new FieldConventions($this->binding, $this->rendering->viewVariable);
+    }
+
+    /** Supply context validation feedback independently of configuration conventions. */
+    protected function createContextFeedback(): ContextFeedback
+    {
+        return new ContextFeedback($this->binding);
     }
 }

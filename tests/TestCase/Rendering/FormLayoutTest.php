@@ -5,6 +5,7 @@ namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\Form\FormProtector;
 use Cake\View\Form\ArrayContext;
+use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\Theme;
@@ -21,20 +22,20 @@ class FormLayoutTest extends FormTestCase
 {
     public function testCustomLayoutReceivesTheFinishedSummaryBodyAndActionOptions(): void
     {
-        $html = $this->helper()->render(
-            TitleForm::class,
-            new ArrayContext([
+        $html = $this->helper()
+            ->form(new ArrayContext([
                 'defaults' => ['title' => 'Keep <this>'],
                 'errors' => ['title' => ['invalid' => 'Fix <title>']],
-            ]),
-            [
-                'template' => 'forms/editor',
-                'templateData' => ['caption' => '<Project editor>'],
-                'errorSummary' => true,
-            ],
-            submit: 'Save <project>',
-            submitOptions: ['name' => 'intent', 'value' => 'save'],
-        );
+            ]))
+            ->blueprint(TitleForm::class)
+            ->partTemplate('layout', 'forms/editor')
+            ->templateData(['caption' => '<Project editor>'])
+            ->errorSummary(true)
+            ->submit('Save <project>')
+            ->submitConfig(
+                ButtonConfig::builder()->name('intent')->value('save'),
+            )
+            ->render();
         $xpath = $this->xpath($html);
         static::assertSame(1.0, $xpath->evaluate('count(//form)'));
         static::assertSame(1.0, $xpath->evaluate('count(//article[@data-form-layout])'));
@@ -50,14 +51,15 @@ class FormLayoutTest extends FormTestCase
 
     public function testNestedFeedbackIsAlreadyAvailableWhenTheCompleteLayoutRuns(): void
     {
-        $html = $this->helper()->render(
-            CommentsForm::class,
-            new ArrayContext([
+        $html = $this->helper()
+            ->form(new ArrayContext([
                 'defaults' => ['comments' => [2 => ['body' => 'A comment']]],
                 'errors' => ['comments' => ['count' => 'Add a comment', 2 => ['body' => ['invalid' => 'Fix row two']]]],
-            ]),
-            ['template' => 'forms/editor', 'errorSummary' => true],
-        );
+            ]))
+            ->blueprint(CommentsForm::class)
+            ->partTemplate('layout', 'forms/editor')
+            ->errorSummary(true)
+            ->render();
         static::assertStringContainsString('href="#form-compose-1-comments.2.body"', $html);
         static::assertSame(1.0, $this->xpath($html)->evaluate(
             'count(//article/section//li[contains(., "Fix row two")])',
@@ -69,17 +71,16 @@ class FormLayoutTest extends FormTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['csrfToken' => $csrf, 'formTokenData' => []]);
-        $html = $helper->render(
-            TitleIdForm::class,
-            new ArrayContext([
-                'defaults' => ['id' => 42, 'title' => 'Example'],
-            ]),
-            ['method' => 'patch', 'template' => 'forms/editor'],
-            submitOptions: [
-                'name' => 'intent',
-                'value' => 'save',
-            ],
-        );
+        $html = $helper->form(new ArrayContext([
+            'defaults' => ['id' => 42, 'title' => 'Example'],
+        ]))
+            ->blueprint(TitleIdForm::class)
+            ->method('patch')
+            ->partTemplate('layout', 'forms/editor')
+            ->submitConfig(
+                ButtonConfig::builder()->name('intent')->value('save'),
+            )
+            ->render();
         $xpath = $this->xpath($html);
         static::assertSame('PATCH', $xpath->evaluate('string(//input[@name="_method"]/@value)'));
         static::assertSame($csrf, $xpath->evaluate('string(//input[@name="_csrfToken"]/@value)'));
@@ -115,7 +116,12 @@ class FormLayoutTest extends FormTestCase
             new Theme(['themes/form-layout']),
             themeDebug: true,
         ));
-        $html = $helper->bind(null, ['method' => 'patch'], renderer: $renderer, blueprint: TitleForm::class)->render();
+        $html = $helper->form()
+            ->method('patch')
+            ->renderer($renderer)
+            ->blueprint(TitleForm::class)
+            ->bind()
+            ->render();
         static::assertStringContainsString('<main data-method-layout>', $html);
         static::assertStringContainsString('element: themes/form-layout/form/patch/layout', $html);
         static::assertStringContainsString('element: FormCompose.form/base/form/layout', $html);
@@ -138,8 +144,14 @@ class FormLayoutTest extends FormTestCase
 
     public function testLocalLayoutSelectionOverridesTheBindingShorthand(): void
     {
-        $form = $this->helper()->bind(null, ['template' => 'forms/failing-editor'], blueprint: TitleForm::class);
-        $html = $form->render(options: ['templates' => ['layout' => 'forms/editor']], submit: false);
+        $form = $this->helper()
+            ->form()
+            ->partTemplate('layout', 'forms/failing-editor')
+            ->blueprint(TitleForm::class)
+            ->partTemplate('layout', 'forms/editor')
+            ->submit(false)
+            ->bind();
+        $html = $form->render();
         static::assertStringContainsString('data-form-layout', $html);
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//button)'));
         static::assertStringNotContainsString('Partial action', $html);
@@ -147,31 +159,26 @@ class FormLayoutTest extends FormTestCase
 
     public function testInvalidLayoutSelectionFailsBeforeOpeningTheSession(): void
     {
-        $form = $this->helper()->bind(blueprint: TitleForm::class);
+        $builder = $this->helper()->form()->blueprint(TitleForm::class);
         try {
-            $form->render(options: ['template' => '']);
+            $builder->template('');
             static::fail('Expected invalid layout selection.');
         } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertStringContainsString('nonempty element name', $invalidArgumentException->getMessage());
+            static::assertStringContainsString('nonempty strings', $invalidArgumentException->getMessage());
         }
 
-        static::assertStringContainsString('<form', $form->render());
+        static::assertStringContainsString('<form', $builder->render());
     }
 
-    public function testConflictingLayoutOptionsFailBeforeOpeningTheSession(): void
+    public function testTheLastLayoutSelectionWinsBeforeBinding(): void
     {
-        $form = $this->helper()->bind(blueprint: TitleForm::class);
-        try {
-            $form->render(options: [
-                'template' => 'forms/editor',
-                'templates' => ['layout' => 'forms/failing-editor'],
-            ]);
-            static::fail('Expected conflicting layout selection.');
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertStringContainsString('templates[layout]', $invalidArgumentException->getMessage());
-        }
-
-        static::assertStringContainsString('data-form-layout', $form->render(options: ['template' => 'forms/editor']));
+        $builder = $this->helper()
+            ->form()
+            ->blueprint(TitleForm::class)
+            ->template('forms/failing-editor')
+            ->template('forms/editor');
+        static::assertSame('forms/editor', $builder->config()->presentation->templates['layout']);
+        static::assertStringContainsString('data-form-layout', $builder->render());
     }
 
     public function testLayoutExceptionsDoNotEchoPartialFormsAndFreshBindingsCanRender(): void
@@ -179,13 +186,19 @@ class FormLayoutTest extends FormTestCase
         $helper = $this->helper();
         $this->expectOutputString('');
         try {
-            $helper->render(TitleForm::class, options: ['template' => 'forms/failing-editor']);
+            $helper->form()
+                ->blueprint(TitleForm::class)
+                ->partTemplate('layout', 'forms/failing-editor')
+                ->render();
             static::fail('Expected layout failure.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Form layout failed.', $runtimeException->getMessage());
         }
 
-        $html = $helper->render(TitleForm::class, options: ['template' => 'forms/editor']);
+        $html = $helper->form()
+            ->blueprint(TitleForm::class)
+            ->partTemplate('layout', 'forms/editor')
+            ->render();
         static::assertStringContainsString('data-form-layout', $html);
         static::assertStringNotContainsString('Partial action', $html);
     }
@@ -195,14 +208,15 @@ class FormLayoutTest extends FormTestCase
         $helper = $this->helper();
         static::assertSame(
             0.0,
-            $this->xpath($helper->render(TitleForm::class, submit: false))->evaluate('count(//button)'),
+            $this->xpath($helper->form()->blueprint(TitleForm::class)->submit(false)->render())->evaluate(
+                'count(//button)',
+            ),
         );
         static::assertSame(
             1.0,
-            $this->xpath($helper->render(
-                TitleForm::class,
-                submit: new Html('<strong>Save</strong>'),
-            ))->evaluate('count(//button/strong[text()="Save"])'),
+            $this->xpath(
+                $helper->form()->blueprint(TitleForm::class)->submit(new Html('<strong>Save</strong>'))->render(),
+            )->evaluate('count(//button/strong[text()="Save"])'),
         );
     }
 }

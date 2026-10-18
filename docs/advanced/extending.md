@@ -18,7 +18,7 @@ It includes complete application examples with PHP layouts and submission behavi
 ## Custom renderers
 
 Custom renderers implement `RendererInterface::render(string $part, RenderNode $node)`.
-A node exposes its `scope`, `type`, prepared `variables`, and presentation `options`.
+A node exposes its `scope`, `type`, prepared `variables`, and typed `presentation` (`PresentationConfig`).
 Its `variables['templateData']` always contains the validated custom data bag,
 defaulting to `[]`. Preserve it when forwarding nodes or preparing template locals.
 Fields, forms, buttons, and hidden inputs all use this same contract. Native
@@ -46,7 +46,7 @@ to the normal form-building API:
 | `FormHelper` | `createSession()` selects the session returned by `bind()` |
 | `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
 | `FieldResolver` | `inferType()` and factories for bound fields, field types, child resolution, values, and field conventions |
-| `FieldConventions` | `choices()`, `resolve()`, and `messages()` specialize choice discovery and association defaults |
+| `FieldConventions` | `choices()` and `resolve()` specialize choice discovery and association defaults; `ContextFeedback` handles messages through `FieldResolver::createContextFeedback()` |
 | `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
 | `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
 | `BlueprintCompiler` | `createBuilder()` supplies the hook builder; `createRepeatedCompiler()` supplies row compilation |
@@ -112,12 +112,13 @@ declare(strict_types=1);
 namespace App\Form;
 
 use FormCompose\Binding\FieldResolver;
+use FormCompose\Configuration\FieldConfig;
 
 class AppFieldResolver extends FieldResolver
 {
-    protected function inferType(string $path, array $options): string
+    protected function inferType(string $path, FieldConfig $config): string
     {
-        return $path === 'website' ? 'url' : parent::inferType($path, $options);
+        return $path === 'website' ? 'url' : parent::inferType($path, $config);
     }
 }
 ```
@@ -138,7 +139,7 @@ use App\View\Helper\AppFormHelper;
 $this->addHelper('Form', ['className' => AppFormHelper::class]);
 ```
 
-Now `$this->Form->bind($entity)->field('website')` infers `url`. Explicit field types
+Now resolving the `website` field through the helper's form builder infers `url`. Explicit field types
 still take priority over type inference. Override `FieldResolver::createFieldConventions()`
 to supply application-specific association or choice-list conventions. The default
 `FieldConventions` uses the binding and the rendering context's optional live
@@ -167,7 +168,7 @@ a `(string $path, string $identifier): FormDefinition` child resolver, and a
 callbacks must retain the current context and the owning factory's resolution.
 
 `BlueprintCompiler::createRepeatedCompiler()` supplies the row compiler used by
-attribute embeds, runtime builder embeds, and session `embedMany()` calls.
+blueprint embeds and session `embedMany()` calls.
 Override it to supply a `RepeatedCompiler` subclass, such as one specializing
 `keys()`. Inferred keys are validated before any child hooks run. Each occurrence
 compiles independently; adding an embed never recompiles existing sections.

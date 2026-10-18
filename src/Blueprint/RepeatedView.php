@@ -56,7 +56,7 @@ class RepeatedView
      */
     public function hasErrors(): bool
     {
-        return ($this->definition->options['errors'] ?? true) !== false && $this->messages !== [];
+        return $this->definition->config->errors && $this->messages !== [];
     }
 
     /**
@@ -68,8 +68,7 @@ class RepeatedView
             return '';
         }
 
-        /** @var array<string, array<string, mixed>> $parts */
-        $parts = $this->definition->options['partAttributes'] ?? [];
+        $parts = $this->definition->config->presentation->partAttributes;
         $attributes = $this->rendering
             ->theme
             ->attributes('embed-many.errors', 'default')
@@ -82,7 +81,7 @@ class RepeatedView
             'embed-many',
             'default',
             ['embed' => $this, 'messages' => $this->messages, 'attributes' => $attributes],
-            $this->definition->options,
+            $this->definition->config->presentation,
         )), $attributes);
     }
 
@@ -92,7 +91,7 @@ class RepeatedView
     public function label(): string|Html
     {
         /** @var mixed $label */
-        $label = $this->definition->options['label'] ?? FieldPath::label($this->definition->path);
+        $label = $this->definition->config->label ?? FieldPath::label($this->definition->path);
 
         return $label instanceof Html ? $label : (string)$label;
     }

@@ -5,6 +5,7 @@ namespace FormCompose\Test\TestCase\Blueprint;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\ContactFormHelper;
@@ -19,14 +20,14 @@ class BlueprintRenderingTest extends FormTestCase
     public function testCollectionsRenderAtTheirCallSitesAlongsideOrdinaryControls(): void
     {
         $contact = new FormDefinition([])->add(new FieldDefinition('name'))
-            ->add(new FieldDefinition('email', ['type' => 'email']));
+            ->add(new FieldDefinition('email', FieldConfig::builder()->type('email')));
         $details = new FormDefinition([])->add(new FieldDefinition('notes'));
-        $form = $this->helper()->bind();
-        $html = $form->open() . $form->control('company');
+        $form = $this->helper()->form()->bind();
+        $html = $form->open() . $form->control('company')->render();
         $html .= $form->renderDefinition($contact);
-        $html .= $form->control('phone');
+        $html .= $form->control('phone')->render();
         $html .= $form->renderDefinition($details);
-        $html .= $form->submit('Save') . $form->close();
+        $html .= $form->submit('Save')->render() . $form->close();
 
         $matches = [];
         preg_match_all('/<input[^>]* name="([^"]+)"/', $html, $matches);
@@ -37,15 +38,20 @@ class BlueprintRenderingTest extends FormTestCase
 
     public function testReuseResolvesEachSessionsDataWithoutLeakingOptions(): void
     {
-        $contact = new FormDefinition([])->add(new FieldDefinition('email', [
-            'type' => 'email',
-            'label' => 'Account email',
-        ]));
+        $contact = new FormDefinition([])->add(
+            new FieldDefinition(
+                'email',
+                FieldConfig::builder()->type('email')->label('Account email'),
+            ),
+        );
         $helper = $this->helper();
-        $first = $helper->bind(new ArrayContext(['data' => ['email' => 'first@example.test']]));
-        $second = $helper->bind(new ArrayContext(['data' => ['email' => 'second@example.test']]));
+        $first = $helper->form(new ArrayContext(['data' => ['email' => 'first@example.test']]))->bind();
+        $second = $helper->form(new ArrayContext(['data' => ['email' => 'second@example.test']]))->bind();
         $first->open();
-        $firstHtml = $first->renderDefinition($contact->with('email', ['label' => 'Work email']));
+        $firstHtml = $first->renderDefinition($contact->with(
+            'email',
+            FieldConfig::builder()->label('Work email'),
+        ));
         $first->close();
         $second->open();
         $secondHtml = $second->renderDefinition($contact);
@@ -57,26 +63,47 @@ class BlueprintRenderingTest extends FormTestCase
         static::assertStringContainsString('value="second@example.test"', $secondHtml);
         static::assertStringNotContainsString('first@example.test', $secondHtml);
         static::assertNotSame(
-            $first->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
-            $second->field($contact->field('email')->path, $contact->field('email')->options)->state->id,
+            $first->field($contact->field('email')->path)
+                ->apply($contact->field('email')->config)
+                ->resolve()
+                ->state
+                ->id,
+            $second->field($contact->field('email')->path)
+                ->apply($contact->field('email')->config)
+                ->resolve()
+                ->state
+                ->id,
         );
-        static::assertSame('email', $first->field('email')->state->type);
-        static::assertSame([], $first->field('email')->state->options);
-        static::assertSame([], $second->field('email')->state->options);
+        static::assertSame('email', $first->field('email')->resolve()->state->type);
+        static::assertNull($first->field('email')->resolve()->state->config->type);
+        static::assertNull($second->field('email')->resolve()->state->config->type);
     }
 
     public function testSelectedFieldsSupportManualCompositionAndInlineOverrides(): void
     {
         $contact = new FormDefinition([])->add(new FieldDefinition('name'))
-            ->add(new FieldDefinition('email', ['type' => 'email', 'label' => 'Email', 'help' => '<Work address>']));
-        $form = $this->helper(['email' => 'posted@example.test'])->bind();
-        $email = $form->field($contact->field('email')->path, array_replace($contact->field('email')->options, [
-            'label' => 'Contact address',
-        ]));
+            ->add(
+                new FieldDefinition(
+                    'email',
+                    FieldConfig::builder()
+                        ->type('email')
+                        ->label('Email')
+                        ->help('<Work address>'),
+                ),
+            );
+        $form = $this->helper(['email' => 'posted@example.test'])->form()->bind();
+        $email = $form->field($contact->field('email')->path)
+            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->label('Contact address')))
+            ->resolve();
         $form->open();
         $html =
-            $form->control($contact->field('name')->path, $contact->field('name')->options) . $form->control('phone');
-        $html .= $email->label() . $email->input() . $email->help() . $email->errors();
+            $form->control($contact->field('name')->path)->apply($contact->field('name')->config)->render()
+            . $form->control('phone')->render();
+        $html .=
+            $email->label()->render()
+            . $email->input()->render()
+            . $email->help()->render()
+            . $email->errors()->render();
         $form->close();
 
         static::assertStringContainsString('Contact address', $html);
@@ -90,8 +117,12 @@ class BlueprintRenderingTest extends FormTestCase
     public function testDefinitionsUseTheNormalThemeAndResolverExtensionPoints(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $form = $helper->bind(theme: new Theme(layers: ['themes/application']));
-        $definition = new FormDefinition([])->add(new FieldDefinition('website', ['variant' => 'compact']));
+        $form = $helper->form()
+            ->theme(new Theme(layers: ['themes/application']))
+            ->bind();
+        $definition = new FormDefinition([])->add(
+            new FieldDefinition('website', FieldConfig::builder()->variant('compact')),
+        );
         $form->open();
         $html = $form->renderDefinition($definition);
         $form->close();
@@ -104,22 +135,22 @@ class BlueprintRenderingTest extends FormTestCase
 
     public function testEmptyDefinitionsRenderNothingInsideAnOpenForm(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         static::assertSame('', $form->renderDefinition(new FormDefinition([])));
-        static::assertStringContainsString('name="name"', $form->control('name'));
+        static::assertStringContainsString('name="name"', $form->control('name')->render());
         $form->close();
     }
 
     public function testDefinitionsRequireAnOpenFormEvenWhenEmpty(): void
     {
         $this->expectException(LogicException::class);
-        $this->helper()->bind()->renderDefinition(new FormDefinition([]));
+        $this->helper()->form()->bind()->renderDefinition(new FormDefinition([]));
     }
 
     public function testDefinitionsCannotRenderAfterClosing(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $form->close();
         $this->expectException(LogicException::class);
@@ -128,10 +159,13 @@ class BlueprintRenderingTest extends FormTestCase
 
     public function testRepeatedInputsAcrossDefinitionsAreRejected(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $form->renderDefinition(new FormDefinition([])->add(new FieldDefinition('email')));
         $this->expectException(LogicException::class);
-        $form->renderDefinition(new FormDefinition([new FieldDefinition('email', ['type' => 'email'])]));
+        $form->renderDefinition(new FormDefinition([new FieldDefinition(
+            'email',
+            FieldConfig::builder()->type('email'),
+        )]));
     }
 }

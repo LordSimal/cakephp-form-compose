@@ -6,6 +6,10 @@ namespace FormCompose\Test\TestCase\Form;
 use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
+use FormCompose\Builder\ControlBuilder;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Form\FormPhase;
 use FormCompose\Form\FormSession;
 use FormCompose\Rendering\PhpRenderer;
@@ -26,27 +30,30 @@ class FormSessionControlsTest extends CompositionTestCase
     public function testMixedBatchControlsPreserveDefaultsOverridesAndExtensions(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $form = $helper->bind(blueprint: EmailForm::class);
+        $form = $helper->form()->blueprint(EmailForm::class)->bind();
         $form->open();
 
         $html = $form->controls([
             'website',
-            'email' => ['label' => 'Work <email>'],
-            'author.name' => ['value' => 'Ada', 'label' => false],
-        ]);
+            new FieldSpec('email', FieldConfig::builder()->label('Work <email>')),
+            new FieldSpec(
+                'author.name',
+                FieldConfig::builder()->value('Ada')->label(false),
+            ),
+        ])->render();
         static::assertStringContainsString('type="url"', $html);
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('Work &lt;email&gt;', $html);
         static::assertStringContainsString('name="author[name]"', $html);
         static::assertLessThan(strpos($html, 'name="email"'), strpos($html, 'name="website"'));
-        static::assertSame('Default email', $form->field('email')->state->options['label']);
-        static::assertSame('', $form->controls([]));
+        static::assertSame('Default email', $form->field('email')->resolve()->state->config->label);
+        static::assertSame('', $form->controls([])->render());
         $form->close();
     }
 
     public function testBatchControlsCallOverriddenControlMethods(): void
     {
-        $base = $this->helper()->bind();
+        $base = $this->helper()->form()->bind();
         $form = new class($base->binding, new RenderContext(
             new PhpRenderer($this->helper()->getView(), Theme::base()),
             Theme::base(),
@@ -54,27 +61,36 @@ class FormSessionControlsTest extends CompositionTestCase
             /**
              * Supply an application control override used by batch rendering.
              *
-             * @param array<string, mixed> $options Field options.
              */
-            public function control(string $field, array $options = []): string
+            public function control(string $field, ?FieldConfig $config = null): ControlBuilder
             {
-                return '<section data-custom-control>' . parent::control($field, $options) . '</section>';
+                return new class(
+                    fn(FieldConfig $settings): BoundField => $this->field($field, $settings)->resolve(),
+                    $config ?? new FieldConfig(),
+                    $this,
+                ) extends ControlBuilder {
+                    /** Decorate the normal control rendering boundary. */
+                    public function render(): string
+                    {
+                        return '<section data-custom-control>' . parent::render() . '</section>';
+                    }
+                };
             }
         };
         $form->open();
-        static::assertSame(2, substr_count($form->controls(['name', 'email']), 'data-custom-control'));
+        static::assertSame(2, substr_count($form->controls(['name', 'email'])->render(), 'data-custom-control'));
         $form->close();
     }
 
     public function testTheEntireBatchIsValidatedBeforeAnyControlIsRendered(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         try {
-            $form->controls(['name', 'email' => false]);
+            $form->controls(['name', 'email' => false])->render();
             static::fail('Expected invalid batch syntax to fail.');
         } catch (InvalidArgumentException) {
-            static::assertStringContainsString('name="name"', $form->control('name'));
+            static::assertStringContainsString('name="name"', $form->control('name')->render());
         }
 
         $form->close();
@@ -83,16 +99,19 @@ class FormSessionControlsTest extends CompositionTestCase
     public function testFailedBatchesRollBackProtectionAndIdsButPreserveExistingInputs(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $html = $form->open() . $form->control('existing');
+        $form = $helper->form()->url('/articles/save')->bind();
+        $html = $form->open() . $form->control('existing')->render();
         try {
-            $form->controls(['name', 'attachment' => ['type' => 'file']]);
+            $form->controls([
+                'name',
+                new FieldSpec('attachment', FieldConfig::builder()->type('file')),
+            ])->render();
             static::fail('Expected multipart enforcement to fail.');
         } catch (LogicException $logicException) {
             static::assertSame('File inputs require a multipart form.', $logicException->getMessage());
         }
 
-        $html .= $form->controls(['name', 'email']) . $form->close();
+        $html .= $form->controls(['name', 'email'])->render() . $form->close();
         $data = [
             'existing' => 'Kept',
             'name' => 'Ada',
@@ -110,29 +129,29 @@ class FormSessionControlsTest extends CompositionTestCase
 
     public function testDuplicateInputsRollBackTheBatch(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         try {
-            $form->controls(['name', 'name']);
+            $form->controls(['name', 'name'])->render();
             static::fail('Expected duplicate IDs to fail.');
         } catch (LogicException $logicException) {
             static::assertStringContainsString('already been rendered', $logicException->getMessage());
         }
 
-        static::assertStringContainsString('name="name"', $form->control('name'));
+        static::assertStringContainsString('name="name"', $form->control('name')->render());
         $form->close();
     }
 
     #[DataProvider('nonOpenPhases')]
     public function testNonemptyBatchesRequireAnOpenSession(FormPhase $phase): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         if ($phase === FormPhase::Closed) {
             $form->render();
         }
 
         $this->expectException(LogicException::class);
-        $form->controls(['name']);
+        $form->controls(['name'])->render();
     }
 
     /**

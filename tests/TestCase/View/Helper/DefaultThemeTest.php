@@ -30,8 +30,8 @@ class DefaultThemeTest extends FormTestCase
             ),
         ]);
         static::assertInstanceOf(FormHelper::class, $helper);
-        $form = $helper->bind();
-        $html = $form->open() . $form->control('email') . $form->submit('Save') . $form->close();
+        $form = $helper->form()->bind();
+        $html = $form->open() . $form->control('email')->render() . $form->submit('Save')->render() . $form->close();
         static::assertStringContainsString('data-layout="application"', $html);
         static::assertStringContainsString('data-layout="library"', $html);
         static::assertStringContainsString('data-theme="&lt;configured&gt;"', $html);
@@ -44,18 +44,20 @@ class DefaultThemeTest extends FormTestCase
             layers: ['themes/application'],
             defaults: ['input' => ['data-default' => true]],
         )]);
-        $form = $helper->bind(theme: new Theme(
-            layers: ['themes/library'],
-            defaults: ['input' => ['data-override' => true]],
-        ));
-        $html = $form->open() . $form->control('email') . $form->close();
+        $form = $helper->form()
+            ->theme(new Theme(
+                layers: ['themes/library'],
+                defaults: ['input' => ['data-override' => true]],
+            ))
+            ->bind();
+        $html = $form->open() . $form->control('email')->render() . $form->close();
         static::assertStringContainsString('data-layout="library"', $html);
         static::assertStringContainsString('data-override', $html);
         static::assertStringNotContainsString('data-layout="application"', $html);
         static::assertStringNotContainsString('data-default', $html);
 
-        $next = $helper->bind();
-        $html = $next->open() . $next->control('email') . $next->close();
+        $next = $helper->form()->bind();
+        $html = $next->open() . $next->control('email')->render() . $next->close();
         static::assertStringContainsString('data-layout="application"', $html);
         static::assertStringContainsString('data-default', $html);
         static::assertStringNotContainsString('data-override', $html);
@@ -64,37 +66,37 @@ class DefaultThemeTest extends FormTestCase
     public function testExplicitBaseBypassesConfiguredThemeWithoutChangingIt(): void
     {
         $helper = new FormHelper($this->helper()->getView(), ['theme' => new Theme(['themes/application'])]);
-        $base = $helper->bind(theme: 'Base');
-        $html = $base->open() . $base->control('email') . $base->close();
+        $base = $helper->form()->theme(Theme::base())->bind();
+        $html = $base->open() . $base->control('email')->render() . $base->close();
         static::assertStringNotContainsString('data-layout=', $html);
         static::assertStringContainsString('name="email"', $html);
 
-        $configured = $helper->bind();
-        $html = $configured->open() . $configured->control('email') . $configured->close();
+        $configured = $helper->form()->bind();
+        $html = $configured->open() . $configured->control('email')->render() . $configured->close();
         static::assertStringContainsString('data-layout="application"', $html);
     }
 
     public function testConfigurationChangesOnlyAffectFutureBindingsAndStayLocalToTheHelper(): void
     {
         $helper = new FormHelper($this->helper()->getView(), ['theme' => new Theme(['themes/application'])]);
-        $first = $helper->bind();
+        $first = $helper->form()->bind();
         $helper->setConfig('theme', new Theme(['themes/library']));
-        $second = $helper->bind();
-        $firstHtml = $first->open() . $first->control('email') . $first->close();
-        $secondHtml = $second->open() . $second->control('email') . $second->close();
+        $second = $helper->form()->bind();
+        $firstHtml = $first->open() . $first->control('email')->render() . $first->close();
+        $secondHtml = $second->open() . $second->control('email')->render() . $second->close();
         static::assertStringContainsString('data-layout="application"', $firstHtml);
         static::assertStringNotContainsString('data-layout="library"', $firstHtml);
         static::assertStringContainsString('data-layout="library"', $secondHtml);
         static::assertStringNotContainsString('data-layout="application"', $secondHtml);
 
-        $other = new FormHelper($helper->getView())->bind();
-        $otherHtml = $other->open() . $other->control('email') . $other->close();
+        $other = new FormHelper($helper->getView())->form()->bind();
+        $otherHtml = $other->open() . $other->control('email')->render() . $other->close();
         static::assertStringNotContainsString('data-layout=', $otherHtml);
         $helper->setConfig('theme');
-        $reset = $helper->bind();
+        $reset = $helper->form()->bind();
         static::assertStringNotContainsString(
             'data-layout=',
-            $reset->open() . $reset->control('email') . $reset->close(),
+            $reset->open() . $reset->control('email')->render() . $reset->close(),
         );
     }
 
@@ -104,7 +106,7 @@ class DefaultThemeTest extends FormTestCase
             layers: ['themes/application'],
             defaults: ['button' => ['class' => 'configured-button']],
         )]);
-        $html = $helper->render(ProfileForm::class, submit: 'Save');
+        $html = $helper->form()->blueprint(ProfileForm::class)->submit('Save')->render();
         static::assertStringContainsString('data-layout="application"', $html);
         static::assertStringContainsString('class="configured-button"', $html);
     }
@@ -118,8 +120,8 @@ class DefaultThemeTest extends FormTestCase
             'action.control' => ['class' => 'configured-trigger'],
         ])]);
         $render = static fn(Theme|string|null $theme = null): string => $kind === 'button'
-            ? $helper->postButton('Go', '/go', theme: $theme)
-            : $helper->postLink('Go', '/go', theme: $theme);
+            ? $helper->postButton(label: 'Go', url: '/go', theme: $theme)->render()
+            : $helper->postLink(label: 'Go', url: '/go', theme: $theme)->render();
         $html = $render();
         static::assertStringContainsString('data-theme="configured"', $html);
         static::assertStringContainsString('class="configured-trigger"', $html);
@@ -148,7 +150,7 @@ class DefaultThemeTest extends FormTestCase
         $helper = new FormHelper($this->helper()->getView(), ['theme' => $theme]);
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Use Base or a Theme instance.');
-        $helper->bind();
+        $helper->form()->bind();
     }
 
     /**
@@ -167,9 +169,12 @@ class DefaultThemeTest extends FormTestCase
     public function testExplicitThemeTakesPrecedenceOverInvalidHelperConfiguration(): void
     {
         $helper = new FormHelper($this->helper()->getView(), ['theme' => false]);
-        $form = $helper->bind(theme: 'Base');
-        static::assertStringContainsString('name="email"', $form->open() . $form->control('email') . $form->close());
+        $form = $helper->form()->theme(Theme::base())->bind();
+        static::assertStringContainsString(
+            'name="email"',
+            $form->open() . $form->control('email')->render() . $form->close(),
+        );
         $this->expectException(InvalidArgumentException::class);
-        $helper->bind();
+        $helper->form()->bind();
     }
 }

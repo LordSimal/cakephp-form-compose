@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Blueprint;
 
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use InvalidArgumentException;
 
@@ -29,11 +31,13 @@ final readonly class FormDefinition
      * Collect ordered entries and index their qualified paths.
      *
      * @param list<\FormCompose\Form\Field\FieldDefinition|\FormCompose\Blueprint\EmbeddedDefinition|\FormCompose\Blueprint\RepeatedDefinition> $fields Ordered entries.
-     * @param array<string, mixed> $options Definition presentation options.
      * @param list<string> $removed Explicitly removed paths for conditional layouts.
      */
-    public function __construct(array $fields, public array $options = [], public array $removed = [])
-    {
+    public function __construct(
+        array $fields,
+        public PresentationConfig $presentation = new PresentationConfig(),
+        public array $removed = [],
+    ) {
         $this->entries = array_values($fields);
         $this->index = new DefinitionIndex($this->entries, $removed);
         $this->fields = $this->index->fields;
@@ -44,19 +48,21 @@ final readonly class FormDefinition
      */
     public function add(FieldDefinition|RepeatedDefinition $field): self
     {
-        return new self([...$this->entries, $field], $this->options, $this->removed);
+        return new self([...$this->entries, $field], $this->presentation, $this->removed);
     }
 
     /**
      * Append a resolved child at a relative association or indexed path.
      *
-     * @param array<string, mixed> $options Presentation for this occurrence.
      */
-    public function embed(string $path, self $definition, array $options = []): self
-    {
+    public function embed(
+        string $path,
+        self $definition,
+        PresentationConfig $presentation = new PresentationConfig(),
+    ): self {
         return new self(
-            [...$this->entries, new EmbeddedDefinition($path, $definition, $options)],
-            $this->options,
+            [...$this->entries, new EmbeddedDefinition($path, $definition, $presentation)],
+            $this->presentation,
             $this->removed,
         );
     }
@@ -64,11 +70,10 @@ final readonly class FormDefinition
     /**
      * Override definition presentation without changing field configuration.
      *
-     * @param array<string, mixed> $options Template, templates, templateData, variant, or attributes.
      */
-    public function presentation(array $options): self
+    public function presentation(PresentationConfig $presentation): self
     {
-        return new self($this->entries, array_replace($this->options, $options), $this->removed);
+        return new self($this->entries, $this->presentation->merge($presentation), $this->removed);
     }
 
     /**
@@ -130,28 +135,27 @@ final readonly class FormDefinition
             static fn(self $child, string $relative): self => $child->remove($relative),
         );
 
-        return new self($entries, $this->options, [...$this->removed, $path, ...$removed]);
+        return new self($entries, $this->presentation, [...$this->removed, $path, ...$removed]);
     }
 
     /**
      * Override a field, including an embedded leaf, without moving it.
      *
-     * @param array<string, mixed> $options Field options, replacing matching top-level keys.
      * @throws \InvalidArgumentException When the field is unavailable.
      */
-    public function with(string $path, array $options): self
+    public function with(string $path, FieldConfig $config): self
     {
-        $replacement = $this->field($path)->with($options);
+        $replacement = $this->field($path)->with($config);
         $entries = DefinitionEntries::change(
             $this->entries,
             $path,
             static fn(FieldDefinition|EmbeddedDefinition|RepeatedDefinition $entry): FieldDefinition => new FieldDefinition(
                 $entry->path,
-                $replacement->options,
+                $replacement->config,
             ),
-            static fn(self $child, string $relative): self => $child->with($relative, $options),
+            static fn(self $child, string $relative): self => $child->with($relative, $config),
         );
 
-        return new self($entries, $this->options, $this->removed);
+        return new self($entries, $this->presentation, $this->removed);
     }
 }

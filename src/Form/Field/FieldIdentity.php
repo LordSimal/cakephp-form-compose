@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Form\Field;
 
+use FormCompose\Configuration\FieldConfig;
 use InvalidArgumentException;
 
 /**
@@ -19,9 +20,8 @@ final readonly class FieldIdentity
     /**
      * Derive bracket names and collision-safe IDs, honoring explicit field options.
      *
-     * @param array<string, mixed> $options Field identity overrides.
      */
-    public function __construct(string $path, public string $type, string $formId, array $options)
+    public function __construct(string $path, public string $type, string $formId, FieldConfig $config)
     {
         if (!preg_match('/^[a-z][a-z0-9_-]*$/D', $type)) {
             throw new InvalidArgumentException('Invalid control type.');
@@ -29,9 +29,9 @@ final readonly class FieldIdentity
 
         $parts = explode('.', $path);
         $first = array_shift($parts);
-        $this->name = (string)($options['name'] ?? $first . ($parts === [] ? '' : '[' . implode('][', $parts) . ']'));
+        $this->name = $config->name ?? $first . ($parts === [] ? '' : '[' . implode('][', $parts) . ']');
         // Preserve path separators and reserve hyphens for generated part suffixes.
-        $this->id = (string)($options['id'] ?? $formId . '-' . str_replace('-', ':2d', $path));
+        $this->id = $config->id ?? $formId . '-' . str_replace('-', ':2d', $path);
         if ($this->id === '' || !preg_match('/^[a-zA-Z0-9_.:-]+(?:\[[a-zA-Z0-9_.:-]*\])*$/D', $this->name)) {
             throw new InvalidArgumentException('Use a nonempty ID and a valid bracket-notation input name.');
         }

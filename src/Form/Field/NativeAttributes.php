@@ -21,7 +21,7 @@ final class NativeAttributes
     public static function resolve(FieldState $state, Attributes $attributes): Attributes
     {
         if ($state->type === 'checkbox') {
-            $value = NativeValue::scalar($state->options['checkedValue'] ?? '1');
+            $value = NativeValue::scalar($state->config->checkedValue ?? '1');
             $selected = NativeValue::scalar($state->value) === $value;
 
             return $attributes->replace([

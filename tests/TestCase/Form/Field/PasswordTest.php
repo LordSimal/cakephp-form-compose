@@ -21,10 +21,11 @@ class PasswordTest extends FormTestCase
         $secret = bin2hex(random_bytes(16));
         $helper = $this->helper(['password' => $secret, 'account' => ['passwd' => $secret]]);
         $helper->getView()->set('passwords', ['a' => 'A']);
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'data' => ['passwd' => $secret, 'account' => ['password' => $secret]],
-        ]));
-        $field = $form->field($path);
+        ]))
+            ->bind();
+        $field = $form->field($path)->resolve();
         static::assertSame('password', $field->state->type);
         $form->open();
         $html = $field->control();
@@ -54,14 +55,17 @@ class PasswordTest extends FormTestCase
         $table->setSchema(new TableSchema('accounts', ['password' => ['type' => 'string']]));
 
         $secret = bin2hex(random_bytes(16));
-        $form = $this->helper()->bind(new Entity(['password' => $secret]), ['context' => ['table' => $table]]);
+        $form = $this->helper()
+            ->form(new Entity(['password' => $secret]))
+            ->context(['table' => $table])
+            ->bind();
         $form->open();
 
-        $html = $form->control('password', [
-            'value' => $secret,
-            'default' => $secret,
-            'options' => [$secret => 'Choice'],
-        ]);
+        $html = $form->control('password')
+            ->value($secret)
+            ->default($secret)
+            ->choices([$secret => 'Choice'])
+            ->render();
         static::assertStringContainsString('type="password"', $html);
         static::assertStringNotContainsString($secret, $html);
         static::assertStringNotContainsString('value=', $html);
@@ -70,12 +74,18 @@ class PasswordTest extends FormTestCase
 
     public function testExplicitTypesAndUnrelatedNamesRetainTheirMeaning(): void
     {
-        $form = $this->helper()->bind();
-        static::assertSame('text', $form->field('password_hint')->state->type);
-        static::assertSame('text', $form->field('password', ['type' => 'text'])->state->type);
-        static::assertSame('hidden', $form->field('passwd', ['type' => 'hidden'])->state->type);
+        $form = $this->helper()->form()->bind();
+        static::assertSame('text', $form->field('password_hint')->resolve()->state->type);
+        static::assertSame(
+            'text',
+            $form->field('password')->type('text')->resolve()->state->type,
+        );
+        static::assertSame(
+            'hidden',
+            $form->field('passwd')->type('hidden')->resolve()->state->type,
+        );
         $form->open();
-        $html = $form->control('password', ['type' => 'text', 'value' => 'deliberate-text']);
+        $html = $form->control('password')->type('text')->value('deliberate-text')->render();
         static::assertStringContainsString('type="text" value="deliberate-text"', $html);
         $form->close();
     }
@@ -87,11 +97,13 @@ class PasswordTest extends FormTestCase
         $helper->getView()->setRequest($helper->getView()
             ->getRequest()
             ->withQueryParams(['password' => $secret]));
-        $form = $helper->bind(null, ['valueSources' => ['query']]);
-        $field = $form->field('password');
+        $form = $helper->form()
+            ->valueSources(['query'])
+            ->bind();
+        $field = $form->field('password')->resolve();
         static::assertSame($secret, $field->state->value);
         $form->open();
-        static::assertStringNotContainsString($secret, $field->input());
+        static::assertStringNotContainsString($secret, $field->input()->render());
         $form->close();
     }
 }

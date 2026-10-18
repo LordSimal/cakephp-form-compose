@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase\Blueprint;
 
-use FormCompose\Attribute\Embed;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use FormCompose\Test\Fixture\Composition\InheritedPostForm;
@@ -28,10 +27,10 @@ class BlueprintCompositionTest extends CompositionTestCase
             ['title', 'author.first_name', 'author.last_name', 'author.email', 'author.id', 'body', 'extra'],
             array_column($definition->fields, 'path'),
         );
-        static::assertSame('Inherited title', $definition->field('title')->options['label']);
-        static::assertSame('composition/post', $definition->options['template']);
-        static::assertSame(['inherited' => true], $definition->options['templateData']);
-        static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame('Inherited title', $definition->field('title')->config->label);
+        static::assertSame('composition/post', $definition->presentation->templates['control']);
+        static::assertSame(['inherited' => true], $definition->presentation->templateData);
+        static::assertSame(['post', 'author'], array_column($this->probe->calls, 'name'));
     }
 
     /**
@@ -46,7 +45,7 @@ class BlueprintCompositionTest extends CompositionTestCase
             'runtime cycle' => [DynamicCycle::class, 'Circular blueprint embedding'],
             'duplicate mounts' => [DuplicateEmbed::class, 'duplicate field paths'],
             'qualified collision' => [OverlappingFields::class, 'duplicate field paths'],
-            'incompatible inheritance' => [ChangedEntryKind::class, 'Cannot replace a field'],
+            'incompatible inheritance' => [ChangedEntryKind::class, 'duplicate field paths'],
         ];
     }
 
@@ -72,15 +71,18 @@ class BlueprintCompositionTest extends CompositionTestCase
 
     public function testSeparateResolutionsKeepRemovalHistoryAndHookStateIsolated(): void
     {
-        $restricted = $this->helper(attributes: ['canEditEmail' => false])->bind(blueprint: AuthorForm::class);
-        $ordinary = $this->helper()->bind(blueprint: AuthorForm::class);
+        $restricted = $this->helper(attributes: ['canEditEmail' => false])
+            ->form()
+            ->blueprint(AuthorForm::class)
+            ->bind();
+        $ordinary = $this->helper()->form()->blueprint(AuthorForm::class)->bind();
         static::assertNotNull($restricted->binding->definition);
         static::assertNotNull($ordinary->binding->definition);
         static::assertFalse($restricted->binding->definition->has('email'));
         static::assertTrue($ordinary->binding->definition->has('email'));
         static::assertSame(
             ['calls' => 1],
-            $ordinary->binding->definition->field('first_name')->options['templateData'],
+            $ordinary->binding->definition->field('first_name')->config->presentation->templateData,
         );
     }
 
@@ -103,16 +105,18 @@ class BlueprintCompositionTest extends CompositionTestCase
     #[DataProvider('invalidEmbeds')]
     public function testInvalidEmbedsAreRejected(string $path, string $name): void
     {
+        $form = $this->helper()->form()->bind();
+        $form->open();
         $this->expectException(InvalidArgumentException::class);
-        new Embed($path, $name);
+        $form->blueprint($name, at: $path)->render();
     }
 
     public function testInvalidMountPathFailsBeforeRunningBlueprintHooks(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         try {
-            $form->blueprint(AuthorForm::class, at: 'author..name');
+            $form->blueprint(blueprint: AuthorForm::class, at: 'author..name')->render();
             static::fail('Expected invalid mounting to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('dot-separated', $invalidArgumentException->getMessage());

@@ -9,6 +9,7 @@ These instructions apply to the entire plugin repository.
 - Prioritize bound fields and application-owned markup. Keep reusable PHP form blueprints an optional layer.
 - Use blueprint terminology for reusable declarations, aliases, selection APIs, and authoring/layout services. Reserve definition terminology for compiled configuration such as FormDefinition and FieldDefinition. Prefer declared blueprint aliases in documentation examples; show class references explicitly as an alternative.
 - Separate field configuration, resolved field state, rendering, and per-form submission/security bookkeeping.
+- Keep reusable configuration immutable and fluent. A `builder()` factory returns the config itself; rendering and attached declaration builders own mutable authoring state.
 - Reuse CakePHP context providers, validation metadata, routing, request abstractions, and form protection through public APIs.
 - Keep inspection of field state free of rendering and security-registration side effects. Register submitted inputs when rendering them, including custom controls.
 - Support native PHP templates, independently renderable field parts, and custom HTML structures without requiring helper subclassing.
@@ -106,6 +107,8 @@ Composer scripts resolve dependency binaries from `vendor/bin`. For direct execu
 - Keep the README concise and link to the documentation site. The site owns the full explanation: show the problem and a control call connected to its PHP element before detailed setup, recipes, and reference material.
 - Keep the homepage short, with a few tabbed code examples. Put conceptual explanations, recipes, and detailed contracts in the guides and reference pages.
 - Prefer built-in navigation, local search, code groups, callouts, and details blocks over custom Vue components when they meet the need.
+- Keep short, simple documentation chains on one line, such as `$form->add('body')->type('textarea');`. Break longer chains with multiple configuration calls onto separate indented lines.
+- Group consecutive template variable annotations in one multiline docblock, including in documentation examples.
 - Write CSS examples as multiline rule blocks with one declaration per line.
 - Run `npm ci` and `npm run docs:build` for documentation-site changes. Fix broken links rather than disabling VitePress's link checks.
 - Keep the repository Pages base path configured, and publish only from `main`. Pull requests must build the site without deploying it.

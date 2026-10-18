@@ -11,10 +11,13 @@ use Cake\View\Form\ArrayContext;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\NativeValue;
+use FormCompose\Form\Field\TemporalTimezone;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use TypeError;
 
 /**
  * Verifies temporal value normalization through bound controls and native attributes.
@@ -23,27 +26,30 @@ class TemporalTest extends FormTestCase
 {
     /**
      * @param mixed $value Bound temporal value.
-     * @param array<string, mixed> $options Field formatting overrides.
      */
     #[DataProvider('temporalValues')]
     public function testTemporalValuesUseNativeFormats(
         string $type,
         mixed $value,
         string $expected,
-        array $options = [],
+        FieldConfig $options = new FieldConfig(),
     ): void {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $field = $form->field('sample', ['type' => $type, 'value' => $value] + $options);
-        $html = $field->input();
+        $field = $form->field('sample')
+            ->apply($options->merge(
+                FieldConfig::builder()->type($type)->value($value),
+            ))
+            ->resolve();
+        $html = $field->input()->render();
         static::assertSame($expected, $this->xpath($html)->evaluate('string(//input/@value)'));
         static::assertSame($value, $field->state->value);
         $form->close();
     }
 
     /**
-     * @return array<string, array{0: string, 1: mixed, 2: string, 3?: array<string, mixed>}>
+     * @return array<string, array{0: string, 1: mixed, 2: string, 3?: \FormCompose\Configuration\FieldConfig}>
      */
     public static function temporalValues(): array
     {
@@ -55,42 +61,47 @@ class TemporalTest extends FormTestCase
             'ISO week year' => ['week', new DateTimeImmutable('2027-01-01'), '2026-W53'],
             'date-only ISO week' => ['week', new Date('2027-01-01'), '2026-W53'],
             'timestamp epoch' => ['date', 0, '1970-01-01'],
-            'timestamp timezone' => ['time', 0, '01:00:00', ['timezone' => 'Europe/Brussels']],
+            'timestamp timezone' => [
+                'time',
+                0,
+                '01:00:00',
+                FieldConfig::builder()->timezone('Europe/Brussels'),
+            ],
             'datetime milliseconds' => [
                 'datetime-local',
                 new DateTimeImmutable('2026-10-15 14:23:45.123456'),
                 '2026-10-15T14:23:45.123',
-                ['attributes' => ['step' => '0.001']],
+                FieldConfig::builder()->attributes(['step' => '0.001']),
             ],
             'time milliseconds' => [
                 'time',
                 new Time('14:23:45.123456'),
                 '14:23:45.123',
-                ['attributes' => ['step' => 'any']],
+                FieldConfig::builder()->attributes(['step' => 'any']),
             ],
             'time interval above one second' => [
                 'time',
                 new Time('00:00:01.500000'),
                 '00:00:01.500',
-                ['attributes' => ['step' => '1.5', 'min' => '00:00:00']],
+                FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00']),
             ],
             'datetime interval above one second' => [
                 'datetime-local',
                 new DateTimeImmutable('2026-10-15 00:00:02.500'),
                 '2026-10-15T00:00:02.500',
-                ['attributes' => ['step' => 2.5, 'min' => '2026-10-15T00:00:00']],
+                FieldConfig::builder()->attributes(['step' => 2.5, 'min' => '2026-10-15T00:00:00']),
             ],
             'local attributes determine precision' => [
                 'time',
                 new DateTimeImmutable('2026-10-15 14:23:45.123456'),
                 '14:23:45.123',
-                ['partAttributes' => ['input' => ['step' => 0.001]]],
+                FieldConfig::builder()->partAttributes('input', ['step' => 0.001]),
             ],
             'submitted wall clock' => [
                 'datetime-local',
                 '2026-10-15T14:23:45.123',
                 '2026-10-15T14:23:45.123',
-                ['timezone' => 'Europe/Brussels'],
+                FieldConfig::builder()->timezone('Europe/Brussels'),
             ],
             'invalid string is escaped, not replaced' => ['date', '<invalid>', '<invalid>'],
             'empty string' => ['date', '', ''],
@@ -100,14 +111,14 @@ class TemporalTest extends FormTestCase
     public function testTimezoneConversionDoesNotMutateTheBoundDateTime(): void
     {
         $value = new DateTime('2026-10-15 23:23:45', new DateTimeZone('UTC'));
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('sample', [
-            'type' => 'datetime-local',
-            'value' => $value,
-            'timezone' => new DateTimeZone('Europe/Brussels'),
-        ]);
+        $html = $form->control('sample')
+            ->type('datetime-local')
+            ->value($value)
+            ->timezone(new DateTimeZone('Europe/Brussels'))
+            ->render();
         static::assertSame('2026-10-16T01:23:45', $this->xpath($html)->evaluate('string(//input/@value)'));
         static::assertSame('2026-10-15T23:23:45+00:00', $value->format('c'));
         $form->close();
@@ -115,13 +126,13 @@ class TemporalTest extends FormTestCase
 
     public function testDateTimeObjectsRetainTheirNonTemporalTextRepresentation(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $html =
             $form->open()
-            . $form->control('sample', [
-                'type' => 'text',
-                'value' => new DateTimeImmutable('2026-10-15 14:23:45'),
-            ])
+            . $form->control('sample')
+                ->type('text')
+                ->value(new DateTimeImmutable('2026-10-15 14:23:45'))
+                ->render()
             . $form->close();
         static::assertSame(
             '2026-10-15T14:23:45',
@@ -131,15 +142,15 @@ class TemporalTest extends FormTestCase
 
     public function testLocalInputStepOverridesDetermineFractionalPrecision(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $field = $form->field('sample', [
-            'type' => 'time',
-            'value' => new Time('00:00:02.500000'),
-            'attributes' => ['step' => 1],
-        ]);
-        $html = $field->input(['step' => '2.5']);
+        $field = $form->field('sample')
+            ->type('time')
+            ->value(new Time('00:00:02.500000'))
+            ->attributes(['step' => 1])
+            ->resolve();
+        $html = $field->input()->attributes(['step' => '2.5'])->render();
         static::assertSame('00:00:02.500', $this->xpath($html)->evaluate('string(//input/@value)'));
         $form->close();
     }
@@ -147,18 +158,20 @@ class TemporalTest extends FormTestCase
     #[DataProvider('schemaSteps')]
     public function testTemporalSchemaControlsSupplyValidStepDefaults(string $schemaType, string $step): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'schema' => ['sample' => ['type' => $schemaType]],
-            'data' => ['sample' => new DateTimeImmutable('2026-10-15 14:23:45.123456')],
-        ]));
-        $field = $form->field('sample');
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'schema' => ['sample' => ['type' => $schemaType]],
+                'data' => ['sample' => new DateTimeImmutable('2026-10-15 14:23:45.123456')],
+            ]))
+            ->bind();
+        $field = $form->field('sample')->resolve();
         static::assertSame($step, $field->attributes()->values['step']);
         static::assertSame(
             $step === '1' ? '14:23:45' : '2026-10-15T14:23:45.123',
             NativeValue::input($field->state),
         );
         $form->open();
-        $html = $field->input(['step' => null]);
+        $html = $field->input()->attributes(['step' => null])->render();
         static::assertSame(0.0, $this->xpath($html)->evaluate('count(//input/@step)'));
         $form->close();
     }
@@ -176,6 +189,13 @@ class TemporalTest extends FormTestCase
         ];
     }
 
+    public function testStandaloneTimezoneResolutionRejectsUnsupportedValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The timezone option must be a timezone name or DateTimeZone.');
+        TemporalTimezone::resolve(false);
+    }
+
     /**
      * @param mixed $value Invalid temporal value.
      * @param mixed $timezone Invalid timezone configuration.
@@ -186,19 +206,24 @@ class TemporalTest extends FormTestCase
         mixed $value,
         mixed $timezone,
     ): void {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
+        $this->expectException(
+            $timezone === null || is_string($timezone) || $timezone instanceof DateTimeZone
+                ? InvalidArgumentException::class
+                : TypeError::class,
+        );
         try {
-            $form->control('sample', ['type' => $type, 'value' => $value, 'timezone' => $timezone]);
-            static::fail('Expected invalid temporal configuration.');
-        } catch (InvalidArgumentException) {
-            static::assertStringContainsString('type="date"', $form->control('sample', [
-                'type' => 'date',
-                'value' => new Date('2026-10-15'),
-            ]));
+            $control = $form->control('sample')->type($type)->value($value);
+            $this->invokeBuilder($control, 'timezone', $timezone);
+            $control->render();
+        } finally {
+            static::assertStringContainsString(
+                'type="date"',
+                $form->control('sample')->type('date')->value(new Date('2026-10-15'))->render(),
+            );
+            $form->close();
         }
-
-        $form->close();
     }
 
     /**

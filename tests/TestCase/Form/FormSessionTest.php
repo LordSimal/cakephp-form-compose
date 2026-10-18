@@ -9,6 +9,7 @@ use Cake\I18n\Package;
 use Cake\View\Form\ArrayContext;
 use Dom\Element;
 use Dom\NodeList;
+use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
@@ -31,16 +32,16 @@ class FormSessionTest extends CompositionTestCase
     {
         $helper = $this->helper();
         $theme = new Theme(layers: ['themes/unified']);
-        $form = $helper->bind(
-            new ArrayContext(['data' => ['title' => 'Original']]),
-            theme: $theme,
-            renderer: new PhpRenderer($helper->getView(), $theme),
-            blueprint: PostForm::class,
-        );
+        $form = $helper->form(new ArrayContext(['data' => ['title' => 'Original']]))
+            ->theme($theme)
+            ->renderer(new PhpRenderer($helper->getView(), $theme))
+            ->blueprint(PostForm::class)
+            ->attributes(['class' => 'complete'])
+            ->submit('Save')
+            ->submitConfig(ButtonConfig::builder()->variant('primary'))
+            ->bind();
         static::assertCount(2, $this->probe->calls);
-        $html = $form->render(options: ['class' => 'complete'], submit: 'Save', submitOptions: [
-            'variant' => 'primary',
-        ]);
+        $html = $form->render();
         static::assertCount(2, $this->probe->calls);
         static::assertStringContainsString('value="Original"', $html);
         static::assertStringContainsString('class="complete"', $html);
@@ -50,26 +51,31 @@ class FormSessionTest extends CompositionTestCase
 
     public function testAnExplicitDefinitionRendersLocallyWithoutReplacingBindingDefaults(): void
     {
-        $form = $this->helper()->bind(blueprint: EmailForm::class);
+        $form = $this->helper()->form()->blueprint(EmailForm::class)->bind();
         $defaults = $form->binding->definition;
-        $html = $form->render(LocalEmailForm::class);
+        $html = $form->open() . $form->blueprint(LocalEmailForm::class)->render() . $form->close();
         static::assertStringContainsString('Local email', $html);
         static::assertStringContainsString('type="email"', $html);
         static::assertSame($defaults, $form->binding->definition);
-        static::assertSame('Default email', $form->field('email')->state->options['label']);
+        static::assertSame('Default email', $form->field('email')->resolve()->state->config->label);
     }
 
     public function testSessionCanResolveAnExplicitBlueprint(): void
     {
-        $html = $this->helper()->bind()->render('composed-post', submit: false);
+        $html = $this->helper()
+            ->form()
+            ->blueprint('composed-post')
+            ->submit(false)
+            ->bind()
+            ->render();
         static::assertStringContainsString('name="author[first_name]"', $html);
-        static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame(['post', 'author'], array_column($this->probe->calls, 'name'));
     }
 
     public function testDefaultSubmitIsTranslatedWhenRenderingRatherThanBinding(): void
     {
         $locale = I18n::getLocale();
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         try {
             I18n::setTranslator(
                 'default',
@@ -92,28 +98,34 @@ class FormSessionTest extends CompositionTestCase
     public function testEmptyFormsAndExplicitButtonLabelsRemainSupported(): void
     {
         $helper = $this->helper();
-        $html = $helper->bind()->render(submit: false);
+        $html = $helper->form()->submit(false)->bind()->render();
         static::assertStringContainsString('<form ', $html);
         static::assertStringContainsString('</form>', $html);
         static::assertStringNotContainsString('<button', $html);
-        static::assertStringContainsString('>Save &lt;all&gt;</button>', $helper->bind()->render(submit: 'Save <all>'));
+        static::assertStringContainsString(
+            '>Save &lt;all&gt;</button>',
+            $helper->form()->submit('Save <all>')->bind()->render(),
+        );
         static::assertStringContainsString(
             '<strong>Save</strong>',
-            $helper->bind()->render(submit: new Html('<strong>Save</strong>')),
+            $helper->form()->submit(new Html('<strong>Save</strong>'))->bind()->render(),
         );
-        static::assertStringContainsString('></button>', $helper->bind()->render(submit: ''));
+        static::assertStringContainsString('></button>', $helper->form()->submit('')->bind()->render());
     }
 
     public function testCompleteFormsPreserveMultipartCsrfMethodAndSubmissionProtection(): void
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['csrfToken' => $csrf, 'formTokenData' => []]);
-        $html = $helper->render(
-            SecureForm::class,
-            new ArrayContext(['data' => ['inputs' => ['tags' => ['b'], 'status' => 'a']]]),
-            ['type' => 'file', 'method' => 'patch', 'url' => '/articles/save'],
-            submitOptions: ['name' => 'save', 'value' => 'yes'],
-        );
+        $html = $helper->form(new ArrayContext(['data' => ['inputs' => ['tags' => ['b'], 'status' => 'a']]]))
+            ->blueprint(SecureForm::class)
+            ->multipart()
+            ->method('patch')
+            ->url('/articles/save')
+            ->submitConfig(
+                ButtonConfig::builder()->name('save')->value('yes'),
+            )
+            ->render();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@enctype="multipart/form-data"])'));
         static::assertTrue($xpath->evaluate('boolean(//input[@name="_method"][@value="PATCH"])'));
@@ -138,12 +150,12 @@ class FormSessionTest extends CompositionTestCase
 
     public function testCompleteRenderingRejectsOpenAndPreviouslyRenderedSessions(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $this->assertCannotRenderAgain($form);
         $form->close();
         $this->assertCannotRenderAgain($form);
-        $complete = $this->helper()->bind();
+        $complete = $this->helper()->form()->bind();
         $complete->render();
         $this->assertCannotRenderAgain($complete);
     }
@@ -151,7 +163,7 @@ class FormSessionTest extends CompositionTestCase
     public function testFailedCompleteRenderingDoesNotEchoOrAutomaticallyClose(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(blueprint: FailingPostForm::class);
+        $form = $helper->form()->blueprint(FailingPostForm::class)->bind();
         ob_start();
         try {
             $form->render();
@@ -163,9 +175,9 @@ class FormSessionTest extends CompositionTestCase
             ob_end_clean();
         }
 
-        static::assertStringContainsString('name="title"', $form->control('title'));
+        static::assertStringContainsString('name="title"', $form->control('title')->render());
         $form->close();
-        static::assertStringContainsString('</form>', $helper->render(PostForm::class));
+        static::assertStringContainsString('</form>', $helper->form()->blueprint(PostForm::class)->render());
     }
 
     /**

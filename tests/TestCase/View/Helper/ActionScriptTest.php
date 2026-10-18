@@ -22,10 +22,11 @@ class ActionScriptTest extends FormTestCase
         static::assertStringContainsString('/form_compose/js/actions.js', $initial);
         static::assertStringContainsString('defer', $initial);
         $other = new FormHelper($view);
-        static::assertStringNotContainsString('<script', $helper->postLink('Delete', '/delete'));
-        static::assertStringNotContainsString('<script', $other->postButton('Delete', '/delete', [
-            'confirm' => 'Sure?',
-        ]));
+        static::assertStringNotContainsString('<script', $helper->postLink(label: 'Delete', url: '/delete')->render());
+        static::assertStringNotContainsString(
+            '<script',
+            $other->postButton(label: 'Delete', url: '/delete')->confirm('Sure?')->render(),
+        );
         static::assertSame($initial, $view->fetch('script'));
     }
 
@@ -33,7 +34,7 @@ class ActionScriptTest extends FormTestCase
     {
         $view = new View(new ServerRequest());
         $helper = new FormHelper($view, ['autoActionScript' => false]);
-        $html = $helper->postLink('Delete', '/delete', ['confirm' => 'Sure?']);
+        $html = $helper->postLink(label: 'Delete', url: '/delete')->confirm('Sure?')->render();
         static::assertStringContainsString('data-form-compose-confirm="Sure?"', $html);
         static::assertStringNotContainsString('<script', $html);
         static::assertSame('', $view->fetch('script'));

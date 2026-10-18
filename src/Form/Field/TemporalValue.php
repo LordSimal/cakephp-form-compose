@@ -28,7 +28,7 @@ final class TemporalValue
      */
     public static function format(FieldState $state, Attributes $attributes): string
     {
-        $timezone = TemporalTimezone::resolve($state->options['timezone'] ?? null);
+        $timezone = TemporalTimezone::resolve($state->config->timezone ?? null);
         /** @var mixed $value */
         $value = $state->value;
         if (is_int($value)) {

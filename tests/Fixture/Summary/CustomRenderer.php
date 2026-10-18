@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Summary;
 
+use FormCompose\Configuration\SummaryConfig;
 use FormCompose\Rendering\ErrorSummaryRenderer;
 
 /**
@@ -11,12 +12,11 @@ use FormCompose\Rendering\ErrorSummaryRenderer;
 class CustomRenderer extends ErrorSummaryRenderer
 {
     /**
-     * @param array<string, mixed> $options Summary presentation.
      * @return array{\FormCompose\Rendering\Attributes, \FormCompose\Rendering\Attributes}
      */
-    protected function attributes(string $bindingId, array $options): array
+    protected function attributes(string $bindingId, SummaryConfig $config): array
     {
-        [$attributes, $title] = parent::attributes($bindingId, $options);
+        [$attributes, $title] = parent::attributes($bindingId, $config);
 
         return [$attributes->merge(['class' => 'custom-summary']), $title];
     }

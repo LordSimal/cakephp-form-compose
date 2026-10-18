@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Blueprint;
 
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\Field\FieldDefinition;
 
 /**
@@ -18,10 +19,12 @@ final readonly class EmbeddedDefinition
     /**
      * Validate the mount path using the ordinary field-path contract.
      *
-     * @param array<string, mixed> $options Presentation overrides, leaving the child layout intact.
      */
-    public function __construct(public string $path, public FormDefinition $definition, public array $options = [])
-    {
+    public function __construct(
+        public string $path,
+        public FormDefinition $definition,
+        public PresentationConfig $presentation = new PresentationConfig(),
+    ) {
         new FieldDefinition($path);
     }
 }

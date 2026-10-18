@@ -8,7 +8,7 @@ use FormCompose\Rendering\Attributes;
 /**
  * Declares reusable child inputs while PHP elements own their layout.
  *
- * Override inputs() with relative paths and ordinary field options. The bundled
+ * Override inputs() with relative FieldSpec children and typed configuration. The bundled
  * composite element renders each child's control(); custom elements receive
  * $inputs and can arrange individual parts or omit children. Only rendered child
  * inputs register submissions, identities, and summary targets.
@@ -52,7 +52,7 @@ abstract class CompositeType extends SingleInputType implements ErrorTargetProvi
     /**
      * Declare children relative to the parent context path and submitted name.
      *
-     * @return array<string, array<string, mixed>> Relative paths mapped to field options.
+     * @return list<\FormCompose\Form\Field\FieldSpec> Ordered relative child declarations.
      */
     abstract public function inputs(BoundField $field): array;
 

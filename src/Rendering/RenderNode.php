@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\Field\BoundField;
-use InvalidArgumentException;
 
 /**
  * Carries prepared template data and lookup options to a RendererInterface.
@@ -29,22 +29,14 @@ final readonly class RenderNode
      * Capture template variables and explicit presentation overrides.
      *
      * @param array<string, mixed> $variables Variables made available to PHP elements.
-     * @param array<string, mixed> $options Optional templates, variant, and templateData configuration.
-     * @throws \InvalidArgumentException When templateData is not an array.
      */
     public function __construct(
         public string $scope,
         public string $type,
         array $variables,
-        public array $options = [],
+        public PresentationConfig $presentation = new PresentationConfig(),
     ) {
-        /** @var mixed $templateData */
-        $templateData = array_key_exists('templateData', $options) ? $options['templateData'] : [];
-        if (!is_array($templateData)) {
-            throw new InvalidArgumentException('The templateData option must be an array.');
-        }
-
-        $this->variables = array_replace($variables, ['templateData' => $templateData]);
+        $this->variables = array_replace($variables, ['templateData' => $presentation->templateData]);
     }
 
     /**
@@ -58,7 +50,7 @@ final readonly class RenderNode
             'field',
             $field->state->type,
             ['field' => $field, 'attributes' => $attributes] + $variables,
-            $field->state->options,
+            $field->presentation,
         );
     }
 }

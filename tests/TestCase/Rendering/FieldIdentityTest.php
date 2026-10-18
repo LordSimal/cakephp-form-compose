@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use LogicException;
@@ -16,11 +18,14 @@ class FieldIdentityTest extends FormTestCase
 {
     public function testConfiguredFeedbackIdsDriveInputReferences(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]));
-        $field = $form->field('email', [
-            'help' => 'Work email',
-            'partAttributes' => ['help' => ['id' => 'custom-help'], 'errors' => ['id' => 'custom-errors']],
-        ]);
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]))
+            ->bind();
+        $field = $form->field('email')
+            ->help('Work email')
+            ->partAttributes('help', ['id' => 'custom-help'])
+            ->partAttributes('errors', ['id' => 'custom-errors'])
+            ->resolve();
         $form->open();
         $html = $field->control() . $form->close();
         static::assertStringContainsString('aria-describedby="custom-help custom-errors"', $html);
@@ -31,13 +36,16 @@ class FieldIdentityTest extends FormTestCase
 
     public function testRemovedFeedbackIdsDoNotLeaveDanglingReferences(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]));
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]))
+            ->bind();
         $form->open();
 
-        $html = $form->control('email', [
-            'help' => 'Work email',
-            'partAttributes' => ['help' => ['id' => null], 'errors' => ['id' => false]],
-        ]);
+        $html = $form->control('email')
+            ->help('Work email')
+            ->partAttributes('help', ['id' => null])
+            ->partAttributes('errors', ['id' => false])
+            ->render();
         static::assertStringNotContainsString('aria-describedby', $html);
         static::assertStringContainsString('aria-invalid="true"', $html);
         $form->close();
@@ -46,8 +54,10 @@ class FieldIdentityTest extends FormTestCase
     #[DataProvider('feedbackParts')]
     public function testRenderTimeFeedbackIdsAreRejected(string $part): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]));
-        $field = $form->field('email', ['help' => 'Work email']);
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['email' => ['invalid' => 'Invalid']]]))
+            ->bind();
+        $field = $form->field('email')->help('Work email')->resolve();
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Configure help and error IDs using field partAttributes.');
         $field->attributes($part, ['id' => 'changed-after-resolution']);
@@ -61,70 +71,83 @@ class FieldIdentityTest extends FormTestCase
         return ['help' => ['help'], 'errors' => ['errors']];
     }
 
-    /**
-     * @param array<string, mixed> $options Field configuration.
-     */
     #[DataProvider('relatedIdentities')]
-    public function testRelatedIdsCannotCollideWithOtherControls(string $part, array $options): void
+    public function testRelatedIdsCannotCollideWithOtherControls(string $part, FieldConfig $options): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        $form->control('field', $options);
+        $form->control('field')->apply($options)->render();
         $this->expectException(LogicException::class);
-        $form->control('field-' . $part, ['id' => 'form-compose-1-field-' . $part]);
+        $form->control('field-' . $part)->id('form-compose-1-field-' . $part)
+            ->render();
     }
 
     /**
-     * @return array<string, array{string, array<string, mixed>}>
+     * @return array<string, array{string, \FormCompose\Configuration\FieldConfig}>
      */
     public static function relatedIdentities(): array
     {
         return [
-            'help' => ['help', ['help' => 'Hint']],
-            'radio' => ['a', ['type' => 'radio', 'options' => ['a' => 'A']]],
-            'checkbox group' => ['a', ['type' => 'multicheckbox', 'options' => ['a' => 'A']]],
-            'select option' => ['a', ['type' => 'select', 'options' => ['a' => 'A']]],
+            'help' => ['help', FieldConfig::builder()->help('Hint')],
+            'radio' => [
+                'a',
+                FieldConfig::builder()->type('radio')->choices(['a' => 'A']),
+            ],
+            'checkbox group' => [
+                'a',
+                FieldConfig::builder()->type('multicheckbox')->choices(['a' => 'A']),
+            ],
+            'select option' => [
+                'a',
+                FieldConfig::builder()->type('select')->choices(['a' => 'A']),
+            ],
             'container' => [
                 'container',
-                ['partAttributes' => ['container' => ['id' => 'form-compose-1-field-container']]],
+                FieldConfig::builder()
+                    ->partAttributes('container', ['id' => 'form-compose-1-field-container']),
             ],
-            'label' => ['label', ['partAttributes' => ['label' => ['id' => 'form-compose-1-field-label']]]],
+            'label' => [
+                'label',
+                FieldConfig::builder()->partAttributes('label', ['id' => 'form-compose-1-field-label']),
+            ],
         ];
     }
 
     public function testLateIdentityFailureRollsBackTheWholeControl(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        $form->control('email-help', ['id' => 'form-compose-1-email-help']);
+        $form->control('email-help')
+            ->id('form-compose-1-email-help')
+            ->render();
         try {
-            $form->control('email', ['help' => 'Colliding help']);
+            $form->control('email')->help('Colliding help')->render();
             static::fail('Expected a feedback identity collision.');
         } catch (LogicException $logicException) {
             static::assertStringContainsString('already been rendered', $logicException->getMessage());
         }
 
-        static::assertStringContainsString('name="email"', $form->control('email'));
+        static::assertStringContainsString('name="email"', $form->control('email')->render());
         $form->close();
     }
 
     public function testInspectingFeedbackAttributesReservesNothing(): void
     {
-        $form = $this->helper()->bind();
-        $form->field('email', ['help' => 'Hint'])->attributes('help');
+        $form = $this->helper()->form()->bind();
+        $form->field('email')->help('Hint')->resolve()->attributes('help');
         $form->open();
-        static::assertStringContainsString('name="email-help"', $form->control('email-help'));
+        static::assertStringContainsString('name="email-help"', $form->control('email-help')->render());
         $form->close();
     }
 
     public function testChoiceIdsCannotReuseTheirOwnFieldIdentity(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $this->expectException(LogicException::class);
-        $form->control('status', [
-            'type' => 'radio',
-            'options' => [['value' => 'a', 'text' => 'A', 'id' => 'form-compose-1-status']],
-        ]);
+        $form->control('status')
+            ->type('radio')
+            ->choices([new ChoiceConfig('a', 'A', [], 'form-compose-1-status')])
+            ->render();
     }
 }

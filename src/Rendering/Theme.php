@@ -17,7 +17,7 @@ use InvalidArgumentException;
  *     layers: ['forms/application'],
  *     defaults: ['input' => ['class' => 'control']],
  * );
- * $form = $this->Form->bind($article, theme: $theme);
+ * $form = $this->Form->form($article)->theme($theme)->bind();
  * ```
  */
 final readonly class Theme
@@ -37,6 +37,21 @@ final readonly class Theme
         }
     }
 
+    /** Append an element prefix while preserving the original theme. */
+    public function layer(string $prefix): self
+    {
+        return new self([...$this->layers, $prefix], $this->defaults);
+    }
+
+    /** @param array<string, mixed> $attributes Merge native defaults for a part and optional type. */
+    public function defaults(string $part, array $attributes, ?string $type = null): self
+    {
+        $key = $type === null ? $part : $type . '.' . $part;
+        $defaults = new Attributes($this->defaults[$key] ?? [])->merge($attributes)->values;
+
+        return new self($this->layers, array_replace($this->defaults, [$key => $defaults]));
+    }
+
     /**
      * Provide a CSS-free base theme.
      */
@@ -53,5 +68,11 @@ final readonly class Theme
         $attributes = new Attributes($this->defaults[$part] ?? []);
 
         return $attributes->replace($this->defaults[$type . '.' . $part] ?? []);
+    }
+
+    /** Start an immutable theme with fluent layer and default configuration. */
+    public static function builder(): self
+    {
+        return new self();
     }
 }

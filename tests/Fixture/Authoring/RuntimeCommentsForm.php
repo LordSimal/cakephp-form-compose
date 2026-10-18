@@ -14,6 +14,6 @@ class RuntimeCommentsForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->embedMany('comments', BodyForm::class);
+        $form->embedMany(path: 'comments', blueprint: BodyForm::class);
     }
 }

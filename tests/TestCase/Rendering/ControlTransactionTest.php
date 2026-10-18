@@ -17,10 +17,13 @@ class ControlTransactionTest extends FormTestCase
     public function testAFeedbackCollisionRollsBackPendingSubmissions(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $html = $form->open() . $form->control('existing', ['id' => 'hint']);
+        $form = $helper->form()->url('/articles/save')->bind();
+        $html = $form->open() . $form->control('existing')->id('hint')->render();
         try {
-            $form->control('rejected', ['help' => 'Hint', 'partAttributes' => ['help' => ['id' => 'hint']]]);
+            $form->control('rejected')
+                ->help('Hint')
+                ->partAttributes('help', ['id' => 'hint'])
+                ->render();
             static::fail('Expected a collision after input rendering.');
         } catch (LogicException $logicException) {
             static::assertStringContainsString('already been rendered', $logicException->getMessage());

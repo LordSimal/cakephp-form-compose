@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Form;
 
-use FormCompose\Binding\FieldOptions;
-use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
 /**
@@ -18,41 +16,34 @@ final class PostActionOptions
     /**
      * Select inline output or a CakePHP view block.
      */
-    public static function block(mixed $block): ?string
+    public static function block(?string $block): ?string
     {
-        return match (true) {
-            $block === true => 'postActions',
-            $block === null || $block === false => null,
-            is_string($block) && trim($block) !== '' => $block,
-            default => throw new InvalidArgumentException('The block option must be a nonempty string or a boolean.'),
-        };
-    }
-
-    /**
-     * Accept a confirmation message or an explicitly disabled confirmation.
-     */
-    public static function confirm(mixed $confirm): ?string
-    {
-        if ($confirm !== null && $confirm !== false && !is_string($confirm)) {
-            throw new InvalidArgumentException('The confirm option must be a string, false, or null.');
+        if ($block !== null && trim($block) === '') {
+            throw new InvalidArgumentException('The block name must be a nonempty string.');
         }
 
-        return $confirm === false || $confirm === '' ? null : $confirm;
+        return $block;
+    }
+
+    /** Normalize an empty confirmation message to disabled confirmation. */
+    public static function confirm(?string $confirm): ?string
+    {
+        return $confirm === '' ? null : $confirm;
     }
 
     /**
      * Preserve trigger presentation while rejecting submission overrides.
      *
      * @param array<string, mixed> $options Trigger attributes and presentation options.
-     * @return array<string, mixed>
      */
-    public static function trigger(array $options): array
+    public static function trigger(array $options): void
     {
-        if (isset($options['type']) && $options['type'] !== 'submit') {
-            throw new InvalidArgumentException('Post action buttons must use type submit.');
-        }
-
         foreach ([
+            'type',
+            'name',
+            'value',
+            'disabled',
+            'form',
             'href',
             'formaction',
             'formmethod',
@@ -64,9 +55,5 @@ final class PostActionOptions
                 throw new InvalidArgumentException('The ' . $key . ' action attribute is managed by FormCompose.');
             }
         }
-
-        FieldOptions::validate($options);
-
-        return TemplateOptions::normalize($options);
     }
 }

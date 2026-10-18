@@ -43,10 +43,10 @@ final class DefinitionEntries
                             $entry->path,
                             $entry->blueprint,
                             $entry->keys,
-                            $entry->options,
+                            $entry->config,
                             $child,
                         )
-                        : new EmbeddedDefinition($entry->path, $child, $entry->options);
+                        : new EmbeddedDefinition($entry->path, $child, $entry->presentation);
                 }
             }
 

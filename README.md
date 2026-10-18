@@ -13,8 +13,9 @@
 
 **A replacement for CakePHP's FormHelper, with PHP element templates.**
 
-FormCompose keeps form data binding separate from markup. A `control()` call
-renders a PHP element where you arrange the field's label, input, help, and errors.
+FormCompose keeps form data binding separate from markup. Configure controls
+with fluent methods, then echo them to render PHP elements where you arrange
+the field's label, input, help, and errors.
 Reuse that layout across forms, or compose an individual field directly in a view.
 
 Use application-owned themes for Tailwind, daisyUI, Bootstrap, or your own design
@@ -25,7 +26,7 @@ part of the form-building workflow.
 
 - [Why FormCompose?](https://josbeir.github.io/cakephp-form-compose/why.html)
 - [Install and build your first form](https://josbeir.github.io/cakephp-form-compose/getting-started.html)
-- [Look up control options](https://josbeir.github.io/cakephp-form-compose/field-options.html)
+- [Look up fluent field configuration](https://josbeir.github.io/cakephp-form-compose/field-options.html)
 - [Choose inline controls or reusable blueprints](https://josbeir.github.io/cakephp-form-compose/reusable-forms.html)
 - [Declare reusable form blueprints](https://josbeir.github.io/cakephp-form-compose/blueprints.html)
 - [Create a PHP template theme](https://josbeir.github.io/cakephp-form-compose/themes.html)
@@ -33,26 +34,6 @@ part of the form-building workflow.
 - [Build custom field widgets](https://josbeir.github.io/cakephp-form-compose/custom-fields.html)
 
 Experimental API. Requires PHP 8.5+ and CakePHP 6 development builds. See the installation guide for setup and compatibility notes.
-
-**PHP template syntax:** Use alternative control syntax when a block wraps HTML
-across PHP tags:
-
-```php
-<?php if ($showHelp): ?>
-    <p>Choose arrival and departure dates.</p>
-<?php endif; ?>
-```
-
-Use normal braces for blocks containing only PHP logic, even inside a template:
-
-```php
-if ($showHelp) {
-    $options['help'] = 'Choose arrival and departure dates.';
-}
-```
-
-The same distinction applies to loops: `foreach: ... endforeach;` around HTML,
-and `foreach (...) { ... }` for PHP-only logic.
 
 Contributor commands and documentation-site setup are in the
 [contributing guide](https://josbeir.github.io/cakephp-form-compose/contributing.html).

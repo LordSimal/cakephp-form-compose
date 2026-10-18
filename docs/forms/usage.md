@@ -1,186 +1,160 @@
 ---
 title: Fields and values
-description: Configure controls, resolve values, render validation feedback, and build upload and search forms.
+description: Configure fluent controls, source values, validation feedback, uploads, and search forms.
 ---
 
 # Fields and values
 
-Continue from [your first form](/getting-started). Examples that use `$form`
-assume an open session unless they show the complete lifecycle. For the complete
-option list, keep [Field options](/field-options) alongside this guide.
+Examples using `$form` assume an open session. Start with [your first form](/getting-started)
+for setup and [field configuration](/field-options) for every method.
 
 ## Complete controls
 
-A control includes the input and its surrounding presentation. Use `type` when
-you want to override context inference:
-
 ```php
-// Inside the article form.
-echo $form->control('title', ['label' => 'Article title']);
-echo $form->control('body', [
-    'type' => 'textarea',
-    'attributes' => ['rows' => 12],
-]);
-echo $form->control('published', ['type' => 'checkbox']);
+echo $form->control('title')->label('Article title');
+echo $form->control('body')
+    ->type('textarea')
+    ->attributes(['rows' => 12]);
+echo $form->control('published')->type('checkbox');
 ```
 
-Otherwise schema metadata supplies types: booleans become checkboxes, text becomes
-a textarea, numbers become numeric inputs, and date/time columns get native date
-or time inputs. Primary keys default to hidden fields. Explicit choice lists
-infer a select. See [type inference](/field-options#type-inference) for the full mapping.
+Schema and path conventions infer native types unless overridden. See
+[type inference](/field-options#type-inference). A control uses a PHP element to
+arrange its label, input, help, and errors.
 
 ### Render several controls
-
-`controls()` renders an ordered batch without an extra wrapper:
 
 ```php
 echo $form->controls([
     'title',
-    'body' => ['type' => 'textarea', 'attributes' => ['rows' => 12]],
-    'published' => ['type' => 'checkbox'],
+    $form->control('body')
+        ->type('textarea')
+        ->attributes(['rows' => 12]),
+    $form->control('published')->type('checkbox'),
 ]);
 ```
 
-Use application HTML around
-separate calls when you need sections or grids.
+The batch has no wrapper and registers all inputs in one transaction. Use
+application HTML around separate calls for sections and grids.
 
 ### Opening and closing
 
-Each binding owns its form lifecycle and input registry. Open once, render all
-inputs, then close once. Rendered input IDs must be unique; explicit form IDs
-must also be unique across the page. You can inspect a field before opening,
-but inputs require an open form. See the [session reference](/form-reference#lifecycle-and-failures)
-for invalid calls and retry behavior.
+Open a bound session once, render inputs, then close once. Rendered IDs must be
+unique. Field resolution and inspection can happen before opening; input rendering
+requires an open form. See [lifecycle and failures](/form-reference#lifecycle-and-failures).
 
 ## Data and value sources
 
-`bind()` accepts ORM entities, CakePHP `Form` objects, array contexts,
-`ContextInterface` implementations, or `null`. It does not change those objects.
-The default value lookup is:
+`$this->Form->form($data)` accepts ORM entities, CakePHP `Form` objects, array
+contexts, `ContextInterface`, or null. It leaves those objects unchanged.
+`bind()` captures configuration and creates the isolated form session.
 
-1. An explicit field `value`, including explicit null.
-2. Submitted request data.
-3. The CakePHP context, including its schema defaults where enabled.
-4. The field's `default` if no source supplies a value.
+Default value lookup is explicit `value()`, submitted request data, context, then
+`default()`. Explicit null, false, zero, and empty string are preserved. A submitted
+null counts as found; a context null falls through, following CakePHP semantics.
 
 ```php
-// An explicit value overrides both the request and entity.
-echo $form->control('title', ['value' => 'Preview title']);
+echo $form->control('title')->value('Preview title');
+echo $form->control('summary')
+    ->default('No summary yet')
+    ->schemaDefault(false);
 ```
 
-This is useful for deliberate overrides; ordinary edit fields usually should use
-the bound value. Request lookup distinguishes missing keys from null, false, zero,
-and empty strings. A context's null result falls through to the next source or
-default, following CakePHP context semantics. See the
-[value options](/field-options#values) for `default` and `schemaDefault`.
+Use `value()` for deliberate overrides; ordinary edit fields should use binding.
+Configure source order before binding, using `valueSources()`.
 
 ### Search forms
 
-Use query parameters before context values, and choose GET:
-
-```php [templates/Articles/index.php]
+```php
 <?php
-$form = $this->Form->bind(null, [
-    'type' => 'get',
-    'valueSources' => ['query', 'context'],
-    'url' => ['action' => 'index'],
-]);
+$form = $this->Form
+    ->form()
+    ->method('get')
+    ->url(['action' => 'index'])
+    ->valueSources(['query', 'context'])
+    ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('q', ['type' => 'search', 'label' => 'Search articles']) ?>
+<?= $form->control('q')
+    ->type('search')
+    ->label('Search articles') ?>
 <?= $form->submit('Search') ?>
 <?= $form->close() ?>
 ```
 
-The query parameter `q` repopulates the search input. `valueSources` belongs to
-`bind()`; changing it in `open()` does not change field binding.
-
 ### Upload files
 
-Enable multipart encoding on the **form**, then select a file **field**:
-
-```php [templates/Articles/edit.php — upload variant]
-<?php $form = $this->Form->bind($article, ['type' => 'file']); ?>
+```php
+<?php
+$form = $this->Form
+    ->form($article)
+    ->multipart()
+    ->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('title') ?>
-<?= $form->control('attachment', [
-    'type' => 'file',
-    'attributes' => ['accept' => 'application/pdf'],
-]) ?>
-<?= $form->submit('Save article') ?>
+<?= $form->control('attachment')
+    ->type('file')
+    ->attributes(['accept' => 'application/pdf']) ?>
+<?= $form->submit('Upload') ?>
 <?= $form->close() ?>
 ```
 
-Form `type => 'file'` selects multipart encoding and retains the context's default
-POST/PUT method. You can instead set `enctype => 'multipart/form-data'` at binding
-or opening. A file input in a non-multipart form throws `LogicException`.
-For several files, add field `multiple => true`; the submitted name gains `[]`.
-File and password controls never prefill their value.
+`multipart()` changes encoding while preserving the context's HTTP method.
+A file input in a non-multipart form throws. Use field `multiple()` for several
+files; submitted names gain `[]`. File and password values never prefill.
 
 ## Labels, feedback, and escaping
 
-Labels are generated from paths unless overridden. Help renders when configured;
-errors come from the context and render when present. Ordinary text and attribute
-values are escaped.
-
 ```php
-echo $form->control('title', [
-    'label' => 'Article title',
-    'help' => 'Visible in article lists.',
-    'partAttributes' => [
-        'container' => ['class' => 'article-field'],
-        'label' => ['class' => 'article-label'],
-    ],
-]);
+echo $form->control('title')
+    ->label('Article title')
+    ->help('Visible in article lists.')
+    ->partAttributes('container', ['class' => 'article-field'])
+    ->partAttributes('label', ['class' => 'article-label']);
 ```
 
-Use `label => false`, `help => false`, or `errors => false` to suppress a part.
-When suppressing labels, provide another accessible name through input attributes.
-Disabling help or errors also removes their generated ARIA references. With a
-custom layout, render the enabled feedback parts so those references have targets.
-
-Trusted label, help, and button markup requires an explicit
-[`Html` object](/template-reference#trusted-markup). Validation, authorization,
-and saving remain in the application.
+Text and attributes are escaped. Use `label(false)`, `help(false)`, or
+`errors(false)` to suppress a part. Supply another accessible name when hiding a
+label. Render enabled help/errors so generated ARIA references have targets.
+Trusted markup requires an explicit [`Html` object](/template-reference#trusted-markup).
+Validation, authorization, and persistence remain in the application.
 
 ## Choose a template for one control
 
-Use `template` to select a specific PHP element for a complete field:
-
 ```php
-echo $form->control('title', ['template' => 'forms/article-title']);
+echo $form->control('title')->template('forms/article-title');
 ```
 
-This renders `templates/element/forms/article-title.php`. Continue with
-[Use your own templates](/templates) for the matching PHP element, individual
-part overrides, and custom presentation data.
-
-For shared defaults, [create a theme](/themes). To offer named presentations
-within a theme, [use variants](/variants). [How rendering works](/rendering)
-explains how those choices fit together.
+This selects `templates/element/forms/article-title.php`. See
+[templates](/templates), [themes](/themes), and [variants](/variants).
 
 ### Pass data to a template
 
-Use `templateData` to supply custom values to the element and that field's parts.
-These values stay in `$templateData`; they do not become HTML attributes. See the
-[worked example](/templates#pass-custom-presentation-data) and
-[scope reference](/template-reference#template-data).
+`templateData(['icon' => 'mail'])` supplies application-owned variables in
+`$templateData`, separate from HTML attributes and field extension data.
+See [template data](/template-reference#template-data) for scope and merge rules.
 
 ## Association fields
 
-Use CakePHP paths such as `author_id`, `tags._ids`, and `comments.0.body`.
-[Association fields](/associations) explains choice discovery, nested records,
-and validation feedback. For ordinary select and checkbox options, see
-[Choice controls](/choices).
+Use paths such as `author_id`, `tags._ids`, and `comments.0.body`. See
+[associations](/associations) for discovery and nested errors, and
+[choices](/choices) for selects and checkbox groups.
 
 ## Composing field parts
 
-Use `$form->field()` when arranging a label, input, help, and errors independently.
-Follow [Compose field parts](/field-parts) for a complete example and handwritten
-input registration.
+Configure a field builder, then call `resolve()` for an immutable `BoundField`.
+Render its parts with fluent local presentation:
+
+```php
+$title = $form->field('title')
+    ->help('Use a descriptive title.')
+    ->resolve();
+echo $title->input()->attributes(['class' => 'title-input']);
+```
+
+See [field parts](/field-parts).
 
 ## Reusable forms
 
-When form configuration repeats, extract a [blueprint](/blueprints).
-[Reusable forms](/reusable-forms) explains when to keep configuration inline and
-when to introduce a class. Both render through the controls and templates shown here.
+Share settings with an immutable `FieldConfig`, or extract a [blueprint](/blueprints)
+when a collection repeats. Both use the same bound fields and PHP templates.

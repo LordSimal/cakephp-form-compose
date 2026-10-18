@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Blueprint;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Attribute\Field;
 use FormCompose\Blueprint\BlueprintRenderer;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Configuration\EmbedConfig;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Form\InputRegistry;
 use FormCompose\Rendering\PhpRenderer;
@@ -18,8 +20,8 @@ use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Authoring\BodyForm;
 use FormCompose\Test\Fixture\Authoring\EmptyForm;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
-use InvalidArgumentException;
 use LogicException;
+use TypeError;
 
 /**
  * Checks field shorthand, manual parts, and definition presentation normalization.
@@ -28,13 +30,18 @@ class BlueprintRendererTest extends CompositionTestCase
 {
     public function testManualFieldPartsUseScopedNamesOverridesAndFeedback(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'data' => ['author' => ['email' => 'author@example.test']],
-            'errors' => ['author' => ['email' => ['invalid' => '<Invalid email>']]],
-        ]));
-        $html = $form->open() . $form->blueprint(AuthorForm::class, at: 'author', options: [
-            'template' => 'composition/parts',
-        ]) . $form->close();
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'data' => ['author' => ['email' => 'author@example.test']],
+                'errors' => ['author' => ['email' => ['invalid' => '<Invalid email>']]],
+            ]))
+            ->bind();
+        $html =
+            $form->open()
+            . $form->blueprint(blueprint: AuthorForm::class, at: 'author')
+                ->partTemplate('control', 'composition/parts')
+                ->render()
+            . $form->close();
         static::assertStringContainsString('data-parts', $html);
         static::assertStringContainsString('Explicit email', $html);
         static::assertStringContainsString('name="author[email]"', $html);
@@ -46,52 +53,45 @@ class BlueprintRendererTest extends CompositionTestCase
         static::assertStringContainsString('&lt;Work&gt; email', $html);
     }
 
-    public function testDefinitionTemplateConflictsFailBeforeRenderingInputs(): void
+    public function testLayoutSelectionsUseTheCanonicalPartMap(): void
     {
-        $form = $this->helper()->bind();
-        $form->open();
-        $this->expectException(InvalidArgumentException::class);
-        $form->renderDefinition(new FormDefinition([]), options: [
-            'template' => 'composition/author',
-            'templates' => ['control' => 'composition/post'],
-        ]);
+        $presentation = new PresentationConfig();
+        $presentation = $presentation->template('composition/author')->partTemplate('control', 'composition/post');
+        static::assertSame(['control' => 'composition/post'], $presentation->templates);
     }
 
-    public function testFieldTemplateConflictsStillFailThroughTheNormalPipeline(): void
+    public function testFieldTemplatesCanBeReplacedWithoutAlteringTheSourceConfig(): void
     {
-        $definition = new FormDefinition([new Field('email', template: 'one', templates: [
-            'control' => 'two',
-        ])->definition()]);
-        $form = $this->helper()->bind();
-        $form->open();
-        $this->expectException(InvalidArgumentException::class);
-        $form->renderDefinition($definition);
+        $original = FieldConfig::builder()->template('themes/custom/control');
+        $replacement = $original->template('themes/application/control');
+        static::assertSame('themes/custom/control', $original->presentation->templates['control']);
+        static::assertSame('themes/application/control', $replacement->presentation->templates['control']);
     }
 
     public function testDefinitionTemplateDataMustBeAnArray(): void
     {
-        $form = $this->helper()->bind();
-        $form->open();
-        $this->expectException(InvalidArgumentException::class);
-        $form->renderDefinition(new FormDefinition([]), options: ['templateData' => 'invalid']);
+        $this->expectException(TypeError::class);
+        $this->invokeBuilder(new PresentationConfig(), 'templateData', 'invalid');
     }
 
     public function testRepeatedRenderingRequiresCompiledRows(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind();
+        $form = $helper->form()->bind();
         $renderer = new BlueprintRenderer(new RenderContext(new PhpRenderer($helper->getView()), Theme::base()));
         $inputs = new InputRegistry(new FormProtection($form->binding->request));
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Repeated embeds must be compiled before rendering.');
-        $renderer->renderMany($form, new RepeatedDefinition('comments', EmptyForm::class), [], $inputs);
+        $renderer->renderMany($form, new RepeatedDefinition('comments', EmptyForm::class), new EmbedConfig(), $inputs);
     }
 
     public function testRepeatedRenderingOnlyRendersMountedRowsFromCompiledDefinitions(): void
     {
         $row = new FormDefinition([])->add(new FieldDefinition('body'));
         $rows = new FormDefinition([])->add(new FieldDefinition('unmounted'))->embed('2', $row);
-        $form = $this->helper(['comments' => [2 => ['body' => 'Mounted']]])->bind();
+        $form = $this->helper(['comments' => [2 => ['body' => 'Mounted']]])
+            ->form()
+            ->bind();
         $form->open();
 
         $html = $form->renderRepeated(
@@ -100,7 +100,10 @@ class BlueprintRendererTest extends CompositionTestCase
         );
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('unmounted', $html);
-        static::assertStringContainsString('name="comments[unmounted]"', $form->control('comments.unmounted'));
+        static::assertStringContainsString(
+            'name="comments[unmounted]"',
+            $form->control('comments.unmounted')->render(),
+        );
         $form->close();
     }
 }

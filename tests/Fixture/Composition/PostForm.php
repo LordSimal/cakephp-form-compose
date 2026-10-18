@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Composition;
 
-use FormCompose\Attribute\Embed;
-use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
 use FormCompose\Blueprint\BlueprintBuilder;
 use FormCompose\Blueprint\FormBlueprint;
@@ -13,10 +11,7 @@ use FormCompose\Blueprint\FormContext;
 /**
  * Adjusts an already configured child without repeating its construction or hook.
  */
-#[Form('composed-post', template: 'composition/post')]
-#[Field('title')]
-#[Embed('author', 'composed-author')]
-#[Field('body', type: 'textarea')]
+#[Form('composed-post')]
 class PostForm extends FormBlueprint
 {
     /**
@@ -31,8 +26,12 @@ class PostForm extends FormBlueprint
      */
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
+        $form->partTemplate('control', 'composition/post');
+        $form->add('title');
+        $form->embed('author', 'composed-author');
+        $form->add('body')->type('textarea');
         $this->probe->record('post', $context);
-        $form->with('author.first_name', ['label' => 'Author name from parent']);
+        $form->field('author.first_name')->label('Author name from parent');
         if ($context->request->getAttribute('stripParentEmail') === true) {
             $form->remove('author.email');
         }

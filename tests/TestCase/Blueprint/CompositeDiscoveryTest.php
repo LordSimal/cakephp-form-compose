@@ -37,8 +37,8 @@ class CompositeDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory($container, 'testBlueprints'));
 
-        $form = $helper->bind();
-        $field = $form->field('period', ['type' => 'dependency-range']);
+        $form = $helper->form()->bind();
+        $field = $form->field('period')->type('dependency-range')->resolve();
         static::assertTrue($field->state->grouped());
         static::assertSame([], $field->attributes('label')->values);
         static::assertSame(0, $probe->count());
@@ -55,8 +55,13 @@ class CompositeDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
-        $form = $helper->bind(null, ['types' => ['dependency-range' => new DateRangeType()]]);
-        $html = $form->open() . $form->control('period', ['type' => 'dependency-range']) . $form->close();
+        $form = $helper->form()
+            ->types(['dependency-range' => new DateRangeType()])
+            ->bind();
+        $html =
+            $form->open()
+            . $form->control('period')->type('dependency-range')->render()
+            . $form->close();
         static::assertStringContainsString('name="period[end]"', $html);
     }
 
@@ -65,7 +70,11 @@ class CompositeDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
-        $field = $helper->bind()->field('period', ['type' => 'dependency-range']);
+        $field = $helper->form()
+            ->bind()
+            ->field('period')
+            ->type('dependency-range')
+            ->resolve();
         static::assertTrue($field->state->grouped());
         $this->expectException(LogicException::class);
         static::assertNotEmpty($field->inputs);
@@ -76,8 +85,11 @@ class CompositeDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
-        $form = $helper->bind();
-        $html = $form->open() . $form->control('body', ['type' => 'markdown', 'value' => 'Hello']) . $form->close();
+        $form = $helper->form()->bind();
+        $html =
+            $form->open()
+            . $form->control('body')->type('markdown')->value('Hello')->render()
+            . $form->close();
         static::assertStringContainsString('<textarea', $html);
         static::assertStringContainsString('Hello</textarea>', $html);
     }
@@ -90,10 +102,10 @@ class CompositeDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory($container, 'testBlueprints'));
 
-        $form = $helper->bind();
+        $form = $helper->form()->bind();
         $form->open();
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('preserve its declared composite contract');
-        $form->control('period', ['type' => 'dependency-range']);
+        $form->control('period')->type('dependency-range')->render();
     }
 }

@@ -29,7 +29,7 @@ class LazyFieldType implements FieldTypeInterface, InputIdentityProviderInterfac
     /**
      * Resolve child declarations only when a composite's children are requested.
      *
-     * @return array<string, array<string, mixed>>
+     * @return list<\FormCompose\Form\Field\FieldSpec>
      */
     public function inputs(BoundField $field): array
     {

@@ -24,11 +24,11 @@ class RepeatedAssociationTest extends AssociationTestCase
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['required' => 'Comment required']);
         $article->setError('comments', ['count' => 'Add another comment']);
-        $form = $this->helper()->bind(
-            $article,
-            ['context' => ['table' => $this->articles]],
-            blueprint: CommentsWithIdForm::class,
-        );
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->blueprint(CommentsWithIdForm::class)
+            ->bind();
         $html = $form->render();
         static::assertStringContainsString('type="hidden"', $html);
         static::assertStringContainsString('<textarea', $html);
@@ -47,20 +47,23 @@ class RepeatedAssociationTest extends AssociationTestCase
             0 => $comments[0],
             2 => new Entity(['id' => 12, 'body' => 'Third'], ['source' => 'Comments']),
         ]);
-        $form = $helper->bind($article, [
-            'url' => '/articles/save',
-            'method' => 'post',
-            'context' => ['table' => $this->articles],
-        ]);
+        $form = $helper->form($article)
+            ->url('/articles/save')
+            ->method('post')
+            ->context(['table' => $this->articles])
+            ->bind();
         $html = $form->open();
         try {
-            $form->embedMany('comments', CommentForm::class, options: ['template' => 'repeat/failure']);
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+                ->partTemplate('control', 'repeat/failure')
+                ->render();
             static::fail('Expected failure after row registration.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Repeated wrapper failed.', $runtimeException->getMessage());
         }
 
-        $html .= $form->embedMany('comments', CommentForm::class, keys: [2]) . $form->close();
+        $html .=
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)->keys([2])->render() . $form->close();
         $tokens = [];
         /** @var NodeList<Element>|false $nodes */
         $nodes = $this->xpath($html)->query('//input[starts-with(@name, "_Token[")]');
@@ -89,13 +92,13 @@ class RepeatedAssociationTest extends AssociationTestCase
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['required' => 'Stale child error']);
         $article->setError('comments', ['count' => 'Collection needs a comment']);
-        $form = $this->helper(['comments' => []])->bind(
-            $article,
-            ['context' => ['table' => $this->articles]],
-        );
+        $form = $this->helper(['comments' => []])
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
         $form->open();
 
-        $html = $form->embedMany('comments', CommentForm::class);
+        $html = $form->embedMany(path: 'comments', blueprint: CommentForm::class)->render();
         static::assertStringContainsString('Collection needs a comment', $html);
         static::assertStringNotContainsString('Stale child error', $html);
         static::assertSame(0, $this->xpath($html)->query('//input | //textarea')->length);

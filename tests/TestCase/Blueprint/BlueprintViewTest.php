@@ -5,7 +5,12 @@ namespace FormCompose\Test\TestCase\Blueprint;
 
 use FormCompose\Blueprint\BlueprintView;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Builder\ControlBuilder;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\FieldDefinition;
+use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Test\CompositionTestCase;
 use FormCompose\Test\Fixture\Composition\AuthorForm;
 use InvalidArgumentException;
@@ -18,15 +23,15 @@ class BlueprintViewTest extends CompositionTestCase
     public function testLayoutBatchesPreserveScopesOptionsOrderAndRemovedFields(): void
     {
         $definition = $this->factory->compile(AuthorForm::class, $this->context());
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
         $view = new BlueprintView($form, $definition, 'author');
         $html = $view->controls([
-            'first_name' => ['label' => 'Given <name>'],
-            'last_name' => ['label' => 'Family name'],
+            new FieldSpec('first_name', FieldConfig::builder()->label('Given <name>')),
+            new FieldSpec('last_name', FieldConfig::builder()->label('Family name')),
             'internal',
-        ]);
+        ])->render();
         static::assertStringContainsString('name="author[first_name]"', $html);
         static::assertStringContainsString('name="author[last_name]"', $html);
         static::assertStringContainsString('id="form-compose-1-author.first_name"', $html);
@@ -35,33 +40,33 @@ class BlueprintViewTest extends CompositionTestCase
         static::assertStringContainsString('Use &lt;given&gt; name.', $html);
         static::assertStringNotContainsString('internal', $html);
         static::assertLessThan(strpos($html, 'name="author[last_name]"'), strpos($html, 'name="author[first_name]"'));
-        static::assertSame('', $view->controls([]));
-        static::assertSame('', $view->controls(['internal']));
+        static::assertSame('', $view->controls([])->render());
+        static::assertSame('', $view->controls(['internal'])->render());
         $form->close();
     }
 
     public function testUnknownLayoutFieldsRemainErrors(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
         $view = new BlueprintView($form, new FormDefinition([]));
         $this->expectException(InvalidArgumentException::class);
-        $view->controls(['typo']);
+        $view->controls(['typo'])->render();
     }
 
     public function testLayoutBatchesValidateAllSyntaxBeforeRendering(): void
     {
         $definition = new FormDefinition([])->add(new FieldDefinition('name'));
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
         $view = new BlueprintView($form, $definition);
         try {
-            $view->controls(['name', false]);
+            $view->controls(['name', false])->render();
             static::fail('Expected invalid syntax to fail before rendering.');
         } catch (InvalidArgumentException) {
-            static::assertStringContainsString('name="name"', $view->control('name'));
+            static::assertStringContainsString('name="name"', $view->control('name')->render());
         }
 
         $form->close();
@@ -69,21 +74,47 @@ class BlueprintViewTest extends CompositionTestCase
 
     public function testLayoutBatchesUseOverriddenControlMethods(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
         $view = new class($form, new FormDefinition([])->add(new FieldDefinition('name'))) extends BlueprintView {
             /**
              * Decorate controls through the public extension point.
              *
-             * @param array<string, mixed> $options Field options.
              */
-            public function control(string $field, array $options = []): string
+            public function control(string $field, ?FieldConfig $config = null): ControlBuilder
             {
-                return '<section data-layout-batch>' . parent::control($field, $options) . '</section>';
+                $base = parent::control($field, $config);
+
+                return new class(
+                    static fn(FieldConfig $settings): BoundField => $base->apply($settings)->resolve(),
+                    $base->config(),
+                    $base->owner,
+                ) extends ControlBuilder {
+                    /** Decorate the normal rendering boundary. */
+                    public function render(): string
+                    {
+                        return '<section data-layout-batch>' . parent::render() . '</section>';
+                    }
+                };
             }
         };
-        static::assertStringContainsString('data-layout-batch', $view->controls(['name']));
+        static::assertStringContainsString('data-layout-batch', $view->controls(['name'])->render());
+        $form->close();
+    }
+
+    public function testCompiledRowSelectionCannotBeChangedByLayoutPresentation(): void
+    {
+        $rows = new FormDefinition([])->embed('2', new FormDefinition([new FieldDefinition('body')]));
+        $definition = new FormDefinition([new RepeatedDefinition('comments', 'comment', [2], rows: $rows)]);
+        $form = $this->helper()->form()->bind();
+        $view = new BlueprintView($form, $definition);
+        $form->open();
+        $rows = $view->embeddedMany('comments')->label('Existing comments');
+        static::assertFalse(method_exists($rows, 'keys'));
+        $html = $rows->render();
+        static::assertStringContainsString('comments[2][body]', $html);
+        static::assertSame('Existing comments', $rows->config()->label);
         $form->close();
     }
 }

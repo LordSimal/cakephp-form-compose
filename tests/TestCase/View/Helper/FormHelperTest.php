@@ -6,6 +6,7 @@ namespace FormCompose\Test\TestCase\View\Helper;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
+use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
@@ -24,13 +25,19 @@ class FormHelperTest extends CompositionTestCase
 {
     public function testClassRenderingCompilesEachBlueprintOnceWithItsLayoutAndContext(): void
     {
-        $html = $this->helper(attributes: ['stripParentEmail' => true])->render(
-            PostForm::class,
-            new ArrayContext(['data' => ['title' => '<Title>', 'author' => ['first_name' => 'Ada']]]),
-            ['url' => '/articles/save', 'method' => 'patch', 'class' => 'profile'],
-            submit: 'Save <profile>',
-            submitOptions: ['class' => 'primary', 'templates' => ['control' => 'themes/explicit/button']],
-        );
+        $html = $this->helper(attributes: ['stripParentEmail' => true])
+            ->form(new ArrayContext(['data' => ['title' => '<Title>', 'author' => ['first_name' => 'Ada']]]))
+            ->blueprint(PostForm::class)
+            ->url('/articles/save')
+            ->method('patch')
+            ->attributes(['class' => 'profile'])
+            ->submit('Save <profile>')
+            ->submitConfig(
+                ButtonConfig::builder()
+                    ->partTemplate('control', 'themes/explicit/button')
+                    ->attributes(['class' => 'primary']),
+            )
+            ->render();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@action="/articles/save"][@class="profile"])'));
         static::assertTrue($xpath->evaluate('boolean(//input[@name="title"][@value="<Title>"])'));
@@ -41,7 +48,7 @@ class FormHelperTest extends CompositionTestCase
         static::assertStringContainsString('Save &lt;profile&gt;', $html);
         static::assertStringNotContainsString('name="author[email]"', $html);
         static::assertStringNotContainsString('name="author[internal]"', $html);
-        static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame(['post', 'author'], array_column($this->probe->calls, 'name'));
         static::assertSame(1, substr_count($html, '<form '));
         static::assertSame(1, substr_count($html, '</form>'));
     }
@@ -49,22 +56,19 @@ class FormHelperTest extends CompositionTestCase
     public function testAliasesAndIndependentFormsKeepSeparateIdsAndDefaults(): void
     {
         $helper = $this->helper();
-        $first = $helper->render('composed-post', submit: false);
-        $second = $helper->render('composed-post');
+        $first = $helper->form()->blueprint('composed-post')->submit(false)->render();
+        $second = $helper->form()->blueprint('composed-post')->render();
         static::assertStringContainsString('id="form-compose-1-title"', $first);
         static::assertStringContainsString('id="form-compose-2-title"', $second);
         static::assertStringNotContainsString('<button', $first);
         static::assertStringContainsString('>Submit</button>', $second);
-        static::assertSame(['author', 'post', 'author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame(['post', 'author', 'post', 'author'], array_column($this->probe->calls, 'name'));
     }
 
     public function testBlueprintsUseTheSessionReturnedByHelperExtensions(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $html = $helper->render(
-            WebsiteForm::class,
-            submit: new Html('<strong>Save</strong>'),
-        );
+        $html = $helper->form()->blueprint(WebsiteForm::class)->submit(new Html('<strong>Save</strong>'))->render();
         static::assertStringContainsString('type="url"', $html);
         static::assertStringContainsString('value="https://example.test"', $html);
         static::assertStringContainsString('data-contact-label', $html);
@@ -75,7 +79,7 @@ class FormHelperTest extends CompositionTestCase
     {
         ob_start();
         try {
-            $this->helper()->render('missing-blueprint');
+            $this->helper()->form()->blueprint('missing-blueprint')->render();
             static::fail('Expected blueprint resolution to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('Unknown form blueprint', $invalidArgumentException->getMessage());
@@ -100,25 +104,15 @@ class FormHelperTest extends CompositionTestCase
                     /**
                      * Decorate complete forms through the session's rendering extension point.
                      *
-                     * @param array<string, mixed> $options Opening options.
-                     * @param array<string, mixed> $submitOptions Button options.
                      */
-                    public function render(
-                        ?string $blueprint = null,
-                        array $options = [],
-                        string|Html|false|null $submit = null,
-                        array $submitOptions = [],
-                    ): string {
-                        return (
-                            '<section data-session-render>'
-                                . parent::render($blueprint, $options, $submit, $submitOptions)
-                                . '</section>'
-                        );
+                    public function render(): string
+                    {
+                        return '<section data-session-render>' . parent::render() . '</section>';
                     }
                 };
             }
         };
-        $html = $helper->render(NameForm::class, submit: 'Save');
+        $html = $helper->form()->blueprint(NameForm::class)->submit('Save')->render();
         static::assertStringContainsString('data-session-render', $html);
         static::assertStringContainsString('name="name"', $html);
         static::assertStringContainsString('>Save</button>', $html);

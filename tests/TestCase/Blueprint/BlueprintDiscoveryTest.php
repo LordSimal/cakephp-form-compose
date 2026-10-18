@@ -46,32 +46,44 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper(attributes: ['canManageAccounts' => true]);
         $helper->setConfig('blueprintFactory', $factory);
 
-        $first = $helper->bind(new ArrayContext(['data' => ['label' => 'First email']]), blueprint: 'conditional');
-        $second = $helper->bind(new ArrayContext(['data' => [
+        $first = $helper->form(new ArrayContext(['data' => ['label' => 'First email']]))
+            ->blueprint('conditional')
+            ->bind();
+        $second = $helper->form(new ArrayContext(['data' => [
             'label' => 'Second email',
-        ]]), blueprint: ConditionalForm::class);
-        static::assertSame('First email', $first->field('email')->state->options['label']);
-        static::assertSame('Second email', $second->field('email')->state->options['label']);
-        static::assertSame(['calls' => 1], $first->field('email')->state->options['templateData']);
-        static::assertSame(['calls' => 1], $second->field('email')->state->options['templateData']);
+        ]]))
+            ->blueprint(ConditionalForm::class)
+            ->bind();
+        static::assertSame('First email', $first->field('email')->resolve()->state->config->label);
+        static::assertSame('Second email', $second->field('email')->resolve()->state->config->label);
+        static::assertSame(
+            ['calls' => 1],
+            $first->field('email')->resolve()->state->config->presentation->templateData,
+        );
+        static::assertSame(
+            ['calls' => 1],
+            $second->field('email')->resolve()->state->config->presentation->templateData,
+        );
         static::assertSame(
             ['email', 'id', 'kind', 'active'],
             array_column($first->binding->definition->fields ?? [], 'path'),
         );
-        $html = $first->open() . $first->blueprint() . $first->close();
+        $html = $first->open() . $first->blueprint()->render() . $first->close();
         static::assertStringContainsString('Work &lt;address&gt;', $html);
         static::assertStringNotContainsString('name="internal_note"', $html);
         $unprivileged = $this->helper();
         $unprivileged->setConfig('blueprintFactory', $factory);
 
-        $third = $unprivileged->bind(new ArrayContext(['data' => [
+        $third = $unprivileged->form(new ArrayContext(['data' => [
             'label' => 'Third email',
-        ]]), blueprint: 'conditional');
+        ]]))
+            ->blueprint('conditional')
+            ->bind();
         static::assertFalse($third->binding->definition?->has('active'));
         static::assertFalse($third->binding->definition?->has('internal_note'));
         static::assertTrue($first->binding->definition?->has('active'));
         $third->open();
-        static::assertStringContainsString('name="internal_note"', $third->control('internal_note'));
+        static::assertStringContainsString('name="internal_note"', $third->control('internal_note')->render());
         $third->close();
     }
 
@@ -83,8 +95,8 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $factory = new BlueprintFactory($container, 'testBlueprints');
         $first = $factory->compile('conditional', $this->context());
         $second = $factory->compile('conditional', $this->context());
-        static::assertSame(['calls' => 1], $first->field('email')->options['templateData']);
-        static::assertSame(['calls' => 1], $second->field('email')->options['templateData']);
+        static::assertSame(['calls' => 1], $first->field('email')->config->presentation->templateData);
+        static::assertSame(['calls' => 1], $second->field('email')->config->presentation->templateData);
     }
 
     public function testPluginServiceUsesTheApplicationContainer(): void
@@ -98,10 +110,10 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', $factory);
 
-        $form = $helper->bind(blueprint: ConditionalForm::class);
+        $form = $helper->form()->blueprint(ConditionalForm::class)->bind();
         static::assertSame(
             ['work' => 'Work <address>', 'home' => 'Home'],
-            $form->field('kind')->state->options['options'],
+            $form->field('kind')->resolve()->state->config->choices,
         );
     }
 
@@ -114,8 +126,11 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', $factory);
 
-        $form = $helper->bind();
-        $html = $form->open() . $form->control('period', ['type' => 'date-range']) . $form->close();
+        $form = $helper->form()->bind();
+        $html =
+            $form->open()
+            . $form->control('period')->type('date-range')->render()
+            . $form->close();
         static::assertStringContainsString('name="period[start]"', $html);
         static::assertStringContainsString('name="period[end]"', $html);
     }
@@ -145,7 +160,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
         ]);
         $factory = new BlueprintFactory(collection: 'testBlueprints');
         $definition = $factory->compile('BlueprintFixture.profile', $this->context());
-        static::assertSame('email', $definition->field('plugin_email')->options['type']);
+        static::assertSame('email', $definition->field('plugin_email')->config->type);
         static::assertTrue($factory->compile('BlueprintFixture.admin', $this->context())->has('admin_email'));
         static::assertInstanceOf(PluginRangeType::class, $factory->types()['plugin-range']);
     }
@@ -153,7 +168,7 @@ class BlueprintDiscoveryTest extends BlueprintTestCase
     public function testSubclassFactoriesAreUsedByPublicBinding(): void
     {
         $helper = new BlueprintFormHelper($this->helper()->getView());
-        $form = $helper->bind(blueprint: ProfileForm::class);
-        static::assertSame('Custom builder', $form->field('custom')->state->options['label']);
+        $form = $helper->form()->blueprint(ProfileForm::class)->bind();
+        static::assertSame('Custom builder', $form->field('custom')->resolve()->state->config->label);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Closure;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderNode;
@@ -21,10 +22,15 @@ class ThemeDebugTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new PhpRenderer($helper->getView(), new Theme(['themes/application']), themeDebug: true);
-        $form = $helper->bind(renderer: $renderer);
+        $form = $helper->form()->renderer($renderer)->bind();
         $form->open();
 
-        $html = $form->field('author.email', ['type' => 'email', 'variant' => 'compact'])->label();
+        $html = $form->field('author.email')
+            ->type('email')
+            ->variant('compact')
+            ->resolve()
+            ->label()
+            ->render();
         static::assertStringContainsString(
             "scope: field\npart: label\ntype: email\nfield: author.email\nvariant: compact",
             $html,
@@ -46,10 +52,12 @@ class ThemeDebugTest extends FormTestCase
     {
         $helper = $this->helper();
         $theme = new Theme(['themes/application', 'themes/library']);
-        $form = $helper->bind(renderer: new PhpRenderer($helper->getView(), $theme, themeDebug: true));
+        $form = $helper->form()
+            ->renderer(new PhpRenderer($helper->getView(), $theme, themeDebug: true))
+            ->bind();
         $form->open();
 
-        $html = $form->control('email', ['type' => 'email', 'variant' => 'compact']);
+        $html = $form->control('email')->type('email')->variant('compact')->render();
         static::assertStringContainsString('MATCH themes/application/variants/compact/control', $html);
         static::assertStringNotContainsString('MISS themes/application/email/control', $html);
         static::assertMatchesRegularExpression(
@@ -72,10 +80,10 @@ class ThemeDebugTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new PhpRenderer($helper->getView(), new Theme(['themes/application']), themeDebug: true);
-        $form = $helper->bind(renderer: $renderer);
+        $form = $helper->form()->renderer($renderer)->bind();
         $form->open();
 
-        $html = $form->control('title', ['template' => 'widgets/parent']);
+        $html = $form->control('title')->partTemplate('control', 'widgets/parent')->render();
         static::assertStringStartsWith(
             "\n<!-- FormCompose BEGIN\nscope: field\npart: control\ntype: text\nfield: title\n"
                 . "source: explicit override\nelement: widgets/parent\n-->\n",
@@ -91,28 +99,18 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper();
         $renderer = new PhpRenderer($helper->getView(), new Theme(['themes/debug']), themeDebug: true);
         static::assertSame('', $renderer->render('label', new RenderNode('field', 'text', [])));
-        static::assertSame('', $renderer->render(
-            'label',
-            new RenderNode(
-                'field',
-                'text',
-                [],
-                [
-                    'templates' => ['label' => 'themes/debug/label'],
-                ],
-            ),
+        static::assertSame('', $renderer->render('label', new RenderNode(
+            'field',
+            'text',
+            [],
+            PresentationConfig::builder()->partTemplate('label', 'themes/debug/label'),
+        )));
+        $html = $renderer->render('label', new RenderNode(
+            'field',
+            'text',
+            [],
+            PresentationConfig::builder()->partTemplate('label', 'widgets/parent'),
         ));
-        $html = $renderer->render(
-            'label',
-            new RenderNode(
-                'field',
-                'text',
-                [],
-                [
-                    'templates' => ['label' => 'widgets/parent'],
-                ],
-            ),
-        );
         static::assertStringNotContainsString('FormCompose PARENT', $html);
         static::assertStringContainsString('<article data-parent-layout></article>', $html);
     }
@@ -120,21 +118,17 @@ class ThemeDebugTest extends FormTestCase
     public function testHostileMetadataCannotEscapeCommentsOrSpoofDiagnosticLines(): void
     {
         $helper = $this->helper();
-        $field = $helper->bind()->field('name--');
+        $field = $helper->form()->bind()->field('name--')->resolve();
         $renderer = new PhpRenderer($helper->getView(), themeDebug: true);
-        $html = $renderer->render(
-            'label',
-            new RenderNode(
-                'field',
-                'text',
-                ['field' => $field],
-                [
-                    'variant' => "--><img src=x onerror=bad>\r\nspoof",
-                    'templates' => ['label' => 'themes/debug/constant'],
-                    'templateData' => ['message' => 'hidden metadata'],
-                ],
-            ),
-        );
+        $html = $renderer->render('label', new RenderNode(
+            'field',
+            'text',
+            ['field' => $field],
+            PresentationConfig::builder()
+                ->variant("--><img src=x onerror=bad>\r\nspoof")
+                ->partTemplate('label', 'themes/debug/constant')
+                ->templateData(['message' => 'hidden metadata']),
+        ));
         static::assertStringContainsString('field: name&#45;&#45;', $html);
         static::assertStringContainsString('variant: &#45;&#45;&gt;&lt;img src=x onerror=bad&gt;\\r\\nspoof', $html);
         static::assertStringNotContainsString('hidden metadata', $html);
@@ -147,10 +141,13 @@ class ThemeDebugTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new PhpRenderer($helper->getView(), themeDebug: true);
-        $field = $helper->bind()->field('title');
+        $field = $helper->form()->bind()->field('title')->resolve();
         $node = RenderNode::field($field, new Attributes());
         $this->expectOutputString('');
-        foreach ([[], ['templates' => ['missing' => 'widgets/parent']]] as $options) {
+        foreach ([
+            new PresentationConfig(),
+            new PresentationConfig(templates: ['missing' => 'widgets/parent']),
+        ] as $options) {
             try {
                 $renderer->render('missing', new RenderNode('field', 'text', $node->variables, $options));
                 static::fail('Expected missing template lookup to throw.');
@@ -168,11 +165,11 @@ class ThemeDebugTest extends FormTestCase
     public function testNestedCommentsFollowRenderDepthAndSiblingsReturnToTheSameDepth(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(renderer: new PhpRenderer($helper->getView(), themeDebug: true));
+        $form = $helper->form()->renderer(new PhpRenderer($helper->getView(), themeDebug: true))->bind();
         $form->open();
 
-        $first = $form->control('title');
-        $second = $form->control('subtitle');
+        $first = $form->control('title')->render();
+        $second = $form->control('subtitle')->render();
         foreach ([$first, $second] as $html) {
             static::assertStringStartsWith("\n<!-- FormCompose BEGIN\nscope: field\npart: control", $html);
             static::assertStringContainsString("\n  <!-- FormCompose BEGIN\n  scope: field\n  part: input", $html);
@@ -235,7 +232,10 @@ class ThemeDebugTest extends FormTestCase
                 return '<b>Application override</b>' . parent::element($element, $node, $parent);
             }
         };
-        $html = $renderer->render('label', RenderNode::field($helper->bind()->field('title'), new Attributes()));
+        $html = $renderer->render('label', RenderNode::field(
+            $helper->form()->bind()->field('title')->resolve(),
+            new Attributes(),
+        ));
         static::assertStringContainsString('element: FormCompose.form/base/label', $html);
         static::assertStringContainsString('<b>Application override</b>', $html);
     }

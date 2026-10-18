@@ -5,8 +5,8 @@ namespace FormCompose\Form;
 
 use Cake\Core\Configure;
 use FormCompose\Binding\FormBinding;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Rendering\Attributes;
-use FormCompose\Rendering\TemplateOptions;
 use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
 
@@ -24,43 +24,23 @@ class FormConstruction
     /**
      * Resolve HTML attributes, multipart encoding, method overrides, and CSRF fields.
      *
-     * @param array<string, mixed> $extra Per-opening options.
      */
-    public function prepare(FormBinding $binding, Theme $theme, array $extra): FormState
+    public function prepare(FormBinding $binding, Theme $theme, FormConfig $extra): FormState
     {
-        $options = array_replace(
-            TemplateOptions::normalize($binding->options, 'layout'),
-            TemplateOptions::normalize($extra, 'layout'),
-        );
-        $defaultMethod = $binding->context->isCreate() ? 'post' : 'put';
-        $type = strtolower((string)($options['type'] ?? $defaultMethod));
-        $method = strtolower((string)($options['method'] ?? ($type === 'file' ? $defaultMethod : $type)));
+        $config = $binding->config->merge($extra);
+        $method = strtolower($config->method ?? ($binding->context->isCreate() ? 'post' : 'put'));
         if (!in_array($method, ['get', 'post', 'put', 'patch', 'delete', 'head', 'options'], true)) {
             throw new InvalidArgumentException('Unsupported form method.');
         }
 
-        $url = ActionUrl::resolve($binding, $options);
-        $presentation = array_intersect_key($options, array_flip(['templates', 'variant', 'templateData']));
-        /** @var string $encoding */
-        $encoding = $options['encoding'] ?? Configure::read('App.encoding', 'UTF-8');
-        /** @var string|null $enctype */
-        $enctype = $options['enctype'] ?? ($type === 'file' ? 'multipart/form-data' : null);
-        unset(
-            $options['url'],
-            $options['type'],
-            $options['method'],
-            $options['encoding'],
-            $options['enctype'],
-            $options['templates'],
-            $options['variant'],
-            $options['templateData'],
-            $options['valueSources'],
-            $options['passwordFields'],
-            $options['typeMap'],
-            $options['errorSummary'],
-        );
+        $url = ActionUrl::resolve($binding, $config);
+        $presentation = $config->presentation;
+        /** @var mixed $encoding */
+        $encoding = $config->encoding ?? Configure::read('App.encoding', 'UTF-8');
+        assert(is_string($encoding), 'The application encoding must be a string.');
+        $enctype = $config->enctype ?? ($config->multipart ? 'multipart/form-data' : null);
         $attributes = $theme->attributes('form.open', $method)
-            ->merge($options)
+            ->merge($presentation->attributes)
             ->replace([
                 'id' => $binding->id,
                 'action' => $url['attribute'],

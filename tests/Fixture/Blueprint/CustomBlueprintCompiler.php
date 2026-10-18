@@ -9,6 +9,7 @@ use FormCompose\Blueprint\FormContext;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedCompiler;
 use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 
 /**
@@ -22,7 +23,7 @@ class CustomBlueprintCompiler extends BlueprintCompiler
     protected function createBuilder(FormDefinition $definition, FormContext $context): BlueprintBuilder
     {
         return new CustomBlueprintBuilder(
-            $definition->add(new FieldDefinition('custom', ['label' => 'Custom builder'])),
+            $definition->add(new FieldDefinition('custom', FieldConfig::builder()->label('Custom builder'))),
             fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
             fn(RepeatedDefinition $entry): RepeatedDefinition => $this->repeated($entry, $context),
         );

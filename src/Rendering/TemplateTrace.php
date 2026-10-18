@@ -88,9 +88,7 @@ final readonly class TemplateTrace
         }
 
         ThemeDebugComment::appendHiddenFieldMetadata($lines, $node, $this->part);
-
-        /** @var mixed $variant */
-        $variant = $node->options['variant'] ?? null;
+        $variant = $node->presentation->variant ?? null;
         if (is_string($variant)) {
             $lines[] = 'variant: ' . $variant;
         }

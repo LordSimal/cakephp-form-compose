@@ -15,6 +15,6 @@ class FailingPostForm extends PostForm
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         parent::configure($form, $context);
-        $form->presentation(['template' => 'composition/failure']);
+        $form->partTemplate('control', 'composition/failure');
     }
 }

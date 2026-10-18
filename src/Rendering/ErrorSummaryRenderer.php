@@ -3,10 +3,9 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
-use FormCompose\Binding\FieldOptions;
+use FormCompose\Configuration\SummaryConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\InputRegistry;
-use InvalidArgumentException;
 use function Cake\I18n\__;
 
 /**
@@ -27,29 +26,21 @@ class ErrorSummaryRenderer
     /**
      * Read feedback and render one summary, reserving only its emitted presentation IDs.
      *
-     * @param array<string, mixed> $options Title and standard template/attribute presentation.
      */
-    public function render(FormSession $session, InputRegistry $inputs, array $options): string
+    public function render(FormSession $session, InputRegistry $inputs, SummaryConfig $config): string
     {
         $entries = array_values($inputs->feedback->entries());
         if ($entries === []) {
             return '';
         }
 
-        FieldOptions::validate($options);
-        $options = TemplateOptions::normalize($options);
-        /** @var mixed $title */
-        $title = $options['title'] ?? __('Please correct the following errors.');
-        if (!is_string($title) && !$title instanceof Html) {
-            throw new InvalidArgumentException('An error summary title must be text or trusted Html.');
-        }
-
-        [$attributes, $titleAttributes] = $this->attributes($session->binding->id, $options);
+        $title = $config->title ?? __('Please correct the following errors.');
+        [$attributes, $titleAttributes] = $this->attributes($session->binding->id, $config);
 
         return $inputs->render(function () use (
             $inputs,
             $session,
-            $options,
+            $config,
             $entries,
             $title,
             $attributes,
@@ -67,7 +58,7 @@ class ErrorSummaryRenderer
                         'attributes' => $attributes,
                         'titleAttributes' => $titleAttributes,
                     ],
-                    $options,
+                    $config->presentation,
                 ),
             );
             if ($titleAttributes->has('id')) {
@@ -79,46 +70,14 @@ class ErrorSummaryRenderer
     }
 
     /**
-     * Extract opt-in summary presentation for the complete-form shortcut.
-     *
-     * @param array<string, mixed> $options Local opening options.
-     * @param array<string, mixed> $defaults Binding options.
-     * @return array<string, mixed>|null Null disables the summary; [] uses defaults.
-     */
-    public function options(array $options, array $defaults): ?array
-    {
-        /** @var mixed $summary */
-        $summary = array_key_exists('errorSummary', $options)
-            ? $options['errorSummary']
-            : $defaults['errorSummary'] ?? false;
-        if ($summary === false) {
-            return null;
-        }
-
-        if ($summary === true) {
-            return [];
-        }
-
-        if (!is_array($summary)) {
-            throw new InvalidArgumentException('The errorSummary option must be a boolean or an options array.');
-        }
-
-        /** @var array<string, mixed> $summary */
-        return $summary;
-    }
-
-    /**
      * Associate the heading with its summary, respecting explicitly omitted identities.
      *
-     * @param array<string, mixed> $options Summary presentation.
      * @return array{\FormCompose\Rendering\Attributes, \FormCompose\Rendering\Attributes}
      */
-    protected function attributes(string $bindingId, array $options): array
+    protected function attributes(string $bindingId, SummaryConfig $config): array
     {
-        /** @var array<string, mixed> $configured */
-        $configured = $options['attributes'] ?? [];
-        /** @var array<string, array<string, mixed>> $parts */
-        $parts = $options['partAttributes'] ?? [];
+        $configured = $config->presentation->attributes;
+        $parts = $config->presentation->partAttributes;
         $attributes = $this->rendering
             ->theme
             ->attributes('error-summary.control', 'default')

@@ -15,10 +15,15 @@ class SingleInputTypeTest extends FormTestCase
 {
     public function testEditorElementEscapesContentAndUsesTheSuppliedIdentity(): void
     {
-        $form = $this->helper(['article' => ['body' => '</textarea><script>bad()</script>']])->bind(null, [
-            'types' => ['markdown' => new MarkdownType()],
-        ]);
-        $field = $form->field('article.body', ['type' => 'markdown', 'label' => 'Body', 'required' => true]);
+        $form = $this->helper(['article' => ['body' => '</textarea><script>bad()</script>']])
+            ->form()
+            ->types(['markdown' => new MarkdownType()])
+            ->bind();
+        $field = $form->field('article.body')
+            ->type('markdown')
+            ->label('Body')
+            ->required(true)
+            ->resolve();
         $html = $form->open() . $field->control() . $form->close();
         static::assertStringContainsString('&lt;/textarea&gt;&lt;script&gt;', $html);
         static::assertSame(0.0, $this->xpath($html)->evaluate('count(//script)'));
@@ -30,14 +35,17 @@ class SingleInputTypeTest extends FormTestCase
 
     public function testLocalWidgetOverrideAndParentLookupRetainTheDefaultScalarValue(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['scalar' => new SingleInputType()]]);
+        $form = $this->helper()
+            ->form()
+            ->types(['scalar' => new SingleInputType()])
+            ->bind();
         $html =
             $form->open()
-            . $form->control('amount', [
-                'type' => 'scalar',
-                'value' => 0,
-                'templates' => ['widget' => 'widgets/parent'],
-            ])
+            . $form->control('amount')
+                ->type('scalar')
+                ->value(0)
+                ->partTemplate('widget', 'widgets/parent')
+                ->render()
             . $form->close();
         static::assertStringContainsString('data-parent-layout', $html);
         static::assertStringContainsString('type="text" value="0"', $html);
@@ -46,12 +54,14 @@ class SingleInputTypeTest extends FormTestCase
     public function testScalarSubmissionsExcludeDisabledControlsAndSupportExplicitUnlocking(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['types' => ['markdown' => new MarkdownType()]]);
+        $form = $helper->form()
+            ->types(['markdown' => new MarkdownType()])
+            ->bind();
         $html =
             $form->open()
-            . $form->control('body', ['type' => 'markdown'])
-            . $form->control('disabled', ['type' => 'markdown', 'disabled' => true])
-            . $form->control('optional', ['type' => 'markdown', 'secure' => false])
+            . $form->control('body')->type('markdown')->render()
+            . $form->control('disabled')->type('markdown')->disabled(true)->render()
+            . $form->control('optional')->type('markdown')->secure(false)->render()
             . $form->close();
         $tokens = [];
         foreach (['fields', 'unlocked', 'debug'] as $key) {

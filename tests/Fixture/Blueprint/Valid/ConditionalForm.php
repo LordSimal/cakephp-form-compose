@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture\Blueprint\Valid;
 
-use FormCompose\Attribute\Field;
 use FormCompose\Attribute\Form;
 use FormCompose\Blueprint\BlueprintBuilder;
 use FormCompose\Blueprint\FormBlueprint;
@@ -13,9 +12,6 @@ use FormCompose\Blueprint\FormContext;
  * Reads injected choices, bound metadata and per-request conditions without retaining state.
  */
 #[Form('conditional')]
-#[Field('email', type: 'email', label: 'Email')]
-#[Field('internal_note')]
-#[Field('id', type: 'hidden', options: ['value' => '42'])]
 class ConditionalForm extends FormBlueprint
 {
     protected int $calls = 0;
@@ -32,20 +28,16 @@ class ConditionalForm extends FormBlueprint
      */
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
+        $form->add('email')->type('email')->label('Email');
+        $form->add('internal_note');
+        $form->add('id')->value('42')->type('hidden');
         $form->remove('internal_note');
-        $form->with('email', [
-            'label' => $context->context->val('label'),
-            'templateData' => ['calls' => ++$this->calls],
-        ]);
-        $form->add(
-            'kind',
-            ['options' => $this->choices->all()],
-        );
+        $form->field('email')
+            ->label((string)$context->context->val('label'))
+            ->templateData(['calls' => ++$this->calls]);
+        $form->add('kind')->choices($this->choices->all());
         if ($context->request->getAttribute('canManageAccounts') === true) {
-            $form->add(
-                'active',
-                ['type' => 'checkbox', 'label' => 'Account enabled'],
-            );
+            $form->add('active')->type('checkbox')->label('Account enabled');
         }
     }
 }

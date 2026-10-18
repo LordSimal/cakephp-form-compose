@@ -10,8 +10,8 @@ use FormCompose\Blueprint\RepeatedDefinition;
  */
 foreach ($definition->entries as $entry) {
     echo match (true) {
-        $entry instanceof RepeatedDefinition => $form->embeddedMany($entry->path),
-        $entry instanceof EmbeddedDefinition => $form->embedded($entry->path),
-        default => $form->control($entry->path),
+        $entry instanceof RepeatedDefinition => $form->embeddedMany(path: $entry->path)->render(),
+        $entry instanceof EmbeddedDefinition => $form->embedded(path: $entry->path)->render(),
+        default => $form->control($entry->path)->render(),
     };
 }

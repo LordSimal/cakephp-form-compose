@@ -11,7 +11,7 @@ use FormCompose\Rendering\Attributes;
  * Browsers omit unchecked checkboxes and empty multiple selections. NativeType
  * renders this fallback before the visible control so an unchecked checkbox can
  * submit its uncheckedValue (zero by default), or an empty choice group can submit
- * an empty string. The hiddenField option disables this behavior.
+ * an empty string. fallback(false) disables this behavior.
  */
 final class ControlFallback
 {
@@ -23,14 +23,14 @@ final class ControlFallback
         $needs =
             in_array($state->type, ['checkbox', 'radio', 'multicheckbox'], true)
             || ($state->type === 'select' && $attributes->has('multiple'));
-        if (!$needs || !($state->options['hiddenField'] ?? true)) {
+        if (!$needs || !$state->config->fallback) {
             return null;
         }
 
         return new Attributes([
             'type' => 'hidden',
             'name' => InputNames::base($state->name),
-            'value' => $state->type === 'checkbox' ? NativeValue::scalar($state->options['uncheckedValue'] ?? '0') : '',
+            'value' => $state->type === 'checkbox' ? NativeValue::scalar($state->config->uncheckedValue ?? '0') : '',
             'disabled' => $attributes->values['disabled'] ?? false,
             'form' => $attributes->values['form'] ?? null,
         ]);

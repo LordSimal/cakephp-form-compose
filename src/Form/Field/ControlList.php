@@ -3,46 +3,34 @@ declare(strict_types=1);
 
 namespace FormCompose\Form\Field;
 
+use FormCompose\Builder\ControlBuilder;
 use InvalidArgumentException;
 
-/**
- * Normalizes batch control declarations before a session or layout renders them.
- *
- * Indexed paths can be mixed with path-to-options entries. The
- * complete batch is validated first, preserving order and explicit option values.
- */
+/** Validates ordered field authoring lists without binding or rendering their entries. */
 final class ControlList
 {
     /**
-     * Convert the supported batch syntax into ordered field definitions.
-     *
-     * @param array<array-key, mixed> $fields Indexed paths or paths mapped to options.
-     * @return list<\FormCompose\Form\Field\FieldDefinition>
-     * @throws \InvalidArgumentException For invalid entries or field paths.
+     * @param iterable<array-key, mixed> $fields Paths, immutable specs, or configured controls.
+     * @return list<FieldSpec|ControlBuilder>
      */
-    public static function normalize(array $fields): array
+    public static function normalize(iterable $fields): array
     {
-        $definitions = [];
+        $result = [];
         /** @var mixed $field */
-        foreach ($fields as $path => $field) {
-            if (is_int($path) && is_string($field)) {
-                $definitions[] = new FieldDefinition($field);
-            } elseif (is_string($path) && is_array($field)) {
-                foreach (array_keys($field) as $option) {
-                    if (!is_string($option)) {
-                        throw new InvalidArgumentException('Control options must use string keys.');
-                    }
-                }
+        foreach ($fields as $field) {
+            if (is_string($field)) {
+                $field = new FieldSpec($field);
+            }
 
-                /** @var array<string, mixed> $field Validated option keys. */
-                $definitions[] = new FieldDefinition($path, $field);
-            } else {
+            if (!$field instanceof FieldSpec && !$field instanceof ControlBuilder) {
                 throw new InvalidArgumentException(
-                    'Use indexed field paths or paths mapped to options.',
+                    'Use field paths, FieldSpec objects, or controls from this session.',
                 );
             }
+
+            $result[] = $field;
         }
 
-        return $definitions;
+        return $result;
     }
 }

@@ -15,10 +15,12 @@ class NestedAssociationTest extends AssociationTestCase
     {
         $helper = $this->helper();
         $helper->getView()->set('authors', [1 => 'Grace', 2 => 'Ada']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
         $form->open();
 
-        $html = $form->control('author_id') . $form->control('comments.0.author_id');
+        $html = $form->control('author_id')->render() . $form->control('comments.0.author_id')->render();
         $form->close();
         $xpath = $this->xpath($html);
 
@@ -36,15 +38,18 @@ class NestedAssociationTest extends AssociationTestCase
         $details = $article->get('details');
         static::assertInstanceOf(Entity::class, $details);
         $details->setError('summary', ['invalid' => 'Fix the summary']);
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
-        $field = $form->field('details.summary');
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('details.summary')->resolve();
 
         static::assertSame('Summary', $field->state->value);
         static::assertSame('details[summary]', $field->state->name);
         static::assertSame(60, $field->state->constraints['maxlength']);
         static::assertTrue($field->state->constraints['required']);
         static::assertSame(['Fix the summary'], $field->state->messages);
-        static::assertSame('checkbox', $form->field('details.is_public')->state->type);
+        static::assertSame('checkbox', $form->field('details.is_public')->resolve()->state->type);
         $form->open();
         $html = $field->control();
         $form->close();
@@ -60,17 +65,18 @@ class NestedAssociationTest extends AssociationTestCase
         $comment = $comments[0];
         $comment->setError('body', ['invalid' => 'Fix this comment']);
 
-        $form = $this->helper(['comments' => [['body' => 'Submitted comment']]])->bind($article, [
-            'context' => ['table' => $this->articles],
-        ]);
-        $field = $form->field('comments.0.body');
+        $form = $this->helper(['comments' => [['body' => 'Submitted comment']]])
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('comments.0.body')->resolve();
         static::assertSame('textarea', $field->state->type);
         static::assertSame('Submitted comment', $field->state->value);
         static::assertSame(40, $field->state->constraints['maxlength']);
         static::assertTrue($field->state->constraints['required']);
         static::assertSame(['Fix this comment'], $field->state->messages);
         $form->open();
-        $html = $form->control('comments.0.id') . $field->control();
+        $html = $form->control('comments.0.id')->render() . $field->control();
         $form->close();
 
         static::assertSame(
@@ -85,12 +91,15 @@ class NestedAssociationTest extends AssociationTestCase
     public function testMissingAssociatedRecordsStillResolveTheirSchema(): void
     {
         $article = new Entity([], ['source' => 'Articles']);
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
 
-        static::assertNull($form->field('details.summary')->state->value);
-        static::assertSame(60, $form->field('details.summary')->state->constraints['maxlength']);
-        static::assertSame('textarea', $form->field('comments.0.body')->state->type);
-        static::assertSame('select', $form->field('tags._ids')->state->type);
+        static::assertNull($form->field('details.summary')->resolve()->state->value);
+        static::assertSame(60, $form->field('details.summary')->resolve()->state->constraints['maxlength']);
+        static::assertSame('textarea', $form->field('comments.0.body')->resolve()->state->type);
+        static::assertSame('select', $form->field('tags._ids')->resolve()->state->type);
     }
 
     public function testJunctionFieldsResolveTheirValueAndSchema(): void
@@ -102,8 +111,11 @@ class NestedAssociationTest extends AssociationTestCase
         $join = $tags[0]->get('_joinData');
         static::assertInstanceOf(Entity::class, $join);
         $join->setError('priority', ['invalid' => 'Invalid priority']);
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
-        $field = $form->field('tags.0._joinData.priority');
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('tags.0._joinData.priority')->resolve();
 
         static::assertSame('number', $field->state->type);
         static::assertSame(3, $field->state->value);
@@ -119,13 +131,22 @@ class NestedAssociationTest extends AssociationTestCase
     {
         $helper = $this->helper();
         $helper->getView()->set('authors', [1 => 'Unwanted']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        $field = $form->field('author_id', ['type' => 'number', 'label' => 'Owner']);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('author_id')->type('number')->label('Owner')->resolve();
 
         static::assertSame('number', $field->state->type);
         static::assertSame('Owner', $field->state->labelText());
-        static::assertArrayNotHasKey('options', $field->state->options);
-        static::assertSame('text', $form->field('comments.0.id', ['type' => 'text'])->state->type);
+        static::assertFalse($field->state->config->hasChoices);
+        static::assertSame(
+            'text',
+            $form->field('comments.0.id')
+                ->type('text')
+                ->resolve()
+                ->state
+                ->type,
+        );
     }
 
     public function testBelongsToRecordFieldsUseTheirTargetMetadataAndErrors(): void
@@ -135,13 +156,16 @@ class NestedAssociationTest extends AssociationTestCase
         $author = $article->get('author');
         $author->setError('name', ['invalid' => 'Fix the author name']);
 
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
-        $field = $form->field('author.name');
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('author.name')->resolve();
 
         static::assertSame('Ada', $field->state->value);
         static::assertSame('author[name]', $field->state->name);
         static::assertSame(60, $field->state->constraints['maxlength']);
         static::assertSame(['Fix the author name'], $field->state->messages);
-        static::assertSame('hidden', $form->field('author.id')->state->type);
+        static::assertSame('hidden', $form->field('author.id')->resolve()->state->type);
     }
 }

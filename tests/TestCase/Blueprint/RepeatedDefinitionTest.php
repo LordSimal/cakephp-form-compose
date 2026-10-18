@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Blueprint;
 
 use Cake\View\Form\ArrayContext;
-use FormCompose\Attribute\EmbedMany;
+use FormCompose\Blueprint\RepeatedDefinition;
 use FormCompose\Test\Fixture\Authoring\CommentsForm;
 use FormCompose\Test\Fixture\Authoring\SuppressedCommentsForm;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
@@ -20,12 +20,14 @@ class RepeatedDefinitionTest extends FormTestCase
 {
     public function testRepeatedBlueprintsCompileIndependentlyPerBinding(): void
     {
-        $first = $this->helper(['comments' => [2 => ['body' => 'First']]])->bind(
-            blueprint: CommentsForm::class,
-        );
-        $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])->bind(
-            blueprint: CommentsForm::class,
-        );
+        $first = $this->helper(['comments' => [2 => ['body' => 'First']]])
+            ->form()
+            ->blueprint(CommentsForm::class)
+            ->bind();
+        $second = $this->helper(['comments' => ['new' => ['body' => 'Second']]])
+            ->form()
+            ->blueprint(CommentsForm::class)
+            ->bind();
         static::assertTrue($first->binding->definition?->has('comments.2.body'));
         static::assertFalse($second->binding->definition?->has('comments.2.body'));
         static::assertStringContainsString('comments[new][body]', $second->render());
@@ -36,9 +38,9 @@ class RepeatedDefinitionTest extends FormTestCase
     public function testClearedAndMalformedSubmissionsDoNotRestoreLoadedRows(mixed $value): void
     {
         $context = new ArrayContext(['defaults' => ['comments' => [0 => ['body' => 'Old']]]]);
-        $form = $this->helper(['comments' => $value])->bind($context);
+        $form = $this->helper(['comments' => $value])->form($context)->bind();
         $form->open();
-        static::assertSame('', trim($form->embedMany('comments', CommentForm::class)));
+        static::assertSame('', trim($form->embedMany(path: 'comments', blueprint: CommentForm::class)->render()));
         $form->close();
     }
 
@@ -56,15 +58,19 @@ class RepeatedDefinitionTest extends FormTestCase
 
     public function testExplicitKeysSelectOrderAndCanSuppressAllRows(): void
     {
-        $form = $this->helper(['comments' => [0 => ['body' => 'Zero'], 2 => ['body' => 'Two']]])->bind();
+        $form = $this->helper(['comments' => [0 => ['body' => 'Zero'], 2 => ['body' => 'Two']]])
+            ->form()
+            ->bind();
         $form->open();
-        static::assertSame('', trim($form->embedMany('comments', CommentForm::class, keys: [])));
-        $html = $form->embedMany(
-            'comments',
-            CommentForm::class,
-            keys: [2, 0],
-            options: ['template' => 'repeat/comments', 'attributes' => ['class' => 'rows']],
+        static::assertSame(
+            '',
+            trim($form->embedMany(path: 'comments', blueprint: CommentForm::class)->keys([])->render()),
         );
+        $html = $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+            ->keys([2, 0])
+            ->partTemplate('control', 'repeat/comments')
+            ->attributes(['class' => 'rows'])
+            ->render();
         static::assertLessThan(strpos($html, 'Zero'), strpos($html, 'Two'));
         static::assertStringContainsString('class="rows comments"', $html);
         $form->close();
@@ -82,10 +88,10 @@ class RepeatedDefinitionTest extends FormTestCase
                 ],
             ],
         ]);
-        $form = $this->helper()->bind($context);
+        $form = $this->helper()->form($context)->bind();
         $form->open();
 
-        $html = $form->embedMany('comments', CommentForm::class, keys: []);
+        $html = $form->embedMany(path: 'comments', blueprint: CommentForm::class)->keys([])->render();
         static::assertStringContainsString('Need &lt;more&gt;', $html);
         static::assertStringNotContainsString('Child', $html);
         $form->close();
@@ -93,27 +99,37 @@ class RepeatedDefinitionTest extends FormTestCase
 
     public function testSuppressedCollectionErrorsAndWholeCollectionRemoval(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => ['comments' => ['count' => 'Required']],
-        ]), blueprint: SuppressedCommentsForm::class);
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => ['comments' => ['count' => 'Required']],
+            ]))
+            ->blueprint(SuppressedCommentsForm::class)
+            ->bind();
         $form->open();
-        static::assertSame('', trim($form->blueprint()));
+        static::assertSame('', trim($form->blueprint()->render()));
         static::assertFalse($form->binding->definition?->remove('comments')->has('comments'));
         $form->close();
     }
 
     public function testFailedWrapperRollsBackAllRowsAndIds(): void
     {
-        $form = $this->helper(['comments' => [0 => ['body' => 'First']]])->bind();
+        $form = $this->helper(['comments' => [0 => ['body' => 'First']]])
+            ->form()
+            ->bind();
         $form->open();
         try {
-            $form->embedMany('comments', CommentForm::class, options: ['template' => 'repeat/failure']);
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+                ->partTemplate('control', 'repeat/failure')
+                ->render();
             static::fail('Expected failure after row rendering.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Repeated wrapper failed.', $runtimeException->getMessage());
         }
 
-        static::assertStringContainsString('First', $form->embedMany('comments', CommentForm::class));
+        static::assertStringContainsString(
+            'First',
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)->render(),
+        );
         $form->close();
     }
 
@@ -122,7 +138,7 @@ class RepeatedDefinitionTest extends FormTestCase
     public function testInvalidDeclarationsFailBeforeRendering(string $path, string $definition, ?array $keys): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new EmbedMany($path, $definition, $keys);
+        new RepeatedDefinition($path, $definition, $keys);
     }
 
     /** @return array<string, array{string, string, list<int|string>|null}> */

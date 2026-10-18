@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Binding;
 
 use Cake\View\Form\ContextInterface;
+use FormCompose\Configuration\FieldConfig;
 
 /**
  * Translates CakePHP context metadata into browser validation attributes.
@@ -17,15 +18,25 @@ final class Constraints
     /**
      * Resolve browser constraints from context metadata and field options.
      *
-     * @param array<string, mixed> $options Field overrides.
      * @return array<string, mixed>
      */
-    public static function resolve(ContextInterface $context, string $path, string $type, array $options): array
+    public static function resolve(ContextInterface $context, string $path, string $type, FieldConfig $config): array
     {
         $constraints = [
-            'required' => $options['required'] ?? $context->isRequired(FieldPath::association($path) ?? $path) ?? false,
+            'required' => $config->required ?? $context->isRequired(FieldPath::association($path) ?? $path) ?? false,
         ];
-        $constraints += array_intersect_key($options, array_flip(['disabled', 'readonly', 'multiple']));
+        if ($config->hasDisabled) {
+            $constraints['disabled'] = $config->disabled;
+        }
+
+        if ($config->hasReadonly) {
+            $constraints['readonly'] = $config->readonly;
+        }
+
+        if ($config->multiple !== null) {
+            $constraints['multiple'] = $config->multiple;
+        }
+
         $maxLength = $context->getMaxLength($path);
         if (
             $maxLength !== null
@@ -48,7 +59,7 @@ final class Constraints
                 : '1';
         }
 
-        if ($type === 'hidden' || (isset($constraints['disabled']) && $constraints['disabled'] !== false)) {
+        if ($type === 'hidden' || (isset($constraints['disabled']) && $constraints['disabled'])) {
             $constraints['required'] = false;
         }
 

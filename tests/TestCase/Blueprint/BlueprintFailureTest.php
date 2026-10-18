@@ -40,35 +40,40 @@ class BlueprintFailureTest extends FormTestCase
             ),
             static fn(RepeatedDefinition $entry): RepeatedDefinition => $factory->repeated($entry, $context),
         );
-        $builder->add('name', [])->add('email', ['type' => 'email']);
+        $builder->add('name');
+        $builder->add('email')->type('email');
         $original = $builder->build();
-        $builder->with('email', ['label' => false, 'value' => null])->remove('name');
+        $builder->field('email')->label(false)->value(null);
+        $builder->remove('name');
+        $changed = $builder->build();
         static::assertSame(['name', 'email'], array_column($original->fields, 'path'));
-        static::assertSame(['type' => 'email'], $original->field('email')->options);
-        static::assertSame(['email'], array_column($builder->build()->fields, 'path'));
-        static::assertSame(
-            ['type' => 'email', 'label' => false, 'value' => null],
-            $builder->build()->field('email')->options,
-        );
+        static::assertSame('email', $original->field('email')->config->type);
+        static::assertNull($original->field('email')->config->label);
+        static::assertFalse($original->field('email')->config->hasValue);
+        static::assertSame(['email'], array_column($changed->fields, 'path'));
+        static::assertSame('email', $changed->field('email')->config->type);
+        static::assertFalse($changed->field('email')->config->label);
+        static::assertTrue($changed->field('email')->config->hasValue);
+        static::assertNull($changed->field('email')->config->value);
     }
 
     public function testRemovingUnknownFieldsFailsClearly(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(blueprint: UnknownRemovalForm::class);
+        $this->helper()->form()->blueprint(UnknownRemovalForm::class)->bind();
     }
 
     public function testDuplicateDeclarationsAreRejectedBeforeRendering(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('duplicate field paths');
-        $this->helper()->bind(blueprint: DuplicateFields::class);
+        $this->helper()->form()->blueprint(DuplicateFields::class)->bind();
     }
 
     public function testInvalidDeclaredPathsAreRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(blueprint: InvalidPath::class);
+        $this->helper()->form()->blueprint(InvalidPath::class)->bind();
     }
 
     /**
@@ -90,28 +95,28 @@ class BlueprintFailureTest extends FormTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('concrete implementation');
-        $this->helper()->bind(blueprint: $class);
+        $this->helper()->form()->blueprint($class)->bind();
     }
 
     public function testDependencyFreeModeExplainsMissingContainerConfiguration(): void
     {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Configure blueprintFactory');
-        $this->helper()->bind(blueprint: ConditionalForm::class);
+        $this->helper()->form()->blueprint(ConditionalForm::class)->bind();
     }
 
     public function testHookFailuresPropagateWithoutLeakingConfiguration(): void
     {
         $helper = $this->helper();
         try {
-            $helper->bind(blueprint: FailingForm::class);
+            $helper->form()->blueprint(FailingForm::class)->bind();
             static::fail('Expected configuration to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Configuration failed.', $runtimeException->getMessage());
         }
 
-        static::assertNull($helper->bind()->binding->definition);
-        static::assertSame([], $helper->bind()->field('partial')->state->options);
+        static::assertNull($helper->form()->bind()->binding->definition);
+        static::assertNull($helper->form()->bind()->field('partial')->resolve()->state->config->type);
     }
 
     public function testInvalidFactoryConfigurationIsRejected(): void
@@ -119,12 +124,17 @@ class BlueprintFailureTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', false);
         $this->expectException(InvalidArgumentException::class);
-        $helper->bind();
+        $helper->form()->bind();
     }
 
     public function testDefinitionRenderingStillRequiresAnOpenForm(): void
     {
         $this->expectException(LogicException::class);
-        $this->helper()->bind(blueprint: ProfileForm::class)->blueprint();
+        $this->helper()
+            ->form()
+            ->blueprint(ProfileForm::class)
+            ->bind()
+            ->blueprint()
+            ->render();
     }
 }

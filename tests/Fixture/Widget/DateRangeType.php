@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Widget;
 
 use FormCompose\Attribute\AsFieldType;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldSpec;
 
 /**
  * Reuses date input semantics across independent PHP layouts.
@@ -16,13 +18,19 @@ class DateRangeType extends CompositeType
     /**
      * Declare relative paths; Cake supplies values, constraints, and feedback.
      *
-     * @return array<string, array<string, mixed>>
+     * @return list<\FormCompose\Form\Field\FieldSpec>
      */
     public function inputs(BoundField $field): array
     {
         return [
-            'start' => ['type' => 'date', 'label' => 'Start date'],
-            'end' => ['type' => 'date', 'label' => 'End date'],
+            new FieldSpec(
+                'start',
+                FieldConfig::builder()->type('date')->label('Start date'),
+            ),
+            new FieldSpec(
+                'end',
+                FieldConfig::builder()->type('date')->label('End date'),
+            ),
         ];
     }
 }

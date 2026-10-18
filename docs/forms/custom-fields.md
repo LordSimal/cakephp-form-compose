@@ -12,14 +12,15 @@ fields in one control:
 ::: code-group
 
 ```php [templates/Bookings/edit.php]
-<?php $form = $this->Form->bind($booking); ?>
+<?php
+$form = $this->Form->form($booking)->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('period', [
-    'type' => 'date-range',
-    'label' => 'Your stay',
-    'help' => 'Choose arrival and departure dates.',
-    'templates' => ['composite' => 'forms/fields/date-range'],
-]) ?>
+<?= $form->control('period')
+    ->type('date-range')
+    ->label('Your stay')
+    ->help('Choose arrival and departure dates.')
+    ->partTemplate('composite', 'forms/fields/date-range') ?>
 <?= $form->submit('Book') ?>
 <?= $form->close() ?>
 ```
@@ -27,6 +28,7 @@ fields in one control:
 ```php [templates/element/forms/fields/date-range.php]
 <?php
 declare(strict_types=1);
+
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
@@ -79,21 +81,33 @@ declare(strict_types=1);
 namespace App\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldSpec;
 use function Cake\I18n\__;
 
 #[AsFieldType('date-range')]
 class DateRangeType extends CompositeType
 {
     /**
-     * @return array<string, array<string, mixed>>
+     * @return list<FieldSpec>
      */
     public function inputs(BoundField $field): array
     {
         return [
-            'start' => ['type' => 'date', 'label' => __('Arrival')],
-            'end' => ['type' => 'date', 'label' => __('Departure')],
+            new FieldSpec(
+                'start',
+                FieldConfig::builder()
+                    ->type('date')
+                    ->label(__('Arrival')),
+            ),
+            new FieldSpec(
+                'end',
+                FieldConfig::builder()
+                    ->type('date')
+                    ->label(__('Departure')),
+            ),
         ];
     }
 }
@@ -117,9 +131,10 @@ Explicit instances override discovered aliases:
 ```php
 use App\Form\Field\DateRangeType;
 
-$form = $this->Form->bind($booking, [
-    'types' => ['date-range' => new DateRangeType()],
-]);
+$form = $this->Form
+    ->form($booking)
+    ->types(['date-range' => new DateRangeType()])
+    ->bind();
 ```
 
 Clear or warm discovery metadata during deployment as described in
@@ -129,7 +144,7 @@ Clear or warm discovery metadata during deployment as described in
 
 | Contract | Use it for | What you declare |
 | --- | --- | --- |
-| `CompositeType` | Date ranges, amount/currency pairs, address widgets | Relative child paths and ordinary field options; PHP arranges their parts. |
+| `CompositeType` | Date ranges, amount/currency pairs, address widgets | Relative `FieldSpec` children and typed configs; PHP arranges their parts. |
 | `SingleInputType` | A Markdown editor or another editable scalar widget | A PHP element that emits one input with the supplied name and ID. |
 | `FieldTypeInterface` | A control with its own submission protocol | Rendering, exact successful submissions, and optional identity/focus metadata. |
 
@@ -163,6 +178,10 @@ The `inputs()` declaration is resolved once per bound field. Keep it free of
 rendering and registration. Distinct composite types can nest; a type that recurs
 in its own ancestor chain is rejected.
 
+`FieldConfig::builder()` returns an immutable `FieldConfig`, accepted directly by
+`FieldSpec` without a terminal conversion. Echoing a part renders it directly; explicit `render()` is only needed
+when you want a string before output.
+
 ### Keep layout in PHP
 
 The bundled composite element calls each child's `control()`. Replace it to
@@ -170,8 +189,8 @@ reorder children, add arbitrary wrappers, or render `label()`, `input()`, `help(
 and `errors()` independently, as in the date-range element above. Each child also
 supports its own variants, templates, attributes, and `templateData`.
 
-`templates['composite']` selects the composite body; `template` or
-`templates['control']` selects the entire outer control. Outer elements can use
+`partTemplate('composite', ...)` selects the composite body; `template` or
+`partTemplate('control', ...)` selects the entire outer control. Outer elements can use
 `$field->inputs` to access children. Keep the parent legend and feedback appropriate
 to your HTML structure. Preserve the supplied wrapper ID when rendering the body.
 The composite element receives wrapper-ready `$attributes`: its ID, classes, ARIA
@@ -181,7 +200,7 @@ references, and integration attributes. Input-only attributes are filtered by
 Without an explicit element, the normal theme lookup applies to `composite`, for
 example `date-range/composite.php` or `variants/compact/composite.php`. A type may
 set `protected ?string $template = 'forms/fields/date-range';` to provide its own
-default element. A local `templates['composite']` override wins. `$parent()` resumes
+default element. A local `partTemplate('composite', ...)` override wins. `$parent()` resumes
 normal theme lookup. Presentation data remains available as `$templateData`.
 
 ### Accessibility
@@ -194,8 +213,8 @@ actually emitted an eligible control; omitted, hidden, disabled, and empty choic
 controls do not become focus targets.
 
 Parent disabled and readonly state applies to every child, including local
-`$field->input(['disabled' => true])` overrides. A child cannot re-enable a disabled
-parent. Required status comes from each child's metadata or options: a required
+`attributes(['disabled' => true])` overrides on the input builder. A child cannot re-enable a disabled
+parent. Required status comes from each child's metadata or explicit settings: a required
 parent does not make every child required. `errors` and `templateData` provide
 inherited defaults that children can override. Child ARIA attributes can
 explicitly remove inherited references with null. Render the referenced parent
@@ -212,7 +231,7 @@ FormCompose does not introduce a separate token-validation system.
 | Authoring contract | Who describes the submissions? |
 | --- | --- |
 | `CompositeType` | Each rendered child; the composite parent contributes no submitted input of its own. |
-| `SingleInputType` | The base class registers one editable name, excluding disabled controls and respecting `secure: false`. |
+| `SingleInputType` | The base class registers one editable name, excluding disabled controls and respecting `secure(false)`. |
 | `FieldTypeInterface` | Your `submissions()` implementation must describe the inputs emitted by your renderer. |
 
 ### Composite children register themselves
@@ -234,7 +253,7 @@ also render and register their inputs.
 | Render a native hidden input | Its name and rendered value are protected. |
 | Render a disabled input | No submission is registered; its name is not automatically unlocked. |
 | Declare or inspect a child without rendering it | No submission is registered and no name is unlocked. |
-| Render a child configured with `secure => false` | Its name is explicitly unlocked, allowing omission or changed values. |
+| Render a child configured with `secure(false)` | Its name is explicitly unlocked, allowing omission or changed values. |
 | Fail during an enclosing composite layout | Pending registrations roll back together with feedback, focus targets, and reserved IDs. |
 
 ::: warning Only rendered children are protected
@@ -288,8 +307,10 @@ declare(strict_types=1);
 namespace App\Form\Field;
 
 use FormCompose\Attribute\AsFieldType;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\CompositeType;
+use FormCompose\Form\Field\FieldSpec;
 use function Cake\I18n\__;
 
 #[AsFieldType('money')]
@@ -298,19 +319,25 @@ class MoneyType extends CompositeType
     protected ?string $template = 'forms/fields/money';
 
     /**
-     * @return array<string, array<string, mixed>>
+     * @return list<FieldSpec>
      */
     public function inputs(BoundField $field): array
     {
         return [
-            'amount' => [
-                'type' => 'number', 'label' => __('Amount'),
-                'attributes' => ['step' => '0.01', 'min' => '0'],
-            ],
-            'currency' => [
-                'type' => 'select', 'label' => __('Currency'),
-                'options' => ['EUR' => __('Euro'), 'USD' => __('US dollar')],
-            ],
+            new FieldSpec(
+                'amount',
+                FieldConfig::builder()
+                    ->type('number')
+                    ->label(__('Amount'))
+                    ->attributes(['step' => '0.01', 'min' => '0']),
+            ),
+            new FieldSpec(
+                'currency',
+                FieldConfig::builder()
+                    ->type('select')
+                    ->label(__('Currency'))
+                    ->choices(['EUR' => __('Euro'), 'USD' => __('US dollar')]),
+            ),
         ];
     }
 }
@@ -319,6 +346,7 @@ class MoneyType extends CompositeType
 ```php [templates/element/forms/fields/money.php]
 <?php
 declare(strict_types=1);
+
 /**
  * @var \FormCompose\Rendering\Attributes $attributes
  * @var array<string, \FormCompose\Form\Field\BoundField> $inputs
@@ -332,10 +360,10 @@ declare(strict_types=1);
 
 ```php
 // Inside an open form; zero is a real value.
-echo $form->control('price', [
-    'type' => 'money',
-    'value' => ['amount' => 0, 'currency' => 'EUR'],
-]);
+echo $form->control('price')
+    ->type('money')
+    ->value(['amount' => 0, 'currency' => 'EUR']);
+
 // Submits price[amount] and price[currency].
 ```
 
@@ -379,14 +407,17 @@ use FormCompose\Rendering\Html;
  */
 ?>
 <textarea<?= (string)$attributes->merge([
-    'data-editor' => 'markdown', 'rows' => 12,
+    'data-editor' => 'markdown',
+    'rows' => 12,
 ]) ?>><?= Html::text($value) ?></textarea>
 ```
 
 :::
 
 ```php
-echo $form->control('body', ['type' => 'markdown', 'label' => 'Article body']);
+echo $form->control('body')
+    ->type('markdown')
+    ->label('Article body');
 ```
 
 Your optional editor integration can find `data-editor="markdown"` and enhance
@@ -397,8 +428,8 @@ Sanitize any rendered Markdown preview separately in the application.
 
 `SingleInputType` supplies `$field`, `$attributes`, and the normalized scalar
 `$value`. It registers the supplied name as editable, excludes disabled controls,
-and respects explicit `secure: false`. Its default body part is `widget`; local
-`templates['widget']`, theme layers, variants, `$parent()`, and `templateData` work
+and respects explicit `secure(false)`. Its default body part is `widget`; local
+`partTemplate('widget', ...)`, theme layers, variants, `$parent()`, and `templateData` work
 like other parts. The bundled fallback emits a text input.
 
 The element must emit exactly one scalar input with the prepared name and ID.

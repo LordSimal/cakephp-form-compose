@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Form;
 
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Rendering\Attributes;
 
 /**
@@ -19,14 +20,13 @@ final readonly class FormState
      * Describe the browser attributes, effective method, signed action, and initial hidden inputs.
      *
      * @param list<\FormCompose\Rendering\Attributes> $hidden Initial method and CSRF fields.
-     * @param array<string, mixed> $presentation Templates, variant, and templateData configuration.
      */
     public function __construct(
         public Attributes $attributes,
         public string $method,
         public string $action,
         public array $hidden,
-        public array $presentation = [],
+        public PresentationConfig $presentation = new PresentationConfig(),
     ) {
     }
 

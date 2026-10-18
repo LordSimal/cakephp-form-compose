@@ -14,11 +14,11 @@ class BlueprintApiTest extends CompositionTestCase
 {
     public function testHelperRenderAcceptsANamedBlueprintAliasAndBoundData(): void
     {
-        $html = $this->helper()->render(
-            blueprint: 'profile',
-            data: new ArrayContext(['defaults' => ['email' => 'reader@example.test']]),
-            submit: false,
-        );
+        $html = $this->helper()
+            ->form(new ArrayContext(['defaults' => ['email' => 'reader@example.test']]))
+            ->blueprint('profile')
+            ->submit(false)
+            ->render();
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//form)'));
         static::assertSame(
             'reader@example.test',
@@ -30,13 +30,13 @@ class BlueprintApiTest extends CompositionTestCase
     public function testSessionRenderAndBodySelectionAcceptNamedBlueprintAliases(): void
     {
         $helper = $this->helper(['email' => 'reader@example.test']);
-        $complete = $helper->bind()->render(blueprint: 'profile', submit: false);
+        $complete = $helper->form()->blueprint('profile')->submit(false)->bind()->render();
         static::assertSame(
             'reader@example.test',
             $this->xpath($complete)->evaluate('string(//input[@name="email"]/@value)'),
         );
-        $form = $helper->bind();
-        $html = $form->open() . $form->blueprint(blueprint: 'composed-author', at: 'author') . $form->close();
+        $form = $helper->form()->bind();
+        $html = $form->open() . $form->blueprint(blueprint: 'composed-author', at: 'author')->render() . $form->close();
         static::assertStringContainsString('name="author[email]"', $html);
         static::assertNull($form->binding->definition);
     }
@@ -48,13 +48,17 @@ class BlueprintApiTest extends CompositionTestCase
             'reviewers' => [0 => ['email' => 'reviewer@example.test']],
             'editor' => ['email' => 'editor@example.test'],
             'contributors' => [1 => ['email' => 'contributor@example.test']],
-        ])->bind(blueprint: 'named-parent');
+        ])
+            ->form()
+            ->blueprint('named-parent')
+            ->submit(false)
+            ->bind();
         $definition = $form->binding->definition;
         static::assertInstanceOf(FormDefinition::class, $definition);
         static::assertSame('profile', $definition->index->repeats['reviewers']->blueprint);
         static::assertSame('profile', $definition->index->repeats['contributors']->blueprint);
         static::assertInstanceOf(FormDefinition::class, $definition->index->repeats['reviewers']->rows);
-        $html = $form->render(submit: false);
+        $html = $form->render();
         $xpath = $this->xpath($html);
         foreach ([
             'author[email]' => 'author@example.test',
@@ -70,17 +74,19 @@ class BlueprintApiTest extends CompositionTestCase
     {
         $definition = $this->factory->compile(blueprint: 'profile', context: $this->context());
         static::assertInstanceOf(FormDefinition::class, $definition);
-        static::assertSame('email', $definition->field('email')->options['type']);
+        static::assertSame('email', $definition->field('email')->config->type);
     }
 
     public function testSessionRepeatsANamedBlueprintAliasAtItsAssociationPath(): void
     {
         $form = $this->helper([
             'reviewers' => [2 => ['email' => 'reviewer@example.test']],
-        ])->bind();
+        ])
+            ->form()
+            ->bind();
         $html =
             $form->open()
-            . $form->embedMany(path: 'reviewers', blueprint: 'profile', keys: [2])
+            . $form->embedMany(path: 'reviewers', blueprint: 'profile')->keys([2])->render()
             . $form->close();
         static::assertSame(
             'reviewer@example.test',

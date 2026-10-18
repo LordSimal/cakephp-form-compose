@@ -6,11 +6,11 @@ declare(strict_types=1);
  */
 ?>
 <section<?= (string)$attributes->merge(['data-control' => 'custom']) ?>>
-    <?= $field->label() ?>
+    <?= (string) $field->label() ?>
     <div class="email-input">
         <span aria-hidden="true">@</span>
-        <?= $field->input() ?>
+        <?= (string) $field->input() ?>
     </div>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
+    <?= (string) $field->help() ?>
+    <?= (string) $field->errors() ?>
 </section>

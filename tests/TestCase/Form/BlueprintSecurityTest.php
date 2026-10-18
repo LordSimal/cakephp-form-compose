@@ -23,13 +23,17 @@ class BlueprintSecurityTest extends CompositionTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf, 'stripParentEmail' => true]);
-        $form = $helper->bind(null, ['url' => '/articles/save', 'method' => 'patch'], blueprint: PostForm::class);
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->method('patch')
+            ->blueprint(PostForm::class)
+            ->bind();
         static::assertNotNull($form->binding->definition);
         $view = new BlueprintView($form, $form->binding->definition);
         static::assertTrue($view->has('author'));
         static::assertFalse($view->has('author.email'));
-        $view->field('author.last_name')->attributes();
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $view->field('author.last_name')->resolve()->attributes();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         $data = [
             'title' => 'Title',
             'author' => ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'id' => '7'],
@@ -55,16 +59,18 @@ class BlueprintSecurityTest extends CompositionTestCase
     public function testFailedParentLayoutRollsBackSuccessfulChildRegistrations(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $html = $form->open() . $form->control('existing');
+        $form = $helper->form()->url('/articles/save')->bind();
+        $html = $form->open() . $form->control('existing')->render();
         try {
-            $form->blueprint(PostForm::class, options: ['template' => 'composition/failure']);
+            $form->blueprint(blueprint: PostForm::class)
+                ->partTemplate('control', 'composition/failure')
+                ->render();
             static::fail('Expected the enclosing layout to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Definition layout failed.', $runtimeException->getMessage());
         }
 
-        $html .= $form->control('title') . $form->close();
+        $html .= $form->control('title')->render() . $form->close();
         $data = ['existing' => 'Existing', 'title' => 'Title', '_Token' => $this->tokens($html)];
         $session = $helper->getView()->getRequest()->getSession()->id();
         static::assertTrue(new FormProtector()->validate($data, '/articles/save', $session));
@@ -79,41 +85,43 @@ class BlueprintSecurityTest extends CompositionTestCase
     public function testFailedLayoutCanBeRetriedUsingTheSameCompiledDefinition(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(blueprint: PostForm::class);
+        $form = $helper->form()->blueprint(PostForm::class)->bind();
         $html = $form->open();
         try {
-            $form->blueprint(options: ['template' => 'composition/failure']);
+            $form->blueprint()
+                ->partTemplate('control', 'composition/failure')
+                ->render();
             static::fail('Expected the enclosing layout to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Definition layout failed.', $runtimeException->getMessage());
         }
 
-        $html .= $form->blueprint() . $form->close();
+        $html .= $form->blueprint()->render() . $form->close();
         static::assertSame(1, substr_count($html, 'name="title"'));
         static::assertSame(1, substr_count($html, 'name="author[first_name]"'));
-        static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame(['post', 'author'], array_column($this->probe->calls, 'name'));
     }
 
     public function testOverlappingMountsRetainDuplicateInputProtection(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        $form->blueprint(PostForm::class);
+        $form->blueprint(blueprint: PostForm::class)->render();
         $this->expectException(LogicException::class);
-        $form->blueprint(PostForm::class);
+        $form->blueprint(blueprint: PostForm::class)->render();
     }
 
     public function testMountedNativeInputsKeepFallbacksFilesAndDisabledProtection(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(
-            new ArrayContext([
-                'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
-            ]),
-            ['type' => 'file', 'url' => '/articles/save'],
-            blueprint: BillingInputsForm::class,
-        );
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $helper->form(new ArrayContext([
+            'data' => ['billing' => ['tags' => ['b'], 'status' => 'a', 'active' => false]],
+        ]))
+            ->multipart()
+            ->url('/articles/save')
+            ->blueprint(BillingInputsForm::class)
+            ->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@enctype="multipart/form-data"])'));
         static::assertTrue($xpath->evaluate(
@@ -139,16 +147,16 @@ class BlueprintSecurityTest extends CompositionTestCase
 
     public function testMultipartFailureRollsBackEarlierControlsInTheDefinition(): void
     {
-        $form = $this->helper()->bind(blueprint: BillingInputsForm::class);
+        $form = $this->helper()->form()->blueprint(BillingInputsForm::class)->bind();
         $form->open();
         try {
-            $form->blueprint();
+            $form->blueprint()->render();
             static::fail('Expected file inputs to require multipart.');
         } catch (LogicException $logicException) {
             static::assertSame('File inputs require a multipart form.', $logicException->getMessage());
         }
 
-        static::assertStringContainsString('name="billing[tags][]"', $form->control('billing.tags'));
+        static::assertStringContainsString('name="billing[tags][]"', $form->control('billing.tags')->render());
         $form->close();
     }
 

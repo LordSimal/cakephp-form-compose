@@ -20,14 +20,15 @@ the path shown in the second tab:
 ::: code-group
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->bind($user); ?>
+<?php
+$form = $this->Form->form($user)->bind();
+?>
 <?= $form->open() ?>
-<?= $form->control('email', [
-    'type' => 'email',
-    'label' => 'Work email',
-    'help' => 'Use your company address.',
-    'template' => 'forms/email',
-]) ?>
+<?= $form->control('email')
+    ->type('email')
+    ->label('Work email')
+    ->help('Use your company address.')
+    ->template('forms/email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -65,16 +66,15 @@ escaping, and submission registration.
 
 ## Replace just one part
 
-Use plural `templates` to map part names to element names:
+Use `partTemplate()` to select a named part:
 
 ::: code-group
 
 ```php [Inside an open form]
-echo $form->control('email', [
-    'type' => 'email',
-    'help' => 'Use your company address.',
-    'templates' => ['help' => 'forms/email-help'],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->help('Use your company address.')
+    ->partTemplate('help', 'forms/email-help');
 ```
 
 ```php [templates/element/forms/email-help.php]
@@ -98,22 +98,20 @@ so the input's `aria-describedby` reference still points to the help. `helpText(
 returns escaped text or explicitly trusted markup. With no configured help, the
 help part is empty and this element is not rendered.
 
-`template => 'forms/email'` is shorthand for
-`templates => ['control' => 'forms/email']`. Combine it with other part overrides
+`template('forms/email')` selects the same part as
+`partTemplate('control', 'forms/email')`. Combine it with other part overrides
 when needed:
 
 ```php
-echo $form->control('email', [
-    'type' => 'email',
-    'help' => 'Use your company address.',
-    'template' => 'forms/email',
-    'templates' => ['help' => 'forms/email-help'],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->help('Use your company address.')
+    ->template('forms/email')
+    ->partTemplate('help', 'forms/email-help');
 ```
 
-Parts without an explicit selection continue to use the theme. Supplying
-different elements for `template` and `templates['control']` throws
-`InvalidArgumentException`.
+Parts without an explicit selection continue to use the theme. If you select
+the same part again, the last selection wins.
 
 ::: tip Match the part you want to change
 `control` arranges the complete field. `input` is the input rendering hook;
@@ -128,11 +126,10 @@ Use `templateData` for values your element needs. Here the decoration becomes
 configurable:
 
 ```php [Inside an open form]
-echo $form->control('email', [
-    'type' => 'email',
-    'template' => 'forms/email',
-    'templateData' => ['prefix' => '@'],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->template('forms/email')
+    ->templateData(['prefix' => '@']);
 ```
 
 In the email element, add `use FormCompose\Rendering\Html;` after
@@ -155,8 +152,11 @@ the complete scope table.
 An explicit template is selected wherever you pass its element name. To make
 this email layout the default for all email fields, move it to
 `templates/element/forms/application/email/control.php` and configure
-`new Theme(['forms/application'])`. Callers can then use just
-`control('email', ['type' => 'email'])`.
+`new Theme(['forms/application'])`. Callers can then use:
+
+```php
+echo $form->control('email')->type('email');
+```
 
 Continue with [Create a theme](/themes) for that setup, or
 [Use variants](/variants) to offer several named layouts.

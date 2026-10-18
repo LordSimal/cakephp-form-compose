@@ -3,10 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Binding;
 
-use Cake\Datasource\EntityInterface;
-use Cake\Utility\Hash;
-use Cake\View\Form\EntityContext;
 use Closure;
+use FormCompose\Configuration\FieldConfig;
 
 /**
  * Applies CakePHP's association and choice-list conventions before field binding.
@@ -32,110 +30,60 @@ class FieldConventions
     }
 
     /**
-     * Supply conventional defaults while preserving explicitly configured options.
+     * Supply conventional defaults while preserving explicit field settings.
      *
-     * @param array<string, mixed> $options Merged field configuration.
-     * @return array<string, mixed>
      */
-    public function resolve(string $path, array $options): array
+    public function resolve(string $path, FieldConfig $config): FieldConfig
     {
-        $options = $this->choices($path, $options);
-        if (isset($options['type'])) {
-            return $options;
+        $config = $this->choices($path, $config);
+        if ($config->type !== null) {
+            return $config;
         }
 
         if (FieldPath::association($path) !== null) {
-            return $options + ['type' => 'select', 'multiple' => true];
+            return $config->type('select')->multiple($config->multiple ?? true);
         }
 
         if ($this->binding->context->isPrimaryKey($path)) {
-            return $options + ['type' => 'hidden'];
+            return $config->type('hidden');
         }
 
         if (str_ends_with($path, '_id')) {
-            $options['type'] = 'select';
+            return $config->type('select');
         }
 
-        return $options;
-    }
-
-    /**
-     * Flatten context errors, mapping collection selectors to their association.
-     *
-     * @return list<string>
-     */
-    public function messages(string $path): array
-    {
-        $association = FieldPath::association($path);
-        $errors = $this->binding->context->error($association ?? $path);
-        if ($association !== null && $this->binding->context instanceof EntityContext) {
-            $owner = $this->binding->context->entity(explode('.', $association));
-            if ($owner instanceof EntityInterface) {
-                $errors = $owner->getError(basename(str_replace('.', '/', $association)));
-            }
-        }
-
-        return array_map(
-            static fn(mixed $message): string => (string)$message,
-            array_values(Hash::flatten($errors)),
-        );
-    }
-
-    /**
-     * Read composite-owned messages without duplicating nested child feedback.
-     *
-     * @return list<string>
-     */
-    public function directMessages(string $path): array
-    {
-        return array_map(
-            static fn(mixed $message): string => (string)$message,
-            array_values(array_filter(
-                $this->binding->context->error($path),
-                static fn(mixed $message): bool => !is_array($message),
-            )),
-        );
-    }
-
-    /**
-     * Read the context's required-validation text for the actual validated property.
-     */
-    public function requiredMessage(string $path): ?string
-    {
-        return $this->binding->context->getRequiredMessage(FieldPath::association($path) ?? $path);
+        return $config;
     }
 
     /**
      * Discover an iterable choice list without overriding explicit choices or input types.
      *
-     * @param array<string, mixed> $options Merged field configuration.
-     * @return array<string, mixed>
      */
-    protected function choices(string $path, array $options): array
+    protected function choices(string $path, FieldConfig $config): FieldConfig
     {
-        if (array_key_exists('options', $options)) {
-            return $options;
+        if ($config->hasChoices) {
+            return $config;
         }
 
-        if (!in_array($options['type'] ?? 'select', ['select', 'radio', 'multicheckbox'], true)) {
-            return $options;
+        if (!in_array($config->type ?? 'select', ['select', 'radio', 'multicheckbox'], true)) {
+            return $config;
         }
 
         $enum = EnumChoices::discover($this->binding->context, $path);
         if ($enum !== null) {
-            return $options + ['options' => $enum];
+            return $config->choices($enum);
         }
 
         if (!$this->viewVariable instanceof Closure) {
-            return $options;
+            return $config;
         }
 
         /** @var mixed $choices */
         $choices = ($this->viewVariable)(FieldPath::optionsVariable($path));
         if (is_iterable($choices)) {
-            $options['options'] = $choices;
+            return $config->choices($choices);
         }
 
-        return $options;
+        return $config;
     }
 }

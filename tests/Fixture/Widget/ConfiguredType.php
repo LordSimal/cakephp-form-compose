@@ -14,7 +14,7 @@ class ConfiguredType extends CompositeType
     /**
      * Capture the declaration used by this test control.
      *
-     * @param array<string, array<string, mixed>> $fields Relative child fields.
+     * @param list<\FormCompose\Form\Field\FieldSpec> $fields Relative child fields.
      */
     public function __construct(protected readonly array $fields)
     {
@@ -23,7 +23,7 @@ class ConfiguredType extends CompositeType
     /**
      * Expose native, nested, or intentionally invalid declarations to the resolver.
      *
-     * @return array<string, array<string, mixed>>
+     * @return list<\FormCompose\Form\Field\FieldSpec>
      */
     public function inputs(BoundField $field): array
     {

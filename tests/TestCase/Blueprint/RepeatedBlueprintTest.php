@@ -23,13 +23,13 @@ class RepeatedBlueprintTest extends FormTestCase
         $context = new ArrayContext([
             'defaults' => ['comments' => [0 => ['id' => 10, 'body' => 'First'], 2 => ['id' => 12, 'body' => 'Third']]],
         ]);
-        $form = $this->helper(attributes: ['repeatCalls' => $calls, 'overrideBody' => true])->bind(
-            $context,
-            blueprint: PostForm::class,
-        );
+        $form = $this->helper(attributes: ['repeatCalls' => $calls, 'overrideBody' => true])
+            ->form($context)
+            ->blueprint(PostForm::class)
+            ->bind();
         static::assertSame(['comments.0', 'comments.2'], $calls->getArrayCopy());
         static::assertNotNull($form->binding->definition);
-        static::assertSame('Parent override', $form->binding->definition->field('comments.0.body')->options['label']);
+        static::assertSame('Parent override', $form->binding->definition->field('comments.0.body')->config->label);
         $html = $form->render();
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('comments[1]', $html);
@@ -42,7 +42,10 @@ class RepeatedBlueprintTest extends FormTestCase
         $context = new ArrayContext(['defaults' => ['comments' => [0 => ['id' => 10]]]]);
         $form = $this->helper(['comments' => ['new-key' => ['id' => 99, 'body' => 'Submitted']]], [
             'repeatCalls' => $calls,
-        ])->bind($context, blueprint: PostForm::class);
+        ])
+            ->form($context)
+            ->blueprint(PostForm::class)
+            ->bind();
         $html = $form->render();
         static::assertSame(['comments.new-key'], $calls->getArrayCopy());
         static::assertStringContainsString('Comment 99', $html);
@@ -55,7 +58,10 @@ class RepeatedBlueprintTest extends FormTestCase
         $calls = new ArrayObject();
         $form = $this->helper(['post' => ['comments' => [2 => ['id' => 4, 'body' => 'Nested']]]], [
             'repeatCalls' => $calls,
-        ])->bind(blueprint: NestedForm::class);
+        ])
+            ->form()
+            ->blueprint(NestedForm::class)
+            ->bind();
         $html = $form->render();
         static::assertSame(['post.comments.2'], $calls->getArrayCopy());
         static::assertStringContainsString('class="post-wrapper"', $html);
@@ -68,9 +74,10 @@ class RepeatedBlueprintTest extends FormTestCase
         $calls = new ArrayObject();
         $form = $this->helper(['comments' => [0 => ['id' => 5, 'body' => 'Existing']]], [
             'repeatCalls' => $calls,
-        ])->bind(
-            blueprint: RuntimeForm::class,
-        );
+        ])
+            ->form()
+            ->blueprint(RuntimeForm::class)
+            ->bind();
         static::assertSame(['comments.0', 'comments.3'], $calls->getArrayCopy());
         $html = $form->render();
         static::assertStringContainsString('name="comments[3][body]"', $html);
@@ -84,7 +91,10 @@ class RepeatedBlueprintTest extends FormTestCase
     {
         $form = $this->helper(['comments' => [0 => ['body' => 'Kept'], 2 => ['body' => 'Removed']]], [
             'removeRow' => true,
-        ])->bind(blueprint: PostForm::class);
+        ])
+            ->form()
+            ->blueprint(PostForm::class)
+            ->bind();
         $html = $form->render();
         static::assertStringContainsString('Kept', $html);
         static::assertStringNotContainsString('Removed', $html);
@@ -95,17 +105,17 @@ class RepeatedBlueprintTest extends FormTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Circular blueprint embedding');
-        $this->helper()->bind(blueprint: CycleForm::class);
+        $this->helper()->form()->blueprint(CycleForm::class)->bind();
     }
 
     public function testSourceOrderingAlsoControlsTheChildHooks(): void
     {
         $context = new ArrayContext(['defaults' => ['comments' => [2 => ['id' => 12, 'body' => 'Loaded']]]]);
-        $form = $this->helper(['comments' => [0 => ['id' => 99]]])->bind(
-            $context,
-            ['valueSources' => ['context', 'data']],
-            blueprint: PostForm::class,
-        );
+        $form = $this->helper(['comments' => [0 => ['id' => 99]]])
+            ->form($context)
+            ->valueSources(['context', 'data'])
+            ->blueprint(PostForm::class)
+            ->bind();
         $html = $form->render();
         static::assertStringContainsString('Comment 12', $html);
         static::assertStringContainsString('Loaded', $html);

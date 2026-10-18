@@ -19,17 +19,22 @@ class GeneratedIdsTest extends FormTestCase
 {
     public function testDistinctPathsAndFeedbackKeepUniqueAssociatedIds(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['title' => ['bad' => 'Fix title']]]));
-        $first = $form->field('author.name');
-        static::assertSame($first->state->id, $form->field('author.name')->state->id);
-        static::assertNotSame($first->state->id, $form->field('author-name')->state->id);
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['title' => ['bad' => 'Fix title']]]))
+            ->bind();
+        $first = $form->field('author.name')->resolve();
+        static::assertSame($first->state->id, $form->field('author.name')->resolve()->state->id);
+        static::assertNotSame($first->state->id, $form->field('author-name')->resolve()->state->id);
         $html = $form->open();
         foreach (['author.name', 'author-name', 'title', 'title.help', 'title.errors', 'title-help'] as $path) {
-            $html .= $form->control($path, ['help' => 'Help']);
+            $html .= $form->control($path)->help('Help')->render();
         }
 
-        $html .= $form->control('status', ['type' => 'radio', 'options' => ['a' => 'A']]);
-        $html .= $form->control('status.a') . $form->close();
+        $html .= $form->control('status')
+            ->type('radio')
+            ->choices(['a' => 'A'])
+            ->render();
+        $html .= $form->control('status.a')->render() . $form->close();
         $xpath = $this->xpath($html);
         $ids = [];
         foreach ($xpath->query('//*[@id]') as $element) {
@@ -59,11 +64,17 @@ class GeneratedIdsTest extends FormTestCase
     {
         $first = $this->helper();
         $second = new FormHelper($first->getView());
-        static::assertSame('form-compose-1', $first->bind(null, ['id' => 'form-compose-1'])->binding->id);
-        static::assertSame('form-compose-2', $second->bind()->binding->id);
-        static::assertStringContainsString('id="form-compose-3"', $first->postButton('Delete', '/delete'));
-        static::assertSame('form-compose-4', $second->bind()->binding->id);
-        static::assertSame('form-compose-1', $this->helper()->bind()->binding->id);
+        static::assertSame(
+            'form-compose-1',
+            $first->form()->id('form-compose-1')->bind()->binding->id,
+        );
+        static::assertSame('form-compose-2', $second->form()->bind()->binding->id);
+        static::assertStringContainsString(
+            'id="form-compose-3"',
+            $first->postButton(label: 'Delete', url: '/delete')->render(),
+        );
+        static::assertSame('form-compose-4', $second->form()->bind()->binding->id);
+        static::assertSame('form-compose-1', $this->helper()->form()->bind()->binding->id);
     }
 
     public function testApplicationsCanSpecializeFormNamingThroughBinding(): void
@@ -79,15 +90,17 @@ class GeneratedIdsTest extends FormTestCase
                 };
             }
         };
-        static::assertSame('application-form', $helper->bind()->binding->id);
+        static::assertSame('application-form', $helper->form()->bind()->binding->id);
     }
 
     public function testDuplicateExplicitFormIdsAreRejectedAcrossHelpers(): void
     {
         $helper = $this->helper();
-        $helper->bind(null, ['id' => 'editor']);
+        $helper->form()->id('editor')->bind();
         $this->expectException(LogicException::class);
-        new FormHelper($helper->getView())->bind(null, ['id' => 'editor']);
+        new FormHelper($helper->getView())->form()
+            ->id('editor')
+            ->bind();
     }
 
     /**
@@ -104,17 +117,18 @@ class GeneratedIdsTest extends FormTestCase
     public function testInvalidFormIdsAreRejected(string $id): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(null, ['id' => $id]);
+        $this->helper()->form()->id($id)->bind();
     }
 
     public function testExplicitFieldIdsArePreservedAndStillRejectDuplicates(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        static::assertStringContainsString('id="application-field"', $form->control('author.name', [
-            'id' => 'application-field',
-        ]));
+        static::assertStringContainsString(
+            'id="application-field"',
+            $form->control('author.name')->id('application-field')->render(),
+        );
         $this->expectException(LogicException::class);
-        $form->control('other', ['id' => 'application-field']);
+        $form->control('other')->id('application-field')->render();
     }
 }

@@ -18,7 +18,7 @@ class FailingForm extends FormBlueprint
      */
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->add('partial', []);
+        $form->add('partial');
         throw new RuntimeException('Configuration failed.');
     }
 }

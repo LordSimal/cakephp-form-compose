@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Form\Field;
 
+use FormCompose\Configuration\ChoiceConfig;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Theme;
 
@@ -25,13 +26,13 @@ class ChoiceAttributes
     /**
      * Preserve bound selection and identity while allowing option-specific presentation.
      *
-     * @param array<string, mixed> $option Option data with value, text, and optional attributes.
      */
-    public function resolve(FieldState $state, Attributes $common, array $option): Attributes
+    public function resolve(FieldState $state, Attributes $common, ChoiceConfig $option): Attributes
     {
-        $value = NativeValue::scalar($option['value']);
+        $value = NativeValue::scalar($option->value);
         $selected = $this->selected($state, $value);
-        $extra = array_diff_key($option, array_flip(['value', 'text', 'name', 'type']));
+        $extra = array_diff_key($option->attributes, array_flip(['value', 'text', 'name', 'type', 'id']));
+        $extra['id'] = $option->id;
         if ($state->type === 'select') {
             return $this->theme
                 ->attributes('option', $state->type)

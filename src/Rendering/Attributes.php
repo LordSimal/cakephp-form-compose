@@ -28,8 +28,10 @@ final readonly class Attributes implements Stringable
      */
     public function __construct(array $values = [])
     {
-        foreach (array_keys($values) as $name) {
-            if (!preg_match('/^[a-zA-Z_:@][a-zA-Z0-9_.:@-]*$/D', $name)) {
+        /** @var array<array-key, mixed> $unchecked Native PHP arrays do not enforce generic key types. */
+        $unchecked = $values;
+        foreach (array_keys($unchecked) as $name) {
+            if (!is_string($name) || !preg_match('/^[a-zA-Z_:@][a-zA-Z0-9_.:@-]*$/D', $name)) {
                 throw new InvalidArgumentException('Invalid HTML attribute name: ' . $name);
             }
         }

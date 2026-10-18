@@ -20,14 +20,14 @@ class UnifiedRenderingTest extends FormTestCase
             'form.open' => ['class' => 'application-form'],
             'button' => ['class' => 'application-button'],
         ]);
-        $form = $helper->bind(null, ['method' => 'patch'], theme: $theme);
+        $form = $helper->form()->method('patch')->theme($theme)->bind();
         $open = $form->open();
         static::assertStringContainsString('data-form-shell', $open);
         static::assertStringContainsString('class="application-form"', $open);
         static::assertStringContainsString('data-hidden', $open);
         static::assertStringContainsString('value="PATCH"', $open);
-        static::assertStringContainsString('data-native-input', $form->control('title'));
-        $button = $form->submit('Save');
+        static::assertStringContainsString('data-native-input', $form->control('title')->render());
+        $button = $form->submit('Save')->render();
         static::assertStringContainsString('data-button-shell', $button);
         static::assertStringContainsString('class="application-button"', $button);
         static::assertStringContainsString('data-form-end', $form->close());
@@ -35,25 +35,31 @@ class UnifiedRenderingTest extends FormTestCase
 
     public function testExplicitAndVariantButtonTemplates(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(['themes/unified']));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(['themes/unified']))
+            ->bind();
         $form->open();
-        static::assertStringContainsString('data-primary', $form->submit('Save', ['variant' => 'primary']));
-        static::assertStringContainsString('data-explicit-button', $form->submit('Save', ['templates' => [
-            'control' => 'themes/explicit/button',
-        ]]));
+        static::assertStringContainsString(
+            'data-primary',
+            $form->submit('Save')->variant('primary')->render(),
+        );
+        static::assertStringContainsString(
+            'data-explicit-button',
+            $form->submit('Save')->partTemplate('control', 'themes/explicit/button')->render(),
+        );
         $form->close();
     }
 
     public function testExplicitFormTemplatesIncludeInfrastructureOverrides(): void
     {
-        $form = $this->helper()->bind(null, [
-            'method' => 'patch',
-            'templates' => [
-                'open' => 'themes/explicit/open',
-                'close' => 'themes/explicit/close',
-                'hidden' => 'themes/explicit/hidden',
-            ],
-        ]);
+        $form = $this->helper()
+            ->form()
+            ->method('patch')
+            ->partTemplate('open', 'themes/explicit/open')
+            ->partTemplate('close', 'themes/explicit/close')
+            ->partTemplate('hidden', 'themes/explicit/hidden')
+            ->bind();
         $open = $form->open();
         static::assertStringContainsString('data-explicit-open', $open);
         static::assertStringContainsString('data-explicit-hidden', $open);
@@ -62,10 +68,16 @@ class UnifiedRenderingTest extends FormTestCase
 
     public function testChoiceMarkupCanBeReplacedWithoutReplacingControlSemantics(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(['themes/unified']));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(['themes/unified']))
+            ->bind();
         $form->open();
 
-        $select = $form->control('status', ['options' => ['a' => 'Active'], 'value' => 'a']);
+        $select = $form->control('status')
+            ->choices(['a' => 'Active'])
+            ->value('a')
+            ->render();
         static::assertStringContainsString('data-option', $select);
         static::assertStringContainsString('selected="selected"', $select);
         static::assertStringContainsString('value="a"', $select);
@@ -76,7 +88,7 @@ class UnifiedRenderingTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new FailOnceRenderer(new PhpRenderer($helper->getView()), 'form', 'open');
-        $form = $helper->bind(renderer: $renderer);
+        $form = $helper->form()->renderer($renderer)->bind();
         try {
             $form->open();
             static::fail('Expected the opening template to fail.');
@@ -92,9 +104,9 @@ class UnifiedRenderingTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new FailOnceRenderer(new PhpRenderer($helper->getView()), 'form', 'close');
-        $form = $helper->bind(renderer: $renderer);
+        $form = $helper->form()->renderer($renderer)->bind();
         $form->open();
-        $form->control('name');
+        $form->control('name')->render();
         try {
             $form->close();
             static::fail('Expected the closing template to fail.');
@@ -108,7 +120,9 @@ class UnifiedRenderingTest extends FormTestCase
     public function testClosingCannotRegisterInputsAfterTokensArePrepared(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(renderer: new AppendInputRenderer(new PhpRenderer($helper->getView())));
+        $form = $helper->form()
+            ->renderer(new AppendInputRenderer(new PhpRenderer($helper->getView())))
+            ->bind();
         $form->open();
         try {
             $form->close();
@@ -117,7 +131,7 @@ class UnifiedRenderingTest extends FormTestCase
             static::assertStringContainsString('current phase is Finalizing', $logicException->getMessage());
         }
 
-        static::assertStringContainsString('name="after_failure"', $form->control('after_failure'));
+        static::assertStringContainsString('name="after_failure"', $form->control('after_failure')->render());
         static::assertStringContainsString('</form>', $form->close());
     }
 }

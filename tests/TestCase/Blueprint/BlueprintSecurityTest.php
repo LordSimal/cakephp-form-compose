@@ -27,15 +27,14 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
         $helper->setConfig('blueprintFactory', $factory);
 
-        $form = $helper->bind(
-            new ArrayContext(['data' => ['label' => 'Email']]),
-            ['url' => '/articles/save'],
-            blueprint: 'conditional',
-        );
-        $form->field('kind')->attributes();
+        $form = $helper->form(new ArrayContext(['data' => ['label' => 'Email']]))
+            ->url('/articles/save')
+            ->blueprint('conditional')
+            ->bind();
+        $form->field('kind')->resolve()->attributes();
         $html = $form->open();
-        $html .= $form->control('email') . $form->control('id');
-        $html .= $form->control('period', ['type' => 'date-range']);
+        $html .= $form->control('email')->render() . $form->control('id')->render();
+        $html .= $form->control('period')->type('date-range')->render();
         $html .= $form->close();
         $data = [
             'email' => 'user@example.test',
@@ -60,11 +59,10 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $helper = $this->helper(attributes: ['formTokenData' => [], 'canManageAccounts' => true]);
         $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
 
-        $form = $helper->bind(
-            new ArrayContext(['data' => ['label' => 'Work <email>']]),
-            ['url' => '/articles/save'],
-            blueprint: 'conditional',
-        );
+        $form = $helper->form(new ArrayContext(['data' => ['label' => 'Work <email>']]))
+            ->url('/articles/save')
+            ->blueprint('conditional')
+            ->bind();
         $html = $form->render();
         static::assertStringContainsString('Work &lt;email&gt;', $html);
         static::assertStringContainsString('name="kind"', $html);
@@ -95,8 +93,11 @@ class BlueprintSecurityTest extends BlueprintTestCase
     public function testCollectionRenderingProtectsNestedFieldsAndCheckboxFallbacks(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save'], blueprint: ProfileForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->blueprint(ProfileForm::class)
+            ->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         $data = [
             'name' => 'Ada',
             'email' => 'ada@example.test',
@@ -117,15 +118,15 @@ class BlueprintSecurityTest extends BlueprintTestCase
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
         $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
 
-        $form = $helper->bind(
-            new ArrayContext(['data' => ['label' => 'Contact email']]),
-            ['url' => '/articles/save', 'method' => 'patch'],
-        );
+        $form = $helper->form(new ArrayContext(['data' => ['label' => 'Contact email']]))
+            ->url('/articles/save')
+            ->method('patch')
+            ->bind();
         $html = $form->open();
-        $html .= $form->blueprint('conditional');
-        $html .= $form->blueprint(BillingAddressForm::class);
-        $html .= $form->control('period', ['type' => 'date-range']);
-        static::assertSame('email', $form->field('email')->state->type);
+        $html .= $form->blueprint(blueprint: 'conditional')->render();
+        $html .= $form->blueprint(blueprint: BillingAddressForm::class)->render();
+        $html .= $form->control('period')->type('date-range')->render();
+        static::assertSame('email', $form->field('email')->resolve()->state->type);
         $html .= $form->close();
         $data = [
             'email' => 'user@example.test',
@@ -151,16 +152,16 @@ class BlueprintSecurityTest extends BlueprintTestCase
     public function testFailedLocalHooksDoNotRegisterPartialConfiguration(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
+        $form = $helper->form()->url('/articles/save')->bind();
         $html = $form->open();
         try {
-            $form->blueprint(FailingForm::class);
+            $form->blueprint(blueprint: FailingForm::class)->render();
             static::fail('Expected configuration failure.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Configuration failed.', $runtimeException->getMessage());
         }
 
-        $html .= $form->control('title') . $form->close();
+        $html .= $form->control('title')->render() . $form->close();
         $data = ['title' => 'Edited', '_Token' => $this->tokens($html)];
         $session = $helper->getView()->getRequest()->getSession()->id();
         static::assertTrue(new FormProtector()->validate($data, '/articles/save', $session));

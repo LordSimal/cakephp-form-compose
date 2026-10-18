@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase\View\Helper;
 
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\FormTestCase;
@@ -17,11 +18,11 @@ class PostActionTest extends FormTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(['version' => 99], ['csrfToken' => $csrf]);
-        $html = $helper->postButton('Delete <record>', '/records/delete/5', [
-            'data' => ['version' => 0, 'flags' => ['active' => false], 'empty' => '', 'missing' => null],
-            'class' => 'danger',
-            'form' => ['class' => 'action-form'],
-        ]);
+        $html = $helper->postButton(label: 'Delete <record>', url: '/records/delete/5')
+            ->data(['version' => 0, 'flags' => ['active' => false], 'empty' => '', 'missing' => null])
+            ->form(FormConfig::builder()->attributes(['class' => 'action-form']))
+            ->attributes(['class' => 'danger'])
+            ->render();
         $xpath = $this->xpath($html);
         static::assertSame(
             1,
@@ -37,14 +38,20 @@ class PostActionTest extends FormTestCase
         static::assertSame('0', $xpath->evaluate('string(//input[@name="version"]/@value)'));
         static::assertSame(1, $xpath->query('//input[@name="missing"]')->length);
         static::assertStringContainsString('Delete &lt;record&gt;', $html);
-        static::assertStringContainsString('id="form-compose-2"', $helper->postButton('Again', '/records/delete/6'));
+        static::assertStringContainsString(
+            'id="form-compose-2"',
+            $helper->postButton(label: 'Again', url: '/records/delete/6')->render(),
+        );
     }
 
     public function testPostLinksUseHiddenFormsAndLoadAnExternalScriptOnlyOnce(): void
     {
         $helper = $this->helper(attributes: ['cspScriptNonce' => 'nonce<safe>']);
-        $html = $helper->postLink('Delete', '/records/delete/5', ['method' => 'DELETE', 'target' => '_blank']);
-        $html .= $helper->postLink(new Html('<strong>Archive</strong>'), '/records/archive/5');
+        $html = $helper->postLink(label: 'Delete', url: '/records/delete/5')
+            ->method('DELETE')
+            ->attributes(['target' => '_blank'])
+            ->render();
+        $html .= $helper->postLink(label: new Html('<strong>Archive</strong>'), url: '/records/archive/5')->render();
         $xpath = $this->xpath($html);
         static::assertSame(2, $xpath->query('//form[@hidden]')->length);
         static::assertSame('DELETE', $xpath->evaluate('string(//form[1]/input[@name="_method"]/@value)'));
@@ -63,8 +70,8 @@ class PostActionTest extends FormTestCase
     public function testButtonsAndLinksShareConfirmationAndAssetLoading(): void
     {
         $helper = $this->helper();
-        $html = $helper->postButton('Delete', '/delete', ['confirm' => 'Delete "this" <record>?']);
-        $html .= $helper->postLink('Archive', '/archive', ['confirm' => 'Archive?']);
+        $html = $helper->postButton(label: 'Delete', url: '/delete')->confirm('Delete "this" <record>?')->render();
+        $html .= $helper->postLink(label: 'Archive', url: '/archive')->confirm('Archive?')->render();
         $xpath = $this->xpath($html);
         static::assertSame('Delete "this" <record>?', $xpath->evaluate('string(//form[1]/@data-form-compose-confirm)'));
         static::assertSame('Archive?', $xpath->evaluate('string(//form[2]/@data-form-compose-confirm)'));
@@ -76,8 +83,11 @@ class PostActionTest extends FormTestCase
     public function testViewBlocksPlaceFormsOutsideTheirVisibleTriggers(): void
     {
         $helper = $this->helper();
-        $button = $helper->postButton('Delete', '/delete', ['block' => true, 'form' => ['id' => 'delete-action']]);
-        $link = $helper->postLink('Archive', '/archive', ['block' => 'actions']);
+        $button = $helper->postButton(label: 'Delete', url: '/delete')
+            ->block('postActions')
+            ->form(FormConfig::builder()->id('delete-action'))
+            ->render();
+        $link = $helper->postLink(label: 'Archive', url: '/archive')->block('actions')->render();
         static::assertStringNotContainsString('<form', $button . $link);
         static::assertStringContainsString('form="delete-action"', $button);
         static::assertStringContainsString('id="delete-action"', $helper->getView()->fetch('postActions'));
@@ -93,24 +103,14 @@ class PostActionTest extends FormTestCase
             'form.open' => ['class' => 'action-form'],
         ]);
         $helper = $this->helper();
-        $html = $helper->postButton(
-            new Html('<em>Go</em>'),
-            '/go',
-            [
-                'template' => 'actions/button',
-                'templateData' => ['marker' => '<custom>'],
-            ],
-            theme: $theme,
-        );
-        $html .= $helper->postLink(
-            'Next',
-            '/next',
-            [
-                'templates' => ['control' => 'actions/link'],
-                'templateData' => ['marker' => '<link>'],
-            ],
-            theme: $theme,
-        );
+        $html = $helper->postButton(label: new Html('<em>Go</em>'), url: '/go', theme: $theme)
+            ->partTemplate('control', 'actions/button')
+            ->templateData(['marker' => '<custom>'])
+            ->render();
+        $html .= $helper->postLink(label: 'Next', url: '/next', theme: $theme)
+            ->partTemplate('control', 'actions/link')
+            ->templateData(['marker' => '<link>'])
+            ->render();
         static::assertStringContainsString('class="button"', $html);
         static::assertStringContainsString('class="action-link"', $html);
         static::assertStringContainsString('class="action-form"', $html);
@@ -122,36 +122,42 @@ class PostActionTest extends FormTestCase
     public function testOmittedLinkUrlUsesTheCurrentRequestAndFormOptionsCannotOverrideTheTarget(): void
     {
         $helper = $this->helper();
-        $html = $helper->postLink('Here');
+        $html = $helper->postLink(label: 'Here')->render();
         static::assertStringContainsString('action="/articles/save"', $html);
-        $html = $helper->postButton('Other', '/explicit', [
-            'method' => 'patch',
-            'form' => ['method' => 'delete', 'url' => '/ignored', 'type' => 'get'],
-        ]);
+        $html = $helper->postButton(label: 'Other', url: '/explicit')
+            ->method('patch')
+            ->form(
+                FormConfig::builder()
+                    ->method('delete')
+                    ->url('/ignored')
+                    ->method('get'),
+            )
+            ->render();
         static::assertStringContainsString('action="/explicit"', $html);
         static::assertStringContainsString('name="_method" value="PATCH"', $html);
-        $html = $helper->postButton('Nested method', '/nested', ['form' => ['method' => 'put']]);
+        $html = $helper->postButton(label: 'Nested method', url: '/nested')
+            ->form(FormConfig::builder()->method('put'))
+            ->render();
         static::assertStringContainsString('name="_method" value="PUT"', $html);
     }
 
     public function testInvalidThemeIsRejectedThroughBothActionEntryPoints(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->postButton('Go', '/go', theme: 'Unknown');
+        $this->helper()->postButton(label: 'Go', url: '/go', theme: 'Unknown')->render();
     }
 
     public function testRouteArraysAndHiddenDataAreEscapedThroughTheOrdinaryPipeline(): void
     {
-        $html = $this->helper()->postButton(
-            'Delete',
-            [
+        $html = $this->helper()
+            ->postButton(label: 'Delete', url: [
                 'controller' => 'articles',
                 'action' => 'delete',
                 5,
                 '?' => ['source' => 'a&b'],
-            ],
-            ['data' => ['note' => '"><script>bad</script>']],
-        );
+            ])
+            ->data(['note' => '"><script>bad</script>'])
+            ->render();
         static::assertStringContainsString('action="/articles/delete/5?source=a%26b"', $html);
         static::assertStringContainsString('&quot;&gt;&lt;script&gt;bad&lt;/script&gt;', $html);
         static::assertStringNotContainsString('<script>', $html);

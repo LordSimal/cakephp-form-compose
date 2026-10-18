@@ -38,8 +38,9 @@ class FeedbackReferences
             return;
         }
 
-        $references = preg_split('/\s+/', AttributeTokens::normalize($attributes->values['aria-describedby'] ?? ''))
-        ?: [];
+        $matches = [];
+        preg_match_all('/\S+/', AttributeTokens::normalize($attributes->values['aria-describedby'] ?? ''), $matches);
+        $references = $matches[0];
         $parts = ['help' => $field->state->hasHelp(), 'errors' => $field->state->hasErrors()];
         foreach (array_keys(array_filter($parts)) as $part) {
             $bag = $field->attributes($part);

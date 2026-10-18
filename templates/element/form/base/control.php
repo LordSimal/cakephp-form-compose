@@ -7,16 +7,16 @@ declare(strict_types=1);
 ?>
 <?php if ($field->state->grouped()): ?>
 <fieldset<?= (string)$attributes ?>>
-    <?= $field->label() ?>
-    <?= $field->input() ?>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
+    <?= (string) $field->label() ?>
+    <?= (string) $field->input() ?>
+    <?= (string) $field->help() ?>
+    <?= (string) $field->errors() ?>
 </fieldset>
 <?php else: ?>
 <div<?= (string)$attributes ?>>
-    <?= $field->label() ?>
-    <?= $field->input() ?>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
+    <?= (string) $field->label() ?>
+    <?= (string) $field->input() ?>
+    <?= (string) $field->help() ?>
+    <?= (string) $field->errors() ?>
 </div>
 <?php endif;

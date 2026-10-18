@@ -23,8 +23,12 @@ class ErrorSummarySecurityTest extends FormTestCase
             'errors' => ['title' => ['invalid' => 'Fix title']],
         ]);
         foreach ([false, true] as $summary) {
-            $form = $helper->bind($context, ['url' => '/articles/save'], blueprint: TitleIdForm::class);
-            $html = $form->render(options: ['errorSummary' => $summary]);
+            $form = $helper->form($context)
+                ->url('/articles/save')
+                ->blueprint(TitleIdForm::class)
+                ->errorSummary($summary)
+                ->bind();
+            $html = $form->render();
             $tokens = [];
             /** @var NodeList<Element>|false $nodes */
             $nodes = $this->xpath($html)->query('//input[starts-with(@name, "_Token[")]');

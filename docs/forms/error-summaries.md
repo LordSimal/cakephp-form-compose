@@ -1,83 +1,55 @@
 ---
 title: Error summaries
-description: Summarize rendered field and collection errors through a PHP template with links to actual controls.
+description: Summarize actual rendered controls with accessible links and buffered form layouts.
 ---
 
 # Error summaries
 
-An error summary gathers CakePHP validation messages for the controls actually
-rendered in one form session. It complements inline errors and uses the same
-PHP template system. It does not validate data or read errors from unrelated fields.
+Summaries gather context validation messages from successfully rendered controls.
+They complement inline feedback and do not validate or persist data.
 
 ## Enable the complete-form shortcut
 
 ```php
-use App\Form\PostForm;
-
-echo $this->Form->render(
-    PostForm::class,
-    $post,
-    options: ['errorSummary' => true],
-    submit: 'Save post',
-);
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary()
+    ->submit('Save article');
 ```
 
-`render()` buffers the blueprint body and places the summary above it. Summaries
-are opt-in and render nothing when there are no eligible errors. Form attributes,
-method overrides, CSRF, and tamper-protection fields keep their normal behavior.
-
-Supply an options array to customize the summary:
+The complete renderer buffers the blueprint body before building the summary,
+then places it above the body. Summaries are opt-in and emit nothing without
+eligible errors. Configure a reusable summary snapshot when needed:
 
 ```php
-options: [
-    'errorSummary' => [
-        'title' => 'Check your post',
-        'attributes' => ['class' => 'validation-summary'],
-    ],
-]
-```
+use FormCompose\Configuration\SummaryConfig;
 
-The session version supports the same option. A local `errorSummary => false`
-overrides a true binding default. This setting is consumed internally and is
-never emitted as a form attribute.
+$summary = SummaryConfig::builder()
+    ->title('Please review these fields')
+    ->attributes(['class' => 'validation-summary']);
+
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary($summary);
+```
 
 ## Keep custom layouts and actions without manual buffering
 
-Use complete-form `render()` when the summary belongs above a blueprint's fields.
-Put the shared complete-form layout in your configured theme as `form/layout.php`.
-For example, with `new Theme(layers: ['form/themes/daisy'])`, the element lives at
-`templates/element/form/themes/daisy/form/layout.php`. [Configure the theme once](/themes#select-theme)
-when loading the helper; each form then discovers the layout automatically:
+The blueprint layout arranges fields inside `$body`. The complete form's layout
+arranges the prepared `$summary`, `$body`, and buttons. Configure that layout with
+`template('forms/editor')` on the form builder or provide a theme `form/layout.php`.
 
 ```php
-<?= $this->Form->render(
-    'article',
-    $article,
-    options: ['errorSummary' => true],
-    submit: 'Save article',
-) ?>
-```
-
-The plugin renders the blueprint into `$body` first, builds `$summary` from the
-controls that actually rendered, then invokes the form layout. Your page template
-needs no `$opening`, `$body`, or `$summary` variables.
-
-::: info Two templates, two jobs
-The blueprint's `#[Form(..., template: ...)]` arranges fields and embeds inside
-`$body`. The theme's `form/layout.php` arranges that prepared body, the summary,
-and actions for the complete form.
-:::
-
-```php [templates/element/form/themes/daisy/form/layout.php]
 <?php
-declare(strict_types=1);
 
 /**
  * @var \FormCompose\Form\FormSession $form
  * @var string $body
  * @var string $summary
  * @var string|\FormCompose\Rendering\Html|false $submit
- * @var array<string, mixed> $submitOptions
+ * @var \FormCompose\Configuration\ButtonConfig $submitConfig
  */
 ?>
 <?= $summary ?>
@@ -85,136 +57,59 @@ declare(strict_types=1);
     <?= $body ?>
 </div>
 <div class="form-actions">
-    <?= $form->submit(__('Check server validation'), ['formnovalidate' => true]) ?>
+    <?= $form->submit('Check server validation')->attributes(['formnovalidate' => true]) ?>
     <?php if ($submit !== false): ?>
-        <?= $form->submit($submit, $submitOptions) ?>
+        <?= $form->submit($submit, config: $submitConfig) ?>
     <?php endif; ?>
 </div>
 ```
 
-`$body` and `$summary` are prepared HTML; output them directly, once each. The
-summary is an empty string when disabled or when there are no eligible errors.
-`$submit` is the requested text/trusted HTML label, a translated default Submit
-label, or `false`. `$submitOptions` contains the caller's button options.
-
-The session stays open while the layout renders its action buttons. The plugin
-then generates final protection fields and closes the form. Opening and closing
-remain the plugin's responsibility. Within a theme, the root `control.php` wraps
-one field; the nested `form/layout.php` lays out the complete form.
-
-::: warning Keep validation controls in the blueprint body
-The automatic summary is prepared from controls rendered in `$body`. Controls
-added later by the complete-form layout won't be included in that summary.
-:::
-
-For an exceptional per-form override, pass
-`options: ['template' => 'form/layouts/special-editor', 'errorSummary' => true]`.
-`templates['layout']` is the equivalent part override. Shared layouts belong in
-the theme so ordinary `render()` calls need no template selection. See
-[form layout variables](/template-reference#complete-form-layouts).
+Emit body and summary once. The form is open while action buttons render; the
+plugin closes it afterward. Controls added by this outer layout after summary
+preparation will not appear in that summary. See [layout variables](/template-reference#complete-form-layouts).
 
 ## Place a summary manually
 
-The low-level `open()` / `control()` / `close()` API emits each part immediately.
-Its `errorSummary()` can describe only controls rendered so far. For a summary
-above handwritten controls, buffer those controls first so their actual labels,
-errors, and target IDs are known:
+Rendering, rather than merely creating a builder, records feedback:
 
 ```php
-$form = $this->Form->bind($post);
+$form = $this->Form->form($article)->bind();
 echo $form->open();
-
-$body = $form->controls([
-    'title',
-    'body' => ['type' => 'textarea'],
-]);
-echo $form->errorSummary();
+$body = $form->controls(['title', 'body'])->render();
+echo $form->errorSummary()->title('Check your article');
 echo $body;
-
-echo $form->submit('Save post');
+echo $form->submit('Save');
 echo $form->close();
 ```
 
-A summary below the controls can be echoed directly after them, without a body
-buffer. For blueprint forms, the complete-form layout above handles this ordering
-inside the plugin. Merely calling `field()` or
-inspecting attributes does not add feedback. A successfully registered handwritten
-input also contributes its errors through the normal `register()` contract.
-Handwritten registrations contribute unlinked messages: configured types and
-choices do not prove which focusable input IDs the handwritten markup emitted.
-Call `errorSummary()` inside the open session.
+The explicit `render()` on the assignment is essential: `$body` must contain
+rendered HTML before the summary is built. A summary below controls can be echoed
+after them without buffering. Field inspection alone contributes no feedback.
 
 ## Which errors appear?
 
-- Rendered controls contribute messages in rendering order, preserving each
-  field's message order. Labels prefix the messages; a suppressed or empty label
-  falls back to the humanized field name.
-- `errors => false` suppresses both inline messages and summary entries. Fields
-  omitted by a blueprint or layout contribute nothing.
-- Ordinary controls link to their input IDs. Radio and multi-checkbox groups link
-  to their first enabled choice, including choices inside groups.
-- Hidden and disabled controls, empty/all-disabled choice groups, and controls
-  explicitly opting out of linking appear as plain messages.
-- Rendered `EmbedMany` sections contribute their own collection errors, including
-  empty collections. These entries have no control link. Row-field errors link to
-  the qualified row inputs and are not duplicated as collection errors.
+Controls contribute errors in rendering order with their resolved labels. Hidden,
+disabled, empty/all-disabled choice controls do not become focus targets.
+`errors(false)` suppresses inline messages and summary entries. Collection errors
+from repeated embeds are unlinked; row-field errors link to their actual controls.
+Composite group errors target the first eligible rendered child and do not
+duplicate nested child errors. Handwritten registrations contribute unlinked
+messages because registration cannot prove which focusable element was emitted.
 
-Only successful rendering contributes feedback. A failed control, batch,
-blueprint layout, or repeated wrapper restores the earlier feedback snapshot alongside
-its ID and submission registrations. Summaries remain isolated between sessions.
+Suppressed or blank labels omit the label prefix. Text is escaped, and summary
+links target only IDs actually recorded by the session. Failed rendering rolls
+back feedback along with submitted names and IDs.
 
 ## Customize the summary element
 
-Place `error-summary/control.php` in a theme layer, or select one explicitly:
-
 ```php
-$form->errorSummary([
-    'template' => 'forms/error-summary',
-    'title' => 'Check these fields',
-    'templateData' => ['intro' => 'Your changes have not been saved.'],
-]);
+echo $form->errorSummary()
+    ->title('Please check your entries')
+    ->template('forms/summary')
+    ->attributes(['class' => 'validation-summary']);
 ```
 
-```php [templates/element/forms/error-summary.php]
-<?php
-use FormCompose\Rendering\Html;
-/**
- * @var list<\FormCompose\Form\FeedbackEntry> $entries
- * @var string|\FormCompose\Rendering\Html $title
- * @var \FormCompose\Rendering\Attributes $attributes
- * @var \FormCompose\Rendering\Attributes $titleAttributes
- * @var array{intro: string} $templateData
- */
-?>
-<aside<?= (string)$attributes ?>>
-    <h2<?= (string)$titleAttributes ?>><?= Html::text($title) ?></h2>
-    <p><?= Html::text($templateData['intro']) ?></p>
-    <ul>
-        <?php foreach ($entries as $entry): ?>
-            <?php foreach ($entry->messages as $message): ?>
-                <li>
-                    <?php if ($entry->target !== null): ?>
-                        <a href="<?= Html::text('#' . rawurlencode($entry->target)) ?>"><?= Html::text($entry->label) ?>: <?= Html::text($message) ?></a>
-                    <?php else: ?>
-                        <?= Html::text($entry->label) ?>: <?= Html::text($message) ?>
-                    <?php endif; ?>
-                </li>
-            <?php endforeach; ?>
-        <?php endforeach; ?>
-    </ul>
-</aside>
-```
-
-Preserve the prepared summary and heading attributes so their ARIA association
-remains valid. Ordinary titles, labels, and messages are escaped; titles and
-labels can use explicit trusted `Html`. Messages always remain escaped.
-
-The default element uses a section, translated heading, and list. Generated
-summary and heading IDs participate in duplicate-ID checks. To render a second
-summary, provide a different `attributes['id']`; its default heading ID follows
-that ID. No JavaScript, autofocus, or focus-management runtime is added. Native
-fragment links navigate to the prepared controls.
-
-For composite controls, implement the optional
-[error target contract](/extending#custom-summary-targets) when the main field
-ID is not the appropriate focus target.
+The element receives `$entries`, `$title`, `$attributes`, `$form`, and
+`$templateData`; see the [template reference](/template-reference#error-summary-elements).
+Custom types can provide focus/identity metadata through the documented
+[extension contracts](/extending#custom-summary-targets).

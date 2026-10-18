@@ -6,6 +6,7 @@ namespace FormCompose\Test\TestCase\Form;
 use ArrayIterator;
 use Cake\ORM\Entity;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Test\AssociationTestCase;
 
@@ -17,14 +18,16 @@ class AssociationRenderingTest extends AssociationTestCase
     public function testBelongsToManyDiscoversOptionsAndSelectsCustomPrimaryKeys(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
         $helper->getView()->set('tags', ['php' => 'PHP', 'css' => 'CSS', 'cake' => 'CakePHP']);
-        $state = $form->field('tags._ids')->state;
+        $state = $form->field('tags._ids')->resolve()->state;
         static::assertSame('select', $state->type);
         static::assertTrue($state->constraints['multiple']);
         static::assertSame(['php', 'cake'], $state->value);
         $form->open();
-        $html = $form->control('tags._ids');
+        $html = $form->control('tags._ids')->render();
         $form->close();
         $xpath = $this->xpath($html);
 
@@ -41,12 +44,14 @@ class AssociationRenderingTest extends AssociationTestCase
         $helper = $this->helper();
         $helper->getView()->set('tags', new ArrayIterator(['php' => 'PHP', 'cake' => 'CakePHP']));
         $helper->getView()->set('topicTags', ['php' => 'PHP']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        static::assertSame(['php', 'cake'], $form->field('comments.0.tags._ids')->state->value);
-        static::assertSame('Topic Tags', $form->field('topic_tags._ids')->state->labelText());
-        static::assertSame(['php' => 'PHP'], $form->field('topic_tags._ids')->state->options['options']);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        static::assertSame(['php', 'cake'], $form->field('comments.0.tags._ids')->resolve()->state->value);
+        static::assertSame('Topic Tags', $form->field('topic_tags._ids')->resolve()->state->labelText());
+        static::assertSame(['php' => 'PHP'], $form->field('topic_tags._ids')->resolve()->state->config->choices);
         $form->open();
-        $html = $form->control('comments.0.tags._ids');
+        $html = $form->control('comments.0.tags._ids')->render();
         $form->close();
 
         static::assertStringContainsString('name="comments[0][tags][_ids][]"', $html);
@@ -57,33 +62,68 @@ class AssociationRenderingTest extends AssociationTestCase
     {
         $helper = $this->helper();
         $helper->getView()->set('tags', ['unwanted' => 'Unwanted']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
         $form->open();
 
-        $html = $form->control('tags._ids', [
-            'options' => ['css' => 'CSS'],
-            'value' => ['css'],
-            'label' => 'Choose topics',
-            'template' => 'themes/custom/control',
-        ]);
+        $html = $form->control('tags._ids')
+            ->choices(['css' => 'CSS'])
+            ->value(['css'])
+            ->label('Choose topics')
+            ->partTemplate('control', 'themes/custom/control')
+            ->render();
         $form->close();
 
         static::assertStringContainsString('data-control="custom"', $html);
         static::assertStringContainsString('Choose topics', $html);
         static::assertSame('css', $this->xpath($html)->evaluate('string(//option[@selected]/@value)'));
         static::assertStringNotContainsString('Unwanted', $html);
-        static::assertSame([], $form->field('tags._ids', ['options' => []])->state->options['options']);
-        static::assertFalse($form->field('tags._ids', ['multiple' => false])->state->constraints['multiple']);
-        static::assertSame('hidden', $form->field('tags._ids', ['type' => 'hidden', 'value' => 'php'])->state->type);
-        static::assertArrayNotHasKey('multiple', $form->field('tags._ids', ['type' => 'hidden'])->state->constraints);
+        static::assertSame(
+            [],
+            $form->field('tags._ids')
+                ->choices([])
+                ->resolve()
+                ->state
+                ->config
+                ->choices,
+        );
+        static::assertFalse(
+            $form->field('tags._ids')
+                ->multiple(false)
+                ->resolve()
+                ->state
+                ->constraints['multiple'],
+        );
+        static::assertSame(
+            'hidden',
+            $form->field('tags._ids')
+                ->type('hidden')
+                ->value('php')
+                ->resolve()
+                ->state
+                ->type,
+        );
+        static::assertArrayNotHasKey(
+            'multiple',
+            $form->field('tags._ids')
+                ->type('hidden')
+                ->resolve()
+                ->state
+                ->constraints,
+        );
     }
 
     public function testCheckboxCollectionsDiscoverChoicesAndKeepAssociationLabels(): void
     {
         $helper = $this->helper();
         $helper->getView()->set('tags', ['php' => 'PHP', 'css' => 'CSS', 'cake' => 'CakePHP']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        $definition = new FormDefinition([])->add(new FieldDefinition('tags._ids', ['type' => 'multicheckbox']));
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        $definition = new FormDefinition([])->add(
+            new FieldDefinition('tags._ids', FieldConfig::builder()->type('multicheckbox')),
+        );
         $form->open();
         $html = $form->renderDefinition($definition);
         $form->close();
@@ -99,8 +139,11 @@ class AssociationRenderingTest extends AssociationTestCase
         $article = $this->article();
         $article->setError('tags', ['valid' => '<Choose valid tags>']);
         $this->articles->getValidator()->notEmptyArray('tags');
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
-        $field = $form->field('tags._ids');
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
+        $field = $form->field('tags._ids')->resolve();
         static::assertSame(['<Choose valid tags>'], $field->state->messages);
         static::assertTrue($field->state->constraints['required']);
         $form->open();
@@ -112,7 +155,13 @@ class AssociationRenderingTest extends AssociationTestCase
         static::assertStringContainsString('aria-describedby="' . $field->state->id . '-errors"', $html);
         static::assertStringContainsString('id="' . $field->state->id . '-errors"', $html);
         static::assertStringContainsString('for="' . $field->state->id . '"', $html);
-        static::assertFalse($form->field('tags._ids', ['required' => false])->state->constraints['required']);
+        static::assertFalse(
+            $form->field('tags._ids')
+                ->required(false)
+                ->resolve()
+                ->state
+                ->constraints['required'],
+        );
     }
 
     public function testNestedAssociationErrorsUseTheCorrectEntity(): void
@@ -123,32 +172,42 @@ class AssociationRenderingTest extends AssociationTestCase
         $comment = $comments[0];
         $comment->setError('tags', ['invalid' => 'Comment tags are invalid']);
         $this->comments->getValidator()->notEmptyArray('tags');
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
 
-        static::assertSame(['Comment tags are invalid'], $form->field('comments.0.tags._ids')->state->messages);
-        static::assertTrue($form->field('comments.0.tags._ids')->state->constraints['required']);
-        static::assertSame([], $form->field('tags._ids')->state->messages);
+        static::assertSame(
+            ['Comment tags are invalid'],
+            $form->field('comments.0.tags._ids')->resolve()->state->messages,
+        );
+        static::assertTrue($form->field('comments.0.tags._ids')->resolve()->state->constraints['required']);
+        static::assertSame([], $form->field('tags._ids')->resolve()->state->messages);
     }
 
     public function testMissingOrNonIterableViewVariablesDoNotBecomeChoices(): void
     {
         $helper = $this->helper();
         $helper->getView()->set('tags', 'not a list');
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        $state = $form->field('tags._ids')->state;
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        $state = $form->field('tags._ids')->resolve()->state;
         static::assertSame('select', $state->type);
-        static::assertArrayNotHasKey('options', $state->options);
-        static::assertArrayNotHasKey('options', $form->field('author_id')->state->options);
+        static::assertFalse($state->config->hasChoices);
+        static::assertFalse($form->field('author_id')->resolve()->state->config->hasChoices);
     }
 
     public function testHasManyIdsSelectorsUseTheSameCollectionConventions(): void
     {
         $helper = $this->helper();
         $helper->getView()->set('comments', [10 => 'Existing comment', 11 => 'Other comment']);
-        $form = $helper->bind($this->article(), ['context' => ['table' => $this->articles]]);
-        static::assertSame([10], $form->field('comments._ids')->state->value);
+        $form = $helper->form($this->article())
+            ->context(['table' => $this->articles])
+            ->bind();
+        static::assertSame([10], $form->field('comments._ids')->resolve()->state->value);
         $form->open();
-        $html = $form->control('comments._ids');
+        $html = $form->control('comments._ids')->render();
         $form->close();
 
         static::assertSame('10', $this->xpath($html)->evaluate('string(//option[@selected]/@value)'));

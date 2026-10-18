@@ -7,29 +7,40 @@ use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Test\Fixture\FailOnceRenderer;
 use FormCompose\Test\Fixture\RangeType;
 use FormCompose\Test\FormTestCase;
-use InvalidArgumentException;
 use RuntimeException;
+use TypeError;
 
 class SecurityTest extends FormTestCase
 {
     public function testDefinitionsOnlySecureRenderedFieldsAndPreserveLockedValues(): void
     {
-        $contact = new FormDefinition([])->add(new FieldDefinition('email', ['type' => 'email']))
+        $contact = new FormDefinition([])->add(
+            new FieldDefinition('email', FieldConfig::builder()->type('email')),
+        )
             ->add(new FieldDefinition('unused'));
-        $fields = new FormDefinition([])->add(new FieldDefinition('id', ['type' => 'hidden', 'value' => '42']))
-            ->add(new FieldDefinition('active', ['type' => 'checkbox']))
+        $fields = new FormDefinition([])->add(
+            new FieldDefinition(
+                'id',
+                FieldConfig::builder()->type('hidden')->value('42'),
+            ),
+        )
+            ->add(new FieldDefinition('active', FieldConfig::builder()->type('checkbox')))
             ->add(new FieldDefinition('comments.0.body'));
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $form->field($contact->field('unused')->path, $contact->field('unused')->options)->attributes();
-        $email = $form->field($contact->field('email')->path, $contact->field('email')->options);
-        $html = $form->open() . $form->control('title');
-        $html .= $email->label() . $email->input();
+        $form = $helper->form()->url('/articles/save')->bind();
+        $form->field($contact->field('unused')->path)
+            ->apply($contact->field('unused')->config)
+            ->resolve()
+            ->attributes();
+        $email = $form->field($contact->field('email')->path)->apply($contact->field('email')->config)->resolve();
+        $html = $form->open() . $form->control('title')->render();
+        $html .= $email->label()->render() . $email->input()->render();
         $html .= $form->renderDefinition($fields) . $form->close();
         $data = [
             'title' => 'Edited',
@@ -74,15 +85,15 @@ class SecurityTest extends FormTestCase
     {
         $csrf = bin2hex(random_bytes(16));
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $unused = $form->field('never_rendered');
+        $form = $helper->form()->url('/articles/save')->bind();
+        $unused = $form->field('never_rendered')->resolve();
         $unused->attributes();
 
         $html = $form->open();
         static::assertStringContainsString('value="' . $csrf . '"', $html);
-        $html .= $form->control('title', ['template' => 'themes/custom/control']);
-        $html .= $form->control('id', ['type' => 'hidden', 'value' => '42']);
-        $html .= $form->control('disabled', ['disabled' => true]);
+        $html .= $form->control('title')->partTemplate('control', 'themes/custom/control')->render();
+        $html .= $form->control('id')->type('hidden')->value('42')->render();
+        $html .= $form->control('disabled')->disabled(true)->render();
         $html .= $form->close();
         $tokens = $this->tokens($html);
         $data = ['title' => 'Edited', 'id' => '42', '_Token' => $tokens];
@@ -96,12 +107,15 @@ class SecurityTest extends FormTestCase
     public function testManualAndCompositeInputsShareSubmissionProtection(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save', 'types' => ['range' => new RangeType()]]);
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->types(['range' => new RangeType()])
+            ->bind();
         $html = $form->open();
-        $manual = $form->field('manual');
+        $manual = $form->field('manual')->resolve();
         $html .= '<input' . (string)$manual->attributes() . '>';
         $manual->register();
-        $html .= $form->control('period', ['type' => 'range']);
+        $html .= $form->control('period')->type('range')->render();
         $html .= $form->close();
         $data = ['manual' => 'text', 'period' => ['start' => '2', 'end' => '9'], '_Token' => $this->tokens($html)];
         $protector = new FormProtector();
@@ -114,12 +128,15 @@ class SecurityTest extends FormTestCase
     public function testChoiceAndNestedFieldsValidateWithBrowserPayloads(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
+        $form = $helper->form()->url('/articles/save')->bind();
         $html = $form->open();
-        $html .= $form->control('active', ['type' => 'checkbox']);
-        $html .= $form->control('comments.0.body');
-        $html .= $form->control('tags', ['multiple' => true, 'options' => ['a' => 'A']]);
-        $html .= $form->control('dynamic', ['secure' => false]);
+        $html .= $form->control('active')->type('checkbox')->render();
+        $html .= $form->control('comments.0.body')->render();
+        $html .= $form->control('tags')
+            ->multiple(true)
+            ->choices(['a' => 'A'])
+            ->render();
+        $html .= $form->control('dynamic')->secure(false)->render();
         $html .= $form->close();
         $data = [
             'active' => '0',
@@ -138,10 +155,10 @@ class SecurityTest extends FormTestCase
     public function testNamedSubmitButtonsAreOptional(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $html = $form->open() . $form->control('title');
-        $html .= $form->submit('Save', ['name' => 'intent', 'value' => 'save']);
-        $html .= $form->submit('Preview', ['name' => 'intent', 'value' => 'preview']);
+        $form = $helper->form()->url('/articles/save')->bind();
+        $html = $form->open() . $form->control('title')->render();
+        $html .= $form->submit('Save')->name('intent')->value('save')->render();
+        $html .= $form->submit('Preview')->name('intent')->value('preview')->render();
         $html .= $form->close();
         $data = ['title' => 'Edited', 'intent' => 'preview', '_Token' => $this->tokens($html)];
         $protector = new FormProtector();
@@ -155,10 +172,13 @@ class SecurityTest extends FormTestCase
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $renderer = new FailOnceRenderer(new PhpRenderer($helper->getView()), 'button', 'control');
-        $form = $helper->bind(null, ['url' => '/articles/save'], renderer: $renderer);
-        $html = $form->open() . $form->control('title');
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->renderer($renderer)
+            ->bind();
+        $html = $form->open() . $form->control('title')->render();
         try {
-            $form->submit('Save', ['name' => 'intent']);
+            $form->submit('Save')->name('intent')->render();
             static::fail('Expected the button template to fail.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Template failed', $runtimeException->getMessage());
@@ -176,8 +196,13 @@ class SecurityTest extends FormTestCase
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $renderer = new FailOnceRenderer(new PhpRenderer($helper->getView()), 'form', 'close');
-        $form = $helper->bind(null, ['url' => '/articles/save'], renderer: $renderer);
-        $html = $form->open() . $form->control('id', ['type' => 'hidden', 'value' => '7']);
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->renderer($renderer)
+            ->bind();
+        $html =
+            $form->open()
+            . $form->control('id')->type('hidden')->value('7')->render();
         try {
             $form->close();
             static::fail('Expected the closing template to fail.');
@@ -207,16 +232,20 @@ class SecurityTest extends FormTestCase
             'value' => '99',
         ];
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => bin2hex(random_bytes(16))]);
-        $form = $helper->bind(null, ['url' => '/articles/save', 'templateData' => $data]);
+        $form = $helper->form()->url('/articles/save')->templateData($data)->bind();
         $html = $form->open();
-        $html .= $form->control('title', ['template' => 'themes/data/control', 'templateData' => $data]);
-        $html .= $form->control('id', ['type' => 'hidden', 'value' => '42', 'templateData' => $data]);
-        $html .= $form->submit('Save', [
-            'name' => 'intent',
-            'value' => 'save',
-            'templates' => ['control' => 'themes/data/part'],
-            'templateData' => $data,
-        ]);
+        $html .= $form->control('title')->partTemplate('control', 'themes/data/control')->templateData($data)->render();
+        $html .= $form->control('id')
+            ->type('hidden')
+            ->value('42')
+            ->templateData($data)
+            ->render();
+        $html .= $form->submit('Save')
+            ->name('intent')
+            ->value('save')
+            ->partTemplate('control', 'themes/data/part')
+            ->templateData($data)
+            ->render();
         $html .= $form->close();
         $submitted = ['title' => 'Edited', 'id' => '42', 'intent' => 'save', '_Token' => $this->tokens($html)];
         $session = $helper->getView()->getRequest()->getSession()->id();
@@ -235,21 +264,22 @@ class SecurityTest extends FormTestCase
     public function testInvalidButtonDataDoesNotUnlockAnUnrenderedName(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save']);
-        $html = $form->open() . $form->control('title');
+        $form = $helper->form()->url('/articles/save')->bind();
+        $html = $form->open() . $form->control('title')->render();
+        $this->expectException(TypeError::class);
         try {
-            $form->submit('Save', ['name' => 'intent', 'templateData' => null]);
-            static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
+            $this->invokeBuilder($form->submit('Save')->name('intent'), 'templateData', null);
+        } finally {
+            $html .= $form->close();
+            $submitted = ['title' => 'Edited', '_Token' => $this->tokens($html)];
+            $protector = new FormProtector();
+            $session = $helper->getView()->getRequest()->getSession()->id();
+            static::assertTrue($protector->validate($submitted, '/articles/save', $session));
+            static::assertFalse($protector->validate(
+                $submitted + ['intent' => 'injected'],
+                '/articles/save',
+                $session,
+            ));
         }
-
-        $html .= $form->close();
-        $submitted = ['title' => 'Edited', '_Token' => $this->tokens($html)];
-        $protector = new FormProtector();
-        $session = $helper->getView()->getRequest()->getSession()->id();
-
-        static::assertTrue($protector->validate($submitted, '/articles/save', $session));
-        static::assertFalse($protector->validate($submitted + ['intent' => 'injected'], '/articles/save', $session));
     }
 }
