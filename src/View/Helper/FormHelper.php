@@ -10,6 +10,7 @@ use FormCompose\Binding\FormBinding;
 use FormCompose\Binding\TypeMap;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Blueprint\FormContext;
+use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Builder\FormBuilder;
 use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\FormIds;
@@ -17,6 +18,7 @@ use FormCompose\Form\FormSession;
 use FormCompose\Rendering\PostActionRenderer;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\Theme;
+use FormCompose\View\PostActionsTrait;
 use InvalidArgumentException;
 
 /**
@@ -100,7 +102,10 @@ class FormHelper extends Helper
         $factory = $this->createBlueprintFactory();
         $valueSources = $config->valueSources;
         $formContext = new FormContext($context, $view->getRequest(), valueSources: $valueSources);
-        $compiled = $config->blueprint === null ? null : $factory->compile($config->blueprint, $formContext);
+        $compiled = array_map(
+            static fn(string $blueprint): FormDefinition => $factory->compile($blueprint, $formContext),
+            $config->blueprints,
+        );
 
         $types = $factory->lazyTypes($types);
 

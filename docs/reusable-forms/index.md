@@ -60,6 +60,9 @@ echo $this->Form
 The complete form includes opening/closing markup and the default action. Use
 `withoutSubmit()` to omit that action. An optional blueprint layout arranges the
 collection; field templates still arrange each individual control.
+Append another `blueprint('article_more')` call to combine independent field
+collections in one form. See [blueprint composition](/composition#combine-blueprints)
+for layout and collision rules.
 
 ## Use blueprint defaults with a manual layout {#select-defaults-for-the-whole-binding}
 

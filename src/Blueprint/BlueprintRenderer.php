@@ -28,6 +28,28 @@ class BlueprintRenderer
     }
 
     /**
+     * Render an ordered composition while preserving each blueprint's layout and session extensions.
+     *
+     * An empty selection still passes an empty definition through the configured theme.
+     * The caller owns the enclosing registration transaction so a failed layout rolls back all sections.
+     *
+     * @param list<\FormCompose\Blueprint\FormDefinition> $definitions Compiled selections.
+     */
+    public function renderAll(
+        FormSession $session,
+        array $definitions,
+        ?string $path,
+        PresentationConfig $presentation,
+    ): string {
+        $html = '';
+        foreach ($definitions ?: [new FormDefinition([])] as $definition) {
+            $html .= $session->renderDefinition($definition, $path, $presentation);
+        }
+
+        return $html;
+    }
+
+    /**
      * Merge local presentation and render the selected or themed default layout.
      *
      */

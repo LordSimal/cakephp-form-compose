@@ -43,7 +43,7 @@ instances, including those created by `FormConfig::builder()`:
 | `passwordFields(array)` | Replace the terminal password field names; default `['password', 'passwd']`. |
 | `typeMap(array)` | Override schema-type to control-type mappings. |
 | `types(array)` | Register aliases mapped to `FieldTypeInterface` instances. |
-| `blueprint(?string)` | Select reusable field defaults and body declarations by alias or class. |
+| `blueprint(?string)` | Append reusable field defaults and body declarations by alias or class. Calls accumulate in order; null clears the selection. |
 | `theme(Theme\|null)`, `renderer(?RendererInterface)` | Per-form rendering collaborators. |
 | `errorSummary(bool\|SummaryConfig = true)` | Configure the complete form's summary. |
 | `submit(string\|Html\|false\|null, ?ButtonConfig)` | Configure the complete form's action; null uses translated Submit. |
@@ -55,6 +55,9 @@ explicit settings. On `FormConfig`, fluent methods return new configs and
 `merge(FormConfig)` combines explicit settings. `FormConfig::builder()` returns
 `FormConfig` itself; pass it directly wherever a config is accepted. Common settings
 also have named constructor arguments: `new FormConfig(url: ..., method: ..., id: ...)`.
+`FormConfig::blueprints` exposes the ordered list of selected aliases or classes.
+When a config explicitly supplies a blueprint selection, `apply()` and `merge()`
+replace the whole selection; an unspecified selection preserves existing defaults.
 The shared [presentation API](/field-options#templates) configures attributes,
 templates, variants, and template data.
 
@@ -145,7 +148,10 @@ echo $form->blueprint('article')->template('forms/article');
 ```
 
 `blueprint(?string $blueprint = null, ?string $at = null): PartBuilder` renders
-a collection inside an open form. Null uses the binding's selected blueprint.
+a collection inside an open form. Null renders all of the binding's selected
+blueprints in order, retaining their individual layouts. The composition shares
+one input-registration transaction, so a later layout failure rolls back earlier
+sections too.
 An explicit selection stays local to this occurrence. `at: 'author'` scopes it
 to that context path. Layout presentation uses the shared fluent methods.
 
@@ -195,9 +201,12 @@ echo $this->Form
 
 `FormBuilder::render()` binds a fresh session and renders the whole form.
 Echoing the builder has the same effect. `FormSession::render(): string` opens
-that existing session, buffers its selected blueprint, renders the summary and
+that existing session, buffers its selected blueprints, renders the summary and
 layout, then closes it. Configure complete rendering before binding; session
 `render()` accepts no settings.
+Chain `blueprint('article')->blueprint('article_more')` before binding to compose
+several blueprints. Their field defaults are combined, and duplicate field or
+embed paths fail before the form opens. See [blueprint composition](/composition#combine-blueprints).
 
 ### Application-owned complete-form layouts
 

@@ -52,7 +52,7 @@ trait FormBindingMethodsTrait
         return $this;
     }
 
-    /** Set blueprint on this mutable builder. */
+    /** Append a blueprint in rendering order; null clears the selection before binding. */
     public function blueprint(?string $value): static
     {
         $this->updateFormConfig($this->config()->blueprint($value));

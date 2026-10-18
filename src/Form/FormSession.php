@@ -76,7 +76,7 @@ class FormSession
     }
 
     /**
-     * Open, buffer a blueprint, arrange its summary/body/actions, and close this fresh session.
+     * Open, buffer the selected blueprints, arrange their summary/body/actions, and close this fresh session.
      *
      * A null blueprint uses binding defaults; without defaults the body is empty.
      * A null label translates Submit at rendering time; false omits the button.
@@ -218,7 +218,7 @@ class FormSession
     /**
      * Render a reusable field collection here, through the normal control templates.
      *
-     * With no argument, render the blueprint selected at bind(). An explicitly
+     * With no argument, render all blueprints selected at bind(), in order. An explicitly
      * supplied blueprint alias or class stays local to this call and
      * does not replace defaults. Blueprints use this session's factory and context.
      * The form must be open; a session without a selected blueprint renders an empty string.
@@ -242,11 +242,18 @@ class FormSession
             $context = $context->at($at);
         }
 
-        $definition = $blueprint === null
-            ? $this->binding->definition ?? new FormDefinition([])
-            : $this->blueprintFactory->compile($blueprint, $context);
+        $definitions = $blueprint === null
+            ? $this->binding->definitions
+            : [$this->blueprintFactory->compile($blueprint, $context)];
 
-        return $this->renderDefinition($definition, $at, $presentation);
+        return $this->lifecycle->inputs->render(
+            fn(): string => $this->blueprintRenderer->renderAll(
+                $this,
+                $definitions,
+                $at,
+                $presentation,
+            ),
+        );
     }
 
     /**

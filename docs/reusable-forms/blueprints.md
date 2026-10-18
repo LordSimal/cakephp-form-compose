@@ -72,7 +72,11 @@ $form = $this->Form
 <?= $form->close() ?>
 ```
 
-`$form->blueprint()` renders the selected collection inside an already open
+Repeated `blueprint()` calls on the form builder append selections. See
+[combining blueprints](/composition#combine-blueprints) to render several collections
+in one complete form while retaining their layouts.
+
+`$form->blueprint()` renders all selected collections inside an already open
 session. Explicit `blueprint('other', at: 'author')` selects a local occurrence
 without changing binding defaults.
 

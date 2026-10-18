@@ -52,7 +52,7 @@ class InlineConfigurationTest extends CompositionTestCase
         ]), config: $settings);
         $settings = $settings->method('delete')->blueprint(null);
         static::assertSame('delete', $settings->method);
-        static::assertNull($settings->blueprint);
+        static::assertSame([], $settings->blueprints);
         $html = $builder->render();
         static::assertStringContainsString('Original summary', $html);
         static::assertStringNotContainsString('Changed summary', $html);

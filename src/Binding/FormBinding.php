@@ -26,18 +26,30 @@ final readonly class FormBinding
     /** @var array<string, string> Schema types mapped to native or registered control aliases. */
     public array $typeMap;
 
+    /** Combined field and embed index supplying defaults from every selected blueprint. */
+    public ?FormDefinition $definition;
+
     /**
      * Capture binding inputs independently of rendering state.
      *
-     * @throws \InvalidArgumentException For malformed password field names or type mappings.
+     * @param list<\FormCompose\Blueprint\FormDefinition> $definitions Compiled blueprints retaining their individual layouts.
+     * @throws \InvalidArgumentException For duplicate declaration paths, malformed password field names, or type mappings.
      */
     public function __construct(
         public ContextInterface $context,
         public ServerRequest $request,
         public string $id,
         public FormConfig $config = new FormConfig(),
-        public ?FormDefinition $definition = null,
+        public array $definitions = [],
     ) {
+        $this->definition = match (count($this->definitions)) {
+            0 => null,
+            1 => $this->definitions[0],
+            default => new FormDefinition(
+                array_merge(...array_column($this->definitions, 'entries')),
+                removed: array_merge(...array_column($this->definitions, 'removed')),
+            ),
+        };
         /** @var mixed $names */
         $names = $config->passwordFields;
         if (!is_array($names) || !array_is_list($names)) {

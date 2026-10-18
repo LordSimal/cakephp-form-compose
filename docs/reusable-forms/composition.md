@@ -1,9 +1,46 @@
 ---
-title: Nested blueprints
-description: Compose reusable field collections at association paths with scoped layouts.
+title: Blueprint composition
+description: Combine reusable field collections in one form or nest them at association paths with scoped layouts.
 ---
 
-# Nested blueprints
+# Blueprint composition
+
+Combine blueprints at the form level when their fields belong to the same data
+context. Embed a child when its fields belong to an association.
+
+## Combine blueprints in one form {#combine-blueprints}
+
+```php
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->blueprint('article_more')
+    ->errorSummary()
+    ->submit('Save article');
+```
+
+Each `blueprint()` call appends a selection. The complete form renders the
+blueprints in that order, retaining each blueprint's optional layout. All share
+one form tag, binding context, error summary, submit action, and submission
+protection. Set `template('forms/editor')` on the form builder when the complete
+form needs its own [outer layout](/form-reference#application-owned-complete-form-layouts).
+
+Binding compiles every selected occurrence once. Their combined field defaults
+also apply when you use `bind()` and arrange individual controls yourself.
+Inside that open session, `$form->blueprint()` renders all selected blueprints;
+`$form->blueprint('other')` renders only that local occurrence and leaves the
+binding's selection unchanged.
+
+The selections must declare distinct field and embed paths. Collisions,
+including selecting the same nonempty blueprint twice, fail during binding
+before the form opens. Use nested embeds for independent copies under different
+association paths. If a later layout fails during `$form->blueprint()`, input
+and feedback registrations from the entire composition roll back together.
+
+On a form builder or immutable `FormConfig`, `blueprint(null)` clears the
+selection before binding. A captured session retains its original selection.
+
+## Nest a child blueprint
 
 Embed a child blueprint when a related collection has its own reusable settings
 or layout. A child shares its enclosing form session and submission protection.

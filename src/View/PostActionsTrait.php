@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace FormCompose\View\Helper;
+namespace FormCompose\View;
 
 use Cake\View\Helper\HtmlHelper;
 use FormCompose\Builder\ActionBuilder;
