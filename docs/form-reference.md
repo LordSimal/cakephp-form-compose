@@ -81,7 +81,7 @@ Helper option `themeDebug` defaults to `false`. Set it to `true` when loading th
 helper or through `setConfig()` to annotate default PHP rendering with HTML
 comments describing template lookup. It is a helper setting, rather than a binding
 or HTML attribute option. Existing sessions retain their setting, and explicitly
-supplied renderers keep their own diagnostics. See [debug template selection](./themes.md#debug-template-selection).
+supplied renderers keep their own diagnostics. See [Debug template selection](./theme-debug.md).
 
 ### Binding options
 
@@ -178,7 +178,7 @@ echo $form->open(['class' => 'article-editor', 'method' => 'patch']);
 | `encoding` | `string` | `App.encoding`, otherwise `UTF-8`; emitted as lowercase `accept-charset`. |
 | `template` | `string` | Selects the complete-form `layout` part for `render()`. |
 | `templates` | `array<string, string>` | Overrides complete-form `layout`, `open`, `close`, or infrastructure `hidden` elements. |
-| `variant` | `string` | Named variant for form templates; omitted by default. |
+| `variant` | `string` | Named variant for form templates; omitted by default. Does not select variants on fields or buttons. See [Use variants](./variants.md). |
 | `templateData` | `array<string, mixed>` | `[]`. Data for the complete-form layout, opening, closing, and infrastructure hidden-input templates. |
 | Other HTML attributes | Attribute values | For example `class`, `novalidate`, and `data-*`, supplied directly in this array. |
 
@@ -313,7 +313,7 @@ echo $form->submit('Save article', [
 | --- | --- |
 | `type` | `submit`. Use `button` or `reset` for other native button behavior. |
 | `templates` | `[]`. The `control` key selects the button element. |
-| `variant` | Omitted. Selects a button template variant. |
+| `variant` | Omitted. Selects a [button template variant](./variants.md#buttons-and-form-layouts-have-their-own-variants). |
 | `templateData` | `[]`. Application data scoped to the button element. |
 | HTML attributes | For example `class`, `disabled`, `name`, and `value`; escaped on output. |
 

@@ -39,7 +39,8 @@ $title = $form->field('title', [
 attributes for that part; field behavior such as `type` or `value` belongs in the
 options passed to `field()`.
 
-Use a [theme element](./themes.md) when this structure should recur across forms.
+Use an [explicit control template](./templates.md) to select this structure on
+individual controls, or a [theme element](./themes.md) to make it a shared default.
 Use a [blueprint layout](./blueprints.md#keep-control-of-the-layout) when arranging a reusable collection
 of fields rather than the internal structure of one field.
 

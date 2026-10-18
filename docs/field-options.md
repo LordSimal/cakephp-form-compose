@@ -306,12 +306,13 @@ call cannot invalidate the input's already resolved association.
 | --- | --- | --- |
 | `template` | Nonempty `string` | Omitted. Explicit CakePHP element for the complete control. Shorthand for `templates['control']`. |
 | `templates` | `array<string, string>` | `[]`. Part-to-element overrides, such as `input`, `help`, or `native`. |
-| `variant` | `string` | Omitted. Selects a named variant before type-specific and generic templates within each layer. |
+| `variant` | `string` | Omitted. Requests alternative templates in `variants/{name}/` before type-specific and generic files within each layer. See [Use variants](./variants.md). |
 | `templateData` | `array<string, mixed>` | `[]`. Application data available to this field's control and all its parts. |
 
 Element names omit `.php`. Conflicting `template` and `templates['control']`
 values throw `InvalidArgumentException`. Hidden controls render their input part
-instead of an outer control layout. See the [template reference](./template-reference.md)
+instead of an outer control layout. Follow [Use your own templates](./templates.md)
+for worked examples, or the [template reference](./template-reference.md)
 for all part names, variables, and lookup rules.
 
 ## Submission protection

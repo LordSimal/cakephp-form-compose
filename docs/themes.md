@@ -5,9 +5,14 @@ description: Connect a control() call to your own PHP element and reuse the layo
 
 # Create a theme
 
-A theme tells FormCompose where to find your PHP elements and which default
-attributes to use. Start with one control layout; the bundled theme supplies any
-parts you do not replace.
+A theme chooses the PHP element directories and default HTML attributes used by
+a form. Use it when your markup should become the shared default across forms.
+You only need to provide the elements you want to change; bundled elements
+supply the remaining parts.
+
+A **layer** is one directory in the theme's search list. A **variant** is an
+optional named presentation inside those directories. If these terms are new,
+start with [How rendering works](./rendering.md).
 
 This example gives email controls an icon beside the input. It changes their
 presentation while keeping their bound values, feedback, and submission behavior.
@@ -52,26 +57,7 @@ The `forms/application` prefix maps to your application's
 `templates/element/forms/application/` directory. For this email control,
 FormCompose looks for `email/control.php`, then a generic `control.php`.
 
-The configured theme also applies to helper `render()`, `postButton()`, and
-`postLink()`. Use `theme:` for a per-call override:
-
-```php
-use FormCompose\Rendering\Theme;
-
-$form = $this->Form->bind($user, theme: new Theme(['forms/compact']));
-// Or use the bundled markup for this binding:
-$form = $this->Form->bind($user, theme: 'Base');
-```
-
-Omitting `theme:` or passing null inherits the helper setting. An explicit theme
-replaces the configured theme, including its layers and attribute defaults.
-Compose multiple layers inside one `Theme` when you want them combined.
-
-The default setting is `'Base'`; setting helper `theme` to null also selects the
-base theme. `setConfig('theme', $theme)` changes future bindings and action calls.
-Existing form sessions retain their selected theme, and other helper instances
-keep their own settings. Unsupported strings, arrays, and unrelated objects fail
-when the configured theme is selected.
+You can also [select a theme for one form](#select-a-theme-for-one-form).
 
 ## 2. Write the control element
 
@@ -109,13 +95,15 @@ use their base elements.
 ::: tip Change just one control
 For an individual field, pass `['template' => 'forms/special-email']` to
 `control()`. This directly selects `templates/element/forms/special-email.php`
-without changing the theme. The [control guide](./usage.md#choose-a-template-for-one-control)
-shows a complete example; plural `templates` selects overrides for individual parts.
+without changing the theme. [Use your own templates](./templates.md)
+shows a complete example and how to replace individual parts.
 :::
 
 ## 3. Add default classes
 
-Put shared class and attribute defaults in the theme:
+Put shared class and attribute defaults in the theme. Replace the `Theme` passed
+to the helper's `theme` setting with this instance, or pass it as `theme: $theme`
+when binding a form:
 
 ```php
 $theme = new Theme(
@@ -128,12 +116,12 @@ $theme = new Theme(
 );
 ```
 
-The email-specific input default replaces the generic input default. Per-field
+The email-specific input class replaces the generic input class. Per-field
 and local attributes then merge on top. Add a class or an integration attribute
 for one field like this:
 
 ```php
-$form->control('email', [
+echo $form->control('email', [
     'type' => 'email',
     'attributes' => ['class' => 'wide', 'x-model' => 'email'],
 ]);
@@ -171,124 +159,94 @@ groups when replacing it. A type-specific element is useful for layouts that
 only make sense for one control type, such as the email icon above.
 :::
 
-## Debug template selection
+## Select a theme for one form
 
-Enable `themeDebug` on the helper to see which PHP elements rendered and why they
-were selected. For example, in `AppView::initialize()`:
+The configured theme also applies to helper `render()`, `postButton()`, and
+`postLink()`. Use `theme:` for a per-call override:
 
 ```php
-use Cake\Core\Configure;
 use FormCompose\Rendering\Theme;
 
-$this->addHelper('Form', [
-    'className' => 'FormCompose.Form',
-    'theme' => new Theme(['forms/application']),
-    'themeDebug' => Configure::read('debug'),
-]);
+$form = $this->Form->bind($user, theme: new Theme(['forms/compact']));
+// Or use the bundled markup for this binding:
+$form = $this->Form->bind($user, theme: 'Base');
 ```
 
-Render controls normally. Inspect page source or comment nodes in the browser's
-developer tools. For an email control, its label portion might look like this:
+Omitting `theme:` or passing null inherits the helper setting. An explicit theme
+replaces the configured theme, including its layers and attribute defaults.
+Compose multiple layers inside one `Theme` when you want them combined.
 
-```html
-<!-- FormCompose BEGIN
-scope: field
-part: label
-type: email
-field: email
-source: layer FormCompose.form/base
-element: FormCompose.form/base/label
-lookup:
-  MISS forms/application/email/label
-  MISS forms/application/label
-  MISS FormCompose.form/base/email/label
-  MATCH FormCompose.form/base/label
--->
-<label for="form-compose-1-email">Email</label>
-<!-- FormCompose END part=label -->
+The default setting is `'Base'`; setting helper `theme` to null also selects the
+base theme. `setConfig('theme', $theme)` changes future bindings and action calls.
+Existing form sessions retain their selected theme, and other helper instances
+keep their own settings. Unsupported strings, arrays, and unrelated objects fail
+when the configured theme is selected.
+
+## Share and layer themes
+
+A theme can search more than one element directory. Put application overrides
+first, a shared design-system plugin next, and let bundled base elements supply
+any remaining parts:
+
+```php
+$theme = new Theme(layers: ['forms/application', 'MyDesignSystem.forms']);
 ```
 
-::: info Read the lookup list
-`MISS` entries show candidates that did not match; `MATCH` identifies the selected
-element. The list includes only candidates actually attempted and stops at the
-winner. A requested `variant` is tried before type-specific and generic candidates
-within each layer.
-:::
+The renderer searches every candidate in the first layer before moving to the
+next. For an email control without a variant, it tries:
 
-Comment boundaries and rendered parts are separated by newlines for readable
-page source. Debug mode therefore adds formatting whitespace between elements;
-control values remain unchanged. Comments use two spaces per render nesting level,
-including `$parent()` delegation. This reflects the rendering hierarchy rather
-than the surrounding page's HTML indentation. The first HTML tag of each part
-aligns with its comments. Lines inside controls and existing nested traces stay
-unchanged, preserving multiline textarea values and other content.
-
-Element names are CakePHP identifiers, not absolute filesystem paths.
-`forms/application/email/control` normally maps to
-`templates/element/forms/application/email/control.php`. Plugin identifiers such
-as `FormCompose.form/base/label` use CakePHP's plugin element resolution, including
-application overrides of plugin elements.
-
-Explicit `template` or `templates` overrides show `source: explicit override`.
-When an element calls `$parent()`, a `FormCompose PARENT` comment precedes a nested
-trace showing where lookup resumed. Nested parts also get their own boundaries:
-an input can pass through `input.php`, then `select/native.php`, then individual
-option elements. This helps identify the part to override.
-
-`themeDebug` defaults to `false` and enables comments only when set to `true`.
-The example ties it to CakePHP's debug setting; you can enable it explicitly with
-`$this->Form->setConfig('themeDebug', true)`. Configuration affects future bindings
-and standalone action calls. Existing sessions retain their setting.
-
-Infrastructure inputs also show their `field` name and `purpose`: CSRF protection
-(`_csrfToken`), HTTP method override (`_method`), and the form-protection signature,
-unlocked fields, and diagnostics (`_Token[fields]`, `_Token[unlocked]`, and
-`_Token[debug]`). Their template lookup remains visible. For example, a hidden
-CSRF input rendered inside the form opening includes:
-
-```html
-  <!-- FormCompose BEGIN
-  scope: form
-  part: hidden
-  type: hidden
-  field: _csrfToken
-  purpose: CSRF protection
-  source: layer FormCompose.form/base
-  element: FormCompose.form/base/form/hidden
-  lookup:
-    MISS FormCompose.form/base/form/hidden/hidden
-    MATCH FormCompose.form/base/form/hidden
-  -->
+```text
+forms/application/email/control
+forms/application/control
+MyDesignSystem.forms/email/control
+MyDesignSystem.forms/control
+FormCompose.form/base/email/control
+FormCompose.form/base/control
 ```
 
-::: info Debug traces omit submitted values
-Traces show template identifiers, field names, and infrastructure purposes. They
-omit values, other attributes, labels, validation messages, `templateData`, and
-security tokens. Token values and hashes are never repeated in comments.
-:::
+The first existing file wins. An earlier layer's generic `control.php` therefore
+wins over a later layer's type-specific element. Each field part repeats this
+search independently.
 
-Empty parts remain empty, and template exceptions still propagate normally.
-Inspection methods that do not render templates produce no comments. Handwritten
-markup and ordinary CakePHP elements called directly by application templates do
-not receive their own FormCompose trace.
+### Wrap the next layer with `$parent()`
 
-The helper setting configures its default `PhpRenderer`. A renderer supplied with
-`renderer:` keeps its own behavior. To enable tracing on an explicitly constructed
-PHP renderer, use `new PhpRenderer($view, $theme, themeDebug: true)` and import
-`FormCompose\Rendering\PhpRenderer`.
+To decorate a shared layout, call `$parent()` from the application element:
 
-## Share a theme or add a variant
+```php [templates/element/forms/application/control.php]
+<?php
+declare(strict_types=1);
 
-A layer can also point to another plugin's elements, for example
-`MyDesignSystem.forms`. Order layers from the most specific application overrides
-to the shared defaults. Bundled base elements are searched last.
+/** @var \Closure(): string $parent */
+?>
+<section class="application-field">
+    <?= $parent() ?>
+</section>
+```
 
-For a named layout, create `variants/compact/control.php` in the layer and use
-`['variant' => 'compact']` on a field. The variant is tried before type-specific
-and generic files.
+Here `$parent()` renders the control from the **next layer**, starting with
+`MyDesignSystem.forms`. It skips the remaining candidates in the current layer.
+Calling it from a variant also moves to the next layer; it does not try the
+current layer's type-specific or generic control.
 
-See the [template reference](./template-reference.md) for lookup order, `$parent()`,
-all part names, and the variables supplied to each element.
+In an [explicit template override](./templates.md), `$parent()` starts normal
+lookup from the first theme layer instead. This lets an exceptional element
+wrap the themed presentation.
+
+## Offer a named alternative
+
+Use `variant => 'compact'` when a caller should choose an alternative layout
+inside this theme. Create `variants/compact/control.php` in a layer; fields
+requesting that variant try it before that layer's type-specific and generic
+files. Other fields keep their ordinary layout.
+
+Follow [Use variants](./variants.md) for a complete file, control call, styling,
+and fallback explanation.
+
+## Debug template selection
+
+Enable `themeDebug` to see attempted candidates and the selected element in page
+source. Follow [Debug template selection](./theme-debug.md) for configuration,
+an annotated trace, and renderer details.
 
 ## Use your CSS framework
 
@@ -304,8 +262,13 @@ passed through [field attributes](./field-options.md#attributes). For the comple
 
 ## A complete starter theme
 
-For a theme that handles ordinary inputs, selects, textareas, files, a single
-checkbox, and grouped choices, start with a generic control element:
+The email example changes only email fields. This optional starter provides a
+generic layout and stylesheet for text inputs, selects, textareas, files, a
+single checkbox, and grouped choices.
+
+::: details Complete starter: control element, form, and CSS
+
+Start with a generic control element:
 
 ```php [templates/element/forms/starter/control.php]
 <?php
@@ -427,3 +390,5 @@ with nested names, validation feedback, disabled controls, choices, and a file
 upload. It checks native validity, unique IDs, matching ARIA references, and an
 accepted multipart POST through CakePHP protection. The theme requires no
 JavaScript or CSS framework.
+
+:::

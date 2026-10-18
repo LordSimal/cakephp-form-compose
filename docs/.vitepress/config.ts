@@ -74,7 +74,6 @@ export default defineConfig({
           { text: 'Why FormCompose?', link: '/why' },
           { text: 'Your first form', link: '/getting-started' },
           { text: 'Migrate a core form', link: '/migration' },
-          { text: 'How rendering works', link: '/rendering' },
         ],
       },
       {
@@ -83,11 +82,20 @@ export default defineConfig({
           { text: 'Fields and values', link: '/usage' },
           { text: 'Choice controls', link: '/choices' },
           { text: 'Association fields', link: '/associations' },
-          { text: 'Compose field parts', link: '/field-parts' },
           { text: 'Custom field types', link: '/custom-fields' },
           { text: 'Error summaries', link: '/error-summaries' },
           { text: 'POST buttons and links', link: '/post-actions' },
+        ],
+      },
+      {
+        text: 'Markup and styling',
+        items: [
+          { text: 'How rendering works', link: '/rendering' },
+          { text: 'Compose field parts', link: '/field-parts' },
+          { text: 'Use your own templates', link: '/templates' },
           { text: 'Create a theme', link: '/themes' },
+          { text: 'Use variants', link: '/variants' },
+          { text: 'Debug template selection', link: '/theme-debug' },
         ],
       },
       {

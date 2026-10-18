@@ -19,7 +19,7 @@ These options apply to `presentation()` and local
 | --- | --- | --- |
 | `template` | Nonempty `string` | Explicit layout element; shorthand for `templates['control']`. |
 | `templates` | `array<string, string>` | `[]`. The `control` key selects the layout element. |
-| `variant` | `string` | Omitted. Blueprint layout variant. |
+| `variant` | `string` | Omitted. Requests `blueprint/variants/{name}/control.php`; scoped to this layout. See [Use variants](./variants.md). |
 | `attributes` | `array<string, mixed>` | `[]`. Wrapper attributes supplied to the layout; the bundled layout has no wrapper. |
 | `templateData` | `array<string, mixed>` | `[]`. Data scoped to this layout, not inherited by fields or children. |
 

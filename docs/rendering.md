@@ -1,62 +1,71 @@
 ---
 title: How rendering works
-description: Follow control() from a bound field to a CakePHP element, and learn how field parts and templates fit together.
+description: Understand field parts, PHP templates, themes, and variants, and choose how to change your form's HTML.
 ---
 
-# How a control becomes HTML
+# How rendering works
 
-FormCompose separates two jobs: resolving a field from your data and rendering
-its markup. A **bound field** connects those jobs. It holds the resolved state
-and exposes methods that render the field's parts.
+A `control()` call renders a field through PHP elements. You can change one
+element, select a named presentation, or share markup across the application.
+These are different ways to choose files in the same rendering system.
 
-## Three terms to know
+## Start with the pieces of a field
 
-| Term | Meaning |
-| --- | --- |
-| **Control** | The complete field presentation: label, input, help, and errors. |
-| **Input** | The actual browser control, such as a text input, select, or checkbox. |
-| **Bound field** | Resolved field data and methods for rendering its parts. |
+A **control** is the complete field presentation. Its **input** is the browser
+control that accepts a value. The other parts explain and label that input:
 
-## From a method call to a file
-
-Forms work with the bundled templates immediately:
-
-```php
-$form = $this->Form->bind($user);
-echo $form->open();
-echo $form->control('email', ['type' => 'email']);
-echo $form->submit('Save');
-echo $form->close();
+```text
+control
+├── label     “Email address”
+├── input     <input type="email" …>
+├── help      “Use your work address.”
+└── errors    Validation feedback, when present
 ```
 
-To use your own markup for that control, select a PHP element directly. Inside
-the open form, replace the `control()` call with:
+Each part has its own PHP element. A control element arranges the parts by
+calling `$field->label()`, `$field->input()`, `$field->help()`, and
+`$field->errors()`. Those calls render their own elements.
 
-```php
-echo $form->control('email', [
+A **bound field** is the `$field` object: resolved data such as the value, ID,
+and errors, plus methods for rendering these parts. Resolving it with `field()`
+produces no HTML and registers no submitted inputs.
+
+## Templates, themes, and variants
+
+| Concept | What it does | Example |
+| --- | --- | --- |
+| **Template** | A PHP element that outputs one part's markup. | `forms/email.php` arranges an email control. |
+| **Theme** | Chooses element directories and default HTML attributes for a form. | `new Theme(['forms/application'])` searches your application elements before the bundled ones. |
+| **Layer** | One element directory in a theme's ordered search list. | `forms/application` maps to `templates/element/forms/application/`. |
+| **Variant** | Requests a named alternative for the parts being rendered. | `variant => 'compact'` tries `variants/compact/control.php` for a field's control. |
+| **Type** | Determines the control's input and submission behavior; also participates in template lookup. | `type => 'email'` uses an email input and allows an `email/control.php` layout. |
+
+A theme can contain several variants. A variant is implemented by the files you
+add to that theme; the name `compact` has no built-in styling or behavior.
+
+## Follow a call into its PHP element
+
+Here a field explicitly selects a control template. Read the call, then open the
+second tab to see the file it renders:
+
+::: code-group
+
+```php [templates/Users/edit.php]
+<?php $form = $this->Form->bind($user); ?>
+<?= $form->open() ?>
+<?= $form->control('email', [
     'type' => 'email',
+    'help' => 'Use your work address.',
     'template' => 'forms/email',
-]);
+]) ?>
+<?= $form->submit('Save') ?>
+<?= $form->close() ?>
 ```
-
-This selects `templates/element/forms/email.php`. The call performs these steps:
-
-1. **Resolve the field.** Combine field options, request values, and the CakePHP
-   context into a state containing the value, name, ID, constraints, and errors.
-2. **Find the control element.** The `template` option names the application
-   element to render. Without an override, use the bundled or selected theme's
-   control element.
-3. **Render the element.** Supply a `$field` object, prepared `$attributes`, and a
-   `$parent()` callback. The element decides how to arrange its field parts.
-4. **Render the parts it calls.** `$field->label()`, `$field->input()`,
-   `$field->help()`, and `$field->errors()` each render their own element.
-
-## What a control element receives
-
-A control element is an ordinary CakePHP PHP element:
 
 ```php [templates/element/forms/email.php]
 <?php
+declare(strict_types=1);
+
 /**
  * @var \FormCompose\Form\Field\BoundField $field
  * @var \FormCompose\Rendering\Attributes $attributes
@@ -70,85 +79,64 @@ A control element is an ordinary CakePHP PHP element:
 </div>
 ```
 
-`$field` carries both the resolved state and the part methods. For example,
-`$field->state->value` is the bound value and `$field->state->messages` contains
-validation feedback. `$attributes` contains the theme and field attributes for
-the control's container.
+:::
 
-Your template places the parts. Each part handles its normal associations and
-escaping. `input()` also registers the submitted names for form protection after
-its template renders successfully.
+The `template` name is a CakePHP element name without `.php`. This call uses
+`templates/element/forms/email.php` for the **control**. The template adds
+`input-shell` around the input. Its label, input, help, and errors still use their
+own template lookup.
+
+`$attributes` holds the prepared container attributes; casting it to a string
+escapes them. The part methods handle their usual escaping and associations.
+`input()` also registers the submitted names for form protection after rendering
+successfully.
 
 ::: details Where does the actual input tag come from?
-By default, `input.php` calls `$field->renderInput($attributes)`. The selected field
-type prepares browser values, choices, and any hidden fallback inputs. Standard
-controls then render `native.php`, with type-specific versions such as
-`textarea/native.php` and `select/native.php`.
+The bundled `input.php` calls `$field->renderInput($attributes)`. The field type
+prepares browser values, choices, and any hidden fallbacks. Standard controls
+then render `native.php`, with type-specific files such as `select/native.php`
+and `textarea/native.php`.
 
-Customize `control.php` to arrange the complete field, `input.php` to customize its
-input rendering hook, or the native parts when changing standard input markup.
-The [template reference](./template-reference.md#field-templates) lists these parts.
+Change `control.php` to rearrange the field. Change native parts when you need to
+change the actual input markup. See [field template contracts](./template-reference.md#field-templates).
 :::
 
-## Render a complete control or compose its parts
+## Choose how to customize
 
-These are alternative ways to present the same field inside an open form:
+| You want to… | Use | Continue with |
+| --- | --- | --- |
+| Add classes or integration attributes | `attributes` for the input; `partAttributes` for its surrounding parts | [Field attributes](./field-options.md#attributes) |
+| Arrange one field directly in a view | `field()`, then its part methods | [Compose field parts](./field-parts.md) |
+| Select a particular PHP file for a field or part | `template` or `templates` | [Use your own templates](./templates.md) |
+| Apply shared markup and attribute defaults | A `Theme` | [Create a theme](./themes.md) |
+| Choose a named presentation such as compact | `variant` and matching theme files | [Use variants](./variants.md) |
+| Find out why a file was selected | `themeDebug` | [Debug template selection](./theme-debug.md) |
 
-::: code-group
+For a first customization, start with [one explicit template](./templates.md).
+When that markup should become the default across forms, move it into a
+[theme layer](./themes.md). Add [variants](./variants.md) when callers need a
+choice of presentations within that theme.
 
-```php [Render a complete control]
-echo $form->control('email', ['type' => 'email']);
-```
+## Field layout and form layout
 
-```php [Arrange parts in the view]
-$email = $form->field('email', ['type' => 'email']);
-echo $email->label();
-echo $email->input(['class' => 'contact-input']);
-echo $email->help();
-echo $email->errors();
-```
+An individual control template arranges one field's parts. A **blueprint layout**
+arranges a collection of fields. A **complete-form layout** arranges the rendered
+blueprint, error summary, and actions when using `render()`.
 
-:::
-
-`field()` resolves an object without emitting HTML or registering an input.
-Calling its part methods renders those parts. Use one presentation per input ID;
-rendering both alternatives would duplicate the input.
-
-## Blueprints follow the same rendering flow
-
-A [blueprint](./blueprints.md) supplies reusable field configuration. For a class
-declared with `#[Form('article')]`, render its alias inside an open form:
-
-```php
-echo $form->blueprint('article');
-```
-
-The bundled blueprint layout renders its fields in order through the same
-`control()` pipeline. A [custom blueprint layout](./blueprints.md#keep-control-of-the-layout)
-can arrange those fields in wrappers or grids and position embedded blueprints.
-Bound values, validation feedback, and submission bookkeeping use the same form
-session in either case.
-
-## Forms and buttons use PHP elements too
-
-| Call | Element in a theme layer |
+| Call | Default element path within a theme layer |
 | --- | --- |
+| `$form->control('email')` | `control.php` |
+| `$form->blueprint('article')` | `blueprint/control.php` |
+| `$form->render('article')` | `form/layout.php`, between opening and closing markup |
 | `$form->open()` | `form/open.php` |
 | `$form->submit('Save')` | `button/control.php` |
 | `$form->close()` | `form/close.php` |
 
-Form opening and closing elements receive prepared method, CSRF, and protection
-fields. Retain those fields when customizing the form structure. The form session
-coordinates submission state; elements render the prepared markup.
+Types, variants, and explicit overrides can select more specific files. Each
+rendered part performs its own lookup.
 
-## Share presentation across forms
-
-Once a control element works, a [theme](./themes.md) can apply it to matching
-fields across forms. Themes provide shared element directories and default
-attributes, with bundled elements as the fallback. The
-[lookup reference](./template-reference.md#lookup-order) explains layers, types,
-and variants.
-
-Continue with [field options](./field-options.md),
-[compose field parts](./field-parts.md), or [create a theme](./themes.md).
-For configuration reused across screens, start with [reusable forms](./reusable-forms.md).
+Blueprints are optional reusable field configuration; their controls use this
+same rendering system. See [blueprint layouts](./blueprints.md#keep-control-of-the-layout)
+and [complete-form layouts](./template-reference.md#complete-form-layouts) when
+you need those larger structures. Preserve the supplied method, CSRF, and
+protection inputs when replacing form opening or closing elements.

@@ -5,14 +5,26 @@ description: Look up field, form, and button elements, their variables, layer pr
 
 # Template reference
 
-Use this page to look up element contracts after [creating a theme](./themes.md).
-For control configuration, see [Field options](./field-options.md). All paths below are relative
-to a theme layer, such as `templates/element/forms/application/`.
+Use this page to look up exact paths, variables, and APIs. For a first example,
+start with [How rendering works](./rendering.md), then follow
+[Use your own templates](./templates.md), [Create a theme](./themes.md), or
+[Use variants](./variants.md). For control configuration, see
+[Field options](./field-options.md).
+
+All paths below are relative to a theme layer, such as
+`templates/element/forms/application/`.
 
 ## Lookup order
 
-For each layer, FormCompose tries a variant, then a type-specific file, then a
-generic part. For an email control with `variant => 'compact'`, that means:
+Lookup runs independently for each rendered part:
+
+1. Use an explicit `templates[part]` element when configured.
+2. Otherwise search the theme layers in their supplied order, followed by the
+   bundled `FormCompose.form/base` layer.
+3. Within each layer, try the requested variant, then the type-specific file,
+   then the generic part. Stop at the first match.
+
+For an email control with `variant => 'compact'`, each layer tries:
 
 ```text
 variants/compact/control.php
@@ -20,8 +32,14 @@ email/control.php
 control.php
 ```
 
-Layers are searched in their supplied order. The bundled `FormCompose.form/base`
-layer is last. The first matching element is rendered.
+Without a variant, skip the first candidate. A valid variant with no matching
+file falls back to type-specific and generic candidates. If every candidate in
+every layer is absent, rendering throws `RuntimeException`.
+
+::: info Layer order comes first
+A generic file in an earlier layer wins over a variant or type-specific file in
+a later layer. See the [worked layer example](./variants.md#layers-take-priority-before-specificity).
+:::
 
 Form, button, and blueprint paths have scope prefixes. A primary submit button tries:
 
@@ -32,7 +50,11 @@ button/control.php
 ```
 
 Variants, types, and part names use lowercase letters, numbers, underscores, and
-hyphens, beginning with a letter.
+hyphens, beginning with a letter. Variants apply to each part of the receiving
+field, form, button, or blueprint; selecting one on a form or blueprint does not
+select it on child fields or buttons. Field variant paths are
+`variants/{variant}/{part}.php`; there is no additional type directory inside a
+variant.
 
 ### Explicit overrides
 
@@ -48,7 +70,7 @@ $form->control('email', [
 
 Here the control uses `templates/element/forms/special-email.php`. Use CakePHP
 element names without `.php`, including plugin-qualified names such as
-`MyDesignSystem.forms/email`. The [control guide](./usage.md#choose-a-template-for-one-control)
+`MyDesignSystem.forms/email`. [Use your own templates](./templates.md)
 shows the call and a complete element together.
 
 Plural `templates` maps individual parts to elements. For a field's outer
@@ -110,7 +132,7 @@ echo $form->control('email', [
 ]);
 ```
 
-The [control guide](./usage.md#choose-a-template-for-one-control) shows the call and
+The [template guide](./templates.md#pass-custom-presentation-data) shows the call and
 its PHP element together. No custom keys are extracted into local variables:
 `$templateData['field']` is ordinary custom data and cannot replace `$field`.
 The same applies to `$attributes`, `$parent`, and other prepared variables.
@@ -309,13 +331,15 @@ The default section and heading IDs are associated with `aria-labelledby` and
 checked for collisions. Preserve those supplied attributes in custom markup.
 See the [complete summary element](./error-summaries.md#customize-the-summary-element).
 
-## Attributes
+## POST action templates
 
 Standalone action buttons use `button/control.php`; action links use
 `action/control.php`. Both receive `$form`, `$label`, `$attributes`, and
 `$templateData`. Preserve the supplied trigger associations in custom markup.
 The external action script is registered through CakePHP's HTML helper and the
 `script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](./post-actions.md#options-and-presentation).
+
+## Attributes
 
 Theme defaults use part keys, with optional type prefixes:
 

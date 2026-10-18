@@ -145,52 +145,26 @@ and saving remain in the application.
 
 ## Choose a template for one control
 
-An explicit `template` selects an ordinary CakePHP element without `.php`:
+Use `template` to select a specific PHP element for a complete field:
 
-::: code-group
-
-```php [Control call inside an open form]
-echo $form->control('title', [
-    'template' => 'forms/article-title',
-    'templateData' => ['prefix' => 'Article'],
-]);
+```php
+echo $form->control('title', ['template' => 'forms/article-title']);
 ```
 
-```php [templates/element/forms/article-title.php]
-<?php
-declare(strict_types=1);
+This renders `templates/element/forms/article-title.php`. Continue with
+[Use your own templates](./templates.md) for the matching PHP element, individual
+part overrides, and custom presentation data.
 
-use FormCompose\Rendering\Html;
-
-/**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
- * @var array{prefix: string} $templateData
- */
-?>
-<div<?= (string)$attributes ?>>
-    <?= $field->label() ?>
-    <span aria-hidden="true"><?= Html::text($templateData['prefix']) ?></span>
-    <?= $field->input() ?>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
-</div>
-```
-
-:::
-
-Use `templates` to select individual parts, such as
-`['templates' => ['input' => 'forms/title-input']]`. The singular shorthand selects
-`templates['control']`; conflicting selections fail. Hidden controls render the
-input part directly. See [template lookup](./template-reference.md#lookup-order).
+For shared defaults, [create a theme](./themes.md). To offer named presentations
+within a theme, [use variants](./variants.md). [How rendering works](./rendering.md)
+explains how those choices fit together.
 
 ### Pass data to a template
 
-`templateData` is a separate array available to that field's control and all its
-parts. Keys stay inside `$templateData`; they do not become HTML attributes or
-replace prepared variables. Escape values when outputting them. Later metadata
-replaces the entire bag. The [template data reference](./template-reference.md#template-data)
-explains scope and supported values.
+Use `templateData` to supply custom values to the element and that field's parts.
+These values stay in `$templateData`; they do not become HTML attributes. See the
+[worked example](./templates.md#pass-custom-presentation-data) and
+[scope reference](./template-reference.md#template-data).
 
 ## Association fields
 

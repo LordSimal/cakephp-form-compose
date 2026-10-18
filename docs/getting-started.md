@@ -150,8 +150,10 @@ FormCompose does not validate or save the entity. Browser attributes such as
 | Render selects, radio buttons, or checkboxes | [Choice controls](./choices.md) |
 | Understand which PHP element renders a control | [How rendering works](./rendering.md) |
 | Arrange one field's parts in the view | [Compose field parts](./field-parts.md) |
+| Replace one field's markup with a PHP element | [Use your own templates](./templates.md) |
 | Reuse markup across forms | [Create a theme](./themes.md) |
+| Offer compact or other named presentations | [Use variants](./variants.md) |
 | Reuse field configuration across screens | [Reusable forms](./reusable-forms.md) |
 
-Start with ordinary controls. Definitions and blueprints are optional layers you
+Start with ordinary controls. Blueprints are an optional layer you
 can add when configuration repeats.
