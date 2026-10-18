@@ -180,14 +180,17 @@ These literal translation calls remain discoverable by CakePHP's extractor.
 ### Resolution timing and overrides
 
 Ordinary translated strings capture the compilation locale. For a reusable config
-that must translate later, use `new Translated('Email address')` or a zero-argument
-label/help closure. They resolve after overrides merge, once per `BoundField`.
-Overridden callbacks are not evaluated. An existing resolved field keeps its text
-if the locale later changes; resolve a fresh field for the new locale.
+that must translate later, call CakePHP's translation functions in a zero-argument
+label/help closure. It resolves after overrides merge, once per `BoundField`.
+Overridden callbacks are not evaluated. A resolved field retains its text if
+the locale changes. Resolve a fresh field to reevaluate a closure; bind a new
+form to rerun ordinary translation calls in its blueprint hooks.
 
 ### Computed text with PHP
 
 ```php
+use function Cake\I18n\__;
+
 $form->add('title')
     ->label(
         $context->request->getAttribute('isAdmin') ? __('Internal title') : __('Article title'),
@@ -197,23 +200,25 @@ $form->add('title')
 ### Translate in runtime configuration and templates
 
 ```php
+use function Cake\I18n\__n;
+
 $form->add('attachments')
     ->help(
         static fn(): string => __n('One attachment', '{0} attachments', $count, $count),
     );
 ```
 
-Import `Cake\I18n\__n` for this hook fragment; `$count` comes from your application. Closures return string, trusted
-`Html`, `Translated`, false, or null. Ordinary strings are escaped. `Translated`
-and closures apply to label/help; translate ordinary choice labels directly or
+`$count` comes from your application. Closures return string, trusted `Html`,
+false, or null. Ordinary strings are escaped. Closures apply to label/help;
+translate ordinary choice labels directly or
 implement CakePHP's `EnumLabelInterface`.
 
 ### Translation catalog extraction
 
-CakePHP's extractor recognizes its translation function calls. It does not
-recognize `new Translated(...)`; maintain those message entries manually.
-`Translated` supports `arguments`, `domain`, and `context` named parameters and
-never marks a message as trusted HTML.
+CakePHP's extractor recognizes literal messages in its translation function
+calls, including calls inside closures. Use CakePHP's domain, context, and plural
+functions when needed. Translation results are ordinary escaped text; trusted
+HTML still requires an explicit `Html` value.
 
 ## Configuration order
 

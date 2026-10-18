@@ -7,15 +7,18 @@ use Cake\Cache\Cache;
 use Cake\I18n\I18n;
 use Cake\I18n\Package;
 use Cake\View\Form\ArrayContext;
-use FormCompose\Form\Field\Translated;
+use Closure;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Test\Fixture\Translation\MessageForm;
 use FormCompose\Test\FormTestCase;
 use RuntimeException;
+use function Cake\I18n\__;
+use function Cake\I18n\__d;
 
 /**
- * Checks declarative messages through ordinary binding, part rendering, and summaries.
+ * Checks CakePHP translations in blueprint hooks and deferred callbacks through binding and rendering.
  */
-class TranslatedTextTest extends FormTestCase
+class TranslationTest extends FormTestCase
 {
     protected string $locale;
 
@@ -44,9 +47,9 @@ class TranslatedTextTest extends FormTestCase
         parent::tearDown();
     }
 
-    public function testAttributesTranslateOnResolutionAndRetainTheirLocaleSnapshot(): void
+    public function testBlueprintHooksTranslateAtBindingAndRetainTheirLocaleSnapshot(): void
     {
-        I18n::setLocale('en_US');
+        I18n::setLocale('fr_FR');
         $form = $this->helper()
             ->form(new ArrayContext([
                 'errors' => ['title' => ['invalid' => 'Invalid title']],
@@ -55,14 +58,14 @@ class TranslatedTextTest extends FormTestCase
             ->bind();
         /** @var mixed $label */
         $label = $form->binding->definition?->field('title')->config->label;
-        static::assertInstanceOf(Translated::class, $label);
-        static::assertSame('Article title {0}', $label->message);
-        I18n::setLocale('fr_FR');
+        static::assertSame('Titre <public>', $label);
         $field = $form->field('title')->resolve();
         static::assertSame('Titre <public>', $field->state->config->label);
         static::assertSame('Visible <partout>', $field->state->config->help);
         I18n::setLocale('en_US');
-        static::assertSame('Article title <public>', $form->field('title')->resolve()->state->config->label);
+        static::assertSame('Titre <public>', $form->field('title')->resolve()->state->config->label);
+        $english = $this->helper()->form()->blueprint(MessageForm::class)->bind();
+        static::assertSame('Article title <public>', $english->field('title')->resolve()->state->config->label);
         static::assertSame('Titre &lt;public&gt;', $field->state->labelText());
         $form->open();
         static::assertSame('', $form->errorSummary()->render());
@@ -88,14 +91,13 @@ class TranslatedTextTest extends FormTestCase
             ]),
             'fr_FR',
         );
-        $message = new Translated('Title for {name}', ['name' => '<Ada>']);
+        $message = __('Title for {name}', ['name' => '<Ada>']);
         $form = $this->helper()->form()->bind();
         $html =
             $form->open()
             . $form->control('title')->label($message)->render()
             . $form->close();
         static::assertStringContainsString('Titre pour &lt;Ada&gt;', $html);
-        static::assertSame('', new Translated('')->translate());
     }
 
     public function testClosuresMayComputeMessagesWhileLiteralStringsRemainLiteral(): void
@@ -103,14 +105,14 @@ class TranslatedTextTest extends FormTestCase
         I18n::setLocale('fr_FR');
         $form = $this->helper()->form()->bind();
         $field = $form->field('title')
-            ->label(static fn(): Translated => new Translated('Shown publicly', domain: 'form-compose-tests'))
+            ->label(static fn(): string => __d('form-compose-tests', 'Shown publicly'))
             ->help('Shown publicly')
             ->resolve();
         static::assertSame('Visible <partout>', $field->state->config->label);
         static::assertSame('Shown publicly', $field->state->config->help);
     }
 
-    public function testPerCallOverridesPreventTranslationOfDiscardedBlueprintMessages(): void
+    public function testPerCallOverridesPreventTranslationOfDiscardedConfigCallbacks(): void
     {
         I18n::setLocale('fr_FR');
         I18n::setTranslator(
@@ -118,11 +120,14 @@ class TranslatedTextTest extends FormTestCase
             static fn(): never => throw new RuntimeException('Not needed.'),
             'fr_FR',
         );
-        $form = $this->helper()->form()->blueprint(MessageForm::class)->bind();
-        $field = $form->field('title')->label(false)->help(null)->resolve();
+        $settings = FieldConfig::builder()
+            ->label(static fn(): string => __d('form-compose-tests', 'Article title'))
+            ->help(static fn(): string => __d('form-compose-tests', 'Shown publicly'));
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('title', config: $settings)->label(false)->help(null)->resolve();
         static::assertFalse($field->state->config->label);
         static::assertFalse($field->state->hasHelp());
-        static::assertInstanceOf(Translated::class, $form->binding->definition?->field('title')->config->label);
+        static::assertInstanceOf(Closure::class, $settings->label);
     }
 
     public function testTranslationFailuresPropagateBeforeInputRegistration(): void
@@ -137,7 +142,7 @@ class TranslatedTextTest extends FormTestCase
         $form->open();
         try {
             $form->control('title')
-                ->label(new Translated('Title', domain: 'failing-translation'))
+                ->label(static fn(): string => __d('failing-translation', 'Title'))
                 ->render();
             static::fail('Expected translation to fail.');
         } catch (RuntimeException $runtimeException) {

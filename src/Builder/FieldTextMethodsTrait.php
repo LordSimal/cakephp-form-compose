@@ -5,7 +5,6 @@ namespace FormCompose\Builder;
 
 use Closure;
 use FormCompose\Configuration\FieldConfig;
-use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
 
 /** Mutable field text setters.
@@ -13,7 +12,7 @@ use FormCompose\Rendering\Html;
 trait FieldTextMethodsTrait
 {
     /** Set label on this mutable builder. */
-    public function label(string|Html|Translated|Closure|false|null $value): static
+    public function label(string|Html|Closure|false|null $value): static
     {
         $this->updateFieldConfig($this->config()->label($value));
 
@@ -21,7 +20,7 @@ trait FieldTextMethodsTrait
     }
 
     /** Set help on this mutable builder. */
-    public function help(string|Html|Translated|Closure|false|null $value): static
+    public function help(string|Html|Closure|false|null $value): static
     {
         $this->updateFieldConfig($this->config()->help($value));
 

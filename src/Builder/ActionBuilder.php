@@ -5,6 +5,7 @@ namespace FormCompose\Builder;
 
 use Closure;
 use FormCompose\Configuration\ActionConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Rendering\RenderableInterface;
 
 /**
@@ -13,8 +14,6 @@ use FormCompose\Rendering\RenderableInterface;
  */
 class ActionBuilder extends ConfigurationBuilder implements RenderableInterface
 {
-    use ActionMethodsTrait;
-
     /** @param \Closure(ActionConfig): string $render Rendering boundary retaining its owning session. */
     public function __construct(
         protected readonly Closure $render,
@@ -53,5 +52,45 @@ class ActionBuilder extends ConfigurationBuilder implements RenderableInterface
     public function __toString(): string
     {
         return $this->render();
+    }
+
+    /** Set method on this mutable builder. */
+    public function method(string $value): static
+    {
+        $this->updateActionConfig($this->config()->method($value));
+
+        return $this;
+    }
+
+    /** @param array<string, mixed> $value Nested locked action data. */
+    public function data(array $value): static
+    {
+        $this->updateActionConfig($this->config()->data($value));
+
+        return $this;
+    }
+
+    /** Set confirm on this mutable builder. */
+    public function confirm(?string $value): static
+    {
+        $this->updateActionConfig($this->config()->confirm($value));
+
+        return $this;
+    }
+
+    /** Set block on this mutable builder. */
+    public function block(?string $value): static
+    {
+        $this->updateActionConfig($this->config()->block($value));
+
+        return $this;
+    }
+
+    /** Set form on this mutable builder. */
+    public function form(FormConfig $value): static
+    {
+        $this->updateActionConfig($this->config()->form($value));
+
+        return $this;
     }
 }

@@ -167,7 +167,7 @@ class DeferredTextTest extends FormTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The ' . $key . ' closure must return a string, Html, Translated, false, or null.',
+            'The ' . $key . ' closure must return a string, Html, false, or null.',
         );
         $builder = $this->helper()->form()->bind()->field('title');
         if ($key === 'label') {

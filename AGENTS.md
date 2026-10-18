@@ -25,6 +25,7 @@ These instructions apply to the entire plugin repository.
 - Follow the standard plugin structure: `src/`, `templates/`, `config/`, and `tests/`, adding directories only when needed. Keep tests under `tests/TestCase/` and fixtures under `tests/Fixture/`.
 - Use CakePHP's plugin lifecycle and dependency injection facilities. Avoid global state, hidden service lookups, and host-application-specific assumptions.
 - Prefer small cohesive objects and composition. Add interfaces for real extension boundaries rather than every implementation class.
+- Use traits for behavior shared by independent owners. Keep single-owner configuration and rendering methods on their class; do not split classes into traits or base classes merely to satisfy size limits. The Mago method and property limits allow the plugin's explicit typed fluent APIs.
 - Keep behavior services extensible. Prefer protected methods and dependencies over private members so application subclasses can reuse and specialize behavior. Provide protected factories or constructor injection where collaborators need to be replaced through the normal API.
 - Reserve final classes for immutable configuration/data objects and stateless implementation utilities. Document extension points on behavior classes, and test that overrides work through public form-building entry points.
 - Use readonly properties for fixed service dependencies rather than readonly service classes, so subclasses can maintain their own state.
