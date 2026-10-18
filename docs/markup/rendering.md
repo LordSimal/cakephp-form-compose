@@ -24,7 +24,7 @@ Create the element in the second tab, then use it in your view:
 
 ```php [templates/Users/edit.php]
 <?php
-$form = $this->Form->form($user)->bind();
+$form = $this->Form->bind($user);
 ?>
 <?= $form->open() ?>
 <?= $form->control('email')

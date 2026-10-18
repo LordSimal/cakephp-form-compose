@@ -8,6 +8,7 @@ use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 
@@ -21,8 +22,7 @@ class BindingTest extends FormTestCase
             'off' => false,
             'blank' => '',
         ])
-            ->form(new ArrayContext(['data' => ['nil' => 'original']]))
-            ->bind();
+            ->bind(new ArrayContext(['data' => ['nil' => 'original']]));
         static::assertNull($form->field('nil')->resolve()->state->value);
         static::assertSame(0, $form->field('zero')->resolve()->state->value);
         static::assertFalse($form->field('off')->resolve()->state->value);
@@ -48,7 +48,7 @@ class BindingTest extends FormTestCase
     public function testContextInferenceConstraintsAndNestedNames(): void
     {
         $form = $this->helper()
-            ->form([
+            ->bind([
                 'schema' => [
                     'title' => ['type' => 'string', 'length' => 30],
                     'body' => ['type' => 'text'],
@@ -59,8 +59,7 @@ class BindingTest extends FormTestCase
                 'required' => ['title' => true],
                 'data' => ['title' => 'Hello'],
                 'errors' => ['title' => ['invalid' => 'Invalid']],
-            ])
-            ->bind();
+            ]);
         $title = $form->field('title')->resolve()->state;
         static::assertSame('Hello', $title->value);
         static::assertSame(['Invalid'], $title->messages);
@@ -111,10 +110,7 @@ class BindingTest extends FormTestCase
         $entity = new Entity(['title' => 'Bound']);
         $entity->setError('title', ['invalid' => 'Fix it']);
 
-        $form = $this->helper()
-            ->form($entity)
-            ->context(['table' => $table])
-            ->bind();
+        $form = $this->helper()->bind($entity, config: FormConfig::builder()->context(['table' => $table]));
         static::assertSame('Bound', $form->field('title')->resolve()->state->value);
         static::assertSame(40, $form->field('title')->resolve()->state->constraints['maxlength']);
         static::assertSame(['Fix it'], $form->field('title')->resolve()->state->messages);
@@ -123,17 +119,13 @@ class BindingTest extends FormTestCase
     public function testContextFirstAndQuerySources(): void
     {
         $helper = $this->helper(['title' => 'posted']);
-        $form = $helper->form(new ArrayContext(['data' => ['title' => 'context']]))
-            ->valueSources([
-                'context',
-                'data',
-            ])
-            ->bind();
+        $form = $helper->bind(
+            new ArrayContext(['data' => ['title' => 'context']]),
+            config: FormConfig::builder()->valueSources(['context', 'data']),
+        );
         static::assertSame('context', $form->field('title')->resolve()->state->value);
         $helper->getView()->setRequest($helper->getView()->getRequest()->withQueryParams(['q' => 'term']));
-        $query = $helper->form()
-            ->valueSources(['query'])
-            ->bind();
+        $query = $helper->bind(config: FormConfig::builder()->valueSources(['query']));
         static::assertSame('term', $query->field('q')->resolve()->state->value);
     }
 
@@ -159,12 +151,11 @@ class BindingTest extends FormTestCase
         $helper = $this->helper();
         $helper->getView()->set('tags', ['a' => 'A']);
         $helper->getView()->set('statuses', ['draft' => 'Draft']);
-        $form = $helper->form(new ArrayContext([
+        $form = $helper->bind(new ArrayContext([
             'data' => ['tags' => ['_ids' => ['a']]],
             'errors' => ['tags' => ['invalid' => 'Invalid tags']],
             'required' => ['tags' => true],
-        ]))
-            ->bind();
+        ]));
         $field = $form->field('tags._ids')->resolve();
 
         static::assertSame(['a'], $field->state->value);

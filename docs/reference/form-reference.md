@@ -5,26 +5,55 @@ description: Typed fluent form setup, binding, rendering, and submission lifecyc
 
 # Helper and form session
 
-`FormHelper::form()` creates a mutable builder. `bind()` captures its configuration
-in an isolated `FormSession`. Rendering uses the session's input registry and
-CakePHP protection metadata.
+Use `FormHelper::bind()` for a form you arrange manually, or `FormHelper::form()`
+for a complete form. Both use the same binding, rendering, and CakePHP protection
+services.
 
-## form() and bind() {#bind}
+## bind() {#bind}
+
+```php
+$form = $this->Form->bind($article);
+```
+
+`bind(mixed $data = null, FormConfig $config = new FormConfig()): FormSession`
+accepts ORM entities, CakePHP `Form` objects, array contexts, `ContextInterface`,
+or null. It prepares an isolated session without rendering markup or registering
+submitted inputs. Use its `open()`, `control()`, `submit()`, and `close()` methods
+to arrange the form in your view.
+
+Pass an immutable `FormConfig` for form-wide settings:
 
 ```php
 use FormCompose\Configuration\FormConfig;
 
-$form = $this->Form
-    ->form($article, config: new FormConfig(method: 'patch'))
-    ->url(['action' => 'edit', $article->id])
-    ->attributes(['class' => 'article-form'])
-    ->bind();
+$form = $this->Form->bind(
+    $article,
+    config: FormConfig::builder()
+        ->method('patch')
+        ->url(['action' => 'edit', $article->id])
+        ->attributes(['class' => 'article-form']),
+);
 ```
 
-`form(mixed $data = null, FormConfig|null $config = null): FormBuilder` accepts ORM
-entities, CakePHP `Form` objects, array contexts, `ContextInterface`, or null.
-`bind(): FormSession` creates a fresh session each time; later builder changes do
-not change existing sessions.
+Each call creates a fresh session. Deriving another config or changing helper
+defaults leaves existing sessions unchanged.
+
+## form() {#form}
+
+```php
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->submit('Save article');
+```
+
+`form(mixed $data = null, FormConfig|null $config = null): FormBuilder` configures
+a complete form with the same accepted data and configuration. Echoing it opens
+the form, renders the selected blueprints and actions, and closes it.
+
+For fluent configuration before manual rendering, `FormBuilder::bind(): FormSession`
+is also available. Each call captures a fresh session from the builder's current
+settings; later builder changes do not change existing sessions.
 
 ### Binding options
 
@@ -71,7 +100,7 @@ It does not change where or how the browser submits the form. Configure it befor
 | --- | --- |
 | `data` | Parsed request body: `$request->getData()`. |
 | `query` | URL query parameters: `$request->getQueryParams()`. |
-| `context` | The entity, CakePHP Form, or context passed to `form()`. |
+| `context` | The entity, CakePHP Form, or context passed to `bind()` or `form()`. |
 
 The default order is `['data', 'context']`. Sources are checked in order;
 `['query', 'context']` reads URL parameters first and uses the bound object as a
@@ -94,7 +123,8 @@ $this->addHelper('Form', [
 
 The helper also accepts `passwordFields`, `typeMap`, `contextFactory`,
 `themeDebug`, and `autoActionScript`. Use a form builder for `valueSources`,
-custom type instances, and a renderer. Per-form settings override helper defaults.
+custom type instances, and a renderer, or pass them through `FormConfig` to `bind()`.
+Per-form settings override helper defaults.
 During normal controller rendering, the plugin supplies the application's
 container-backed blueprint factory automatically. The optional helper setting
 `blueprintFactory` takes precedence; use it for manually constructed views or a
@@ -107,7 +137,7 @@ echo $form->open();
 ```
 
 `open(): string` renders the form tag, CSRF field where supplied by CakePHP,
-and method override. Configure it **before** `bind()`; `open()` accepts no options.
+and method override. Configure the form **before** binding; `open()` accepts no options.
 Existing entities default to PUT, new entities to POST. GET uses native query submission.
 A file input requires a multipart form.
 

@@ -21,7 +21,7 @@ the path shown in the second tab:
 
 ```php [templates/Users/edit.php]
 <?php
-$form = $this->Form->form($user)->bind();
+$form = $this->Form->bind($user);
 ?>
 <?= $form->open() ?>
 <?= $form->control('email')

@@ -21,7 +21,7 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 
 ```php [FormCompose]
 <?php
-$form = $this->Compose->form($article)->bind();
+$form = $this->Compose->bind($article);
 ?>
 <?= $form->open() ?>
 <?= $form->control('title')->attributes(['class' => 'title-input']) ?>
@@ -36,7 +36,7 @@ $form = $this->Compose->form($article)->bind();
 
 | Existing concern | FormCompose equivalent |
 | --- | --- |
-| `create($entity)` / `end()` | `form($entity)`, then `bind()`, then session `open()` / `close()` |
+| `create($entity)` / `end()` | `bind($entity)`, then session `open()` / `close()` |
 | Inline HTML attributes on `control()` | `attributes([...])` for the input, `partAttributes(part, [...])` for other parts |
 | String templates and widgets | Application-owned PHP elements through a `Theme`; custom submission semantics through `FieldTypeInterface` |
 | `empty` select option | `placeholder()` accepts a label, true, false, or null. Optional single selects automatically get a blank choice. |

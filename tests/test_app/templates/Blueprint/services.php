@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 use FormCompose\View\Helper\FormHelper;
+use FormCompose\Configuration\FormConfig;
 
 /**
  * @var \Cake\View\View $this
@@ -11,12 +12,8 @@ use FormCompose\View\Helper\FormHelper;
  */
 $helper = $this->helpers()->get('Form');
 assert($helper instanceof FormHelper, 'The configured helper must extend FormCompose FormHelper.');
-$builder = $helper->form();
-if (!$local) {
-    $builder->blueprint($blueprint);
-}
-
-$form = $builder->bind();
+$config = $local ? new FormConfig() : FormConfig::builder()->blueprint($blueprint);
+$form = $helper->bind(config: $config);
 echo $form->open();
 echo (string)($local ? $form->blueprint($blueprint) : $form->blueprint());
 if ($customType) {

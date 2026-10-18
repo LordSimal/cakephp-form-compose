@@ -37,13 +37,13 @@ use Throwable;
 /**
  * Coordinates the public API for building and rendering one bound form.
  *
- * Created by FormBuilder::bind(). Uses the binding to resolve fields, the renderer
- * to produce themed markup, and the lifecycle to track submitted inputs and tokens.
+ * Created by FormHelper::bind() or FormBuilder::bind(). Uses the binding to resolve
+ * fields, the renderer to produce themed markup, and the lifecycle to track submitted inputs and tokens.
  * A session can open once; render its inputs before closing it. Override
  * createFieldResolver() or createLifecycle() to supply specialized collaborators.
  *
  * ```php
- * $form = $this->Form->form($article)->bind();
+ * $form = $this->Form->bind($article);
  * echo $form->open(), $form->control('title');
  * echo $form->submit('Save'), $form->close();
  * ```

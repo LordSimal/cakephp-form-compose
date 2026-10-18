@@ -33,7 +33,7 @@ use the same fluent configuration and rendering parts.
 
 ```php [Simple form]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
 <?= $form->control('title')->template('forms/article-title') ?>

@@ -55,7 +55,7 @@ use FormCompose\Rendering\Html;
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)->bind();
+$form = $this->Form->bind($article);
 ?>
 <?= $form->open() ?>
 <?= $form->control('body')
@@ -138,7 +138,7 @@ class DateRangeType extends CompositeType
 
 ```php [templates/Bookings/edit.php]
 <?php
-$form = $this->Form->form($booking)->bind();
+$form = $this->Form->bind($booking);
 ?>
 <?= $form->open() ?>
 <?= $form->control('period')

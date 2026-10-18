@@ -29,13 +29,13 @@ use InvalidArgumentException;
 /**
  * Creates bound form sessions, renders complete forms, and authors standalone protected actions.
  *
- * form()->bind() selects a CakePHP form context for the supplied data and collects the
+ * bind() selects a CakePHP form context for the supplied data and collects the
  * form's theme, renderer, and custom field types. Each returned FormSession has
  * its own field resolution, rendering, and submission lifecycle. Override
  * createSession() to select an application-specific FormSession subclass.
  *
  * ```php
- * $form = $this->Form->form($article)->url(['action' => 'edit', $article->id])->bind();
+ * $form = $this->Form->bind($article);
  * echo $form->open(), $form->control('title'), $form->submit('Save'), $form->close();
  * ```
  *
@@ -79,11 +79,11 @@ class FormHelper extends Helper
         }
     }
 
-    /** Configure a form before binding or rendering; override to supply a custom FormBuilder. */
+    /** Configure a complete form or prepare a binding; override to supply a custom FormBuilder. */
     public function form(mixed $data = null, ?FormConfig $config = null): FormBuilder
     {
         return new FormBuilder(
-            fn(FormConfig $settings): FormSession => $this->bindForm($data, $settings),
+            fn(FormConfig $settings): FormSession => $this->bind($data, $settings),
             $config ?? new FormConfig(),
         );
     }
@@ -141,10 +141,13 @@ class FormHelper extends Helper
     }
 
     /**
-     * Create a form session for the given context and presentation.
+     * Bind data for a manually arranged form, without rendering markup or registering inputs.
      *
+     * Accepts the same CakePHP data and context providers as form(). Optional immutable
+     * configuration supplies form-wide settings. Each call creates an independent session;
+     * override createSession() to supply an application-specific session implementation.
      */
-    protected function bindForm(mixed $data, FormConfig $config): FormSession
+    public function bind(mixed $data = null, FormConfig $config = new FormConfig()): FormSession
     {
         $view = $this->getView();
         /** @var list<string> $passwordFields */
@@ -258,7 +261,7 @@ class FormHelper extends Helper
     {
         return new PostActionRenderer(
             $this->getView(),
-            fn(FormConfig $config, RenderContext $rendering): FormSession => $this->bindForm(
+            fn(FormConfig $config, RenderContext $rendering): FormSession => $this->bind(
                 null,
                 $config->theme($rendering->theme)->renderer($rendering->renderer),
             ),
