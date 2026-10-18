@@ -15,7 +15,7 @@ trait FieldTextMethodsTrait
     /** Set label on this mutable builder. */
     public function label(string|Html|Translated|Closure|false|null $value): static
     {
-        $this->updateFieldConfig($this->config()->withLabel($value));
+        $this->updateFieldConfig($this->config()->label($value));
 
         return $this;
     }
@@ -23,7 +23,7 @@ trait FieldTextMethodsTrait
     /** Set help on this mutable builder. */
     public function help(string|Html|Translated|Closure|false|null $value): static
     {
-        $this->updateFieldConfig($this->config()->withHelp($value));
+        $this->updateFieldConfig($this->config()->help($value));
 
         return $this;
     }
@@ -31,7 +31,7 @@ trait FieldTextMethodsTrait
     /** Set errors on this mutable builder. */
     public function errors(bool $value = true): static
     {
-        $this->updateFieldConfig($this->config()->withErrors($value));
+        $this->updateFieldConfig($this->config()->errors($value));
 
         return $this;
     }
@@ -39,6 +39,6 @@ trait FieldTextMethodsTrait
     /** Capture domain-specific immutable configuration. */
     abstract public function config(): FieldConfig;
 
-    /** Store a typed configuration update and notify attached behavior. */
+    /** Store a typed configuration update on the attached builder. */
     abstract protected function updateFieldConfig(FieldConfig $config): void;
 }

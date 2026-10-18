@@ -21,7 +21,7 @@ class SelectPlaceholderTest extends FormTestCase
         $form->open();
 
         $html = $form->control('status')
-            ->apply($options->merge(FieldConfig::builder()->type('select')->choices(['a' => 'A'])->config()))
+            ->apply($options->merge(FieldConfig::builder()->type('select')->choices(['a' => 'A'])))
             ->render();
         static::assertSame((float)$expected, $this->xpath($html)->evaluate('count(//option[@value=""])'));
         $form->close();
@@ -33,14 +33,17 @@ class SelectPlaceholderTest extends FormTestCase
     public static function emptyOptions(): array
     {
         return [
-            'optional' => [FieldConfig::builder()->config(), 1],
-            'required' => [FieldConfig::builder()->required(true)->config(), 0],
-            'disabled' => [FieldConfig::builder()->placeholder(false)->config(), 0],
-            'explicit blank' => [FieldConfig::builder()->placeholder(true)->config(), 1],
-            'explicit label' => [FieldConfig::builder()->placeholder('Choose…')->config(), 1],
-            'empty label' => [FieldConfig::builder()->placeholder('')->config(), 1],
-            'multiple' => [FieldConfig::builder()->multiple(true)->config(), 0],
-            'explicit multiple' => [FieldConfig::builder()->multiple(true)->placeholder(true)->config(), 1],
+            'optional' => [new FieldConfig(), 1],
+            'required' => [FieldConfig::builder()->required(true), 0],
+            'disabled' => [FieldConfig::builder()->placeholder(false), 0],
+            'explicit blank' => [FieldConfig::builder()->placeholder(true), 1],
+            'explicit label' => [FieldConfig::builder()->placeholder('Choose…'), 1],
+            'empty label' => [FieldConfig::builder()->placeholder(''), 1],
+            'multiple' => [FieldConfig::builder()->multiple(true), 0],
+            'explicit multiple' => [
+                FieldConfig::builder()->multiple(true)->placeholder(true),
+                1,
+            ],
         ];
     }
 
@@ -120,8 +123,7 @@ class SelectPlaceholderTest extends FormTestCase
                             ],
                             new ChoiceConfig('', 'Second blank', []),
                         ])
-                        ->value($value)
-                        ->config(),
+                        ->value($value),
                 ),
             )
             ->render();
@@ -141,12 +143,16 @@ class SelectPlaceholderTest extends FormTestCase
     public static function retainedSelections(): array
     {
         return [
-            'null' => [null, FieldConfig::builder()->config(), ''],
-            'nonempty' => ['a', FieldConfig::builder()->config(), 'a'],
-            'zero' => [0, FieldConfig::builder()->config(), '0'],
-            'false' => [false, FieldConfig::builder()->config(), '0'],
-            'disabled placeholder' => [null, FieldConfig::builder()->placeholder(false)->config(), 'none'],
-            'multiple' => [null, FieldConfig::builder()->multiple(true)->placeholder(true)->config(), 'none'],
+            'null' => [null, new FieldConfig(), ''],
+            'nonempty' => ['a', new FieldConfig(), 'a'],
+            'zero' => [0, new FieldConfig(), '0'],
+            'false' => [false, new FieldConfig(), '0'],
+            'disabled placeholder' => [null, FieldConfig::builder()->placeholder(false), 'none'],
+            'multiple' => [
+                null,
+                FieldConfig::builder()->multiple(true)->placeholder(true),
+                'none',
+            ],
         ];
     }
 }

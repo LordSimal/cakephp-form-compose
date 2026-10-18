@@ -23,7 +23,7 @@ class CustomBlueprintCompiler extends BlueprintCompiler
     protected function createBuilder(FormDefinition $definition, FormContext $context): BlueprintBuilder
     {
         return new CustomBlueprintBuilder(
-            $definition->add(new FieldDefinition('custom', FieldConfig::builder()->label('Custom builder')->config())),
+            $definition->add(new FieldDefinition('custom', FieldConfig::builder()->label('Custom builder'))),
             fn(string $path, string $name): FormDefinition => $this->resolve($name, $context->at($path)),
             fn(RepeatedDefinition $entry): RepeatedDefinition => $this->repeated($entry, $context),
         );

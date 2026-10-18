@@ -104,10 +104,12 @@ echo $form->control('audience')
 
 Nested maps such as `['Public' => ['everyone' => 'Everyone']]` also create groups.
 Legacy extended entry arrays are replaced by `ChoiceConfig(value, label, attributes, id)`.
-Choice builders expose `label()`, `id()`, `attributes()`, and `config()`; group
-builders expose `choices()`, `attributes()`, and optional `config()`.
-Pass inline builders directly; choice arrays capture them immediately. Lazy
-iterables remain unconsumed and capture yielded builders during rendering. Omitted enum labels
+`ChoiceConfig::builder()` returns `ChoiceConfig` with fluent `label()`, `id()`,
+`disabled()`, and `attributes()` methods. `ChoiceGroupConfig::builder()` returns
+`ChoiceGroupConfig` with `choices()` and `attributes()`. These are immutable configs:
+pass them directly in choice arrays without a terminal conversion. Deriving a new
+choice or group leaves its source unchanged. Lazy iterables remain unconsumed
+until rendering. Omitted enum labels
 use the enum's label; explicit null or empty string creates a blank label.
 Labels are escaped unless wrapped in trusted `Html`.
 

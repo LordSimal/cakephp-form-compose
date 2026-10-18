@@ -93,7 +93,7 @@ final readonly class FormContext
         }
 
         return new ValueResolver(
-            new FormBinding($this->context, $request, '', new FormConfig()->withValueSources($this->valueSources)),
+            new FormBinding($this->context, $request, '', FormConfig::builder()->valueSources($this->valueSources)),
         )->resolve($path, new FieldConfig());
     }
 

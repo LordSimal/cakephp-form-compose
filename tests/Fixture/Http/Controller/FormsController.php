@@ -123,7 +123,9 @@ class FormsController extends Controller
             ->templateData(['caption' => 'Complete form'])
             ->errorSummary(true)
             ->submit('Save complete form')
-            ->submitConfig(ButtonConfig::builder()->name('intent')->value('save')->config())
+            ->submitConfig(
+                ButtonConfig::builder()->name('intent')->value('save'),
+            )
             ->render();
 
         return $this->getResponse()
@@ -185,11 +187,11 @@ class FormsController extends Controller
                 'instant',
                 new FieldSpec(
                     'fractional_clock',
-                    FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00'])->config(),
+                    FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00']),
                 ),
                 new FieldSpec(
                     'fractional_instant',
-                    FieldConfig::builder()->attributes(['step' => '2.5', 'min' => '2026-10-15T00:00:00'])->config(),
+                    FieldConfig::builder()->attributes(['step' => '2.5', 'min' => '2026-10-15T00:00:00']),
                 ),
             ])->render();
         $html .= $form->control('week')
@@ -244,7 +246,7 @@ class FormsController extends Controller
             $form->open()
             . $form->controls([
                 'status',
-                new FieldSpec('priority', FieldConfig::builder()->type('radio')->config()),
+                new FieldSpec('priority', FieldConfig::builder()->type('radio')),
             ])->render();
         $html .= $form->submit('Save enums')->render() . $form->close();
 

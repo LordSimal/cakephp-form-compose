@@ -87,7 +87,7 @@ Configure the complete form on its builder before binding. Use `url()`,
 Add this at the end of the blueprint's `configure()` hook:
 
 ```php
-$form->presentation()->template('forms/article');
+$form->template('forms/article');
 ```
 
 The layout receives a scoped `BlueprintView`:

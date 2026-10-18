@@ -26,7 +26,7 @@ class PostForm extends FormBlueprint
      */
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->presentation()->partTemplate('control', 'composition/post');
+        $form->partTemplate('control', 'composition/post');
         $form->add('title');
         $form->embed('author', 'composed-author');
         $form->add('body')->type('textarea');

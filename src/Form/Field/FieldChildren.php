@@ -77,16 +77,17 @@ class FieldChildren
     protected function configuration(BoundField $field, FieldSpec $child): FieldConfig
     {
         $state = $field->state;
-        $config = new FieldConfig()->withName(
-            InputNames::base($state->name) . '[' . str_replace('.', '][', $child->path) . ']',
-        )
-            ->withId($state->id . '.' . str_replace('-', ':2d', $child->path))
-            ->withSecure($state->config->secure)
-            ->withErrors($state->config->errors)
-            ->withPresentation(new PresentationConfig()->withTemplateData($state->config->presentation->templateData));
+        $config = FieldConfig::builder()
+            ->name(
+                InputNames::base($state->name) . '[' . str_replace('.', '][', $child->path) . ']',
+            )
+            ->id($state->id . '.' . str_replace('-', ':2d', $child->path))
+            ->secure($state->config->secure)
+            ->errors($state->config->errors)
+            ->presentation(PresentationConfig::builder()->templateData($state->config->presentation->templateData));
         $value = PathValue::lookup(is_array($state->value) ? $state->value : [], $child->path);
         if ($value->found || $state->config->hasValue) {
-            $config = $config->withValue($value->value);
+            $config = $config->value($value->value);
         }
 
         return $config->merge($child->config);

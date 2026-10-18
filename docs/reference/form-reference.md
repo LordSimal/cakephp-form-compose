@@ -21,14 +21,15 @@ $form = $this->Form
     ->bind();
 ```
 
-`form(mixed $data = null, FormConfig|FormConfigBuilder|null $config = null): FormBuilder` accepts ORM
+`form(mixed $data = null, FormConfig|null $config = null): FormBuilder` accepts ORM
 entities, CakePHP `Form` objects, array contexts, `ContextInterface`, or null.
 `bind(): FormSession` creates a fresh session each time; later builder changes do
 not change existing sessions. There is no helper-level `bind()` method.
 
 ### Binding options
 
-These are methods on `FormBuilder` and `FormConfig::builder()`:
+These settings are available on both `FormBuilder` and immutable `FormConfig`
+instances, including those created by `FormConfig::builder()`:
 
 | Method | Contract |
 | --- | --- |
@@ -43,15 +44,16 @@ These are methods on `FormBuilder` and `FormConfig::builder()`:
 | `typeMap(array)` | Override schema-type to control-type mappings. |
 | `types(array)` | Register aliases mapped to `FieldTypeInterface` instances. |
 | `blueprint(?string)` | Select reusable field defaults and body declarations by alias or class. |
-| `theme(Theme\|ThemeBuilder\|null)`, `renderer(?RendererInterface)` | Per-form rendering collaborators. |
-| `errorSummary(bool\|SummaryConfig\|SummaryConfigBuilder = true)` | Configure the complete form's summary. |
+| `theme(Theme\|null)`, `renderer(?RendererInterface)` | Per-form rendering collaborators. |
+| `errorSummary(bool\|SummaryConfig = true)` | Configure the complete form's summary. |
 | `submit(string\|Html\|false\|null, ?ButtonConfig)` | Configure the complete form's action; null uses translated Submit. |
 | `withoutSubmit()` | Omit that action. |
-| `submitConfig(ButtonConfig\|ButtonConfigBuilder)` | Configure its presentation and native button state. |
+| `submitConfig(ButtonConfig)` | Configure its presentation and native button state. |
 
-All setters return the same builder. `apply(FormConfig|FormConfigBuilder)` overlays explicitly
-configured settings; `config()` optionally returns an immutable snapshot. Configuration arguments
-also accept the matching builder and capture it immediately. Common settings
+On `FormBuilder`, setters update that builder and `apply(FormConfig)` overlays
+explicit settings. On `FormConfig`, fluent methods return new configs and
+`merge(FormConfig)` combines explicit settings. `FormConfig::builder()` returns
+`FormConfig` itself; pass it directly wherever a config is accepted. Common settings
 also have named constructor arguments: `new FormConfig(url: ..., method: ..., id: ...)`.
 The shared [presentation API](/field-options#templates) configures attributes,
 templates, variants, and template data.
@@ -100,7 +102,7 @@ echo $form->control('email')
     ->attributes(['autocomplete' => 'email']);
 ```
 
-`control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder` configures
+`control(string $field, FieldConfig|null $config = null): ControlBuilder` configures
 a complete control. Echo or `render(): string` resolves its final settings and
 renders it. Creating or configuring a control renders nothing. See
 [field configuration](/field-options) for every setter.
@@ -132,7 +134,7 @@ $title = $form->field('title')
 $currentTitle = $title->state->value;
 ```
 
-`field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder` configures a
+`field(string $field, FieldConfig|null $config = null): FieldBuilder` configures a
 field; `resolve(): BoundField` captures immutable state. Resolution, state reads,
 and attribute inspection render nothing and register no inputs. Use
 [bound field parts](/field-reference) to arrange custom HTML.
@@ -156,7 +158,7 @@ echo $form->embedMany('comments', 'comment')
     ->label('Comments');
 ```
 
-`embedMany(string $path, string $blueprint, EmbedConfig|EmbedConfigBuilder|null $config = null): RepeatedEmbedBuilder`
+`embedMany(string $path, string $blueprint, EmbedConfig|null $config = null): RepeatedEmbedBuilder`
 compiles and renders repeated rows at that path. Null keys infer bound keys;
 `[]` renders no rows. See [repeated embeds](/repeated-embeds).
 
@@ -169,7 +171,7 @@ echo $form->submit('Save')
     ->attributes(['class' => 'button']);
 ```
 
-`submit(string|Html $label, ButtonConfig|ButtonConfigBuilder|null $config = null): ButtonBuilder` creates
+`submit(string|Html $label, ButtonConfig|null $config = null): ButtonBuilder` creates
 a renderable button. Setters include `type(string)`, `name(?string)`,
 `value(mixed)`, `disabled(bool = true)`, and common presentation methods.
 Named enabled buttons participate in the submission contract after successful
@@ -228,7 +230,7 @@ echo $form->errorSummary()
     ->attributes(['class' => 'errors']);
 ```
 
-`errorSummary(SummaryConfig|SummaryConfigBuilder|null $config = null): SummaryBuilder` renders a summary
+`errorSummary(SummaryConfig|null $config = null): SummaryBuilder` renders a summary
 of errors from successfully rendered controls. Render it after the controls;
 buffer their HTML first if the summary should appear above them. Inspection
 alone adds no summary entries. `errors(false)` suppresses that field's entry.
@@ -252,7 +254,7 @@ See [handwritten feedback](/field-parts#preserve-feedback-and-accessible-names).
 
 `postLink()` returns `ActionBuilder`; `postButton()` returns `PostButtonBuilder`,
 which also exposes native button `name()`, `value()`, and `disabled()` setters.
-Both offer `method()`, `data()`, `confirm()`, `block()`, `form(FormConfig|FormConfigBuilder)`,
+Both offer `method()`, `data()`, `confirm()`, `block()`, `form(FormConfig)`,
 and common presentation setters.
 `block()` takes a nonempty block name or null. See [POST actions](/post-actions)
 for delegated JavaScript, blocks, and protection contracts.

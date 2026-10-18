@@ -28,7 +28,7 @@ class AuthorForm extends FormBlueprint
      */
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->presentation()->partTemplate('control', 'composition/author')->templateData(['heading' => '<Author>']);
+        $form->partTemplate('control', 'composition/author')->templateData(['heading' => '<Author>']);
         $form->add('first_name')->label('First <name>')->help('Use <given> name.');
         $form->add('last_name');
         $form->add('email')

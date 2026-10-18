@@ -80,7 +80,7 @@ class TypeInferenceTest extends FormTestCase
             $context,
             $view->getRequest(),
             'direct',
-            FormConfig::builder()->typeMap(['money' => 'number'])->config(),
+            FormConfig::builder()->typeMap(['money' => 'number']),
         );
         static::assertSame('number', $binding->typeMap['money']);
         static::assertSame('datetime-local', $binding->typeMap['datetime']);

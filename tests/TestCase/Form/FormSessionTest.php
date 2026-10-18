@@ -38,7 +38,7 @@ class FormSessionTest extends CompositionTestCase
             ->blueprint(PostForm::class)
             ->attributes(['class' => 'complete'])
             ->submit('Save')
-            ->submitConfig(ButtonConfig::builder()->variant('primary')->config())
+            ->submitConfig(ButtonConfig::builder()->variant('primary'))
             ->bind();
         static::assertCount(2, $this->probe->calls);
         $html = $form->render();
@@ -122,7 +122,9 @@ class FormSessionTest extends CompositionTestCase
             ->multipart()
             ->method('patch')
             ->url('/articles/save')
-            ->submitConfig(ButtonConfig::builder()->name('save')->value('yes')->config())
+            ->submitConfig(
+                ButtonConfig::builder()->name('save')->value('yes'),
+            )
             ->render();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//form[@enctype="multipart/form-data"])'));

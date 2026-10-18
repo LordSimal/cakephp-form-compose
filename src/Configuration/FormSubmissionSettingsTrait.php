@@ -23,7 +23,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** @param array|string|false|null $value A CakePHP route or URL. */
-    public function withUrl(array|string|false|null $value): static
+    public function url(array|string|false|null $value): static
     {
         return $this->changed('url', $value);
     }
@@ -40,7 +40,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** Return configuration with an explicit method setting. */
-    public function withMethod(?string $value): static
+    public function method(?string $value): static
     {
         return $this->changed('method', $value);
     }
@@ -57,7 +57,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** Return configuration with an explicit id setting. */
-    public function withId(?string $value): static
+    public function id(?string $value): static
     {
         return $this->changed('id', $value);
     }
@@ -74,7 +74,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** Return configuration with an explicit multipart setting. */
-    public function withMultipart(bool $value): static
+    public function multipart(bool $value = true): static
     {
         return $this->changed('multipart', $value);
     }
@@ -91,7 +91,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** Return configuration with an explicit enctype setting. */
-    public function withEnctype(?string $value): static
+    public function enctype(?string $value): static
     {
         return $this->changed('enctype', $value);
     }
@@ -109,7 +109,7 @@ trait FormSubmissionSettingsTrait
     }
 
     /** Return configuration with an explicit encoding setting. */
-    public function withEncoding(?string $value): static
+    public function encoding(?string $value): static
     {
         return $this->changed('encoding', $value);
     }

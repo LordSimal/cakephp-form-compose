@@ -122,7 +122,7 @@ class AssociationRenderingTest extends AssociationTestCase
             ->context(['table' => $this->articles])
             ->bind();
         $definition = new FormDefinition([])->add(
-            new FieldDefinition('tags._ids', FieldConfig::builder()->type('multicheckbox')->config()),
+            new FieldDefinition('tags._ids', FieldConfig::builder()->type('multicheckbox')),
         );
         $form->open();
         $html = $form->renderDefinition($definition);

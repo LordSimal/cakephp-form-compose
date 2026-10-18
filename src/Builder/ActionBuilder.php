@@ -18,9 +18,9 @@ class ActionBuilder extends ConfigurationBuilder implements RenderableInterface
     /** @param \Closure(ActionConfig): string $render Rendering boundary retaining its owning session. */
     public function __construct(
         protected readonly Closure $render,
-        ActionConfig|ActionConfigBuilder $config = new ActionConfig(),
+        ActionConfig $config = new ActionConfig(),
     ) {
-        parent::__construct(ActionConfig::capture($config));
+        parent::__construct($config);
     }
 
     /** Capture the action settings independently of future edits. */
@@ -30,9 +30,9 @@ class ActionBuilder extends ConfigurationBuilder implements RenderableInterface
     }
 
     /** Overlay explicitly supplied action settings. */
-    public function apply(ActionConfig|ActionConfigBuilder $config): static
+    public function apply(ActionConfig $config): static
     {
-        $this->applyConfig(ActionConfig::capture($config));
+        $this->applyConfig($config);
 
         return $this;
     }

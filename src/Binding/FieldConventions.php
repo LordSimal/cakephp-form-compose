@@ -41,15 +41,15 @@ class FieldConventions
         }
 
         if (FieldPath::association($path) !== null) {
-            return $config->withType('select')->withMultiple($config->multiple ?? true);
+            return $config->type('select')->multiple($config->multiple ?? true);
         }
 
         if ($this->binding->context->isPrimaryKey($path)) {
-            return $config->withType('hidden');
+            return $config->type('hidden');
         }
 
         if (str_ends_with($path, '_id')) {
-            return $config->withType('select');
+            return $config->type('select');
         }
 
         return $config;
@@ -71,7 +71,7 @@ class FieldConventions
 
         $enum = EnumChoices::discover($this->binding->context, $path);
         if ($enum !== null) {
-            return $config->withChoices($enum);
+            return $config->choices($enum);
         }
 
         if (!$this->viewVariable instanceof Closure) {
@@ -81,7 +81,7 @@ class FieldConventions
         /** @var mixed $choices */
         $choices = ($this->viewVariable)(FieldPath::optionsVariable($path));
         if (is_iterable($choices)) {
-            return $config->withChoices($choices);
+            return $config->choices($choices);
         }
 
         return $config;

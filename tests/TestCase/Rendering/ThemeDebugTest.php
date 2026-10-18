@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Closure;
-use FormCompose\Builder\PresentationBuilder;
 use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\PhpRenderer;
@@ -104,15 +103,13 @@ class ThemeDebugTest extends FormTestCase
             'field',
             'text',
             [],
-            new PresentationBuilder()->partTemplate('label', 'themes/debug/label')
-                ->config(),
+            PresentationConfig::builder()->partTemplate('label', 'themes/debug/label'),
         )));
         $html = $renderer->render('label', new RenderNode(
             'field',
             'text',
             [],
-            new PresentationBuilder()->partTemplate('label', 'widgets/parent')
-                ->config(),
+            PresentationConfig::builder()->partTemplate('label', 'widgets/parent'),
         ));
         static::assertStringNotContainsString('FormCompose PARENT', $html);
         static::assertStringContainsString('<article data-parent-layout></article>', $html);
@@ -127,10 +124,10 @@ class ThemeDebugTest extends FormTestCase
             'field',
             'text',
             ['field' => $field],
-            new PresentationBuilder()->variant("--><img src=x onerror=bad>\r\nspoof")
+            PresentationConfig::builder()
+                ->variant("--><img src=x onerror=bad>\r\nspoof")
                 ->partTemplate('label', 'themes/debug/constant')
-                ->templateData(['message' => 'hidden metadata'])
-                ->config(),
+                ->templateData(['message' => 'hidden metadata']),
         ));
         static::assertStringContainsString('field: name&#45;&#45;', $html);
         static::assertStringContainsString('variant: &#45;&#45;&gt;&lt;img src=x onerror=bad&gt;\\r\\nspoof', $html);

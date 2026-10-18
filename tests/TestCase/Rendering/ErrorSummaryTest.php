@@ -145,8 +145,7 @@ class ErrorSummaryTest extends FormTestCase
                     ->title(new Html('<em>Errors</em>'))
                     ->attributes(['id' => 'validation', 'class' => 'notice'])
                     ->partAttributes('title', ['id' => 'validation-heading'])
-                    ->templateData(['intro' => 'Check <these>'])
-                    ->config(),
+                    ->templateData(['intro' => 'Check <these>']),
             )
             ->render();
         static::assertStringContainsString(

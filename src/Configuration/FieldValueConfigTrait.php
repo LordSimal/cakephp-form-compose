@@ -50,25 +50,25 @@ trait FieldValueConfigTrait
     }
 
     /** Return configuration with an explicit value setting. */
-    public function withValue(mixed $value): static
+    public function value(mixed $value): static
     {
         return $this->changed('value', $value);
     }
 
     /** Return configuration with an explicit defaultValue setting. */
-    public function withDefaultValue(mixed $value): static
+    public function default(mixed $value): static
     {
         return $this->changed('defaultValue', $value);
     }
 
     /** Return configuration with an explicit schemaDefault setting. */
-    public function withSchemaDefault(bool $value): static
+    public function schemaDefault(bool $value = true): static
     {
         return $this->changed('schemaDefault', $value);
     }
 
     /** Return configuration with an explicit timezone setting. */
-    public function withTimezone(DateTimeZone|string|null $value): static
+    public function timezone(DateTimeZone|string|null $value): static
     {
         return $this->changed('timezone', $value);
     }

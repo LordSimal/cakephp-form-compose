@@ -12,11 +12,10 @@ class FieldConfigTest extends TestCase
 {
     public function testConfigurationPreservesNamedSettingsAndLastTemplateSelection(): void
     {
-        $builder = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email', help: 'Help'))
-            ->template('old')
+        $builder = new FieldConfig(type: 'email', label: 'Email', help: 'Help')->template('old')
             ->partTemplate('input', 'old-input');
-        $previous = $builder->config();
-        $field = $builder->template('new')->partTemplate('input', 'new-input')->templateData([])->config();
+        $previous = $builder;
+        $field = $builder->template('new')->partTemplate('input', 'new-input')->templateData([]);
         static::assertSame('email', $field->type);
         static::assertSame('Email', $field->label);
         static::assertSame('Help', $field->help);
@@ -25,18 +24,28 @@ class FieldConfigTest extends TestCase
         static::assertSame([], $field->presentation->templateData);
     }
 
+    public function testBuilderFactoryReturnsTheConfigAndPreservesItsImmutableSource(): void
+    {
+        $base = FieldConfig::builder();
+        $required = $base->type('email')->required();
+        static::assertInstanceOf(FieldConfig::class, $required);
+        static::assertNotSame($base, FieldConfig::builder());
+        static::assertNull($base->type);
+        static::assertNull($base->required);
+        static::assertSame('email', $required->type);
+        static::assertTrue($required->required);
+    }
+
     public function testNamedConfigurationAndFluentOverridesPreserveExplicitValues(): void
     {
         $help = new Html('<strong>Trusted help</strong>');
         $original = new FieldConfig(type: 'text', label: 'Original', help: 'Original');
-        $field = FieldConfig::builder($original)
-            ->type('email')
+        $field = $original->type('email')
             ->label(false)
             ->help($help)
             ->value(null)
             ->disabled(false)
-            ->extensionData(['data-empty' => '', 'data-zero' => 0])
-            ->config();
+            ->extensionData(['data-empty' => '', 'data-zero' => 0]);
         static::assertSame('email', $field->type);
         static::assertFalse($field->label);
         static::assertSame($help, $field->help);

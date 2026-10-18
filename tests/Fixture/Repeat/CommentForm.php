@@ -16,7 +16,7 @@ class CommentForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->presentation()->partTemplate('control', 'repeat/comment');
+        $form->partTemplate('control', 'repeat/comment');
         $form->add('id')->type('hidden');
         $form->add('body')->type('textarea')->help('Comment text');
         /** @var \ArrayObject<int, string>|null $calls */

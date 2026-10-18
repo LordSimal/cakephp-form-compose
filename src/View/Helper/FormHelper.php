@@ -11,8 +11,6 @@ use FormCompose\Binding\TypeMap;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\Blueprint\FormContext;
 use FormCompose\Builder\FormBuilder;
-use FormCompose\Builder\FormConfigBuilder;
-use FormCompose\Builder\ThemeBuilder;
 use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\FormIds;
 use FormCompose\Form\FormSession;
@@ -58,9 +56,9 @@ class FormHelper extends Helper
     protected ?PostActionRenderer $postActions = null;
 
     /** Configure a form before binding data or rendering markup. */
-    public function form(mixed $data = null, FormConfig|FormConfigBuilder|null $config = null): FormBuilder
+    public function form(mixed $data = null, ?FormConfig $config = null): FormBuilder
     {
-        return $this->createFormBuilder($data, FormConfig::capture($config));
+        return $this->createFormBuilder($data, $config ?? new FormConfig());
     }
 
     /** Supply the fluent entry point through an overridable factory. */
@@ -78,9 +76,8 @@ class FormHelper extends Helper
         $view = $this->getView();
         /** @var list<string> $passwordFields */
         $passwordFields = $this->getConfig('passwordFields', FormBinding::DEFAULT_PASSWORD_FIELDS);
-        $config = new FormConfig()->withPasswordFields($passwordFields)
-            ->merge($config);
-        $config = $config->withTypeMap(array_replace(
+        $config = FormConfig::builder()->passwordFields($passwordFields)->merge($config);
+        $config = $config->typeMap(array_replace(
             TypeMap::normalize($this->getConfig('typeMap', [])),
             $config->typeMap,
         ));
@@ -164,13 +161,12 @@ class FormHelper extends Helper
      * Null inherits helper configuration; Base explicitly selects the base theme.
      * Each binding retains the selected immutable theme independently of later config changes.
      */
-    protected function resolveTheme(Theme|ThemeBuilder|string|null $theme): Theme
+    protected function resolveTheme(Theme|string|null $theme): Theme
     {
         /** @var mixed $selected */
         $selected = $theme ?? $this->getConfig('theme');
-        /** @var mixed $selected */
-        $selected = $selected instanceof ThemeBuilder ? $selected->build() : $selected;
 
+        /** @var mixed $selected */
         return match ($selected) {
             null, 'Base' => Theme::base(),
             default => $selected instanceof Theme

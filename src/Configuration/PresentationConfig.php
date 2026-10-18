@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\PresentationBuilder;
 use FormCompose\Rendering\Attributes;
 
 /**
@@ -13,6 +12,7 @@ use FormCompose\Rendering\Attributes;
 final class PresentationConfig
 {
     use PresentationReplacementTrait;
+    use PresentationTemplatesTrait;
 
     /** @var array{attributes?: array<string, mixed>, partAttributes?: array<string, array<string, mixed>>, templates?: array<string, string>, templateData?: array<string, mixed>, variant?: ?string} Explicit presentation values. */
     private readonly array $values;
@@ -76,10 +76,8 @@ final class PresentationConfig
     }
 
     /** Merge an immutable presentation layer, honoring explicit bag replacements. */
-    public function merge(self|PresentationBuilder $next): self
+    public function merge(self $next): self
     {
-        $next = self::capture($next);
-
         return clone($this, [
             'values' => PresentationMerge::values($this->values, $next->values, $next->replace),
             'replace' => $next->replace + $this->replace,
@@ -87,7 +85,7 @@ final class PresentationConfig
     }
 
     /** @param array<string, mixed> $attributes HTML attributes. */
-    public function withAttributes(array $attributes): self
+    public function attributes(array $attributes): self
     {
         $attributes = new Attributes($attributes)->values;
 
@@ -95,7 +93,7 @@ final class PresentationConfig
     }
 
     /** @param array<string, mixed> $attributes HTML attributes for one named part. */
-    public function withPartAttributes(string $part, array $attributes): self
+    public function partAttributes(string $part, array $attributes): self
     {
         $attributes = new Attributes($attributes)->values;
 
@@ -105,19 +103,19 @@ final class PresentationConfig
     }
 
     /** @param array<string, string> $templates Elements keyed by part. */
-    public function withTemplates(array $templates): self
+    public function templates(array $templates): self
     {
         return $this->merge($this->layer(['templates' => $templates], []));
     }
 
     /** @param array<string, mixed> $data Application-owned variables. */
-    public function withTemplateData(array $data): self
+    public function templateData(array $data): self
     {
         return $this->merge($this->layer(['templateData' => $data], []));
     }
 
     /** Select or clear a variant independently of explicit elements. */
-    public function withVariant(?string $variant): self
+    public function variant(?string $variant): self
     {
         return $this->merge(new self(variant: $variant));
     }
@@ -134,9 +132,9 @@ final class PresentationConfig
         return $layer;
     }
 
-    /** Capture inline presentation without retaining mutable authoring state. */
-    public static function capture(self|PresentationBuilder|null $config): self
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return $config instanceof PresentationBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

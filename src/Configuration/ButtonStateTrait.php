@@ -21,7 +21,7 @@ trait ButtonStateTrait
     }
 
     /** Return configuration with an explicit name setting. */
-    public function withName(?string $value): static
+    public function name(?string $value): static
     {
         return $this->changed('name', $value);
     }
@@ -34,7 +34,7 @@ trait ButtonStateTrait
     }
 
     /** Return configuration with an explicit value setting. */
-    public function withValue(mixed $value): static
+    public function value(mixed $value): static
     {
         return $this->changed('value', $value);
     }
@@ -51,7 +51,7 @@ trait ButtonStateTrait
     }
 
     /** Return configuration with an explicit disabled setting. */
-    public function withDisabled(bool $value): static
+    public function disabled(bool $value = true): static
     {
         return $this->changed('disabled', $value);
     }

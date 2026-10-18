@@ -12,16 +12,12 @@ use FormCompose\Blueprint\FormContext;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedDefinition;
 use FormCompose\Builder\ButtonBuilder;
-use FormCompose\Builder\ButtonConfigBuilder;
 use FormCompose\Builder\ControlBatch;
 use FormCompose\Builder\ControlBuilder;
-use FormCompose\Builder\EmbedConfigBuilder;
 use FormCompose\Builder\FieldBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Builder\PartBuilder;
 use FormCompose\Builder\RepeatedEmbedBuilder;
 use FormCompose\Builder\SummaryBuilder;
-use FormCompose\Builder\SummaryConfigBuilder;
 use FormCompose\Configuration\ButtonConfig;
 use FormCompose\Configuration\EmbedConfig;
 use FormCompose\Configuration\FieldConfig;
@@ -158,9 +154,9 @@ class FormSession
      * Resolve a field snapshot without emitting markup or registering submissions.
      *
      */
-    public function field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder
+    public function field(string $field, ?FieldConfig $config = null): FieldBuilder
     {
-        return $this->createFieldBuilder($field, FieldConfig::capture($config));
+        return $this->createFieldBuilder($field, $config ?? new FieldConfig());
     }
 
     /** Create a configurable field through an application extension point. */
@@ -174,9 +170,9 @@ class FormSession
     }
 
     /** Configure a complete control, deferring resolution and registration until rendering. */
-    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+    public function control(string $field, ?FieldConfig $config = null): ControlBuilder
     {
-        return $this->createControlBuilder($field, FieldConfig::capture($config));
+        return $this->createControlBuilder($field, $config ?? new FieldConfig());
     }
 
     /** Create a renderable control while retaining field() customization. */
@@ -277,7 +273,7 @@ class FormSession
     public function embedMany(
         string $path,
         string $blueprint,
-        EmbedConfig|EmbedConfigBuilder|null $config = null,
+        ?EmbedConfig $config = null,
     ): RepeatedEmbedBuilder {
         return new RepeatedEmbedBuilder(
             /** @param list<int|string>|null $keys Selected row keys. */
@@ -288,7 +284,7 @@ class FormSession
 
                 return $this->renderRepeated($path, $compiled);
             },
-            EmbedConfig::capture($config),
+            $config ?? new EmbedConfig(),
         );
     }
 
@@ -300,7 +296,7 @@ class FormSession
     public function renderRepeated(
         string $path,
         RepeatedDefinition $compiled,
-        EmbedConfig|EmbedConfigBuilder|null $config = null,
+        ?EmbedConfig $config = null,
     ): string {
         $this->lifecycle->assertOpen();
         $compiled = new RepeatedDefinition(
@@ -314,7 +310,7 @@ class FormSession
         return $this->lifecycle->inputs->render(fn(): string => $this->blueprintRenderer->renderMany(
             $this,
             $compiled,
-            EmbedConfig::capture($config),
+            $config ?? new EmbedConfig(),
             $this->lifecycle->inputs,
         ));
     }
@@ -324,13 +320,13 @@ class FormSession
      *
      * Render or buffer the body first; inspecting fields never contributes entries.
      */
-    public function errorSummary(SummaryConfig|SummaryConfigBuilder|null $config = null): SummaryBuilder
+    public function errorSummary(?SummaryConfig $config = null): SummaryBuilder
     {
         return new SummaryBuilder(function (SummaryConfig $settings): string {
             $this->lifecycle->assertOpen();
 
             return $this->summaries->render($this, $this->lifecycle->inputs, $settings);
-        }, SummaryConfig::capture($config));
+        }, $config ?? new SummaryConfig());
     }
 
     /**
@@ -357,12 +353,12 @@ class FormSession
      * Render a themed button and register its optional submission only after rendering succeeds.
      *
      */
-    public function submit(string|Html $label, ButtonConfig|ButtonConfigBuilder|null $config = null): ButtonBuilder
+    public function submit(string|Html $label, ?ButtonConfig $config = null): ButtonBuilder
     {
         return new ButtonBuilder(fn(ButtonConfig $settings): string => $this->renderButton(
             $label,
             $settings,
-        ), ButtonConfig::capture($config));
+        ), $config ?? new ButtonConfig());
     }
 
     /** Commit a named button only after its template has succeeded. */

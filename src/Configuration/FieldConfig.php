@@ -4,12 +4,11 @@ declare(strict_types=1);
 namespace FormCompose\Configuration;
 
 use Closure;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
 
 /**
- * Immutable unbound field settings; authoring entry points capture inline builders.
+ * Immutable unbound field settings with named arguments and fluent configuration.
  * Explicit values, including null, remain distinct from missing configuration.
  */
 final class FieldConfig extends Configuration
@@ -34,7 +33,7 @@ final class FieldConfig extends Configuration
     }
 
     /** @param array<string, mixed> $value Application-owned custom type settings. */
-    public function withExtensionData(array $value): static
+    public function extensionData(array $value): static
     {
         return $this->changed('extensionData', $value);
     }
@@ -59,7 +58,7 @@ final class FieldConfig extends Configuration
         get => array_key_exists('choices', $this->values);
     }
 
-    /** Initialize common named settings; use builder() for the complete field API. */
+    /** Initialize common named settings; fluent methods return independent configurations. */
     public function __construct(
         string|Unspecified|null $type = Unspecified::Value,
         string|Html|Translated|Closure|Unspecified|false|null $label = Unspecified::Value,
@@ -71,15 +70,9 @@ final class FieldConfig extends Configuration
         ));
     }
 
-    /** Build reusable settings independently of a form session. */
-    public static function builder(self|FieldConfigBuilder|null $config = null): FieldConfigBuilder
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return new FieldConfigBuilder(self::capture($config));
-    }
-
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|FieldConfigBuilder|null $config): self
-    {
-        return $config instanceof FieldConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

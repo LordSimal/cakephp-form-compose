@@ -27,8 +27,7 @@ use FormCompose\Configuration\SummaryConfig;
 
 $summary = SummaryConfig::builder()
     ->title('Please review these fields')
-    ->attributes(['class' => 'validation-summary'])
-    ->config();
+    ->attributes(['class' => 'validation-summary']);
 
 echo $this->Form
     ->form($article)

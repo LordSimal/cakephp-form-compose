@@ -81,14 +81,17 @@ class BindingTest extends FormTestCase
 
     public function testInlineOptionsCanBeReusedAndExplicitOverridesWin(): void
     {
-        $options = FieldConfig::builder()->type('email')->label('Email')->help('Work email')->config();
-        $changed = $options->merge(FieldConfig::builder()->label('Contact')->config());
+        $options = FieldConfig::builder()
+            ->type('email')
+            ->label('Email')
+            ->help('Work email');
+        $changed = $options->merge(FieldConfig::builder()->label('Contact'));
         $form = $this->helper()->form()->url('/articles/save')->bind();
         static::assertSame('Contact', $form->field('email')->apply($changed)->resolve()->state->config->label);
         static::assertSame(
             'Override',
             $form->field('email')
-                ->apply($changed->merge(FieldConfig::builder()->label('Override')->config()))
+                ->apply($changed->merge(FieldConfig::builder()->label('Override')))
                 ->resolve()
                 ->state
                 ->config

@@ -47,8 +47,8 @@ class PostActionRenderer
         foreach ($action->data as $path => $value) {
             $html .= $form->control(
                 $path,
-                new FieldConfig(type: 'hidden')->withValue($value)
-                    ->withSecure(true),
+                new FieldConfig(type: 'hidden')->value($value)
+                    ->secure(true),
             )->render();
         }
 
@@ -77,7 +77,7 @@ class PostActionRenderer
         $attributes = $presentation->attributes;
         if ($action->kind === 'button') {
             PostActionSubmission::button($action->data, $action->button->name);
-            $config = $action->button->withPresentation($presentation->withAttributes(['form' => $form->binding->id]));
+            $config = $action->button->presentation($presentation->attributes(['form' => $form->binding->id]));
 
             return $form->submit($label, $config)->render();
         }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\EmbedConfigBuilder;
 use FormCompose\Rendering\Html;
 
 /** Immutable embed configuration captured before binding or rendering. */
@@ -24,7 +23,7 @@ final class EmbedConfig extends Configuration
     }
 
     /** Return configuration with an explicit label setting. */
-    public function withLabel(string|Html|null $value): static
+    public function label(string|Html|null $value): static
     {
         return $this->changed('label', $value);
     }
@@ -41,7 +40,7 @@ final class EmbedConfig extends Configuration
     }
 
     /** Return configuration with an explicit errors setting. */
-    public function withErrors(bool $value): static
+    public function errors(bool $value = true): static
     {
         return $this->changed('errors', $value);
     }
@@ -57,15 +56,9 @@ final class EmbedConfig extends Configuration
         ));
     }
 
-    /** Create a configuration-only builder for complete programmatic reuse. */
-    public static function builder(self|EmbedConfigBuilder|null $config = null): EmbedConfigBuilder
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return new EmbedConfigBuilder(self::capture($config));
-    }
-
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|EmbedConfigBuilder|null $config): self
-    {
-        return $config instanceof EmbedConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

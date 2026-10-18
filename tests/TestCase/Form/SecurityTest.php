@@ -21,13 +21,16 @@ class SecurityTest extends FormTestCase
     public function testDefinitionsOnlySecureRenderedFieldsAndPreserveLockedValues(): void
     {
         $contact = new FormDefinition([])->add(
-            new FieldDefinition('email', FieldConfig::builder()->type('email')->config()),
+            new FieldDefinition('email', FieldConfig::builder()->type('email')),
         )
             ->add(new FieldDefinition('unused'));
         $fields = new FormDefinition([])->add(
-            new FieldDefinition('id', FieldConfig::builder()->type('hidden')->value('42')->config()),
+            new FieldDefinition(
+                'id',
+                FieldConfig::builder()->type('hidden')->value('42'),
+            ),
         )
-            ->add(new FieldDefinition('active', FieldConfig::builder()->type('checkbox')->config()))
+            ->add(new FieldDefinition('active', FieldConfig::builder()->type('checkbox')))
             ->add(new FieldDefinition('comments.0.body'));
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $form = $helper->form()->url('/articles/save')->bind();

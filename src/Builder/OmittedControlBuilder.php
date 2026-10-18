@@ -12,7 +12,7 @@ use InvalidArgumentException;
 class OmittedControlBuilder extends ControlBuilder
 {
     /** Preserve the normal fluent field API without resolving an omitted field. */
-    public function __construct(FormSession $owner, FieldConfig|FieldConfigBuilder $config = new FieldConfig())
+    public function __construct(FormSession $owner, FieldConfig $config = new FieldConfig())
     {
         parent::__construct(
             static fn(FieldConfig $settings): BoundField => throw new InvalidArgumentException(

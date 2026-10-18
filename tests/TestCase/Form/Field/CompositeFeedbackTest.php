@@ -63,10 +63,9 @@ class CompositeFeedbackTest extends FormTestCase
                     FieldConfig::builder()
                         ->disabled(false)
                         ->readonly(false)
-                        ->attributes(['disabled' => false])
-                        ->config(),
+                        ->attributes(['disabled' => false]),
                 ),
-                new FieldSpec('check', FieldConfig::builder()->type('checkbox')->config()),
+                new FieldSpec('check', FieldConfig::builder()->type('checkbox')),
             ])])
             ->bind();
         $field = $form->field('settings')->type('settings')->resolve();
@@ -86,11 +85,14 @@ class CompositeFeedbackTest extends FormTestCase
         $form = $this->helper()
             ->form($context)
             ->types(['range' => new ConfiguredType([
-                new FieldSpec('hidden', FieldConfig::builder()->type('hidden')->config()),
-                new FieldSpec('disabled', FieldConfig::builder()->disabled(true)->config()),
-                new FieldSpec('empty', FieldConfig::builder()->type('radio')->choices([])->config()),
-                new FieldSpec('start', FieldConfig::builder()->config()),
-                new FieldSpec('end', FieldConfig::builder()->config()),
+                new FieldSpec('hidden', FieldConfig::builder()->type('hidden')),
+                new FieldSpec('disabled', FieldConfig::builder()->disabled(true)),
+                new FieldSpec(
+                    'empty',
+                    FieldConfig::builder()->type('radio')->choices([]),
+                ),
+                new FieldSpec('start', new FieldConfig()),
+                new FieldSpec('end', new FieldConfig()),
             ])])
             ->bind();
         $field = $form->field('period')->type('range')->partTemplate('composite', 'widgets/start-only')->resolve();
@@ -106,9 +108,12 @@ class CompositeFeedbackTest extends FormTestCase
         $form = $this->helper()
             ->form($context)
             ->types(['range' => new ConfiguredType([
-                new FieldSpec('hidden', FieldConfig::builder()->type('hidden')->config()),
-                new FieldSpec('disabled', FieldConfig::builder()->disabled(true)->config()),
-                new FieldSpec('empty', FieldConfig::builder()->type('radio')->choices([])->config()),
+                new FieldSpec('hidden', FieldConfig::builder()->type('hidden')),
+                new FieldSpec('disabled', FieldConfig::builder()->disabled(true)),
+                new FieldSpec(
+                    'empty',
+                    FieldConfig::builder()->type('radio')->choices([]),
+                ),
             ])])
             ->bind();
         $field = $form->field('period')->type('range')->resolve();
@@ -144,9 +149,9 @@ class CompositeFeedbackTest extends FormTestCase
             ->types(['range' => new ConfiguredType([
                 new FieldSpec(
                     'start',
-                    FieldConfig::builder()->attributes(['aria-describedby' => null])->config(),
+                    FieldConfig::builder()->attributes(['aria-describedby' => null]),
                 ),
-                new FieldSpec('end', FieldConfig::builder()->config()),
+                new FieldSpec('end', new FieldConfig()),
             ])])
             ->bind();
         $field = $form->field('period')
@@ -189,7 +194,10 @@ class CompositeFeedbackTest extends FormTestCase
         $form = $this->helper()
             ->form()
             ->types(['settings' => new ConfiguredType([
-                new FieldSpec('id', FieldConfig::builder()->type('hidden')->value(42)->config()),
+                new FieldSpec(
+                    'id',
+                    FieldConfig::builder()->type('hidden')->value(42),
+                ),
             ])])
             ->bind();
         $field = $form->field('settings')->type('settings')->help('Visible group help')->resolve();

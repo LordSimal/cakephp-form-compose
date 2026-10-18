@@ -23,8 +23,14 @@ class DateRangeType extends CompositeType
     public function inputs(BoundField $field): array
     {
         return [
-            new FieldSpec('start', FieldConfig::builder()->type('date')->label('Start date')->config()),
-            new FieldSpec('end', FieldConfig::builder()->type('date')->label('End date')->config()),
+            new FieldSpec(
+                'start',
+                FieldConfig::builder()->type('date')->label('Start date'),
+            ),
+            new FieldSpec(
+                'end',
+                FieldConfig::builder()->type('date')->label('End date'),
+            ),
         ];
     }
 }

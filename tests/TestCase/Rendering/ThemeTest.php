@@ -46,6 +46,24 @@ class ThemeTest extends FormTestCase
         $form->close();
     }
 
+    public function testFluentThemesKeepEarlierLayersAndDefaultsIndependent(): void
+    {
+        $original = Theme::builder()->layer('themes/library')->defaults('input', ['class' => 'original']);
+        $derived = $original->layer('themes/application')->defaults('input', ['class' => 'derived']);
+        $original->defaults('input', ['class' => 'ignored']);
+        static::assertSame(['themes/library'], $original->layers);
+        static::assertSame(['themes/library', 'themes/application'], $derived->layers);
+        $form = $this->helper()->form()->theme($original)->bind();
+        $html = $form->open() . $form->control('title')->render() . $form->close();
+        static::assertSame('original', $this->xpath($html)->evaluate('string(//input/@class)'));
+    }
+
+    public function testFluentThemeLayersValidatePathsImmediately(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        Theme::builder()->layer('../outside');
+    }
+
     public function testInvalidThemePathsAreRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);

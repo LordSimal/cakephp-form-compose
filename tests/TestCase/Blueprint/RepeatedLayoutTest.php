@@ -60,8 +60,7 @@ class RepeatedLayoutTest extends FormTestCase
 
         $options = EmbedConfig::builder()
             ->attributes(['id' => 'comments-wrapper', 'data-heading' => '<Comments>'])
-            ->label('Discussion <comments>')
-            ->config();
+            ->label('Discussion <comments>');
         try {
             $form->embedMany(path: 'comments', blueprint: CommentForm::class)->apply($options)->render();
             static::fail('Expected wrapper attributes to require a custom template.');

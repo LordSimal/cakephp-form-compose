@@ -24,9 +24,11 @@ class PostActionTest extends FormTestCase
         try {
             $action = $helper->postLink('Delete', '/delete')->block('actions');
             if ($method === 'form-id') {
-                $form = FormConfig::builder();
-                $this->invokeBuilder($form, 'id', $value);
-                $action->form($form->config());
+                $form = new FormConfig();
+                /** @var mixed $configured Deliberately dynamic input exercises runtime type enforcement. */
+                $configured = $this->invokeBuilder($form, 'id', $value);
+                static::assertInstanceOf(FormConfig::class, $configured);
+                $action->form($configured);
             } else {
                 $this->invokeBuilder($action, $method, $value);
             }

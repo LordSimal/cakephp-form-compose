@@ -20,7 +20,7 @@ class BlueprintRenderingTest extends FormTestCase
     public function testCollectionsRenderAtTheirCallSitesAlongsideOrdinaryControls(): void
     {
         $contact = new FormDefinition([])->add(new FieldDefinition('name'))
-            ->add(new FieldDefinition('email', FieldConfig::builder()->type('email')->config()));
+            ->add(new FieldDefinition('email', FieldConfig::builder()->type('email')));
         $details = new FormDefinition([])->add(new FieldDefinition('notes'));
         $form = $this->helper()->form()->bind();
         $html = $form->open() . $form->control('company')->render();
@@ -39,7 +39,10 @@ class BlueprintRenderingTest extends FormTestCase
     public function testReuseResolvesEachSessionsDataWithoutLeakingOptions(): void
     {
         $contact = new FormDefinition([])->add(
-            new FieldDefinition('email', FieldConfig::builder()->type('email')->label('Account email')->config()),
+            new FieldDefinition(
+                'email',
+                FieldConfig::builder()->type('email')->label('Account email'),
+            ),
         );
         $helper = $this->helper();
         $first = $helper->form(new ArrayContext(['data' => ['email' => 'first@example.test']]))->bind();
@@ -47,7 +50,7 @@ class BlueprintRenderingTest extends FormTestCase
         $first->open();
         $firstHtml = $first->renderDefinition($contact->with(
             'email',
-            FieldConfig::builder()->label('Work email')->config(),
+            FieldConfig::builder()->label('Work email'),
         ));
         $first->close();
         $second->open();
@@ -82,12 +85,15 @@ class BlueprintRenderingTest extends FormTestCase
             ->add(
                 new FieldDefinition(
                     'email',
-                    FieldConfig::builder()->type('email')->label('Email')->help('<Work address>')->config(),
+                    FieldConfig::builder()
+                        ->type('email')
+                        ->label('Email')
+                        ->help('<Work address>'),
                 ),
             );
         $form = $this->helper(['email' => 'posted@example.test'])->form()->bind();
         $email = $form->field($contact->field('email')->path)
-            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->label('Contact address')->config()))
+            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->label('Contact address')))
             ->resolve();
         $form->open();
         $html =
@@ -115,7 +121,7 @@ class BlueprintRenderingTest extends FormTestCase
             ->theme(new Theme(layers: ['themes/application']))
             ->bind();
         $definition = new FormDefinition([])->add(
-            new FieldDefinition('website', FieldConfig::builder()->variant('compact')->config()),
+            new FieldDefinition('website', FieldConfig::builder()->variant('compact')),
         );
         $form->open();
         $html = $form->renderDefinition($definition);
@@ -159,7 +165,7 @@ class BlueprintRenderingTest extends FormTestCase
         $this->expectException(LogicException::class);
         $form->renderDefinition(new FormDefinition([new FieldDefinition(
             'email',
-            FieldConfig::builder()->type('email')->config(),
+            FieldConfig::builder()->type('email'),
         )]));
     }
 }

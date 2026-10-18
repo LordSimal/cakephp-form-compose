@@ -3,16 +3,17 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\ConfigurationBuilder;
-use FormCompose\Builder\PresentationBuilder;
 use InvalidArgumentException;
 
 /**
  * Stores immutable, presence-aware configuration behind typed domain properties.
- * Builders use declared with-methods; no public option-array import is provided.
+ * Named arguments and fluent methods create independent settings without option-array imports.
  */
 abstract class Configuration
 {
+    use PresentationMethodsTrait;
+    use ReplacementMethodsTrait;
+
     /** @param array<string, mixed> $values Explicitly supplied typed settings. */
     protected function __construct(protected readonly array $values = [])
     {
@@ -30,18 +31,14 @@ abstract class Configuration
     }
 
     /** Return independent configuration with the supplied presentation. */
-    public function withPresentation(PresentationConfig|PresentationBuilder $presentation): static
+    public function presentation(PresentationConfig $presentation): static
     {
-        return $this->changed('presentation', PresentationConfig::capture($presentation));
+        return $this->changed('presentation', $presentation);
     }
 
     /** Overlay only settings supplied by the same configuration domain. */
-    public function merge(self|ConfigurationBuilder $overrides): static
+    public function merge(self $overrides): static
     {
-        if ($overrides instanceof ConfigurationBuilder) {
-            $overrides = $overrides->config();
-        }
-
         if ($overrides::class !== static::class) {
             throw new InvalidArgumentException('Configuration domains must match.');
         }
@@ -52,6 +49,24 @@ abstract class Configuration
         }
 
         return clone($this, ['values' => $values]);
+    }
+
+    /** Read presentation while keeping field values and rendering untouched. */
+    protected function currentPresentation(): PresentationConfig
+    {
+        return $this->presentation;
+    }
+
+    /** Return a copy with updated presentation. */
+    protected function updatePresentation(PresentationConfig $presentation): static
+    {
+        return $this->presentation($presentation);
+    }
+
+    /** Identify the template selected by template(). */
+    protected function primaryPart(): string
+    {
+        return 'control';
     }
 
     /** Return a new configuration; callers cannot mutate a previously captured snapshot. */

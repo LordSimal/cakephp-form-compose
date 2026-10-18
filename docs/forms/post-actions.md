@@ -248,15 +248,15 @@ form at the call site, so call it outside other forms.
 
 `postLink()` returns `ActionBuilder`. `postButton()` returns `PostButtonBuilder`,
 which adds native button `name()`, `value()`, and `disabled()` setters.
-Optional `config: $actionConfig` accepts an
-immutable `ActionConfig` or an inline `ActionConfig::builder()` chain. The helper
-captures builders immediately; `config()` is only needed for an explicit snapshot.
+Optional `config: $actionConfig` accepts an immutable `ActionConfig` directly.
+`ActionConfig::builder()` returns a new `ActionConfig`; its fluent methods return
+new configs, so an inline chain needs no terminal conversion.
 
 | Setter | Behavior |
 | --- | --- |
 | `method(string)` | POST, PUT, PATCH, or DELETE; overrides the nested form method. |
 | `data(array)` | Nested locked hidden payload. |
-| `form(FormConfig|FormConfigBuilder)` | Typed configuration of the independent form. Its URL is controlled by the action URL argument. |
+| `form(FormConfig)` | Typed configuration of the independent form. Its URL is controlled by the action URL argument. |
 | `block(?string)` | Inline for null; a nonempty CakePHP view block name otherwise. |
 | `confirm(?string)` | Confirmation text; null or empty string disables it. |
 | `attributes(array)` | Presentation attributes on the visible button/link. |

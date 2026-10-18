@@ -109,13 +109,12 @@ class TemplateDataTest extends FormTestCase
                 'email',
                 FieldConfig::builder()
                     ->partTemplate('control', 'themes/data/control')
-                    ->templateData(['marker' => 'original', 'content' => 'Original'])
-                    ->config(),
+                    ->templateData(['marker' => 'original', 'content' => 'Original']),
             ),
         );
         $customized = $contact->with(
             'email',
-            FieldConfig::builder()->replaceTemplateData(['marker' => 'customized'])->config(),
+            FieldConfig::builder()->replaceTemplateData(['marker' => 'customized']),
         );
         $form = $this->helper()->form()->bind();
         $form->open();
@@ -129,7 +128,7 @@ class TemplateDataTest extends FormTestCase
             $contact->field('email')->config->presentation->templateData,
         );
         $inline = $form->field($contact->field('email')->path)
-            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->replaceTemplateData([])->config()))
+            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->replaceTemplateData([])))
             ->resolve();
         static::assertSame([], $inline->state->config->presentation->templateData);
     }

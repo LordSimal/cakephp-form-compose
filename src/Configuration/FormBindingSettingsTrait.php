@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\ThemeBuilder;
 use FormCompose\Rendering\RendererInterface;
 use FormCompose\Rendering\Theme;
 
@@ -26,7 +25,7 @@ trait FormBindingSettingsTrait
     }
 
     /** @param list<string> $value Configured valueSources data. */
-    public function withValueSources(array $value): static
+    public function valueSources(array $value): static
     {
         return $this->changed('valueSources', $value);
     }
@@ -45,7 +44,7 @@ trait FormBindingSettingsTrait
     }
 
     /** @param list<string> $value Configured passwordFields data. */
-    public function withPasswordFields(array $value): static
+    public function passwordFields(array $value): static
     {
         return $this->changed('passwordFields', $value);
     }
@@ -64,7 +63,7 @@ trait FormBindingSettingsTrait
     }
 
     /** @param array<string, string> $value Configured typeMap data. */
-    public function withTypeMap(array $value): static
+    public function typeMap(array $value): static
     {
         return $this->changed('typeMap', $value);
     }
@@ -83,7 +82,7 @@ trait FormBindingSettingsTrait
     }
 
     /** @param array<string, \FormCompose\Form\Field\FieldTypeInterface> $value Configured types data. */
-    public function withTypes(array $value): static
+    public function types(array $value): static
     {
         return $this->changed('types', $value);
     }
@@ -103,7 +102,7 @@ trait FormBindingSettingsTrait
     }
 
     /** @param array<string, mixed> $value Configured context data. */
-    public function withContext(array $value): static
+    public function context(array $value): static
     {
         return $this->changed('context', $value);
     }
@@ -120,7 +119,7 @@ trait FormBindingSettingsTrait
     }
 
     /** Return configuration with an explicit blueprint setting. */
-    public function withBlueprint(?string $value): static
+    public function blueprint(?string $value): static
     {
         return $this->changed('blueprint', $value);
     }
@@ -140,9 +139,9 @@ trait FormBindingSettingsTrait
     }
 
     /** Return configuration with an explicit theme setting. */
-    public function withTheme(Theme|ThemeBuilder|null $value): static
+    public function theme(?Theme $value): static
     {
-        return $this->changed('theme', $value instanceof ThemeBuilder ? $value->build() : $value);
+        return $this->changed('theme', $value);
     }
 
     /** The configured renderer setting. */
@@ -160,7 +159,7 @@ trait FormBindingSettingsTrait
     }
 
     /** Return configuration with an explicit renderer setting. */
-    public function withRenderer(?RendererInterface $value): static
+    public function renderer(?RendererInterface $value): static
     {
         return $this->changed('renderer', $value);
     }

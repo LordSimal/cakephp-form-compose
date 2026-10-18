@@ -37,7 +37,7 @@ class NativeSubmissionTest extends FormTestCase
         $html =
             $form->open()
             . $form->control('author_id')
-                ->apply($options->merge(FieldConfig::builder()->type('select')->config()))
+                ->apply($options->merge(FieldConfig::builder()->type('select')))
                 ->render()
             . $form->close();
         $tokens = [];
@@ -71,54 +71,56 @@ class NativeSubmissionTest extends FormTestCase
     public static function selectSubmissions(): array
     {
         return [
-            'enum class' => [FieldConfig::builder()->choices(Priority::class)->config(), ['author_id' => '0']],
+            'enum class' => [FieldConfig::builder()->choices(Priority::class), ['author_id' => '0']],
             'enum cases multiple' => [
-                FieldConfig::builder()->choices(Priority::cases())->multiple(true)->config(),
+                FieldConfig::builder()->choices(Priority::cases())->multiple(true),
                 ['author_id' => ['0', '2']],
             ],
-            'disabled enum select' => [FieldConfig::builder()->choices(Priority::class)->disabled(true)->config(), []],
+            'disabled enum select' => [
+                FieldConfig::builder()->choices(Priority::class)->disabled(true),
+                [],
+            ],
             'disabled enum option' => [
                 FieldConfig::builder()
                     ->choices([new ChoiceConfig(Priority::Normal, null, ['disabled' => true])])
-                    ->placeholder(false)
-                    ->config(),
+                    ->placeholder(false),
                 [],
             ],
-            'empty single' => [FieldConfig::builder()->choices([])->placeholder(false)->config(), []],
-            'required empty single' => [FieldConfig::builder()->choices([])->required(true)->config(), []],
-            'optional blank' => [FieldConfig::builder()->choices([])->config(), ['author_id' => '']],
+            'empty single' => [FieldConfig::builder()->choices([])->placeholder(false), []],
+            'required empty single' => [FieldConfig::builder()->choices([])->required(true), []],
+            'optional blank' => [FieldConfig::builder()->choices([]), ['author_id' => '']],
             'disabled options' => [
                 FieldConfig::builder()
                     ->choices([new ChoiceConfig('a', 'A', ['disabled' => true])])
-                    ->placeholder(false)
-                    ->config(),
+                    ->placeholder(false),
                 [],
             ],
-            'empty optgroup' => [FieldConfig::builder()->choices(['Group' => []])->placeholder(false)->config(), []],
+            'empty optgroup' => [FieldConfig::builder()->choices(['Group' => []])->placeholder(false), []],
             'disabled optgroup' => [
                 FieldConfig::builder()
                     ->choices(['Group' => ['a' => 'A']])
-                    ->placeholder(false)
-                    ->config(),
+                    ->placeholder(false),
                 [],
                 ['choice-group' => ['disabled' => true]],
             ],
             'enabled optgroup' => [
                 FieldConfig::builder()
                     ->choices(['Group' => ['a' => 'A']])
-                    ->placeholder(false)
-                    ->config(),
+                    ->placeholder(false),
                 ['author_id' => 'a'],
             ],
             'empty multiple fallback' => [
-                FieldConfig::builder()->choices([])->multiple(true)->config(),
+                FieldConfig::builder()->choices([])->multiple(true),
                 ['author_id' => ''],
             ],
             'empty multiple no fallback' => [
-                FieldConfig::builder()->choices([])->multiple(true)->fallback(false)->config(),
+                FieldConfig::builder()
+                    ->choices([])
+                    ->multiple(true)
+                    ->fallback(false),
                 [],
             ],
-            'disabled select' => [FieldConfig::builder()->choices(['a' => 'A'])->disabled(true)->config(), []],
+            'disabled select' => [FieldConfig::builder()->choices(['a' => 'A'])->disabled(true), []],
         ];
     }
 

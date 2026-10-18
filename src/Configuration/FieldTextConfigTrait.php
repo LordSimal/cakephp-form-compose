@@ -62,19 +62,19 @@ trait FieldTextConfigTrait
     }
 
     /** Return configuration with an explicit label setting. */
-    public function withLabel(string|Html|Translated|Closure|false|null $value): static
+    public function label(string|Html|Translated|Closure|false|null $value): static
     {
         return $this->changed('label', $value);
     }
 
     /** Return configuration with an explicit help setting. */
-    public function withHelp(string|Html|Translated|Closure|false|null $value): static
+    public function help(string|Html|Translated|Closure|false|null $value): static
     {
         return $this->changed('help', $value);
     }
 
     /** Return configuration with an explicit errors setting. */
-    public function withErrors(bool $value): static
+    public function errors(bool $value = true): static
     {
         return $this->changed('errors', $value);
     }

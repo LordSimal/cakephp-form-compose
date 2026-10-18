@@ -7,7 +7,6 @@ use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
 use FormCompose\Builder\ControlBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\FieldSpec;
@@ -36,8 +35,11 @@ class FormSessionControlsTest extends CompositionTestCase
 
         $html = $form->controls([
             'website',
-            new FieldSpec('email', FieldConfig::builder()->label('Work <email>')->config()),
-            new FieldSpec('author.name', FieldConfig::builder()->value('Ada')->label(false)->config()),
+            new FieldSpec('email', FieldConfig::builder()->label('Work <email>')),
+            new FieldSpec(
+                'author.name',
+                FieldConfig::builder()->value('Ada')->label(false),
+            ),
         ])->render();
         static::assertStringContainsString('type="url"', $html);
         static::assertStringContainsString('type="email"', $html);
@@ -60,7 +62,7 @@ class FormSessionControlsTest extends CompositionTestCase
              * Supply an application control override used by batch rendering.
              *
              */
-            public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+            public function control(string $field, ?FieldConfig $config = null): ControlBuilder
             {
                 return new class(
                     fn(FieldConfig $settings): BoundField => $this->field($field, $settings)->resolve(),
@@ -102,7 +104,7 @@ class FormSessionControlsTest extends CompositionTestCase
         try {
             $form->controls([
                 'name',
-                new FieldSpec('attachment', FieldConfig::builder()->type('file')->config()),
+                new FieldSpec('attachment', FieldConfig::builder()->type('file')),
             ])->render();
             static::fail('Expected multipart enforcement to fail.');
         } catch (LogicException $logicException) {

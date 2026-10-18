@@ -13,7 +13,7 @@ trait FieldChoicesMethodsTrait
     /** @param iterable<mixed, mixed>|string|null $value Choice maps, lazy sources, or an enum class. */
     public function choices(iterable|string|null $value): static
     {
-        $this->updateFieldConfig($this->config()->withChoices($value));
+        $this->updateFieldConfig($this->config()->choices($value));
 
         return $this;
     }
@@ -21,7 +21,7 @@ trait FieldChoicesMethodsTrait
     /** Set placeholder on this mutable builder. */
     public function placeholder(bool|string|null $value): static
     {
-        $this->updateFieldConfig($this->config()->withPlaceholder($value));
+        $this->updateFieldConfig($this->config()->placeholder($value));
 
         return $this;
     }
@@ -29,7 +29,7 @@ trait FieldChoicesMethodsTrait
     /** Set checkedValue on this mutable builder. */
     public function checkedValue(mixed $value): static
     {
-        $this->updateFieldConfig($this->config()->withCheckedValue($value));
+        $this->updateFieldConfig($this->config()->checkedValue($value));
 
         return $this;
     }
@@ -37,7 +37,7 @@ trait FieldChoicesMethodsTrait
     /** Set uncheckedValue on this mutable builder. */
     public function uncheckedValue(mixed $value): static
     {
-        $this->updateFieldConfig($this->config()->withUncheckedValue($value));
+        $this->updateFieldConfig($this->config()->uncheckedValue($value));
 
         return $this;
     }
@@ -45,7 +45,7 @@ trait FieldChoicesMethodsTrait
     /** Set fallback on this mutable builder. */
     public function fallback(bool $value = true): static
     {
-        $this->updateFieldConfig($this->config()->withFallback($value));
+        $this->updateFieldConfig($this->config()->fallback($value));
 
         return $this;
     }
@@ -53,6 +53,6 @@ trait FieldChoicesMethodsTrait
     /** Capture domain-specific immutable configuration. */
     abstract public function config(): FieldConfig;
 
-    /** Store a typed configuration update and notify attached behavior. */
+    /** Store a typed configuration update on the attached builder. */
     abstract protected function updateFieldConfig(FieldConfig $config): void;
 }

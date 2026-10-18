@@ -132,7 +132,7 @@ The same applies to `$attributes`, `$parent`, and other prepared variables.
 | Field builder `templateData()` | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
 | Form builder `templateData()` before binding | That form's opening, closing, and infrastructure hidden-input elements. |
 | Button builder `templateData()` | That button's element. |
-| Blueprint `presentation()` or occurrence builder `templateData()` | That blueprint's layout, independently of child field or embedded layout data. |
+| Blueprint or occurrence builder `templateData()` | That blueprint's layout, independently of child field or embedded layout data. |
 
 Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
 their field, form, or button. Form data does not become a default for its fields

@@ -12,7 +12,7 @@ trait FieldIdentityMethodsTrait
     /** Set type on this mutable builder. */
     public function type(?string $value): static
     {
-        $this->updateFieldConfig($this->config()->withType($value));
+        $this->updateFieldConfig($this->config()->type($value));
 
         return $this;
     }
@@ -20,7 +20,7 @@ trait FieldIdentityMethodsTrait
     /** Set name on this mutable builder. */
     public function name(?string $value): static
     {
-        $this->updateFieldConfig($this->config()->withName($value));
+        $this->updateFieldConfig($this->config()->name($value));
 
         return $this;
     }
@@ -28,7 +28,7 @@ trait FieldIdentityMethodsTrait
     /** Set id on this mutable builder. */
     public function id(?string $value): static
     {
-        $this->updateFieldConfig($this->config()->withId($value));
+        $this->updateFieldConfig($this->config()->id($value));
 
         return $this;
     }
@@ -36,6 +36,6 @@ trait FieldIdentityMethodsTrait
     /** Capture domain-specific immutable configuration. */
     abstract public function config(): FieldConfig;
 
-    /** Store a typed configuration update and notify attached behavior. */
+    /** Store a typed configuration update on the attached builder. */
     abstract protected function updateFieldConfig(FieldConfig $config): void;
 }

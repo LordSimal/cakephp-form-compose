@@ -10,13 +10,42 @@ use FormCompose\Form\FormSession;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderableInterface;
 
-/** Configures a form before binding; every bind captures an independent session. */
-class FormBuilder extends FormConfigBuilder implements RenderableInterface
+/**
+ * Configures a form before binding; every bind captures an independent session.
+ * @extends ConfigurationBuilder<FormConfig>
+ */
+class FormBuilder extends ConfigurationBuilder implements RenderableInterface
 {
+    use FormSubmissionMethodsTrait;
+    use FormBindingMethodsTrait;
+    use FormLayoutMethodsTrait;
+
+    protected string $primaryPart = 'layout';
+
+    /** Capture the domain-specific immutable settings. */
+    public function config(): FormConfig
+    {
+        return $this->configuration;
+    }
+
+    /** Store domain settings through the shared immutable snapshot boundary. */
+    protected function updateFormConfig(FormConfig $config): void
+    {
+        $this->configuration = $config;
+    }
+
+    /** Overlay explicitly supplied settings from the same configuration domain. */
+    public function apply(FormConfig $config): static
+    {
+        $this->applyConfig($config);
+
+        return $this;
+    }
+
     /** @param \Closure(FormConfig): FormSession $bind Session factory preserving helper extension points. */
     public function __construct(
         protected readonly Closure $bind,
-        FormConfig|FormConfigBuilder $config = new FormConfig(),
+        FormConfig $config = new FormConfig(),
     ) {
         parent::__construct($config);
     }
@@ -28,12 +57,9 @@ class FormBuilder extends FormConfigBuilder implements RenderableInterface
     }
 
     /** Select the complete form's default action. */
-    public function submit(string|Html|false|null $value, ButtonConfig|ButtonConfigBuilder|null $config = null): static
+    public function submit(string|Html|false|null $value, ?ButtonConfig $config = null): static
     {
-        parent::submit($value);
-        if ($config !== null) {
-            $this->submitConfig($config);
-        }
+        $this->updateFormConfig($this->config()->submit($value, $config));
 
         return $this;
     }

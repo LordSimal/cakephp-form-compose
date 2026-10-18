@@ -96,18 +96,18 @@ class EnumDiscoveryTest extends FormTestCase
     {
         return [
             'subset' => [
-                FieldConfig::builder()->choices(['published' => 'Available'])->config(),
+                FieldConfig::builder()->choices(['published' => 'Available']),
                 'select',
                 ['published' => 'Available'],
             ],
-            'empty choices' => [FieldConfig::builder()->choices([])->config(), 'select', []],
-            'explicit null opts out' => [FieldConfig::builder()->choices(null)->config(), 'text', null],
-            'text' => [FieldConfig::builder()->type('text')->config(), 'text', null],
-            'hidden' => [FieldConfig::builder()->type('hidden')->config(), 'hidden', null],
-            'custom type' => [FieldConfig::builder()->type('application-status')->config(), 'application-status', null],
-            'radio' => [FieldConfig::builder()->type('radio')->config(), 'radio', PublicationStatus::class],
+            'empty choices' => [FieldConfig::builder()->choices([]), 'select', []],
+            'explicit null opts out' => [FieldConfig::builder()->choices(null), 'text', null],
+            'text' => [FieldConfig::builder()->type('text'), 'text', null],
+            'hidden' => [FieldConfig::builder()->type('hidden'), 'hidden', null],
+            'custom type' => [FieldConfig::builder()->type('application-status'), 'application-status', null],
+            'radio' => [FieldConfig::builder()->type('radio'), 'radio', PublicationStatus::class],
             'checkbox group' => [
-                FieldConfig::builder()->type('multicheckbox')->config(),
+                FieldConfig::builder()->type('multicheckbox'),
                 'multicheckbox',
                 PublicationStatus::class,
             ],
@@ -180,7 +180,7 @@ class EnumDiscoveryTest extends FormTestCase
                 ]),
                 $view->getRequest(),
                 'isolated',
-                FormConfig::builder()->config(),
+                new FormConfig(),
             ),
             new RenderContext(new PhpRenderer($view, $theme), $theme),
         );

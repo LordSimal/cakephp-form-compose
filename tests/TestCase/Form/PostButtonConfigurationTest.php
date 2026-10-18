@@ -16,9 +16,14 @@ class PostButtonConfigurationTest extends FormTestCase
     public function testTypedButtonValuesMatchOrdinaryButtons(mixed $value, string $expected): void
     {
         $helper = $this->helper();
-        $settings = ActionConfig::builder()->name('intent')->value($value)->disabled();
+        $settings = ActionConfig::builder()
+            ->name('intent')
+            ->value($value)
+            ->disabled();
         $action = $helper->postButton('Save <record>', '/save', config: $settings);
-        $settings->name('changed')->value('changed')->disabled(false);
+        $settings = $settings->name('changed')->value('changed')->disabled(false);
+        static::assertSame('changed', $settings->name);
+        static::assertFalse($settings->disabled);
         $html = $action->render();
         $xpath = $this->xpath($html);
         static::assertSame('intent', $xpath->evaluate('string(//button/@name)'));
@@ -46,7 +51,10 @@ class PostButtonConfigurationTest extends FormTestCase
 
     public function testFluentOverridesResetPreviouslyConfiguredButtonState(): void
     {
-        $settings = ActionConfig::builder()->name('old')->value('old')->disabled();
+        $settings = ActionConfig::builder()
+            ->name('old')
+            ->value('old')
+            ->disabled();
         $action = $this->helper()
             ->postButton('Save', '/save', config: $settings)
             ->name(null)
@@ -55,8 +63,8 @@ class PostButtonConfigurationTest extends FormTestCase
         $html = $action->render();
         static::assertSame(0.0, $this->xpath($html)->evaluate('count(//button/@name | //button/@disabled)'));
         static::assertSame('0', $this->xpath($html)->evaluate('string(//button/@value)'));
-        static::assertSame('old', $settings->config()->name);
-        static::assertTrue($settings->config()->disabled);
+        static::assertSame('old', $settings->name);
+        static::assertTrue($settings->disabled);
     }
 
     public function testLinksExposeOnlyApplicableMethods(): void
@@ -85,9 +93,9 @@ class PostButtonConfigurationTest extends FormTestCase
     public static function buttonOnlySettings(): array
     {
         return [
-            'name' => [new ActionConfig()->withName('intent')],
-            'value' => [new ActionConfig()->withValue(0)],
-            'disabled' => [new ActionConfig()->withDisabled(true)],
+            'name' => [ActionConfig::builder()->name('intent')],
+            'value' => [ActionConfig::builder()->value(0)],
+            'disabled' => [ActionConfig::builder()->disabled(true)],
         ];
     }
 }

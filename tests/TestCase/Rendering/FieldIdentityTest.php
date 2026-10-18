@@ -88,19 +88,27 @@ class FieldIdentityTest extends FormTestCase
     public static function relatedIdentities(): array
     {
         return [
-            'help' => ['help', FieldConfig::builder()->help('Hint')->config()],
-            'radio' => ['a', FieldConfig::builder()->type('radio')->choices(['a' => 'A'])->config()],
-            'checkbox group' => ['a', FieldConfig::builder()->type('multicheckbox')->choices(['a' => 'A'])->config()],
-            'select option' => ['a', FieldConfig::builder()->type('select')->choices(['a' => 'A'])->config()],
+            'help' => ['help', FieldConfig::builder()->help('Hint')],
+            'radio' => [
+                'a',
+                FieldConfig::builder()->type('radio')->choices(['a' => 'A']),
+            ],
+            'checkbox group' => [
+                'a',
+                FieldConfig::builder()->type('multicheckbox')->choices(['a' => 'A']),
+            ],
+            'select option' => [
+                'a',
+                FieldConfig::builder()->type('select')->choices(['a' => 'A']),
+            ],
             'container' => [
                 'container',
                 FieldConfig::builder()
-                    ->partAttributes('container', ['id' => 'form-compose-1-field-container'])
-                    ->config(),
+                    ->partAttributes('container', ['id' => 'form-compose-1-field-container']),
             ],
             'label' => [
                 'label',
-                FieldConfig::builder()->partAttributes('label', ['id' => 'form-compose-1-field-label'])->config(),
+                FieldConfig::builder()->partAttributes('label', ['id' => 'form-compose-1-field-label']),
             ],
         ];
     }

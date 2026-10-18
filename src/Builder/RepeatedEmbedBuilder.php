@@ -12,7 +12,7 @@ class RepeatedEmbedBuilder extends EmbedBuilder
     use RowSelectionTrait;
 
     /** @param \Closure(EmbedConfig, list<int|string>|null): string $render Compile and render the selected rows. */
-    public function __construct(Closure $render, EmbedConfig|EmbedConfigBuilder $config = new EmbedConfig())
+    public function __construct(Closure $render, EmbedConfig $config = new EmbedConfig())
     {
         parent::__construct(fn(EmbedConfig $settings): string => $render($settings, $this->selectedKeys), $config);
     }

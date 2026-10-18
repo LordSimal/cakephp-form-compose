@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\FormConfigBuilder;
-
 /** Immutable form configuration captured before binding or rendering. */
 final class FormConfig extends Configuration
 {
@@ -24,15 +22,15 @@ final class FormConfig extends Configuration
         ));
     }
 
-    /** Create a configuration-only builder for complete programmatic reuse. */
-    public static function builder(self|FormConfigBuilder|null $config = null): FormConfigBuilder
+    /** Complete form presentation selects its layout part. */
+    protected function primaryPart(): string
     {
-        return new FormConfigBuilder(self::capture($config));
+        return 'layout';
     }
 
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|FormConfigBuilder|null $config): self
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return $config instanceof FormConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

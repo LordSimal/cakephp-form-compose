@@ -25,6 +25,6 @@ class DynamicPostForm extends FormBlueprint
         $form->embed('comments.0.author', 'composed-author');
         $form->embed('details', DetailsForm::class);
         $form->add('body')->type('textarea');
-        $form->presentation()->templateData(['source' => 'builder']);
+        $form->templateData(['source' => 'builder']);
     }
 }

@@ -14,7 +14,7 @@ class ControlBuilder extends FieldBuilder implements RenderableInterface
     /** @param \Closure(FieldConfig): \FormCompose\Form\Field\BoundField $resolve Owning field resolver. */
     public function __construct(
         Closure $resolve,
-        FieldConfig|FieldConfigBuilder $config,
+        FieldConfig $config,
         public readonly FormSession $owner,
     ) {
         parent::__construct($resolve, $config);

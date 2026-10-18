@@ -140,7 +140,7 @@ class ExtensibilityTest extends FormTestCase
             }
         };
         $lifecycle = new FormLifecycle($binding, $construction);
-        $state = $lifecycle->prepare(Theme::base(), FormConfig::builder()->method('patch')->config());
+        $state = $lifecycle->prepare(Theme::base(), FormConfig::builder()->method('patch'));
         static::assertSame('_method', $state->hidden[0]->values['name']);
         static::assertSame('PATCH', $state->hidden[0]->values['value']);
         static::assertTrue($state->hidden[0]->has('data-infrastructure'));

@@ -94,14 +94,14 @@ class TemplateOverrideTest extends FormTestCase
         $contact = new FormDefinition([])->add(
             new FieldDefinition(
                 'email',
-                FieldConfig::builder()->type('email')->partTemplate('control', 'themes/custom/control')->config(),
+                FieldConfig::builder()->type('email')->partTemplate('control', 'themes/custom/control'),
             ),
         );
         $form = $this->helper()->form()->bind();
         $selected = $form->field($contact->field('email')->path)
             ->apply(
                 $contact->field('email')->config->merge(
-                        FieldConfig::builder()->partTemplate('control', 'themes/library/control')->config(),
+                        FieldConfig::builder()->partTemplate('control', 'themes/library/control'),
                     ),
             )
             ->resolve();
@@ -155,6 +155,6 @@ class TemplateOverrideTest extends FormTestCase
             $this->expectExceptionMessage('Template parts and element names must be nonempty strings.');
         }
 
-        $this->invokeBuilder(FieldConfig::builder(), 'partTemplate', 'control', $template);
+        $this->invokeBuilder(new FieldConfig(), 'partTemplate', 'control', $template);
     }
 }

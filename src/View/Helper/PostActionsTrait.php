@@ -5,9 +5,7 @@ namespace FormCompose\View\Helper;
 
 use Cake\View\Helper\HtmlHelper;
 use FormCompose\Builder\ActionBuilder;
-use FormCompose\Builder\ActionConfigBuilder;
 use FormCompose\Builder\PostButtonBuilder;
-use FormCompose\Builder\ThemeBuilder;
 use FormCompose\Configuration\ActionConfig;
 use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\FormSession;
@@ -49,12 +47,10 @@ trait PostActionsTrait
     public function postButton(
         string|Html $label,
         array|string $url,
-        ActionConfig|ActionConfigBuilder|null $config = null,
-        Theme|ThemeBuilder|string|null $theme = null,
+        ?ActionConfig $config = null,
+        Theme|string|null $theme = null,
         ?RendererInterface $renderer = null,
     ): PostButtonBuilder {
-        $theme = $theme instanceof ThemeBuilder ? $theme->build() : $theme;
-
         return new PostButtonBuilder(fn(ActionConfig $settings): string => ($this->postActions ??=
             $this->createPostActionRenderer())->render(
             $label,
@@ -67,7 +63,7 @@ trait PostActionsTrait
                 $renderer ?? $settings->form->renderer,
                 themeDebug: $this->getConfig('themeDebug') === true,
             ),
-        ), ActionConfig::capture($config));
+        ), $config ?? new ActionConfig());
     }
 
     /**
@@ -77,12 +73,10 @@ trait PostActionsTrait
     public function postLink(
         string|Html $label,
         array|string|null $url = null,
-        ActionConfig|ActionConfigBuilder|null $config = null,
-        Theme|ThemeBuilder|string|null $theme = null,
+        ?ActionConfig $config = null,
+        Theme|string|null $theme = null,
         ?RendererInterface $renderer = null,
     ): ActionBuilder {
-        $theme = $theme instanceof ThemeBuilder ? $theme->build() : $theme;
-
         return new ActionBuilder(fn(ActionConfig $settings): string => ($this->postActions ??=
             $this->createPostActionRenderer())->render(
             $label,
@@ -95,7 +89,7 @@ trait PostActionsTrait
                 $renderer ?? $settings->form->renderer,
                 themeDebug: $this->getConfig('themeDebug') === true,
             ),
-        ), ActionConfig::capture($config));
+        ), $config ?? new ActionConfig());
     }
 
     /**
@@ -107,7 +101,7 @@ trait PostActionsTrait
             $this->getView(),
             fn(FormConfig $config, RenderContext $rendering): FormSession => $this->bindForm(
                 null,
-                $config->withTheme($rendering->theme)->withRenderer($rendering->renderer),
+                $config->theme($rendering->theme)->renderer($rendering->renderer),
             ),
         );
     }

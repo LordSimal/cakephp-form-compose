@@ -9,7 +9,6 @@ use Cake\Utility\Inflector;
 use FormCompose\Binding\EnumChoices;
 use FormCompose\Configuration\ChoiceConfig;
 use FormCompose\Configuration\ChoiceGroupConfig;
-use FormCompose\Configuration\ChoiceList;
 use FormCompose\Configuration\Unspecified;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
@@ -51,8 +50,6 @@ class Choices
         $choices = [];
         /** @var mixed $label */
         foreach ($options as $value => $label) {
-            /** @var mixed $label */
-            $label = ChoiceList::item($label);
             if (is_array($label)) {
                 $label = new ChoiceGroupConfig((string)$value, $label);
             }
@@ -90,7 +87,7 @@ class Choices
         }
 
         $this->ids[$id] = true;
-        $option = $option->withId($id);
+        $option = $option->id($id);
         /** @var mixed $text */
         $text = $option->label === Unspecified::Value ? '' : $option->label;
 
@@ -123,7 +120,7 @@ class Choices
             }
 
             if ($option->label === Unspecified::Value) {
-                return $option->withLabel($this->enumLabel($option->value));
+                return $option->label($this->enumLabel($option->value));
             }
         }
 

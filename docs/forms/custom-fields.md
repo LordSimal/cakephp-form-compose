@@ -178,8 +178,8 @@ The `inputs()` declaration is resolved once per bound field. Keep it free of
 rendering and registration. Distinct composite types can nest; a type that recurs
 in its own ancestor chain is rejected.
 
-Inline `FieldConfig` builders are captured by `FieldSpec`; no `config()` call is
-needed. Echoing a part renders it directly; explicit `render()` is only needed
+`FieldConfig::builder()` returns an immutable `FieldConfig`, accepted directly by
+`FieldSpec` without a terminal conversion. Echoing a part renders it directly; explicit `render()` is only needed
 when you want a string before output.
 
 ### Keep layout in PHP

@@ -7,7 +7,6 @@ use FormCompose\Blueprint\BlueprintView;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedDefinition;
 use FormCompose\Builder\ControlBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\FieldDefinition;
@@ -29,8 +28,8 @@ class BlueprintViewTest extends CompositionTestCase
 
         $view = new BlueprintView($form, $definition, 'author');
         $html = $view->controls([
-            new FieldSpec('first_name', FieldConfig::builder()->label('Given <name>')->config()),
-            new FieldSpec('last_name', FieldConfig::builder()->label('Family name')->config()),
+            new FieldSpec('first_name', FieldConfig::builder()->label('Given <name>')),
+            new FieldSpec('last_name', FieldConfig::builder()->label('Family name')),
             'internal',
         ])->render();
         static::assertStringContainsString('name="author[first_name]"', $html);
@@ -83,7 +82,7 @@ class BlueprintViewTest extends CompositionTestCase
              * Decorate controls through the public extension point.
              *
              */
-            public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+            public function control(string $field, ?FieldConfig $config = null): ControlBuilder
             {
                 $base = parent::control($field, $config);
 

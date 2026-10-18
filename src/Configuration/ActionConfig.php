@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\ActionConfigBuilder;
-use FormCompose\Builder\FormConfigBuilder;
-
 /** Immutable action configuration captured before binding or rendering. */
 final class ActionConfig extends Configuration
 {
@@ -23,7 +20,7 @@ final class ActionConfig extends Configuration
     }
 
     /** Return configuration with an explicit method setting. */
-    public function withMethod(string $value): static
+    public function method(string $value): static
     {
         return $this->changed('method', $value);
     }
@@ -42,7 +39,7 @@ final class ActionConfig extends Configuration
     }
 
     /** @param array<string, mixed> $value Nested locked action data. */
-    public function withData(array $value): static
+    public function data(array $value): static
     {
         return $this->changed('data', $value);
     }
@@ -59,7 +56,7 @@ final class ActionConfig extends Configuration
     }
 
     /** Return configuration with an explicit confirm setting. */
-    public function withConfirm(?string $value): static
+    public function confirm(?string $value): static
     {
         return $this->changed('confirm', $value);
     }
@@ -76,7 +73,7 @@ final class ActionConfig extends Configuration
     }
 
     /** Return configuration with an explicit block setting. */
-    public function withBlock(?string $value): static
+    public function block(?string $value): static
     {
         return $this->changed('block', $value);
     }
@@ -93,9 +90,9 @@ final class ActionConfig extends Configuration
     }
 
     /** Return configuration with an explicit form setting. */
-    public function withForm(FormConfig|FormConfigBuilder $value): static
+    public function form(FormConfig $value): static
     {
-        return $this->changed('form', FormConfig::capture($value));
+        return $this->changed('form', $value);
     }
 
     /** Initialize common named settings without losing explicit null values. */
@@ -111,15 +108,9 @@ final class ActionConfig extends Configuration
         ));
     }
 
-    /** Create a configuration-only builder for complete programmatic reuse. */
-    public static function builder(self|ActionConfigBuilder|null $config = null): ActionConfigBuilder
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return new ActionConfigBuilder(self::capture($config));
-    }
-
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|ActionConfigBuilder|null $config): self
-    {
-        return $config instanceof ActionConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

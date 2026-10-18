@@ -41,7 +41,7 @@ class ActionsController extends Controller
         $html = $helper->postButton(label: 'Native delete', url: '/actions/save')
             ->method('delete')
             ->data(['version' => 0, 'record' => ['id' => 42]])
-            ->form(FormConfig::builder()->id('native-action')->config())
+            ->form(FormConfig::builder()->id('native-action'))
             ->render();
         $html .= $helper->postLink(label: 'Confirm link', url: '/actions/save')
             ->method('patch')
@@ -52,11 +52,11 @@ class ActionsController extends Controller
                 'isConnected' => 'locked',
             ])
             ->confirm('Proceed with <record>?')
-            ->form(FormConfig::builder()->id('link-action')->config())
+            ->form(FormConfig::builder()->id('link-action'))
             ->render();
         $html .= $helper->postButton(label: 'Confirm button', url: '/actions/save')
             ->confirm('Proceed with button?')
-            ->form(FormConfig::builder()->id('confirm-action')->config())
+            ->form(FormConfig::builder()->id('confirm-action'))
             ->name('intent')
             ->value('delete')
             ->render();
@@ -68,13 +68,13 @@ class ActionsController extends Controller
             ->method('delete')
             ->block('actions')
             ->data(['version' => 5])
-            ->form(FormConfig::builder()->id('external-action')->config())
+            ->form(FormConfig::builder()->id('external-action'))
             ->render();
         $html .= $helper->postLink(label: 'External link', url: '/actions/save')
             ->method('put')
             ->block('actions')
             ->data(['version' => 6])
-            ->form(FormConfig::builder()->id('external-link')->config())
+            ->form(FormConfig::builder()->id('external-link'))
             ->render();
         $html .= $parent->submit('Save parent')->render() . $parent->close() . $view->fetch('actions');
 
@@ -111,12 +111,12 @@ class ActionsController extends Controller
             ->method('delete')
             ->data(['version' => $id])
             ->confirm('Delete dynamic record?')
-            ->form(FormConfig::builder()->id('dynamic-link-' . $id)->config())
+            ->form(FormConfig::builder()->id('dynamic-link-' . $id))
             ->render();
         $html .= $helper->postButton(label: 'Dynamic button ' . $id, url: '/actions/save')
             ->confirm('Delete dynamic record?')
             ->data(['version' => $id])
-            ->form(FormConfig::builder()->id('dynamic-button-' . $id)->config())
+            ->form(FormConfig::builder()->id('dynamic-button-' . $id))
             ->render();
 
         return $this->getResponse()->withType('html')->withStringBody($html);

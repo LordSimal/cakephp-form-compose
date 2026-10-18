@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
-use FormCompose\Builder\ThemeBuilder;
 use InvalidArgumentException;
 
 /**
@@ -38,10 +37,19 @@ final readonly class Theme
         }
     }
 
-    /** Author layers and defaults through the fluent theme API. */
-    public static function builder(): ThemeBuilder
+    /** Append an element prefix while preserving the original theme. */
+    public function layer(string $prefix): self
     {
-        return new ThemeBuilder();
+        return new self([...$this->layers, $prefix], $this->defaults);
+    }
+
+    /** @param array<string, mixed> $attributes Merge native defaults for a part and optional type. */
+    public function defaults(string $part, array $attributes, ?string $type = null): self
+    {
+        $key = $type === null ? $part : $type . '.' . $part;
+        $defaults = new Attributes($this->defaults[$key] ?? [])->merge($attributes)->values;
+
+        return new self($this->layers, array_replace($this->defaults, [$key => $defaults]));
     }
 
     /**
@@ -60,5 +68,11 @@ final readonly class Theme
         $attributes = new Attributes($this->defaults[$part] ?? []);
 
         return $attributes->replace($this->defaults[$type . '.' . $part] ?? []);
+    }
+
+    /** Start an immutable theme with fluent layer and default configuration. */
+    public static function builder(): self
+    {
+        return new self();
     }
 }

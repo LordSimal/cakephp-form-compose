@@ -6,10 +6,9 @@ use FormCompose\Configuration\FieldConfig;
 /** @var \FormCompose\Blueprint\BlueprintView $form */
 $email = $form->field('email')
     ->apply(
-        FieldConfig::builder()
+        (FieldConfig::builder())
             ->label('Explicit email')
-            ->config()
-            ->merge(FieldConfig::builder()->help('<Parts help>')->config()),
+            ->merge((FieldConfig::builder())->help('<Parts help>')),
     )
     ->resolve();
 ?>

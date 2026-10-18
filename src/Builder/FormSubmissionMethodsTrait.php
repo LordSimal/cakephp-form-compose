@@ -12,7 +12,7 @@ trait FormSubmissionMethodsTrait
     /** @param array|string|false|null $value A CakePHP route or URL. */
     public function url(array|string|false|null $value): static
     {
-        $this->updateFormConfig($this->config()->withUrl($value));
+        $this->updateFormConfig($this->config()->url($value));
 
         return $this;
     }
@@ -20,7 +20,7 @@ trait FormSubmissionMethodsTrait
     /** Set method on this mutable builder. */
     public function method(?string $value): static
     {
-        $this->updateFormConfig($this->config()->withMethod($value));
+        $this->updateFormConfig($this->config()->method($value));
 
         return $this;
     }
@@ -28,7 +28,7 @@ trait FormSubmissionMethodsTrait
     /** Set id on this mutable builder. */
     public function id(?string $value): static
     {
-        $this->updateFormConfig($this->config()->withId($value));
+        $this->updateFormConfig($this->config()->id($value));
 
         return $this;
     }
@@ -36,7 +36,7 @@ trait FormSubmissionMethodsTrait
     /** Set multipart on this mutable builder. */
     public function multipart(bool $value = true): static
     {
-        $this->updateFormConfig($this->config()->withMultipart($value));
+        $this->updateFormConfig($this->config()->multipart($value));
 
         return $this;
     }
@@ -44,7 +44,7 @@ trait FormSubmissionMethodsTrait
     /** Set enctype on this mutable builder. */
     public function enctype(?string $value): static
     {
-        $this->updateFormConfig($this->config()->withEnctype($value));
+        $this->updateFormConfig($this->config()->enctype($value));
 
         return $this;
     }
@@ -53,7 +53,7 @@ trait FormSubmissionMethodsTrait
 
     public function encoding(?string $value): static
     {
-        $this->updateFormConfig($this->config()->withEncoding($value));
+        $this->updateFormConfig($this->config()->encoding($value));
 
         return $this;
     }
@@ -61,6 +61,6 @@ trait FormSubmissionMethodsTrait
     /** Capture domain-specific immutable configuration. */
     abstract public function config(): FormConfig;
 
-    /** Store a typed configuration update and notify attached behavior. */
+    /** Store a typed configuration update on the attached builder. */
     abstract protected function updateFormConfig(FormConfig $config): void;
 }

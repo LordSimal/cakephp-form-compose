@@ -32,12 +32,13 @@ use FormCompose\Configuration\FieldConfig;
 
 $email = FieldConfig::builder()
     ->type('email')
-    ->required()
-    ->config();
+    ->required();
 echo $form->control('email', config: $email);
 ```
 
-Builders are mutable authoring objects; configs are immutable snapshots. See
+`FieldConfig::builder()` returns a `FieldConfig`, and each fluent call returns a
+new config. Form, rendering, and declaration builders update their attached
+occurrence. See
 [field configuration](/field-options) for constructors, merging, and every setter.
 
 ## Extract a reusable form

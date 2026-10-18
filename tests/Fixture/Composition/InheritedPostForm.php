@@ -17,7 +17,7 @@ class InheritedPostForm extends PostForm
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         parent::configure($form, $context);
-        $form->presentation()->templateData(['inherited' => true]);
+        $form->templateData(['inherited' => true]);
         $form->field('title')->label('Inherited title');
         $form->add('extra');
     }

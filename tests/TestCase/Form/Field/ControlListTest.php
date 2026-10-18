@@ -23,9 +23,15 @@ class ControlListTest extends TestCase
         $fields = ControlList::normalize([
             'first_name',
             $email,
-            new FieldSpec('author.name', FieldConfig::builder()->label(false)->value(null)->required(false)->config()),
-            new FieldSpec('count', FieldConfig::builder()->value(0)->config()),
-            new FieldSpec('empty', FieldConfig::builder()->value('')->config()),
+            new FieldSpec(
+                'author.name',
+                FieldConfig::builder()
+                    ->label(false)
+                    ->value(null)
+                    ->required(false),
+            ),
+            new FieldSpec('count', FieldConfig::builder()->value(0)),
+            new FieldSpec('empty', FieldConfig::builder()->value('')),
         ]);
         static::assertSame(['first_name', 'email', 'author.name', 'count', 'empty'], array_column($fields, 'path'));
         static::assertSame($email, $fields[1]);

@@ -19,19 +19,20 @@ use LogicException;
 /** Exercises mutable authoring, immutable snapshots, and explicit rendering boundaries. */
 class FluentApiTest extends FormTestCase
 {
-    public function testReusableSnapshotsDoNotTrackLaterBuilderChanges(): void
+    public function testReusableConfigurationsKeepDerivedSettingsIndependent(): void
     {
-        $builder = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email address'))
-            ->required()
+        $builder = new FieldConfig(type: 'email', label: 'Email address')->required()
             ->attributes(['autocomplete' => 'email']);
-        $email = $builder->config();
-        $builder->label('Work email')->disabled();
+        $email = $builder;
+        $email->type('hidden');
+
+        $builder = $builder->label('Work email')->disabled();
 
         $form = $this->helper()->form()->bind();
         $html =
             $form->open()
             . $form->control('personal', config: $email)->render()
-            . $form->control('work', config: $builder->config())->render()
+            . $form->control('work', config: $builder)->render()
             . $form->close();
         $xpath = $this->xpath($html);
         static::assertSame(
@@ -41,6 +42,7 @@ class FluentApiTest extends FormTestCase
         static::assertSame(0.0, $xpath->evaluate('count(//input[@name="personal"]/@disabled)'));
         static::assertSame(1.0, $xpath->evaluate('count(//input[@name="work"]/@disabled)'));
         static::assertSame('email', $xpath->evaluate('string(//input[@name="personal"]/@autocomplete)'));
+        static::assertSame('email', $xpath->evaluate('string(//input[@name="personal"]/@type)'));
     }
 
     public function testControlResolvesItsFinalSettingsOnlyWhenRendered(): void
@@ -82,31 +84,27 @@ class FluentApiTest extends FormTestCase
         $base = FieldConfig::builder()
             ->attributes(['class' => 'base', 'data-old' => 'yes'])
             ->templateData(['old' => 1, 'retained' => 2])
-            ->partAttributes('label', ['class' => 'base-label'])
-            ->config();
+            ->partAttributes('label', ['class' => 'base-label']);
         $layer = FieldConfig::builder()
             ->replaceAttributes(['class' => 'replacement'])
             ->attributes(['class' => 'extra'])
             ->replaceTemplateData(['fresh' => 3])
-            ->replacePartAttributes('label', ['class' => 'new-label'])
-            ->config();
+            ->replacePartAttributes('label', ['class' => 'new-label']);
         $merged = $base->merge($layer)->presentation;
         static::assertSame('replacement extra', $merged->attributes['class']);
         static::assertArrayNotHasKey('data-old', $merged->attributes);
         static::assertSame(['fresh' => 3], $merged->templateData);
         static::assertSame(['class' => 'new-label'], $merged->partAttributes['label']);
         static::assertSame(['old' => 1, 'retained' => 2], $base->presentation->templateData);
-        static::assertNull(new PresentationConfig(variant: 'compact')->withVariant(null)->variant);
+        static::assertNull(new PresentationConfig(variant: 'compact')->variant(null)->variant);
     }
 
-    public function testChoiceAndThemeBuildersRenderTypedChoiceMetadata(): void
+    public function testFluentChoicesAndThemesRenderTypedChoiceMetadata(): void
     {
-        $choice = ChoiceConfig::builder('a', 'Alpha')
-            ->attributes(['data-code' => 'alpha'])
-            ->id('choice-alpha')
-            ->config();
-        $group = ChoiceGroupConfig::builder('Letters', [$choice])->attributes(['data-group' => 'letters'])->config();
-        $theme = Theme::builder()->defaults('input', ['class' => 'themed'])->build();
+        $choice = ChoiceConfig::builder('a', 'Alpha')->attributes(['data-code' => 'alpha'])
+            ->id('choice-alpha');
+        $group = ChoiceGroupConfig::builder('Letters', [$choice])->attributes(['data-group' => 'letters']);
+        $theme = Theme::builder()->defaults('input', ['class' => 'themed']);
         $form = $this->helper()->form()->theme($theme)->bind();
         $html = $form->open() . $form->control('letter')->choices([$group])->value('a')->render() . $form->close();
         $xpath = $this->xpath($html);
@@ -117,9 +115,9 @@ class FluentApiTest extends FormTestCase
 
     public function testChoiceEditsDoNotChangeEarlierSnapshots(): void
     {
-        $builder = ChoiceConfig::builder('a', 'Original');
-        $original = $builder->config();
-        $updated = $builder->label('Edited')->disabled()->config();
+        $builder = new ChoiceConfig('a', 'Original');
+        $original = $builder;
+        $updated = $builder->label('Edited')->disabled();
         static::assertSame('Original', $original->label);
         static::assertSame([], $original->attributes);
         static::assertSame('Edited', $updated->label);

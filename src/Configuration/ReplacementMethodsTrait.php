@@ -1,9 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace FormCompose\Builder;
-
-use FormCompose\Configuration\PresentationConfig;
+namespace FormCompose\Configuration;
 
 /** Explicit replacement counterparts to the normal merging presentation setters. */
 trait ReplacementMethodsTrait

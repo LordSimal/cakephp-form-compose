@@ -20,7 +20,7 @@ class PostActionTest extends FormTestCase
         $helper = $this->helper(['version' => 99], ['csrfToken' => $csrf]);
         $html = $helper->postButton(label: 'Delete <record>', url: '/records/delete/5')
             ->data(['version' => 0, 'flags' => ['active' => false], 'empty' => '', 'missing' => null])
-            ->form(FormConfig::builder()->attributes(['class' => 'action-form'])->config())
+            ->form(FormConfig::builder()->attributes(['class' => 'action-form']))
             ->attributes(['class' => 'danger'])
             ->render();
         $xpath = $this->xpath($html);
@@ -85,7 +85,7 @@ class PostActionTest extends FormTestCase
         $helper = $this->helper();
         $button = $helper->postButton(label: 'Delete', url: '/delete')
             ->block('postActions')
-            ->form(FormConfig::builder()->id('delete-action')->config())
+            ->form(FormConfig::builder()->id('delete-action'))
             ->render();
         $link = $helper->postLink(label: 'Archive', url: '/archive')->block('actions')->render();
         static::assertStringNotContainsString('<form', $button . $link);
@@ -126,12 +126,17 @@ class PostActionTest extends FormTestCase
         static::assertStringContainsString('action="/articles/save"', $html);
         $html = $helper->postButton(label: 'Other', url: '/explicit')
             ->method('patch')
-            ->form(FormConfig::builder()->method('delete')->url('/ignored')->method('get')->config())
+            ->form(
+                FormConfig::builder()
+                    ->method('delete')
+                    ->url('/ignored')
+                    ->method('get'),
+            )
             ->render();
         static::assertStringContainsString('action="/explicit"', $html);
         static::assertStringContainsString('name="_method" value="PATCH"', $html);
         $html = $helper->postButton(label: 'Nested method', url: '/nested')
-            ->form(FormConfig::builder()->method('put')->config())
+            ->form(FormConfig::builder()->method('put'))
             ->render();
         static::assertStringContainsString('name="_method" value="PUT"', $html);
     }

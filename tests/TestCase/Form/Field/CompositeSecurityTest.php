@@ -24,8 +24,11 @@ class CompositeSecurityTest extends FormTestCase
         $helper = $this->helper(attributes: ['formTokenData' => [], 'csrfToken' => $csrf]);
         $form = $helper->form()
             ->types(['range' => new ConfiguredType([
-                new FieldSpec('start', FieldConfig::builder()->type('hidden')->value(42)->config()),
-                new FieldSpec('end', FieldConfig::builder()->config()),
+                new FieldSpec(
+                    'start',
+                    FieldConfig::builder()->type('hidden')->value(42),
+                ),
+                new FieldSpec('end', new FieldConfig()),
             ])])
             ->method('patch')
             ->bind();

@@ -5,7 +5,6 @@ namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Blueprint\BlueprintView;
 use FormCompose\Builder\ControlBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Configuration\FieldConfig;
 
 /**
@@ -17,8 +16,8 @@ class CustomBlueprintView extends BlueprintView
      * Annotate controls through typed field configuration.
      *
      */
-    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+    public function control(string $field, ?FieldConfig $config = null): ControlBuilder
     {
-        return parent::control($field, FieldConfig::capture($config)->withLabel('Application layout field'));
+        return parent::control($field, ($config ?? new FieldConfig())->label('Application layout field'));
     }
 }

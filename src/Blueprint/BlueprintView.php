@@ -7,10 +7,8 @@ use FormCompose\Builder\ControlBatch;
 use FormCompose\Builder\ControlBuilder;
 use FormCompose\Builder\EmbedBuilder;
 use FormCompose\Builder\FieldBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
 use FormCompose\Builder\OmittedControlBuilder;
 use FormCompose\Builder\PartBuilder;
-use FormCompose\Builder\PresentationBuilder;
 use FormCompose\Configuration\EmbedConfig;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Configuration\PresentationConfig;
@@ -50,25 +48,25 @@ class BlueprintView
      *
      * @throws \InvalidArgumentException For removed or unknown fields; guard optional parts with has().
      */
-    public function field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder
+    public function field(string $field, ?FieldConfig $config = null): FieldBuilder
     {
         $configured = $this->definition->field($field);
 
-        return $this->session->field($this->qualify($field), $configured->config->merge(FieldConfig::capture($config)));
+        return $this->session->field($this->qualify($field), $configured->config->merge($config ?? new FieldConfig()));
     }
 
     /** Configure a scoped control, preserving deliberately removed fields as empty output. */
-    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+    public function control(string $field, ?FieldConfig $config = null): ControlBuilder
     {
         if ($this->definition->index->wasRemoved($field)) {
-            return new OmittedControlBuilder($this->session, FieldConfig::capture($config));
+            return new OmittedControlBuilder($this->session, $config ?? new FieldConfig());
         }
 
         $configured = $this->definition->field($field);
 
         return $this->session->control(
             $this->qualify($field),
-            $configured->config->merge(FieldConfig::capture($config)),
+            $configured->config->merge($config ?? new FieldConfig()),
         );
     }
 
@@ -100,12 +98,12 @@ class BlueprintView
     }
 
     /** Render this child's layout at its existing path without another form lifecycle. */
-    public function render(PresentationConfig|PresentationBuilder|null $presentation = null): string
+    public function render(?PresentationConfig $presentation = null): string
     {
         return $this->session->renderDefinition(
             $this->definition,
             $this->path === '' ? null : $this->path,
-            PresentationConfig::capture($presentation),
+            $presentation ?? new PresentationConfig(),
         );
     }
 

@@ -10,9 +10,9 @@ submission state belong to the enclosing form session.
 
 ## Presentation options
 
-`$form->presentation()` in a blueprint hook returns an attached
-`PresentationBuilder`: `template()`, `partTemplate()`, `variant()`, `attributes()`,
-`partAttributes()`, `templateData()`, and explicit replacement methods.
+Configure the blueprint layout directly on `$form`: `template()`, `partTemplate()`,
+`variant()`, `attributes()`, `partAttributes()`, `templateData()`, and explicit
+replacement methods. These update the attached blueprint.
 Embed declaration builders and renderable scoped occurrences use the same methods.
 
 ## Blueprint declarations
@@ -24,8 +24,9 @@ layout, template, or data settings. Class references remain supported explicitly
 
 ### Field
 
-Declare fields with `BlueprintBuilder::add(string $path, FieldConfig|FieldConfigBuilder|null $config = null)`.
-A builder argument is captured immediately. The returned attached `FieldConfigBuilder` exposes all [field setters](/field-options).
+Declare fields with `BlueprintBuilder::add(string $path, FieldConfig|null $config = null)`.
+Pass an immutable `FieldConfig` directly. The returned attached `FieldDeclarationBuilder`
+exposes all [field setters](/field-options) and compiles a field declaration during `build()`.
 There is no `Field` attribute.
 
 ### Embed
@@ -65,7 +66,7 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
     $form->add('title')->required();
     $form->embed('author', 'author');
     $form->field('author.email')->label(__('Contact email'));
-    $form->presentation()->template('forms/article');
+    $form->template('forms/article');
 }
 ```
 
@@ -78,7 +79,7 @@ This is a class method; import the blueprint classes and CakePHP's `__` function
 | `embed(string, string)` | Deferred single-child declaration builder. |
 | `embedMany(string, string)` | Deferred repeated declaration builder; select keys before compilation. |
 | `remove(string)` | Remove a field or entire embed; retains omission history. |
-| `presentation()` | Attached collection presentation builder. |
+| `template()`, `partTemplate()`, `attributes()`, `templateData()` | Configure the attached collection layout. |
 | `build()` | Immutable compiled `FormDefinition`; normally called by the compiler. |
 
 ## FormContext
@@ -133,9 +134,9 @@ See [services and discovery](/blueprint-configuration).
 ## Repeated blueprints and occurrence options
 
 `EmbedConfig::builder()` exposes `label(string|Html|null)`,
-`errors(bool = true)`, and shared presentation methods. `config()` captures a
-snapshot; `apply(EmbedConfig)` overlays one. Native constructors accept label
-and errors by name. Row selection belongs to `keys(?array)` on the
+`errors(bool = true)`, and shared presentation methods. The factory returns an
+immutable `EmbedConfig`; fluent calls return new configs, and `merge(EmbedConfig)`
+overlays explicit settings. Constructors accept label and errors by name. Row selection belongs to `keys(?array)` on the
 `RepeatedBlueprintBuilder` returned by blueprint `embedMany()` and the
 `RepeatedEmbedBuilder` returned by session `embedMany()`. Null keys infer rows;
 empty keys render no rows. Each selected row has its own scoped blueprint hook.

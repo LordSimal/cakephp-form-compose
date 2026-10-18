@@ -9,6 +9,7 @@ These instructions apply to the entire plugin repository.
 - Prioritize bound fields and application-owned markup. Keep reusable PHP form blueprints an optional layer.
 - Use blueprint terminology for reusable declarations, aliases, selection APIs, and authoring/layout services. Reserve definition terminology for compiled configuration such as FormDefinition and FieldDefinition. Prefer declared blueprint aliases in documentation examples; show class references explicitly as an alternative.
 - Separate field configuration, resolved field state, rendering, and per-form submission/security bookkeeping.
+- Keep reusable configuration immutable and fluent. A `builder()` factory returns the config itself; rendering and attached declaration builders own mutable authoring state.
 - Reuse CakePHP context providers, validation metadata, routing, request abstractions, and form protection through public APIs.
 - Keep inspection of field state free of rendering and security-registration side effects. Register submitted inputs when rendering them, including custom controls.
 - Support native PHP templates, independently renderable field parts, and custom HTML structures without requiring helper subclassing.

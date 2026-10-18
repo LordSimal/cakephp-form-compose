@@ -5,10 +5,12 @@ namespace FormCompose\Blueprint;
 
 use Closure;
 use FormCompose\Builder\EmbeddedBlueprintBuilder;
-use FormCompose\Builder\FieldConfigBuilder;
-use FormCompose\Builder\PresentationBuilder;
+use FormCompose\Builder\FieldDeclarationBuilder;
 use FormCompose\Builder\RepeatedBlueprintBuilder;
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
+use FormCompose\Configuration\PresentationMethodsTrait;
+use FormCompose\Configuration\ReplacementMethodsTrait;
 use FormCompose\Form\Field\FieldDefinition;
 use InvalidArgumentException;
 
@@ -20,11 +22,13 @@ use InvalidArgumentException;
 class BlueprintBuilder
 {
     use ChildDeclarationsTrait;
+    use PresentationMethodsTrait;
+    use ReplacementMethodsTrait;
 
-    /** @var array<string, FieldConfigBuilder|EmbeddedBlueprintBuilder|RepeatedBlueprintBuilder|EmbeddedDefinition|RepeatedDefinition> Ordered declarations. */
+    /** @var array<string, FieldDeclarationBuilder|EmbeddedBlueprintBuilder|RepeatedBlueprintBuilder|EmbeddedDefinition|RepeatedDefinition> Ordered declarations. */
     protected array $entries = [];
 
-    /** @var array<string, FieldConfigBuilder> Qualified child overrides. */
+    /** @var array<string, FieldDeclarationBuilder> Qualified child overrides. */
     protected array $edits = [];
 
     /** @var list<string> Explicit removals. */
@@ -33,7 +37,7 @@ class BlueprintBuilder
     /** @var list<string> Omission history retained from a compiled seed. */
     protected array $omitted = [];
 
-    protected readonly PresentationBuilder $presentation;
+    protected PresentationConfig $layout;
 
     /**
      * @param \Closure(string, string): FormDefinition $resolver Scoped mount and blueprint identifier.
@@ -46,27 +50,27 @@ class BlueprintBuilder
     ) {
         foreach ($definition->entries as $entry) {
             $this->entries[$entry->path] = $entry instanceof FieldDefinition
-                ? $this->createFieldBuilder($entry->config)
+                ? $this->createFieldBuilder($entry->path, $entry->config)
                 : $entry;
         }
 
         $this->omitted = $definition->removed;
-        $this->presentation = new PresentationBuilder($definition->presentation);
+        $this->layout = $definition->presentation;
     }
 
     /** Append an attached field builder; duplicate declarations fail immediately. */
-    public function add(string $path, FieldConfig|FieldConfigBuilder|null $config = null): FieldConfigBuilder
+    public function add(string $path, ?FieldConfig $config = null): FieldDeclarationBuilder
     {
         $this->assertAvailable($path);
 
-        return $this->entries[$path] = $this->createFieldBuilder(FieldConfig::capture($config));
+        return $this->entries[$path] = $this->createFieldBuilder($path, $config ?? new FieldConfig());
     }
 
     /** Edit a declared field or stage a qualified child override, validated during build(). */
-    public function field(string $path): FieldConfigBuilder
+    public function field(string $path): FieldDeclarationBuilder
     {
         $entry = $this->entries[$path] ?? null;
-        if ($entry instanceof FieldConfigBuilder) {
+        if ($entry instanceof FieldDeclarationBuilder) {
             return $entry;
         }
 
@@ -74,7 +78,7 @@ class BlueprintBuilder
             throw new InvalidArgumentException('Cannot configure an embed as a field: ' . $path);
         }
 
-        return $this->edits[$path] ??= $this->createFieldBuilder(new FieldConfig());
+        return $this->edits[$path] ??= $this->createFieldBuilder($path, new FieldConfig());
     }
 
     /** Stage a removal, including qualified children, without rendering anything. */
@@ -83,12 +87,6 @@ class BlueprintBuilder
         $this->removed[] = $path;
 
         return $this;
-    }
-
-    /** Configure this blueprint's layout through the common presentation API. */
-    public function presentation(): PresentationBuilder
-    {
-        return $this->presentation;
     }
 
     /** Compile children, apply parent edits, and return an independent immutable tree. */
@@ -103,7 +101,7 @@ class BlueprintBuilder
             }
 
             $entries[] = match (true) {
-                $entry instanceof FieldConfigBuilder => new FieldDefinition($path, $entry->config()),
+                $entry instanceof FieldDeclarationBuilder => $entry->build(),
                 $entry instanceof EmbeddedBlueprintBuilder,
                 $entry instanceof RepeatedBlueprintBuilder,
                     => $entry->build(),
@@ -111,7 +109,7 @@ class BlueprintBuilder
             };
         }
 
-        $definition = new FormDefinition($entries, $this->presentation->config(), [...$this->omitted, ...$removed]);
+        $definition = new FormDefinition($entries, $this->layout, [...$this->omitted, ...$removed]);
         foreach ($this->edits as $path => $edit) {
             $definition = $definition->with($path, $edit->config());
         }
@@ -124,9 +122,29 @@ class BlueprintBuilder
     }
 
     /** Supply field authoring behavior through a protected factory. */
-    protected function createFieldBuilder(FieldConfig $config): FieldConfigBuilder
+    protected function createFieldBuilder(string $path, FieldConfig $config): FieldDeclarationBuilder
     {
-        return new FieldConfigBuilder($config);
+        return new FieldDeclarationBuilder($path, $config);
+    }
+
+    /** Read layout presentation without a separate configuration builder. */
+    protected function currentPresentation(): PresentationConfig
+    {
+        return $this->layout;
+    }
+
+    /** Update the attached blueprint layout. */
+    protected function updatePresentation(PresentationConfig $presentation): static
+    {
+        $this->layout = $presentation;
+
+        return $this;
+    }
+
+    /** Blueprint presentation selects its collection control template. */
+    protected function primaryPart(): string
+    {
+        return 'control';
     }
 
     /** Validate names before adding declarations or running application hooks. */

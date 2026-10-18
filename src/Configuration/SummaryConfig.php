@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\SummaryConfigBuilder;
 use FormCompose\Rendering\Html;
 
 /** Immutable summary configuration captured before binding or rendering. */
@@ -24,7 +23,7 @@ final class SummaryConfig extends Configuration
     }
 
     /** Return configuration with an explicit title setting. */
-    public function withTitle(string|Html|null $value): static
+    public function title(string|Html|null $value): static
     {
         return $this->changed('title', $value);
     }
@@ -39,15 +38,9 @@ final class SummaryConfig extends Configuration
         ));
     }
 
-    /** Create a configuration-only builder for complete programmatic reuse. */
-    public static function builder(self|SummaryConfigBuilder|null $config = null): SummaryConfigBuilder
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return new SummaryConfigBuilder(self::capture($config));
-    }
-
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|SummaryConfigBuilder|null $config): self
-    {
-        return $config instanceof SummaryConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

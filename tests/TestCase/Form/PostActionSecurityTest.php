@@ -65,21 +65,16 @@ class PostActionSecurityTest extends FormTestCase
     public static function conflictingNames(): array
     {
         return [
-            'exact payload' => [ActionConfig::builder()
-                ->data(['version' => 1])
-                ->name('version')
-                ->config()],
+            'exact payload' => [ActionConfig::builder()->data(['version' => 1])->name('version')],
             'nested leaf' => [ActionConfig::builder()
                 ->data(['record' => ['id' => 42]])
-                ->name('id')
-                ->config()],
+                ->name('id')],
             'nested path' => [ActionConfig::builder()
                 ->data(['record' => ['id' => 42]])
-                ->name('record[id]')
-                ->config()],
-            'method field' => [ActionConfig::builder()->name('_method')->config()],
-            'CSRF field' => [ActionConfig::builder()->name('_csrfToken')->config()],
-            'token field' => [ActionConfig::builder()->name('_Token[fields]')->config()],
+                ->name('record[id]')],
+            'method field' => [ActionConfig::builder()->name('_method')],
+            'CSRF field' => [ActionConfig::builder()->name('_csrfToken')],
+            'token field' => [ActionConfig::builder()->name('_Token[fields]')],
         ];
     }
 

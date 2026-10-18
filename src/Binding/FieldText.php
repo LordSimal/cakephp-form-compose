@@ -53,7 +53,7 @@ final class FieldText
                 $text = $text->translate();
             }
 
-            $config = $key === 'label' ? $config->withLabel($text) : $config->withHelp($text);
+            $config = $key === 'label' ? $config->label($text) : $config->help($text);
         }
 
         return $config;

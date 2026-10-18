@@ -29,7 +29,7 @@ class AuthorForm extends FormBlueprint
     {
         $form->add('name')->label(__('Author name'));
         $form->add('email')->type('email');
-        $form->presentation()->template('forms/author');
+        $form->template('forms/author');
     }
 }
 ```

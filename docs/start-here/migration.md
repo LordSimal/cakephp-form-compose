@@ -74,6 +74,22 @@ renderable builders too. Use `choices()`, `placeholder()`, and `fallback()` in
 place of `options`, `empty`, and `hiddenField` keys. Declare blueprints in
 `configure()` with `add()`, `field()`, `embed()`, and `embedMany()`.
 
+Reusable configs now expose fluent methods directly. Each `builder()` factory
+returns its own immutable config class; the separate configuration-builder
+classes and `with…()` methods are removed. Pass the config directly without a
+terminal conversion, and assign the returned object when changing an existing preset:
+
+```php
+use FormCompose\Configuration\FieldConfig;
+
+$email = FieldConfig::builder()->type('email');
+$requiredEmail = $email->required();
+```
+
+The original `$email` stays optional. Rendering and declaration builders remain
+mutable. Configure blueprint layouts directly with `$form->template(...)`,
+`partTemplate()`, and `templateData()` in the blueprint hook.
+
 Presentation maps now merge by key. Use `replaceAttributes()`,
 `replacePartAttributes()`, `replaceTemplates()`, or `replaceTemplateData()` when
 replacement is intentional. Custom types read `state->config` and renderers read

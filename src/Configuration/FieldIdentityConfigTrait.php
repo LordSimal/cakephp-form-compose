@@ -42,19 +42,19 @@ trait FieldIdentityConfigTrait
     }
 
     /** Return configuration with an explicit type setting. */
-    public function withType(?string $value): static
+    public function type(?string $value): static
     {
         return $this->changed('type', $value);
     }
 
     /** Return configuration with an explicit name setting. */
-    public function withName(?string $value): static
+    public function name(?string $value): static
     {
         return $this->changed('name', $value);
     }
 
     /** Return configuration with an explicit id setting. */
-    public function withId(?string $value): static
+    public function id(?string $value): static
     {
         return $this->changed('id', $value);
     }

@@ -24,7 +24,10 @@ class FormDefinitionCompositionTest extends FormTestCase
     public function testCompiledSnapshotsKeepRemovalAndBindingDefaultsIsolated(): void
     {
         $original = new FormDefinition([
-            new FieldDefinition('email', FieldConfig::builder()->type('email')->label('Email')->config()),
+            new FieldDefinition(
+                'email',
+                FieldConfig::builder()->type('email')->label('Email'),
+            ),
             new FieldDefinition('internal_note'),
         ]);
         $selected = $original->remove('internal_note');
@@ -40,10 +43,10 @@ class FormDefinitionCompositionTest extends FormTestCase
     public function testNestedOverridesAndRemovalPreserveBothViewsOfTheDefinition(): void
     {
         $child = new FormDefinition([])->add(
-            new FieldDefinition('email', FieldConfig::builder()->type('email')->config()),
+            new FieldDefinition('email', FieldConfig::builder()->type('email')),
         )->add(new FieldDefinition('internal'));
         $original = new FormDefinition([])->embed('post', new FormDefinition([])->embed('author', $child));
-        $edited = $original->with('post.author.email', FieldConfig::builder()->label('Contact')->config())
+        $edited = $original->with('post.author.email', FieldConfig::builder()->label('Contact'))
             ->remove('post.author.internal');
         static::assertSame(['post.author.email'], array_column($edited->fields, 'path'));
         static::assertSame('Contact', $edited->embedded(path: 'post.author')->field('email')->config->label);
@@ -75,7 +78,7 @@ class FormDefinitionCompositionTest extends FormTestCase
     {
         $definition = new FormDefinition([])->add(new FieldDefinition('email'))
             ->remove('email')
-            ->add(new FieldDefinition('email', FieldConfig::builder()->type('email')->config()));
+            ->add(new FieldDefinition('email', FieldConfig::builder()->type('email')));
         $form = $this->helper()->form()->bind();
         $view = new BlueprintView($form, $definition);
         static::assertTrue($view->has('email'));
@@ -112,7 +115,7 @@ class FormDefinitionCompositionTest extends FormTestCase
     {
         $child = new FormDefinition([])->add(new FieldDefinition('email'));
         $definition = new FormDefinition([])->embed('author', $child)->add(new FieldDefinition('author.nickname'));
-        $edited = $definition->with('author.nickname', FieldConfig::builder()->label('Nickname')->config())
+        $edited = $definition->with('author.nickname', FieldConfig::builder()->label('Nickname'))
             ->remove('author.email');
         static::assertSame('Nickname', $edited->field('author.nickname')->config->label);
         static::assertTrue($edited->embedded(path: 'author')->index->wasRemoved('email'));
@@ -133,7 +136,7 @@ class FormDefinitionCompositionTest extends FormTestCase
         );
         $original = $builder->build();
         $builder->embed('author', EmailForm::class);
-        $builder->presentation()->template('composition/parts')->templateData(['marker' => 'local']);
+        $builder->template('composition/parts')->templateData(['marker' => 'local']);
 
         $snapshot = $builder->build();
         $builder->field('author.email')->label('Changed');

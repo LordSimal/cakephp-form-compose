@@ -37,7 +37,9 @@ class TemporalTest extends FormTestCase
         $form->open();
 
         $field = $form->field('sample')
-            ->apply($options->merge(FieldConfig::builder()->type($type)->value($value)->config()))
+            ->apply($options->merge(
+                FieldConfig::builder()->type($type)->value($value),
+            ))
             ->resolve();
         $html = $field->input()->render();
         static::assertSame($expected, $this->xpath($html)->evaluate('string(//input/@value)'));
@@ -62,43 +64,43 @@ class TemporalTest extends FormTestCase
                 'time',
                 0,
                 '01:00:00',
-                FieldConfig::builder()->timezone('Europe/Brussels')->config(),
+                FieldConfig::builder()->timezone('Europe/Brussels'),
             ],
             'datetime milliseconds' => [
                 'datetime-local',
                 new DateTimeImmutable('2026-10-15 14:23:45.123456'),
                 '2026-10-15T14:23:45.123',
-                FieldConfig::builder()->attributes(['step' => '0.001'])->config(),
+                FieldConfig::builder()->attributes(['step' => '0.001']),
             ],
             'time milliseconds' => [
                 'time',
                 new Time('14:23:45.123456'),
                 '14:23:45.123',
-                FieldConfig::builder()->attributes(['step' => 'any'])->config(),
+                FieldConfig::builder()->attributes(['step' => 'any']),
             ],
             'time interval above one second' => [
                 'time',
                 new Time('00:00:01.500000'),
                 '00:00:01.500',
-                FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00'])->config(),
+                FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00']),
             ],
             'datetime interval above one second' => [
                 'datetime-local',
                 new DateTimeImmutable('2026-10-15 00:00:02.500'),
                 '2026-10-15T00:00:02.500',
-                FieldConfig::builder()->attributes(['step' => 2.5, 'min' => '2026-10-15T00:00:00'])->config(),
+                FieldConfig::builder()->attributes(['step' => 2.5, 'min' => '2026-10-15T00:00:00']),
             ],
             'local attributes determine precision' => [
                 'time',
                 new DateTimeImmutable('2026-10-15 14:23:45.123456'),
                 '14:23:45.123',
-                FieldConfig::builder()->partAttributes('input', ['step' => 0.001])->config(),
+                FieldConfig::builder()->partAttributes('input', ['step' => 0.001]),
             ],
             'submitted wall clock' => [
                 'datetime-local',
                 '2026-10-15T14:23:45.123',
                 '2026-10-15T14:23:45.123',
-                FieldConfig::builder()->timezone('Europe/Brussels')->config(),
+                FieldConfig::builder()->timezone('Europe/Brussels'),
             ],
             'invalid string is escaped, not replaced' => ['date', '<invalid>', '<invalid>'],
             'empty string' => ['date', '', ''],

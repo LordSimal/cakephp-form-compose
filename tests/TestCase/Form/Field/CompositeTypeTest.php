@@ -25,7 +25,7 @@ class CompositeTypeTest extends FormTestCase
         $helper = $this->helper(['period' => ['start' => '2026-10-01', 'end' => '2026-10-17']]);
         foreach ([
             new FieldConfig(),
-            FieldConfig::builder()->partTemplate('composite', 'widgets/inline')->config(),
+            FieldConfig::builder()->partTemplate('composite', 'widgets/inline'),
         ] as $layout) {
             $form = $helper->form()
                 ->types(['date-range' => new DateRangeType()])
@@ -35,7 +35,6 @@ class CompositeTypeTest extends FormTestCase
                     FieldConfig::builder()
                         ->type('date-range')
                         ->templateData(['caption' => '<Range>'])
-                        ->config()
                         ->merge($layout),
                 )
                 ->resolve();
@@ -66,14 +65,14 @@ class CompositeTypeTest extends FormTestCase
         $form = $this->helper()
             ->form()
             ->types(['details' => new ConfiguredType([
-                new FieldSpec('zero', FieldConfig::builder()->config()),
-                new FieldSpec('no', FieldConfig::builder()->config()),
-                new FieldSpec('empty', FieldConfig::builder()->config()),
-                new FieldSpec('null', FieldConfig::builder()->config()),
-                new FieldSpec('missing', FieldConfig::builder()->default('fallback')->config()),
+                new FieldSpec('zero', new FieldConfig()),
+                new FieldSpec('no', new FieldConfig()),
+                new FieldSpec('empty', new FieldConfig()),
+                new FieldSpec('null', new FieldConfig()),
+                new FieldSpec('missing', FieldConfig::builder()->default('fallback')),
                 new FieldSpec(
                     'address.post-code',
-                    FieldConfig::builder()->name('postal')->id('postal-id')->config(),
+                    FieldConfig::builder()->name('postal')->id('postal-id'),
                 ),
             ])])
             ->bind();
@@ -101,9 +100,9 @@ class CompositeTypeTest extends FormTestCase
             ->form($context)
             ->types([
                 'range' => new ConfiguredType([
-                    new FieldSpec('start', FieldConfig::builder()->config()),
-                    new FieldSpec('end', FieldConfig::builder()->config()),
-                    new FieldSpec('explicit', FieldConfig::builder()->value(false)->config()),
+                    new FieldSpec('start', new FieldConfig()),
+                    new FieldSpec('end', new FieldConfig()),
+                    new FieldSpec('explicit', FieldConfig::builder()->value(false)),
                 ]),
             ])
             ->bind();
@@ -121,7 +120,7 @@ class CompositeTypeTest extends FormTestCase
             ->types([
                 'booking' => new ConfiguredType([new FieldSpec(
                     'dates',
-                    FieldConfig::builder()->type('range')->config(),
+                    FieldConfig::builder()->type('range'),
                 )]),
                 'range' => new DateRangeType(),
             ])
@@ -140,16 +139,21 @@ class CompositeTypeTest extends FormTestCase
         $form = $this->helper()
             ->form()
             ->types(['settings' => new ConfiguredType([
-                new FieldSpec('id', FieldConfig::builder()->type('hidden')->value(7)->config()),
-                new FieldSpec('active', FieldConfig::builder()->type('checkbox')->value(false)->config()),
+                new FieldSpec(
+                    'id',
+                    FieldConfig::builder()->type('hidden')->value(7),
+                ),
+                new FieldSpec(
+                    'active',
+                    FieldConfig::builder()->type('checkbox')->value(false),
+                ),
                 new FieldSpec(
                     'tags',
                     FieldConfig::builder()
                         ->type('select')
                         ->multiple(true)
                         ->choices(['a' => 'A', 'b' => 'B'])
-                        ->value(['b'])
-                        ->config(),
+                        ->value(['b']),
                 ),
             ])])
             ->bind();
@@ -169,8 +173,8 @@ class CompositeTypeTest extends FormTestCase
         $form = $this->helper()
             ->form()
             ->types(['upload' => new ConfiguredType([
-                new FieldSpec('name', FieldConfig::builder()->config()),
-                new FieldSpec('file', FieldConfig::builder()->type('file')->config()),
+                new FieldSpec('name', new FieldConfig()),
+                new FieldSpec('file', FieldConfig::builder()->type('file')),
             ])])
             ->bind();
         $field = $form->field('upload')->type('upload')->resolve();
@@ -189,7 +193,7 @@ class CompositeTypeTest extends FormTestCase
             ->form()
             ->types(['upload' => new ConfiguredType([new FieldSpec(
                 'file',
-                FieldConfig::builder()->type('file')->config(),
+                FieldConfig::builder()->type('file'),
             )])])
             ->multipart()
             ->bind();
@@ -207,7 +211,7 @@ class CompositeTypeTest extends FormTestCase
             ->form()
             ->types(['recursive' => new ConfiguredType([new FieldSpec(
                 'again',
-                FieldConfig::builder()->type('recursive')->config(),
+                FieldConfig::builder()->type('recursive'),
             )])])
             ->bind();
         $field = $form->field('tree')->type('recursive')->resolve();

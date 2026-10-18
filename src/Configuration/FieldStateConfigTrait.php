@@ -64,31 +64,31 @@ trait FieldStateConfigTrait
     }
 
     /** Return configuration with an explicit required setting. */
-    public function withRequired(?bool $value): static
+    public function required(?bool $value = true): static
     {
         return $this->changed('required', $value);
     }
 
     /** Return configuration with an explicit disabled setting. */
-    public function withDisabled(bool $value): static
+    public function disabled(bool $value = true): static
     {
         return $this->changed('disabled', $value);
     }
 
     /** Return configuration with an explicit readonly setting. */
-    public function withReadonly(bool $value): static
+    public function readonly(bool $value = true): static
     {
         return $this->changed('readonly', $value);
     }
 
     /** Return configuration with an explicit multiple setting. */
-    public function withMultiple(?bool $value): static
+    public function multiple(?bool $value = true): static
     {
         return $this->changed('multiple', $value);
     }
 
     /** Return configuration with an explicit secure setting. */
-    public function withSecure(bool $value): static
+    public function secure(bool $value = true): static
     {
         return $this->changed('secure', $value);
     }

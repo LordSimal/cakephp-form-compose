@@ -7,9 +7,9 @@ use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\BlueprintRenderer;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedDefinition;
-use FormCompose\Builder\PresentationBuilder;
 use FormCompose\Configuration\EmbedConfig;
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Form\InputRegistry;
 use FormCompose\Rendering\PhpRenderer;
@@ -55,15 +55,15 @@ class BlueprintRendererTest extends CompositionTestCase
 
     public function testLayoutSelectionsUseTheCanonicalPartMap(): void
     {
-        $presentation = new PresentationBuilder();
-        $presentation->template('composition/author')->partTemplate('control', 'composition/post');
-        static::assertSame(['control' => 'composition/post'], $presentation->config()->templates);
+        $presentation = new PresentationConfig();
+        $presentation = $presentation->template('composition/author')->partTemplate('control', 'composition/post');
+        static::assertSame(['control' => 'composition/post'], $presentation->templates);
     }
 
     public function testFieldTemplatesCanBeReplacedWithoutAlteringTheSourceConfig(): void
     {
-        $original = FieldConfig::builder()->template('themes/custom/control')->config();
-        $replacement = FieldConfig::builder($original)->template('themes/application/control')->config();
+        $original = FieldConfig::builder()->template('themes/custom/control');
+        $replacement = $original->template('themes/application/control');
         static::assertSame('themes/custom/control', $original->presentation->templates['control']);
         static::assertSame('themes/application/control', $replacement->presentation->templates['control']);
     }
@@ -71,7 +71,7 @@ class BlueprintRendererTest extends CompositionTestCase
     public function testDefinitionTemplateDataMustBeAnArray(): void
     {
         $this->expectException(TypeError::class);
-        $this->invokeBuilder(new PresentationBuilder(), 'templateData', 'invalid');
+        $this->invokeBuilder(new PresentationConfig(), 'templateData', 'invalid');
     }
 
     public function testRepeatedRenderingRequiresCompiledRows(): void

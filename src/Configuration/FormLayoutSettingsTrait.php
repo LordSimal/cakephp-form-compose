@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\ButtonConfigBuilder;
-use FormCompose\Builder\SummaryConfigBuilder;
 use FormCompose\Rendering\Html;
 
 /** Layout settings for form configuration.
@@ -27,9 +25,9 @@ trait FormLayoutSettingsTrait
     }
 
     /** Return configuration with an explicit errorSummary setting. */
-    public function withErrorSummary(bool|SummaryConfig|SummaryConfigBuilder $value): static
+    public function errorSummary(bool|SummaryConfig $value = true): static
     {
-        return $this->changed('errorSummary', $value instanceof SummaryConfigBuilder ? $value->config() : $value);
+        return $this->changed('errorSummary', $value);
     }
 
     /** The configured submit setting. */
@@ -48,9 +46,17 @@ trait FormLayoutSettingsTrait
     }
 
     /** Return configuration with an explicit submit setting. */
-    public function withSubmit(string|Html|false|null $value): static
+    public function submit(string|Html|false|null $value, ?ButtonConfig $config = null): static
     {
-        return $this->changed('submit', $value);
+        $updated = $this->changed('submit', $value);
+
+        return $config instanceof ButtonConfig ? $updated->submitConfig($config) : $updated;
+    }
+
+    /** Return configuration that omits the complete form's default action. */
+    public function withoutSubmit(): static
+    {
+        return $this->submit(false);
     }
 
     /** The configured submitConfig setting. */
@@ -65,8 +71,8 @@ trait FormLayoutSettingsTrait
     }
 
     /** Return configuration with an explicit submitConfig setting. */
-    public function withSubmitConfig(ButtonConfig|ButtonConfigBuilder $value): static
+    public function submitConfig(ButtonConfig $value): static
     {
-        return $this->changed('submitConfig', ButtonConfig::capture($value));
+        return $this->changed('submitConfig', $value);
     }
 }

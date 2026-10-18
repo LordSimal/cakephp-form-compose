@@ -5,10 +5,45 @@ namespace FormCompose\Builder;
 
 use Closure;
 use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Configuration\EmbedConfig;
+use FormCompose\Rendering\Html;
 
-/** Stages a repeated child, selecting final keys before compiling any row hooks. */
-class RepeatedBlueprintBuilder extends EmbedConfigBuilder
+/**
+ * Stages a repeated child, selecting final keys before compiling any row hooks.
+ * @extends ConfigurationBuilder<EmbedConfig>
+ */
+class RepeatedBlueprintBuilder extends ConfigurationBuilder
 {
+    /** Set label on this mutable builder. */
+    public function label(string|Html|null $value): static
+    {
+        $this->configuration = $this->config()->label($value);
+
+        return $this;
+    }
+
+    /** Set errors on this mutable builder. */
+    public function errors(bool $value = true): static
+    {
+        $this->configuration = $this->config()->errors($value);
+
+        return $this;
+    }
+
+    /** Capture the domain-specific immutable settings. */
+    public function config(): EmbedConfig
+    {
+        return $this->configuration;
+    }
+
+    /** Overlay explicitly supplied settings from the same configuration domain. */
+    public function apply(EmbedConfig $config): static
+    {
+        $this->applyConfig($config);
+
+        return $this;
+    }
+
     use RowSelectionTrait;
 
     protected ?RepeatedDefinition $compiled = null;
@@ -19,7 +54,7 @@ class RepeatedBlueprintBuilder extends EmbedConfigBuilder
     /** @param \Closure(list<int|string>|null): RepeatedDefinition $compile Compile selected rows in their scoped contexts. */
     public function __construct(protected readonly string $path, protected readonly Closure $compile)
     {
-        parent::__construct();
+        parent::__construct(new EmbedConfig());
     }
 
     /** Capture selected rows and current occurrence presentation independently. */

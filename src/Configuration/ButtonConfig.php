@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace FormCompose\Configuration;
 
-use FormCompose\Builder\ButtonConfigBuilder;
-
 /** Immutable button configuration captured before binding or rendering. */
 final class ButtonConfig extends Configuration
 {
@@ -22,7 +20,7 @@ final class ButtonConfig extends Configuration
     }
 
     /** Return configuration with an explicit type setting. */
-    public function withType(string $value): static
+    public function type(string $value): static
     {
         return $this->changed('type', $value);
     }
@@ -39,15 +37,9 @@ final class ButtonConfig extends Configuration
         ));
     }
 
-    /** Create a configuration-only builder for complete programmatic reuse. */
-    public static function builder(self|ButtonConfigBuilder|null $config = null): ButtonConfigBuilder
+    /** Start an immutable fluent configuration; every setting returns a new instance. */
+    public static function builder(): self
     {
-        return new ButtonConfigBuilder(self::capture($config));
-    }
-
-    /** Capture inline builders immediately; immutable configurations are already safe to reuse. */
-    public static function capture(self|ButtonConfigBuilder|null $config): self
-    {
-        return $config instanceof ButtonConfigBuilder ? $config->config() : $config ?? new self();
+        return new self();
     }
 }

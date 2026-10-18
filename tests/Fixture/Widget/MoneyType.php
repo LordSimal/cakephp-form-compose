@@ -29,16 +29,14 @@ class MoneyType extends CompositeType
                 FieldConfig::builder()
                     ->type('number')
                     ->label(__('Amount'))
-                    ->attributes(['step' => '0.01', 'min' => '0'])
-                    ->config(),
+                    ->attributes(['step' => '0.01', 'min' => '0']),
             ),
             new FieldSpec(
                 'currency',
                 FieldConfig::builder()
                     ->type('select')
                     ->label(__('Currency'))
-                    ->choices(['EUR' => __('Euro'), 'USD' => __('US dollar')])
-                    ->config(),
+                    ->choices(['EUR' => __('Euro'), 'USD' => __('US dollar')]),
             ),
         ];
     }

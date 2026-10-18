@@ -64,37 +64,36 @@ trait FieldChoicesConfigTrait
         }
     }
 
-    /** Return configuration with an explicit choices setting. */
     /** @param iterable<mixed, mixed>|string|null $value Choice maps, lazy sources, or an enum class. */
-    public function withChoices(iterable|string|null $value): static
+    public function choices(iterable|string|null $value): static
     {
         if (is_string($value) && !is_subclass_of($value, BackedEnum::class)) {
             throw new InvalidArgumentException('Choices must use a backed enum class name or an iterable.');
         }
 
-        return $this->changed('choices', is_iterable($value) ? ChoiceList::capture($value) : $value);
+        return $this->changed('choices', $value);
     }
 
     /** Return configuration with an explicit placeholder setting. */
-    public function withPlaceholder(bool|string|null $value): static
+    public function placeholder(bool|string|null $value): static
     {
         return $this->changed('placeholder', $value);
     }
 
     /** Return configuration with an explicit checkedValue setting. */
-    public function withCheckedValue(mixed $value): static
+    public function checkedValue(mixed $value): static
     {
         return $this->changed('checkedValue', $value);
     }
 
     /** Return configuration with an explicit uncheckedValue setting. */
-    public function withUncheckedValue(mixed $value): static
+    public function uncheckedValue(mixed $value): static
     {
         return $this->changed('uncheckedValue', $value);
     }
 
     /** Return configuration with an explicit fallback setting. */
-    public function withFallback(bool $value): static
+    public function fallback(bool $value = true): static
     {
         return $this->changed('fallback', $value);
     }

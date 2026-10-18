@@ -29,23 +29,23 @@ renders it. `field()` returns a `FieldBuilder`; call `resolve()` for an immutabl
 ```php
 use FormCompose\Configuration\FieldConfig;
 
-$emailConfig = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email address'))
+$emailConfig = new FieldConfig(type: 'email', label: 'Email address')
     ->required()
-    ->attributes(['autocomplete' => 'email'])
-    ->config();
+    ->attributes(['autocomplete' => 'email']);
 
 echo $form->control('email', config: $emailConfig);
 echo $form->control('billing.email', config: $emailConfig)->label('Billing email');
 ```
 
-The constructor names common settings (`type`, `label`, `help`); the builder
-exposes all settings. Start an empty builder with `FieldConfig::builder()`.
-`apply()` overlays a configuration or another builder. `config()` is optional:
-use it when you explicitly want to store an immutable snapshot.
+`FieldConfig` supports named constructor arguments and fluent methods on the same
+immutable object. `FieldConfig::builder()` is a convenience factory returning a
+new `FieldConfig`. There is no separate configuration builder or terminal conversion.
+Every fluent call returns a new config; keep that return value when deriving a preset.
+`merge()` overlays explicitly configured settings without changing either input.
 
-Every public authoring configuration argument accepts its matching builder directly and captures
-it immediately. Later edits to that builder cannot change an existing field
-specification, control, or form configuration. For example:
+Pass configurations directly to controls, field specifications, nested settings,
+and blueprint declarations. Reusing a preset cannot change an already configured
+field or form. For example:
 
 ```php
 use FormCompose\Configuration\FieldConfig;
@@ -62,7 +62,8 @@ $currency = new FieldSpec(
 Ordinary controls accept `choices()` directly on their fluent builder.
 Parts render when echoed: `<?= $field->input() ?>`. Explicit `render()` is useful
 when assigning HTML to a variable; it is unnecessary inside echo/short echo tags.
-Immutable config `with…()` methods return new configs rather than mutating them.
+Config methods return new configs; rendering and declaration builder methods update
+the attached occurrence and return the same builder.
 
 ## Identity and type
 
@@ -187,7 +188,7 @@ bags. Generated feedback identities are still managed for accessibility.
 
 ## Templates
 
-All configuration and rendering builders share:
+Immutable configs and mutable rendering/declaration builders share these method names:
 
 | Setter | Behavior |
 | --- | --- |
@@ -213,7 +214,8 @@ must describe their real submission contract. See [custom fields](/custom-fields
 ## Configuration precedence
 
 Blueprint defaults are overlaid by an explicit per-call config and then fluent
-edits. A builder's `config()` captures its authored settings;
+edits. Configs are already immutable. A rendering or declaration builder's `config()`
+exposes its current authored settings;
 `resolve()->state->config` exposes the final merged field settings. Only explicitly
 supplied settings override earlier values. Explicit null
 is preserved where accepted. Presentation maps merge by key, with class/ARIA

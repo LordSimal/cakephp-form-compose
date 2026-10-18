@@ -17,9 +17,9 @@ class FormDefinitionTest extends TestCase
     public function testAddingFieldsPreservesOrderAndEarlierCollections(): void
     {
         $empty = new FormDefinition([]);
-        $name = new FieldDefinition('name', FieldConfig::builder()->label('Full name')->config());
+        $name = new FieldDefinition('name', FieldConfig::builder()->label('Full name'));
         $contact = $empty->add($name);
-        $extended = $contact->add(new FieldDefinition('email', FieldConfig::builder()->type('email')->config()));
+        $extended = $contact->add(new FieldDefinition('email', FieldConfig::builder()->type('email')));
 
         static::assertSame([], $empty->fields);
         static::assertSame([$name], $contact->fields);
@@ -35,13 +35,15 @@ class FormDefinitionTest extends TestCase
                 ->type('email')
                 ->label('Email')
                 ->help('Work address')
-                ->attributes(['class' => 'original', 'data-original' => true])
-                ->config(),
+                ->attributes(['class' => 'original', 'data-original' => true]),
         );
         $contact = new FormDefinition([new FieldDefinition('name'), $email]);
         $customized = $contact->with(
             'email',
-            FieldConfig::builder()->label(false)->value(null)->attributes(['class' => 'replacement'])->config(),
+            FieldConfig::builder()
+                ->label(false)
+                ->value(null)
+                ->attributes(['class' => 'replacement']),
         );
         $config = $customized->field('email')->config;
         static::assertSame(['name', 'email'], array_column($customized->fields, 'path'));
@@ -69,16 +71,16 @@ class FormDefinitionTest extends TestCase
     public function testOverridingMissingFieldsIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new FormDefinition([])->with('missing', FieldConfig::builder()->label('Typo')->config());
+        new FormDefinition([])->with('missing', FieldConfig::builder()->label('Typo'));
     }
 
     public function testAddingDuplicatePathsIsRejected(): void
     {
         $contact = new FormDefinition([])->add(
-            new FieldDefinition('email', FieldConfig::builder()->type('email')->config()),
+            new FieldDefinition('email', FieldConfig::builder()->type('email')),
         );
         $this->expectException(InvalidArgumentException::class);
-        $contact->add(new FieldDefinition('email', FieldConfig::builder()->label('Duplicate')->config()));
+        $contact->add(new FieldDefinition('email', FieldConfig::builder()->label('Duplicate')));
     }
 
     public function testConstructorRejectsDuplicatePaths(): void

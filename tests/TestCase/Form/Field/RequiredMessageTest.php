@@ -55,8 +55,8 @@ class RequiredMessageTest extends AssociationTestCase
         );
         static::assertSame('Pick tags', $form->field('tags._ids')->resolve()->state->requiredMessage);
         foreach ([
-            FieldConfig::builder()->required(false)->config(),
-            FieldConfig::builder()->disabled()->config(),
+            FieldConfig::builder()->required(false),
+            FieldConfig::builder()->disabled(),
             new FieldConfig(type: 'hidden'),
         ] as $options) {
             $field = $form->field('name')->apply($options)->resolve();

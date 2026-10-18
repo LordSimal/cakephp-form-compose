@@ -35,8 +35,7 @@ class FormHelperTest extends CompositionTestCase
             ->submitConfig(
                 ButtonConfig::builder()
                     ->partTemplate('control', 'themes/explicit/button')
-                    ->attributes(['class' => 'primary'])
-                    ->config(),
+                    ->attributes(['class' => 'primary']),
             )
             ->render();
         $xpath = $this->xpath($html);

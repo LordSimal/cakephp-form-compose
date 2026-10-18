@@ -18,7 +18,7 @@ trait ButtonStateMethodsTrait
     /** Set the optional submitted button name. */
     public function name(?string $value): static
     {
-        $this->updateButtonConfig($this->buttonConfig()->withName($value));
+        $this->updateButtonConfig($this->buttonConfig()->name($value));
 
         return $this;
     }
@@ -26,7 +26,7 @@ trait ButtonStateMethodsTrait
     /** Set the submitted button value, preserving false, zero, and null. */
     public function value(mixed $value): static
     {
-        $this->updateButtonConfig($this->buttonConfig()->withValue($value));
+        $this->updateButtonConfig($this->buttonConfig()->value($value));
 
         return $this;
     }
@@ -34,7 +34,7 @@ trait ButtonStateMethodsTrait
     /** Enable or disable the native button. */
     public function disabled(bool $value = true): static
     {
-        $this->updateButtonConfig($this->buttonConfig()->withDisabled($value));
+        $this->updateButtonConfig($this->buttonConfig()->disabled($value));
 
         return $this;
     }

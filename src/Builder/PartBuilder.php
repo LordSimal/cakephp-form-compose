@@ -7,13 +7,31 @@ use Closure;
 use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Rendering\RenderableInterface;
 
-/** Defers rendering of one field part or scoped layout until its presentation is complete. */
-class PartBuilder extends PresentationBuilder implements RenderableInterface
+/**
+ * Defers rendering of one field part or scoped layout until its presentation is complete.
+ * @extends ConfigurationBuilder<PresentationConfig>
+ */
+class PartBuilder extends ConfigurationBuilder implements RenderableInterface
 {
+    /** Capture immutable presentation independently of future edits. */
+    public function config(): PresentationConfig
+    {
+        return $this->configuration;
+    }
+
+    /** Overlay another presentation layer. */
+    public function apply(PresentationConfig $config): static
+    {
+        $this->configuration = $this->configuration->merge($config);
+
+        return $this;
+    }
+
     /** @param \Closure(PresentationConfig): string $render Rendering boundary. */
     public function __construct(protected readonly Closure $render, string $part = 'control')
     {
-        parent::__construct(primaryPart: $part);
+        parent::__construct(new PresentationConfig());
+        $this->primaryPart = $part;
     }
 
     /** Render through the owner, preserving its lifecycle and extension points. */

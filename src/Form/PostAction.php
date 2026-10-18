@@ -39,15 +39,15 @@ final readonly class PostAction
         $attributes = $presentation->attributes;
         $form = $config
             ->form
-            ->withUrl($url)
-            ->withMethod(PostActionSubmission::method($config->method ?? $config->form->method ?? 'post'));
+            ->url($url)
+            ->method(PostActionSubmission::method($config->method ?? $config->form->method ?? 'post'));
         if ($kind === 'link' && isset($attributes['target'])) {
-            $form = $form->withPresentation($form->presentation->withAttributes(['target' => $attributes['target']]));
+            $form = $form->presentation($form->presentation->attributes(['target' => $attributes['target']]));
             unset($attributes['target']);
             $presentation = $presentation->replaceAttributes($attributes);
         }
 
-        $form = $form->withPresentation($form->presentation->withAttributes([
+        $form = $form->presentation($form->presentation->attributes([
             'hidden' => $kind === 'link' || $this->block !== null ? true : null,
             'data-form-compose-confirm' => $this->confirm,
         ]));
@@ -59,8 +59,8 @@ final readonly class PostAction
             throw new InvalidArgumentException('Button name, value, and disabled settings require a post button.');
         }
 
-        $this->button = new ButtonConfig(name: $config->name, value: $config->value)->withDisabled($config->disabled)
-            ->withPresentation($presentation);
+        $this->button = new ButtonConfig(name: $config->name, value: $config->value)->disabled($config->disabled)
+            ->presentation($presentation);
         $this->form = $form;
         $this->data = PostActionSubmission::data($config->data);
         $this->presentation = $presentation;

@@ -32,7 +32,9 @@ class FormLayoutTest extends FormTestCase
             ->templateData(['caption' => '<Project editor>'])
             ->errorSummary(true)
             ->submit('Save <project>')
-            ->submitConfig(ButtonConfig::builder()->name('intent')->value('save')->config())
+            ->submitConfig(
+                ButtonConfig::builder()->name('intent')->value('save'),
+            )
             ->render();
         $xpath = $this->xpath($html);
         static::assertSame(1.0, $xpath->evaluate('count(//form)'));
@@ -75,7 +77,9 @@ class FormLayoutTest extends FormTestCase
             ->blueprint(TitleIdForm::class)
             ->method('patch')
             ->partTemplate('layout', 'forms/editor')
-            ->submitConfig(ButtonConfig::builder()->name('intent')->value('save')->config())
+            ->submitConfig(
+                ButtonConfig::builder()->name('intent')->value('save'),
+            )
             ->render();
         $xpath = $this->xpath($html);
         static::assertSame('PATCH', $xpath->evaluate('string(//input[@name="_method"]/@value)'));

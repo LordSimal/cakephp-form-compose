@@ -28,7 +28,7 @@ class SingleInputType implements FieldTypeInterface
         $presentation = $field->state->config->presentation;
         if ($this->template !== null) {
             $templates = $presentation->templates;
-            $presentation = $presentation->withTemplates($templates + [$this->part => $this->template]);
+            $presentation = $presentation->templates($templates + [$this->part => $this->template]);
         }
 
         return $field->renderer->render($this->part, new RenderNode(
