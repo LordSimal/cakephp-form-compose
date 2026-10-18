@@ -84,7 +84,7 @@ $form = $this->Form->bind($article);
 
 The form submits to the current URL. New entities use POST; existing entities use
 PUT through CakePHP's method override. For a different destination or method,
-pass a `FormConfig` to `bind()`; see [form configuration](/form-reference#bind).
+configure a fluent builder before binding; see [form configuration](/form-reference#bind).
 
 Keep CakePHP's CSRF middleware and FormProtectionComponent configured in your
 application. Loading the helper does not enable them.

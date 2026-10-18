@@ -5,9 +5,9 @@ description: Typed fluent form setup, binding, rendering, and submission lifecyc
 
 # Helper and form session
 
-Use `FormHelper::bind()` for a form you arrange manually, or `FormHelper::form()`
-for a complete form. Both use the same binding, rendering, and CakePHP protection
-services.
+Use `FormHelper::bind()` to start a manually arranged form directly. Use
+`FormHelper::form()` for fluent configuration before binding or rendering a
+complete form. Both use the same binding, rendering, and CakePHP protection services.
 
 ## bind() {#bind}
 
@@ -21,22 +21,22 @@ or null. It prepares an isolated session without rendering markup or registering
 submitted inputs. Use its `open()`, `control()`, `submit()`, and `close()` methods
 to arrange the form in your view.
 
-Pass an immutable `FormConfig` for form-wide settings:
+For additional form settings, configure a fluent builder before binding:
 
 ```php
-use FormCompose\Configuration\FormConfig;
-
-$form = $this->Form->bind(
-    $article,
-    config: FormConfig::builder()
-        ->method('patch')
-        ->url(['action' => 'edit', $article->id])
-        ->attributes(['class' => 'article-form']),
-);
+$form = $this->Form
+    ->form($article)
+    ->method('patch')
+    ->url(['action' => 'edit', $article->id])
+    ->attributes(['class' => 'article-form'])
+    ->bind();
 ```
 
 Each call creates a fresh session. Deriving another config or changing helper
 defaults leaves existing sessions unchanged.
+
+If you already have a reusable `FormConfig`, pass it directly as the `config`
+argument to either helper method.
 
 ## form() {#form}
 
@@ -48,7 +48,7 @@ echo $this->Form
 ```
 
 `form(mixed $data = null, FormConfig|null $config = null): FormBuilder` configures
-a complete form with the same accepted data and configuration. Echoing it opens
+a form with the same accepted data and configuration. Echoing it opens
 the form, renders the selected blueprints and actions, and closes it.
 
 For fluent configuration before manual rendering, `FormBuilder::bind(): FormSession`
