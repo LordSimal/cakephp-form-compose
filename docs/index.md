@@ -57,30 +57,68 @@ $form = $this->Form->form($article)->bind();
 </div>
 ```
 
-```php [Arrange parts directly in the view]
+:::
+
+Render labels, inputs, help, and errors independently, or share the markup through
+[templates](/templates), [themes](/themes), and [variants](/variants).
+
+## Start inline. Reuse what repeats.
+
+Configure individual controls, share immutable settings, or render a whole
+[blueprint](/blueprints) through its declared alias. Nested paths bind association
+fields using the same API.
+
+::: code-group
+
+```php [Fluent controls and shared settings]
 <?php
+use FormCompose\Configuration\FieldConfig;
+
+$email = FieldConfig::builder()
+    ->type('email')
+    ->required()
+    ->attributes(['autocomplete' => 'email']);
+
 $form = $this->Form->form($article)->bind();
-$title = $form->field('title')->resolve();
 ?>
 <?= $form->open() ?>
-<section class="article-title">
-    <?= $title->label() ?>
-    <?= $title->input() ?>
-    <?= $title->help() ?>
-    <?= $title->errors() ?>
-</section>
+<?= $form->control('author.email', config: $email)->label('Author email') ?>
+<?= $form->control('editor.email', config: $email)->label('Editor email') ?>
+<?= $form->control('status')
+    ->choices(['draft' => 'Draft', 'published' => 'Published'])
+    ->help('Only published articles appear on the site.') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
+```php [Reusable blueprint forms]
+<?php
+// The application declares its fields under the 'article' blueprint alias.
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary()
+    ->submit('Save article');
+```
+
+```php [Protected actions]
+<?php
+// A standalone form, for example in an article listing.
+echo $this->Form
+    ->postButton(label: 'Delete', url: ['action' => 'delete', $article->id])
+    ->method('delete')
+    ->attributes(['class' => 'button-danger']);
+```
+
 :::
 
-Start with [how rendering works](/rendering), select
-[your own templates](/templates), share them with a [theme](/themes),
-or offer named presentations with [variants](/variants).
-Use optional [reusable forms](/reusable-forms) to share field configuration.
+Explore [choices and enums](/choices), [repeated association rows](/repeated-embeds),
+[custom field types](/custom-fields), and [POST buttons and links](/post-actions)
+when your form needs more.
+
 CakePHP continues to supply values, validation metadata, routing, and submission
-protection. No CSS framework or JavaScript runtime is required.
+protection. Forms and native action buttons need no CSS framework or JavaScript
+runtime.
 
 [Why FormCompose?](/why) · [Your first form](/getting-started) ·
 [Field configuration](/field-options)
