@@ -23,26 +23,32 @@ hero:
       link: /form-reference
 ---
 
-## A control call connected to your markup
+## Simple forms and reusable blueprints
 
-When a field needs its own wrappers, icons, or feedback placement, put that markup
-in a PHP element. `control()` binds the data; the element arranges its parts.
+Start with bound controls and ordinary PHP views. Put custom field markup in a
+PHP element, and extract a blueprint when the same fields repeat. Both approaches
+use the same fluent configuration and rendering parts.
 
 ::: code-group
 
-```php [templates/Articles/edit.php]
+```php [Simple form]
 <?php
 $form = $this->Form->form($article)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title')->template('forms/article-title') ?>
-<?= $form->control('body') ?>
+<?= $form->control('body')->type('textarea') ?>
+<?= $form->control('status')->choices([
+    'draft' => 'Draft',
+    'published' => 'Published',
+]) ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
-```php [templates/element/forms/article-title.php]
+```php [Custom field markup]
 <?php
+// templates/element/forms/article-title.php
 
 /**
  * @var \FormCompose\Form\Field\BoundField $field
@@ -57,43 +63,38 @@ $form = $this->Form->form($article)->bind();
 </div>
 ```
 
-:::
-
-Render labels, inputs, help, and errors independently, or share the markup through
-[templates](/templates), [themes](/themes), and [variants](/variants).
-
-## Start inline. Reuse what repeats.
-
-Configure individual controls, share immutable settings, or render a whole
-[blueprint](/blueprints) through its declared alias. Nested paths bind association
-fields using the same API.
-
-::: code-group
-
-```php [Fluent controls and shared settings]
+```php [Declare a blueprint]
 <?php
-use FormCompose\Configuration\FieldConfig;
+declare(strict_types=1);
 
-$email = FieldConfig::builder()
-    ->type('email')
-    ->required()
-    ->attributes(['autocomplete' => 'email']);
+namespace App\Form;
 
-$form = $this->Form->form($article)->bind();
-?>
-<?= $form->open() ?>
-<?= $form->control('author.email', config: $email)->label('Author email') ?>
-<?= $form->control('editor.email', config: $email)->label('Editor email') ?>
-<?= $form->control('status')
-    ->choices(['draft' => 'Draft', 'published' => 'Published'])
-    ->help('Only published articles appear on the site.') ?>
-<?= $form->submit('Save article') ?>
-<?= $form->close() ?>
+use FormCompose\Attribute\Form;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
+use function Cake\I18n\__;
+
+/**
+ * Shares article fields across forms while keeping values and saving in CakePHP.
+ */
+#[Form('article')]
+class ArticleForm extends FormBlueprint
+{
+    public function configure(BlueprintBuilder $form, FormContext $context): void
+    {
+        $form->add('title');
+        $form->add('body')->type('textarea');
+        $form->add('status')->choices([
+            'draft' => __('Draft'),
+            'published' => __('Published'),
+        ]);
+    }
+}
 ```
 
-```php [Reusable blueprint forms]
+```php [Render the blueprint]
 <?php
-// The application declares its fields under the 'article' blueprint alias.
 echo $this->Form
     ->form($article)
     ->blueprint('article')
@@ -101,24 +102,13 @@ echo $this->Form
     ->submit('Save article');
 ```
 
-```php [Protected actions]
-<?php
-// A standalone form, for example in an article listing.
-echo $this->Form
-    ->postButton(label: 'Delete', url: ['action' => 'delete', $article->id])
-    ->method('delete')
-    ->attributes(['class' => 'button-danger']);
-```
-
 :::
 
-Explore [choices and enums](/choices), [repeated association rows](/repeated-embeds),
-[custom field types](/custom-fields), and [POST buttons and links](/post-actions)
-when your form needs more.
+Choose [your own templates](/templates), share markup through [themes](/themes),
+or compose [nested blueprints](/composition) and [repeated rows](/repeated-embeds).
 
 CakePHP continues to supply values, validation metadata, routing, and submission
-protection. Forms and native action buttons need no CSS framework or JavaScript
-runtime.
+protection. No CSS framework or JavaScript runtime is required for ordinary forms.
 
 [Why FormCompose?](/why) · [Your first form](/getting-started) ·
 [Field configuration](/field-options)
