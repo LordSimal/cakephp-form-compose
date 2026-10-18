@@ -95,13 +95,11 @@ class ArticleForm extends FormBlueprint
 
 ```php [Render the blueprint]
 <?php
-$form = $this->Form
+echo $this->Form
     ->form($article)
     ->blueprint('article')
     ->errorSummary()
     ->submit('Save article');
-
-echo $form->render();
 ```
 
 :::
