@@ -85,8 +85,7 @@ controller or your existing application services.
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)
-    ->bind();
+$form = $this->Form->form($article)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>

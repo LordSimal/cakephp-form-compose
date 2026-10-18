@@ -149,8 +149,7 @@ $form = $this->Form
 
 echo $form->open();
 echo $form->control('title');
-echo $form->submit('Save')
-    ->templateData(['icon' => 'save']);
+echo $form->submit('Save')->templateData(['icon' => 'save']);
 echo $form->close();
 ```
 

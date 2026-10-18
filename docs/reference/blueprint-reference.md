@@ -62,13 +62,10 @@ hooks are the usual choice for labels and choices. See
 ```php
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->add('title')
-        ->required();
+    $form->add('title')->required();
     $form->embed('author', 'author');
-    $form->field('author.email')
-        ->label(__('Contact email'));
-    $form->presentation()
-        ->template('forms/article');
+    $form->field('author.email')->label(__('Contact email'));
+    $form->presentation()->template('forms/article');
 }
 ```
 

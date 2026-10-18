@@ -113,8 +113,7 @@ echo $form->controls([
     $form->control('body')
         ->type('textarea')
         ->attributes(['rows' => 12]),
-    $form->control('published')
-        ->type('checkbox'),
+    $form->control('published')->type('checkbox'),
 ]);
 ```
 
@@ -141,8 +140,7 @@ and attribute inspection render nothing and register no inputs. Use
 ## blueprint() {#blueprint}
 
 ```php
-echo $form->blueprint('article')
-    ->template('forms/article');
+echo $form->blueprint('article')->template('forms/article');
 ```
 
 `blueprint(?string $blueprint = null, ?string $at = null): PartBuilder` renders

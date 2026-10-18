@@ -12,25 +12,21 @@ view arranges label, input, help, and errors independently.
 
 ```php
 <?php
-$form = $this->Form->form($article)
-    ->bind();
+$form = $this->Form->form($article)->bind();
 $title = $form->field('title')
     ->help('Displayed above the article.')
     ->resolve();
 ?>
 <?= $form->open() ?>
 <section class="article-title">
-    <?= $title->label()
-        ->attributes(['class' => 'title-label']) ?>
+    <?= $title->label()->attributes(['class' => 'title-label']) ?>
     <div class="title-input-shell">
-        <?= $title->input()
-            ->attributes(['class' => 'title-input', 'data-controller' => 'title']) ?>
+        <?= $title->input()->attributes(['class' => 'title-input', 'data-controller' => 'title']) ?>
     </div>
     <?= $title->help() ?>
     <?= $title->errors() ?>
 </section>
-<?= $form->control('body')
-    ->type('textarea') ?>
+<?= $form->control('body')->type('textarea') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
@@ -44,8 +40,7 @@ field builder before resolution.
 ## Inspect state without rendering
 
 ```php
-$title = $form->field('title')
-    ->resolve();
+$title = $form->field('title')->resolve();
 $currentTitle = $title->state->value;
 $messages = $title->state->messages;
 $attributes = $title->attributes();
@@ -66,8 +61,7 @@ For errors shown only in a summary, keep errors enabled and explicitly remove
 input descriptions on the input builder:
 
 ```php
-echo $field->input()
-    ->attributes(['aria-describedby' => null]);
+echo $field->input()->attributes(['aria-describedby' => null]);
 ```
 
 Application-owned ARIA references remain your responsibility. If hiding a label,

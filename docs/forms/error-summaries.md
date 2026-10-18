@@ -58,8 +58,7 @@ arranges the prepared `$summary`, `$body`, and buttons. Configure that layout wi
     <?= $body ?>
 </div>
 <div class="form-actions">
-    <?= $form->submit('Check server validation')
-        ->attributes(['formnovalidate' => true]) ?>
+    <?= $form->submit('Check server validation')->attributes(['formnovalidate' => true]) ?>
     <?php if ($submit !== false): ?>
         <?= $form->submit($submit, config: $submitConfig) ?>
     <?php endif; ?>
@@ -75,13 +74,10 @@ preparation will not appear in that summary. See [layout variables](/template-re
 Rendering, rather than merely creating a builder, records feedback:
 
 ```php
-$form = $this->Form->form($article)
-    ->bind();
+$form = $this->Form->form($article)->bind();
 echo $form->open();
-$body = $form->controls(['title', 'body'])
-    ->render();
-echo $form->errorSummary()
-    ->title('Check your article');
+$body = $form->controls(['title', 'body'])->render();
+echo $form->errorSummary()->title('Check your article');
 echo $body;
 echo $form->submit('Save');
 echo $form->close();

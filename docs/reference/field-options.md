@@ -35,8 +35,7 @@ $emailConfig = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email
     ->config();
 
 echo $form->control('email', config: $emailConfig);
-echo $form->control('billing.email', config: $emailConfig)
-    ->label('Billing email');
+echo $form->control('billing.email', config: $emailConfig)->label('Billing email');
 ```
 
 The constructor names common settings (`type`, `label`, `help`); the builder

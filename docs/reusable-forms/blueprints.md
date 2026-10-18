@@ -28,12 +28,9 @@ class ArticleForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->add('title')
-            ->label(__('Article title'));
-        $form->add('body')
-            ->type('textarea');
-        $form->add('published')
-            ->type('checkbox');
+        $form->add('title')->label(__('Article title'));
+        $form->add('body')->type('textarea');
+        $form->add('published')->type('checkbox');
     }
 }
 ```
@@ -90,8 +87,7 @@ Configure the complete form on its builder before binding. Use `url()`,
 Add this at the end of the blueprint's `configure()` hook:
 
 ```php
-$form->presentation()
-    ->template('forms/article');
+$form->presentation()->template('forms/article');
 ```
 
 The layout receives a scoped `BlueprintView`:
@@ -123,12 +119,10 @@ order. Each field still uses its own control template.
 ### Inspect values and field configuration
 
 ```php
-$title = $form->field('title')
-    ->resolve();
+$title = $form->field('title')->resolve();
 $value = $title->state->value;
 $showHint = $title->state->config->presentation->templateData['showHint'] ?? false;
-$disabled = $title->attributes()
-    ->has('disabled');
+$disabled = $title->attributes()->has('disabled');
 ```
 
 Resolution and inspection render nothing. For a local change, configure a new
@@ -147,8 +141,7 @@ the effective value after all configured sources and overrides.
 ```php
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
-    $form->add('title')
-        ->label(__('Article title'));
+    $form->add('title')->label(__('Article title'));
     $form->add('status')
         ->choices([
             'draft' => __('Draft'),
@@ -156,8 +149,7 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
         ]);
 
     if ($context->request->getAttribute('canPublish')) {
-        $form->add('published')
-            ->type('checkbox');
+        $form->add('published')->type('checkbox');
     }
 }
 ```

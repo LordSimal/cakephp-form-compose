@@ -13,8 +13,7 @@ fields in one control:
 
 ```php [templates/Bookings/edit.php]
 <?php
-$form = $this->Form->form($booking)
-    ->bind();
+$form = $this->Form->form($booking)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('period')

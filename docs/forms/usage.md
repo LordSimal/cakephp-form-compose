@@ -11,13 +11,11 @@ for setup and [field configuration](/field-options) for every method.
 ## Complete controls
 
 ```php
-echo $form->control('title')
-    ->label('Article title');
+echo $form->control('title')->label('Article title');
 echo $form->control('body')
     ->type('textarea')
     ->attributes(['rows' => 12]);
-echo $form->control('published')
-    ->type('checkbox');
+echo $form->control('published')->type('checkbox');
 ```
 
 Schema and path conventions infer native types unless overridden. See
@@ -32,8 +30,7 @@ echo $form->controls([
     $form->control('body')
         ->type('textarea')
         ->attributes(['rows' => 12]),
-    $form->control('published')
-        ->type('checkbox'),
+    $form->control('published')->type('checkbox'),
 ]);
 ```
 
@@ -57,8 +54,7 @@ Default value lookup is explicit `value()`, submitted request data, context, the
 null counts as found; a context null falls through, following CakePHP semantics.
 
 ```php
-echo $form->control('title')
-    ->value('Preview title');
+echo $form->control('title')->value('Preview title');
 echo $form->control('summary')
     ->default('No summary yet')
     ->schemaDefault(false);
@@ -126,8 +122,7 @@ Validation, authorization, and persistence remain in the application.
 ## Choose a template for one control
 
 ```php
-echo $form->control('title')
-    ->template('forms/article-title');
+echo $form->control('title')->template('forms/article-title');
 ```
 
 This selects `templates/element/forms/article-title.php`. See
@@ -154,8 +149,7 @@ Render its parts with fluent local presentation:
 $title = $form->field('title')
     ->help('Use a descriptive title.')
     ->resolve();
-echo $title->input()
-    ->attributes(['class' => 'title-input']);
+echo $title->input()->attributes(['class' => 'title-input']);
 ```
 
 See [field parts](/field-parts).

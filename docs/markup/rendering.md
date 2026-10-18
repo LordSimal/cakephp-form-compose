@@ -52,8 +52,7 @@ second tab to see the file it renders:
 
 ```php [templates/Users/edit.php]
 <?php
-$form = $this->Form->form($user)
-    ->bind();
+$form = $this->Form->form($user)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('email')

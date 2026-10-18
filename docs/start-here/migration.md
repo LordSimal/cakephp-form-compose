@@ -21,12 +21,10 @@ Keep your controller's authorization, `patchEntity()`, validation, and saving.
 
 ```php [FormCompose]
 <?php
-$form = $this->Compose->form($article)
-    ->bind();
+$form = $this->Compose->form($article)->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('title')
-    ->attributes(['class' => 'title-input']) ?>
+<?= $form->control('title')->attributes(['class' => 'title-input']) ?>
 <?= $form->control('author_id')
     ->choices($authors)
     ->placeholder('No author') ?>

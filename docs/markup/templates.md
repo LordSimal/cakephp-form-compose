@@ -21,8 +21,7 @@ the path shown in the second tab:
 
 ```php [templates/Users/edit.php]
 <?php
-$form = $this->Form->form($user)
-    ->bind();
+$form = $this->Form->form($user)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('email')
@@ -156,8 +155,7 @@ this email layout the default for all email fields, move it to
 `new Theme(['forms/application'])`. Callers can then use:
 
 ```php
-echo $form->control('email')
-    ->type('email');
+echo $form->control('email')->type('email');
 ```
 
 Continue with [Create a theme](/themes) for that setup, or

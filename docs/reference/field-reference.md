@@ -28,8 +28,7 @@ resolved state with independently renderable parts. See
 | `config` | `FieldConfig` | Typed merged field configuration, including its `PresentationConfig`. |
 
 ```php
-$title = $form->field('title')
-    ->resolve();
+$title = $form->field('title')->resolve();
 $currentTitle = $title->state->value;
 $hasErrors = $title->state->hasErrors();
 ```
@@ -50,14 +49,11 @@ progressive enhancement using an escaped data attribute:
 
 ```php
 // Inside an open form.
-$field = $form->field('name')
-    ->resolve();
-$message = $field->attributes()
-    ->has('required')
+$field = $form->field('name')->resolve();
+$message = $field->attributes()->has('required')
     ? $field->state->requiredMessage
     : null;
-echo $field->input()
-    ->attributes(['data-required-message' => $message]);
+echo $field->input()->attributes(['data-required-message' => $message]);
 ```
 
 Keep the value as text and let attribute rendering escape it. Server-side
@@ -100,8 +96,7 @@ Requires an open session and an unused input ID. The part builder's `attributes(
 prepared bag; behavior and identity belong in [field options](/field-options).
 
 ```php
-echo $title->input()
-    ->attributes(['class' => 'wide', 'autocomplete' => 'off']);
+echo $title->input()->attributes(['class' => 'wide', 'autocomplete' => 'off']);
 ```
 
 Do not also call `register()` or render the same input through `control()`.
@@ -124,13 +119,10 @@ parts registers no inputs. A disabled label/help/errors part emits an empty stri
 A grouped field uses a legend rather than an ordinary input label.
 
 ```php
-echo $title->label()
-    ->attributes(['class' => 'caption']);
+echo $title->label()->attributes(['class' => 'caption']);
 echo $title->input();
-echo $title->help()
-    ->attributes(['class' => 'hint']);
-echo $title->errors()
-    ->attributes(['class' => 'feedback']);
+echo $title->help()->attributes(['class' => 'hint']);
+echo $title->errors()->attributes(['class' => 'feedback']);
 ```
 
 Render enabled feedback to preserve the input's generated ARIA relationships.

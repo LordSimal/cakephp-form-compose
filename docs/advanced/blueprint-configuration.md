@@ -42,8 +42,7 @@ class ArticleForm extends FormBlueprint
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
         $form->add('title');
-        $form->add('status')
-            ->choices($this->statuses->all());
+        $form->add('status')->choices($this->statuses->all());
     }
 }
 ```

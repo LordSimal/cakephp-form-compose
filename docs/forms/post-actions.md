@@ -131,8 +131,7 @@ use FormCompose\Configuration\FormConfig;
     ->postLink(label: 'Delete', url: ['action' => 'delete', $article->id])
     ->method('delete')
     ->form(
-        FormConfig::builder()
-            ->id('delete-article-' . $article->id),
+        FormConfig::builder()->id('delete-article-' . $article->id),
     ) ?>
 ```
 
@@ -223,8 +222,7 @@ Use `block` to put the independent action form outside the surrounding form:
 
 ```php
 <?php
-$form = $this->Form->form($article)
-    ->bind();
+$form = $this->Form->form($article)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>

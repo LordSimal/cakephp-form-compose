@@ -31,8 +31,7 @@ needs to distinguish them. Zero is also a real choice value.
 ```php
 use App\Enum\Status;
 
-echo $form->control('status')
-    ->choices(Status::class);
+echo $form->control('status')->choices(Status::class);
 ```
 
 A backed enum class renders all cases in declaration order. Cases submit their
@@ -96,8 +95,7 @@ echo $form->control('audience')
         ]),
         ChoiceGroupConfig::builder('Internal')
             ->choices([
-                ChoiceConfig::builder('staff', 'Staff')
-                    ->attributes(['data-tier' => 'internal']),
+                ChoiceConfig::builder('staff', 'Staff')->attributes(['data-tier' => 'internal']),
                 new ChoiceConfig(value: 'legacy', label: 'Legacy team', attributes: ['disabled' => true]),
             ])
             ->attributes(['data-group' => 'internal']),

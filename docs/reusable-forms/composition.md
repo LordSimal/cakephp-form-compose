@@ -27,12 +27,9 @@ class AuthorForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->add('name')
-            ->label(__('Author name'));
-        $form->add('email')
-            ->type('email');
-        $form->presentation()
-            ->template('forms/author');
+        $form->add('name')->label(__('Author name'));
+        $form->add('email')->type('email');
+        $form->presentation()->template('forms/author');
     }
 }
 ```
@@ -58,8 +55,7 @@ In the parent article blueprint's hook:
 
 ```php
 $form->add('title');
-$form->embed('author', 'author')
-    ->attributes(['class' => 'article-author']);
+$form->embed('author', 'author')->attributes(['class' => 'article-author']);
 ```
 
 The first argument is the context mount; the second is the child's declared
@@ -77,8 +73,7 @@ In a parent layout, position the occurrence with:
 
 ```php
 $form->embed('author', 'author');
-$form->field('author.email')
-    ->label(__('Contact email'));
+$form->field('author.email')->label(__('Contact email'));
 
 if (!$context->request->getAttribute('canEditAuthorName')) {
     $form->remove('author.name');
@@ -97,8 +92,7 @@ Use `embed()` in hooks for reusable structure. For an occurrence placed directly
 in a view, render a blueprint inside an open session:
 
 ```php
-echo $form->blueprint('author', at: 'author')
-    ->attributes(['class' => 'article-author']);
+echo $form->blueprint('author', at: 'author')->attributes(['class' => 'article-author']);
 ```
 
 This local occurrence does not replace the binding's selected defaults. Do not
@@ -116,15 +110,13 @@ input registrations, preserving the enclosing session for a corrected retry.
 
 ```php
 // Parent blueprint hook.
-$form->embed('author', 'author')
-    ->template('forms/compact-author');
+$form->embed('author', 'author')->template('forms/compact-author');
 ```
 
 Or override presentation in the parent layout:
 
 ```php
-<?= $form->embedded('author')
-    ->template('forms/compact-author') ?>
+<?= $form->embedded('author')->template('forms/compact-author') ?>
 ```
 
 Presentation changes do not rerun the child's hook. Use the common

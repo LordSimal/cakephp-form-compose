@@ -159,8 +159,7 @@ under the `button` scope:
 ::: code-group
 
 ```php [Inside an open form]
-echo $form->submit('Save')
-    ->variant('primary');
+echo $form->submit('Save')->variant('primary');
 ```
 
 ```php [templates/element/forms/application/button/variants/primary/control.php]

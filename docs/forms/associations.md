@@ -34,8 +34,7 @@ Then render the fields without repeating conventional choice configuration:
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->form($article)
-    ->bind();
+$form = $this->Form->form($article)->bind();
 ?>
 
 <?= $form->open() ?>
@@ -98,8 +97,7 @@ when needed. `multiple(false)` overrides the inferred multiple-selection default
 For a checkbox group, use the plugin's explicit field type:
 
 ```php
-echo $form->control('tags._ids')
-    ->type('multicheckbox');
+echo $form->control('tags._ids')->type('multicheckbox');
 ```
 
 The group still discovers `$tags`, selects the loaded IDs, and uses “Tags” as its

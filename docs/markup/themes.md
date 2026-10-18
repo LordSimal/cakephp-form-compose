@@ -47,12 +47,10 @@ Forms inherit that theme without repeating it at each binding:
 
 ```php [templates/Users/edit.php]
 <?php
-$form = $this->Form->form($user)
-    ->bind();
+$form = $this->Form->form($user)->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('email')
-    ->type('email') ?>
+<?= $form->control('email')->type('email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -333,23 +331,19 @@ $form = $this->Form
     ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('title')
-    ->help('Shown in the article list.') ?>
-<?= $form->control('body')
-    ->type('textarea') ?>
+<?= $form->control('title')->help('Shown in the article list.') ?>
+<?= $form->control('body')->type('textarea') ?>
 <?= $form->control('author_id')
     ->choices($authors)
     ->placeholder('No author') ?>
-<?= $form->control('published')
-    ->type('checkbox') ?>
+<?= $form->control('published')->type('checkbox') ?>
 <?= $form->control('visibility')
     ->type('radio')
     ->choices(['public' => 'Public', 'private' => 'Private']) ?>
 <?= $form->control('topics')
     ->type('multicheckbox')
     ->choices(['php' => 'PHP', 'cakephp' => 'CakePHP']) ?>
-<?= $form->control('attachment')
-    ->type('file') ?>
+<?= $form->control('attachment')->type('file') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
