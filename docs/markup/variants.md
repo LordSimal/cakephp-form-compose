@@ -1,33 +1,19 @@
 ---
 title: Use variants
-description: Build a compact field variant from its PHP file to the control call, and understand fallback, scope, and layer precedence.
+description: Add a compact presentation to a theme and select it for individual fields or buttons.
 ---
 
 # Use variants
 
-A **variant** is a name that asks the theme for alternative templates. For
-example, `variant('compact')` asks for files under `variants/compact/`.
-You create those files and their styling. Setting the option alone does not
-make a field smaller or add a CSS class.
+A variant offers a named alternative inside a theme. For example,
+`variant('compact')` selects your compact layout; you supply its markup and CSS.
 
-Use variants when the same theme needs several presentations, such as ordinary
-fields and compact fields. Use an [explicit template](/templates) when you
-want to select a particular element by its full name.
+## Create and request a compact variant
 
-## 1. Create the variant element
+With a theme layer at `forms/application`, create the first file and use the
+variant as shown in the second tab:
 
-Assume your theme layer is `forms/application`. Add a control element at:
-
-```text
-templates/element/forms/application/
-├── control.php                   Optional default layout
-└── variants/
-    └── compact/
-        └── control.php           Layout requested by variant('compact')
-```
-
-This variant places the label and input side by side. It uses a fieldset for
-grouped choices, letting the label part render a legend:
+::: code-group
 
 ```php [templates/element/forms/application/variants/compact/control.php]
 <?php
@@ -39,36 +25,15 @@ declare(strict_types=1);
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>
-<<?= $tag ?><?= (string)$attributes->merge(['class' => 'compact-field']) ?>>
+<<?= $tag ?><?= $attributes->merge(['class' => 'compact-field']) ?>>
     <?= $field->label() ?>
-    <div class="compact-field-body">
+    <div>
         <?= $field->input() ?>
         <?= $field->help() ?>
         <?= $field->errors() ?>
     </div>
 </<?= $tag ?>>
 ```
-
-Add these rules to your application's stylesheet:
-
-```css
-.compact-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-  gap: .75rem;
-  border: 0;
-  margin: 0 0 .75rem;
-  padding: 0;
-}
-
-.compact-field-body {
-  min-width: 0;
-}
-```
-
-## 2. Request it on a field
-
-Select the layer and pass the variant on the field that needs it:
 
 ```php [templates/Users/edit.php]
 <?php
@@ -89,72 +54,41 @@ $form = $this->Form
 <?= $form->close() ?>
 ```
 
-The email field uses `variants/compact/control.php`, adding the `compact-field`
-wrapper and side-by-side layout. The name field uses the ordinary control layout.
-Both keep their normal values, validation feedback, and submission behavior.
-
-If you already [configured this theme on the helper](/themes#select-theme),
-you can omit the `theme()` call.
-
-## 3. Understand what gets selected
-
-For the email control above, each layer tries these files in order:
-
-```text
-variants/compact/control.php     Named variant
-email/control.php                Type-specific layout
-control.php                      Generic layout
-```
-
-The first existing file wins. If no compact control file exists, lookup continues
-to the type-specific and generic files. A valid variant name with no matching
-files therefore falls back to the ordinary presentation.
-
-The variant is considered separately for **every part of that field**. For the
-label it tries `variants/compact/label.php`, then `email/label.php`, then
-`label.php`. You can add only `control.php` and let all its parts fall back, or
-also provide `label.php`, `help.php`, or other parts in the variant directory.
-
-::: info A field variant applies across field types
-`variants/compact/control.php` can be selected for email, text, select, or any
-other field type requesting `compact`. There is no
-`variants/compact/email/control.php` lookup. Use `email/control.php` for an
-automatic email-specific layout, or an explicit `template` for a particular file.
 :::
 
-Variant names begin with a lowercase letter and contain only lowercase letters,
-digits, underscores, and hyphens. For example, `compact` and `inline_help` are
-valid. An invalid name throws `InvalidArgumentException` during theme lookup.
+Add these rules to your application's stylesheet:
+
+```css
+.compact-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: .75rem;
+  border: 0;
+  margin: 0 0 .75rem;
+  padding: 0;
+}
+```
+
+The email control uses the compact layout; the name control keeps the default.
+If the helper already selects this theme, omit the per-form `theme()` call.
+
+## Understand what gets selected
+
+Within a layer, `variant('compact')` tries `variants/compact/control.php` before
+`email/control.php` and `control.php`. A missing variant falls back to ordinary
+markup. The setting applies to each part of that field, so a variant can also
+provide its own `label.php`, `help.php`, or `errors.php`.
 
 ## Layers take priority before specificity
 
-With `new Theme(['forms/application', 'MyDesignSystem.forms'])`, the renderer
-searches all candidates in the application layer before moving to the shared
-plugin layer:
-
-```text
-1. forms/application/variants/compact/control
-2. forms/application/email/control
-3. forms/application/control
-4. MyDesignSystem.forms/variants/compact/control
-5. MyDesignSystem.forms/email/control
-6. MyDesignSystem.forms/control
-7. Bundled base candidates
-```
-
-An application `control.php` wins over a shared plugin's compact variant. If you
-want the shared variant to be reachable, avoid a generic control override in the
-earlier layer, or delegate with [`$parent()`](/themes#share-and-layer-themes).
-Explicit `template` or `templates` selections take priority over this entire
-search for the selected part.
+An earlier layer is searched before a later one. An application `control.php`
+therefore wins over a shared plugin's compact variant. See the
+[worked lookup example](/template-reference#layer-priority) for exact paths.
 
 ## Buttons and form layouts have their own variants
 
-The option applies to the object receiving it. A field variant does not change
-the submit button, and a form variant is not inherited by its fields or buttons.
-
-For a primary submit button, pass the variant on `submit()` and create its element
-under the `button` scope:
+A field variant does not change its submit button. To offer a primary button,
+create the element in the second tab and select it on `submit()`:
 
 ::: code-group
 
@@ -168,30 +102,23 @@ declare(strict_types=1);
 
 use FormCompose\Rendering\Html;
 
+/**
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var string|\FormCompose\Rendering\Html $label
+ */
 ?>
-<button<?= (string)$attributes->merge(['class' => 'button-primary']) ?>>
+<button<?= $attributes->merge(['class' => 'button-primary']) ?>>
     <?= Html::text($label) ?>
 </button>
 ```
 
 :::
 
-This adds your `button-primary` class. Style it in the application stylesheet.
-
-| Variant supplied to | Example candidate in a theme layer |
-| --- | --- |
-| `control()` or `field()` | `variants/compact/control.php` |
-| `submit()` | `button/variants/primary/control.php` |
-| Form builder `variant()` | `form/variants/compact/open.php` and `form/variants/compact/close.php` |
-| Form builder `variant()` | `form/variants/compact/layout.php` |
-| Blueprint occurrence `variant()` | `blueprint/variants/compact/control.php` |
+Style `button-primary` in your stylesheet. Form and blueprint layouts use their
+own scopes too; see [lookup scope and filenames](/template-reference#lookup-order).
 
 ## When a variant seems to do nothing
 
-Check that the form uses the theme containing your file, that the file path
-matches the requested scope and part, and that no explicit override or earlier
-layer wins. A variant needs its own markup or classes to change the presentation.
-
-Enable [template debugging](/theme-debug) to see every attempted candidate and
-the element that matched. See the [lookup reference](/template-reference#lookup-order)
-for the complete rules.
+Check the theme directory, filename, and requested variant. A name alone adds no
+styling. Use [template debugging](/theme-debug) to see whether an explicit
+template or an earlier layer selected another file.

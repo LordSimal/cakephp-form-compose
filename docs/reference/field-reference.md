@@ -64,7 +64,7 @@ context paths.
 The snapshot does not track subsequent entity or request changes. Resolve a new
 bound field when you need a new snapshot.
 
-For a practical condition combining values, field options, and attributes, see
+For inspection inside a layout, see
 [inspection inside a blueprint layout](/blueprints#inspect-values-and-field-configuration).
 
 ## control() {#control}
@@ -134,6 +134,15 @@ Configure help/error IDs through field `partAttributes`; local ID overrides on
 duplicate-ID checks. A complete control commits its input registrations only
 after all parts succeed.
 
+For summary-only error display, keep errors enabled and remove the generated
+input description explicitly:
+
+```php
+echo $title->input()->attributes(['aria-describedby' => null]);
+```
+
+The application remains responsible for any external ARIA references it supplies.
+
 ## attributes() {#attributes}
 
 ```php
@@ -141,8 +150,9 @@ public function attributes(string $part = 'input', array $extra = []): Attribute
 ```
 
 Returns a `FormCompose\Rendering\Attributes` bag without rendering or registration.
-Supported presentation parts include `container`, `input`, `label`, `help`, and
-`errors`. Input attributes include name, ID, constraints, and ARIA descriptions;
+Attribute targets include `container`, `input`, `label`, `help`, and `errors`.
+`container` supplies attributes to the outer `control.php` element; it is not a
+separate template part or rendering method. Input attributes include name, ID, constraints, and ARIA descriptions;
 native type/value attributes are prepared later by the field type.
 
 ```php
@@ -169,11 +179,30 @@ add fallback inputs, or infer extra submitted names from HTML.
 If the field has errors, registration adds an unlinked entry to an optional error
 summary; it does not infer focus targets from configured choices or custom types.
 
-Use it once, after emitting the input. The
-[handwritten input example](/field-parts#write-a-native-input-by-hand) shows
-escaping, attributes, and registration together. A control that submits different
-names needs a custom field type with matching
-[`submissions()` records](/custom-fields#low-level-submission-records).
+Use it once, after emitting the input. This example belongs inside an open form
+and handles an ordinary scalar text field:
+
+```php
+<?php
+
+use FormCompose\Rendering\Html;
+
+$title = $form->field('title')
+    ->type('text')
+    ->resolve();
+?>
+<?= $title->label() ?>
+<input type="text"<?= $title->attributes() ?> value="<?= Html::text((string)$title->state->value) ?>">
+<?php $title->register(); ?>
+<?= $title->help() ?>
+<?= $title->errors() ?>
+```
+
+`attributes()` excludes the native type and formatted value. For local input
+attributes, pass the same bag to `attributes('input', $local)` and `register($local)`.
+File/password, checkbox, choice, and composite fields need their additional native
+formatting and submission behavior. Prefer their `input()` methods, or supply a
+custom type with matching [submission records](/custom-field-reference#low-level-submission-records).
 For a composite, register each actual child; registering the parent does not
 register its declared children.
 

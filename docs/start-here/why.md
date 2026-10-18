@@ -22,35 +22,10 @@ render it with a single `control()` call wherever you need it.
 | Add an icon, wrapper, or conditional markup | Arrange template fragments and pass template variables. | Use HTML, PHP conditionals, and element includes in the control element. |
 | Arrange one field differently | Call individual helper methods with the field name and options. | Resolve one bound field, then place its parts in your view. |
 | Reuse a set of fields | Organize helper calls in application code or elements. | Use optional PHP blueprints, with embedded blueprints and application-owned layouts. |
-| Read values and validation feedback | CakePHP contexts and validation metadata. | The same CakePHP contexts and metadata, exposed through bound fields. |
 
 Core's [template and widget APIs](https://book.cakephp.org/6.x/views/helpers/form.html#customizing-the-templates-formhelper-uses)
 already support custom markup. FormCompose makes PHP elements and field objects
 the starting point for that work.
-
-## How the pieces fit together
-
-<figure class="formcompose-architecture">
-  <div class="formcompose-architecture-scroll" tabindex="0" role="region" aria-label="FormCompose architecture diagram; scroll horizontally on small screens">
-    <img src="/diagrams/formcompose-architecture.svg" width="960" height="610" alt="CakePHP data and request feed a form session through bind(). Fluent field settings override optional blueprint defaults. Resolving a field builder captures bound fields without rendering. Explicit control or part calls render PHP elements; blueprint() renders a blueprint collection and render() renders a full form. Successful input rendering registers submitted names with the session, and closing adds protection fields to the HTML." />
-  </div>
-  <figcaption>Bind the data, resolve fields, and explicitly render markup. The session tracks submitted inputs.</figcaption>
-</figure>
-
-`bind()` prepares a form session and optional blueprint configuration without
-emitting markup. Calling `resolve()` on a field builder captures values, names, IDs, constraints, and errors
-without rendering or registering inputs. `control()` returns a renderable builder; echo or `render()` resolves and renders
-the field. Parts on a bound field also return renderable builders. Use `blueprint()`
-for a selected blueprint's field collection/layout, or `render()` for a complete
-form. PHP elements render the parts you call; successful input
-rendering registers submitted fields. Form opening and closing prepare method,
-CSRF, and form-protection fields when needed.
-
-[Blueprints](/blueprints) supply optional configuration, and
-[blueprint layouts](/blueprints#keep-control-of-the-layout) arrange fields;
-[embedded blueprints](/composition) compose related sections. They
-use this same rendering flow. Validation and persistence stay in your existing
-CakePHP application layers.
 
 ## One call, your markup
 
@@ -90,40 +65,6 @@ Move the hint, add another wrapper, or include an icon element here. Every call
 using this element gets the change. A [theme](/themes) can apply it across
 forms without repeating the `template` option.
 
-::: info Adopting FormCompose
-This is a separate form-building API for CakePHP 6. Existing FormHelper calls and
-custom widgets need to be ported. The API is still evolving.
-:::
-
 [Build your first form](/getting-started) ·
 [Follow a control from data to HTML](/rendering) ·
 [Look up field configuration](/field-options)
-
-<style>
-.formcompose-architecture {
-  margin: 24px 0;
-}
-
-.formcompose-architecture-scroll {
-  overflow-x: auto;
-  border-radius: 16px;
-}
-
-.formcompose-architecture-scroll:focus-visible {
-  outline: 2px solid var(--vp-c-brand-1);
-  outline-offset: 4px;
-}
-
-.formcompose-architecture img {
-  width: 100%;
-  min-width: 640px;
-  max-width: none;
-}
-
-.formcompose-architecture figcaption {
-  margin-top: 12px;
-  color: var(--vp-c-text-2);
-  font-size: 14px;
-  line-height: 1.6;
-}
-</style>

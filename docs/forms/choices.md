@@ -1,47 +1,104 @@
 ---
 title: Choice controls
-description: Typed choices, groups, enums, native selection, checkboxes, and empty-selection fallbacks.
+description: Render selects, checkboxes, radio buttons, grouped options, and choices from backed enums.
 ---
 
 # Choice controls
 
-Inside an open form, selection comes from the bound value. Use `value()` only
-for deliberate overrides. See [choice settings](/field-options#choices-and-fallbacks).
+Give `choices()` a map of submitted values to labels. The bound field value
+selects the matching option, so an edit form normally needs no `value()` call.
+Examples below go inside an [open form](/usage#render-fields).
 
 ## A select list
 
 ```php
 echo $form->control('status')
-    ->choices(['draft' => 'Draft', 'published' => 'Published'])
+    ->choices([
+        'draft' => 'Draft',
+        'published' => 'Published',
+    ])
     ->placeholder('Choose a status');
 ```
 
-`choices()` infers a select unless an explicit type overrides it. Optional single
-selects receive a blank placeholder by default. `placeholder(false)` suppresses
-it; `placeholder(true)` requests a blank option even for a required select.
+`choices()` selects a select control automatically. Choosing “Published” submits
+`status=published`. `placeholder()` labels its empty option; use
+`placeholder(false)` to omit it.
 
-::: info Empty placeholder and empty-string choice
-A real `''` choice remains a choice and takes precedence over generated
-placeholders. Both submit an empty string; use another value when your application
-needs to distinguish them. Zero is also a real choice value.
+## A single checkbox
+
+```php
+echo $form->control('published')
+    ->type('checkbox')
+    ->label('Publish this article');
+```
+
+This submits `'1'` when checked and `'0'` when unchecked. A bound true or 1 checks
+it automatically. For application-specific values:
+
+```php
+echo $form->control('approval')
+    ->type('checkbox')
+    ->checkedValue('approved')
+    ->uncheckedValue('pending');
+```
+
+## Radio buttons
+
+```php
+echo $form->control('visibility')
+    ->type('radio')
+    ->label('Who can read this article?')
+    ->choices([
+        'public' => 'Everyone',
+        'private' => 'Editors only',
+    ]);
+```
+
+The group uses a fieldset and legend. Each option has its own label.
+
+## Multiple selections
+
+Choose one presentation for the same set of topics:
+
+::: code-group
+
+```php [Multiple select]
+echo $form->control('topics')
+    ->multiple()
+    ->choices([
+        'php' => 'PHP',
+        'testing' => 'Testing',
+    ]);
+```
+
+```php [Checkbox group]
+echo $form->control('topics')
+    ->type('multicheckbox')
+    ->choices([
+        'php' => 'PHP',
+        'testing' => 'Testing',
+    ]);
+```
+
 :::
+
+Both submit `topics[]`. A bound array such as `['php', 'testing']` selects both.
+For related ORM records, use [association selectors](/associations), such as
+`tags._ids`.
 
 ## Backed enums
 
-```php
-use App\Enum\Status;
+If your application already uses an enum, pass its class to `choices()`. This
+example defines the enum in the first tab and uses it in the second.
 
-echo $form->control('status')->choices(Status::class);
-```
+::: code-group
 
-A backed enum class renders all cases in declaration order. Cases submit their
-backing values; labels default to humanized case names. CakePHP schema `enum-*`
-types discover their backed enum automatically, including nested associations.
-Explicit `choices([])` or `choices(null)` opts out of discovery.
+```php [src/Enum/Status.php]
+<?php
+declare(strict_types=1);
 
-### Custom enum labels
+namespace App\Enum;
 
-```php
 use Cake\Database\Type\EnumLabelInterface;
 use function Cake\I18n\__;
 
@@ -60,112 +117,54 @@ enum Status: string implements EnumLabelInterface
 }
 ```
 
-CakePHP's `EnumLabelInterface` supplies translated labels. They are escaped like
-ordinary text. Pure enums fail because they have no submitted backing value.
+```php [Inside an open form]
+use App\Enum\Status;
 
-### Subsets and multiple selections
-
-```php
-echo $form->control('status')
-    ->type('radio')
-    ->choices([Status::Published, Status::Draft]);
-echo $form->control('allowed_statuses')
-    ->type('multicheckbox')
-    ->choices(Status::class)
-    ->value([Status::Draft, Status::Published]);
+echo $form->control('status')->choices(Status::class);
 ```
 
-Iterable keys do not replace enum backing values. Bound scalar values and enum
-cases select the corresponding choice. Explicit native non-choice types keep
-their type and do not consume choice iterators.
+:::
+
+Cases submit their backing values. `EnumLabelInterface` supplies translated labels;
+without it, labels use humanized case names. Pass `[Status::Draft]` instead of the
+class when you want only a subset of cases.
 
 ## Groups and attributes on individual choices
 
-Simple maps remain convenient data. Use typed configs for choice metadata:
+For ordinary option groups, use nested maps:
+
+```php
+echo $form->control('audience')->choices([
+    'Public' => [
+        'everyone' => 'Everyone',
+        'subscribers' => 'Subscribers',
+    ],
+    'Internal' => [
+        'staff' => 'Staff',
+    ],
+]);
+```
+
+When one option needs attributes, use `ChoiceConfig` for that option:
 
 ```php
 use FormCompose\Configuration\ChoiceConfig;
-use FormCompose\Configuration\ChoiceGroupConfig;
 
-echo $form->control('audience')
-    ->choices([
-        new ChoiceGroupConfig('Public', [
-            'everyone' => 'Everyone',
-            'subscribers' => 'Subscribers',
-        ]),
-        ChoiceGroupConfig::builder('Internal')
-            ->choices([
-                ChoiceConfig::builder('staff', 'Staff')->attributes(['data-tier' => 'internal']),
-                new ChoiceConfig(value: 'legacy', label: 'Legacy team', attributes: ['disabled' => true]),
-            ])
-            ->attributes(['data-group' => 'internal']),
-    ]);
+echo $form->control('audience')->choices([
+    'staff' => 'Staff',
+    ChoiceConfig::builder('legacy', 'Legacy team')->disabled(),
+]);
 ```
 
-Nested maps such as `['Public' => ['everyone' => 'Everyone']]` also create groups.
-Use `ChoiceConfig(value, label, attributes, id)` for individual choice metadata.
-`ChoiceConfig::builder()` returns `ChoiceConfig` with fluent `label()`, `id()`,
-`disabled()`, and `attributes()` methods. `ChoiceGroupConfig::builder()` returns
-`ChoiceGroupConfig` with `choices()` and `attributes()`. These are immutable configs:
-pass them directly in choice arrays without a terminal conversion. Deriving a new
-choice or group leaves its source unchanged. Lazy iterables remain unconsumed
-until rendering. Omitted enum labels
-use the enum's label; explicit null or empty string creates a blank label.
-Labels are escaped unless wrapped in trusted `Html`.
-
-## Radio buttons
-
-```php
-echo $form->control('visibility')
-    ->type('radio')
-    ->label('Who can read this article?')
-    ->choices(['public' => 'Everyone', 'private' => 'Editors only']);
-```
-
-Groups use fieldset/legend semantics and unique labeled choices. Required radio
-sets use native browser behavior. Required multi-checkbox groups do not require
-every box; enforce minimum selections in CakePHP validation.
-
-## A single checkbox
-
-```php
-echo $form->control('published')
-    ->type('checkbox')
-    ->label('Publish this article');
-```
-
-The default checked value is `'1'`; a hidden fallback submits `'0'` when unchecked.
-Boolean true and integer 1 bind as checked. Customize both values:
-
-```php
-echo $form->control('approval')
-    ->type('checkbox')
-    ->checkedValue('approved')
-    ->uncheckedValue('pending');
-```
-
-`value()` controls the bound selection; `checkedValue()` controls submission.
-
-## Multiple selections
-
-```php
-echo $form->control('topics')
-    ->multiple()
-    ->choices(['php' => 'PHP', 'testing' => 'Testing']);
-```
-
-Or use `type('multicheckbox')` instead of a multiple select. Both submit under
-`topics[]`. An array of scalar values or backed enum cases selects entries.
-For ORM associations use `tags._ids`; see [associations](/associations).
+See [choice configuration](/field-options#choices-and-fallbacks) for group metadata,
+enum discovery, and all choice setters.
 
 ## Empty selections and disabled controls
 
-Browsers omit unchecked/empty selections. FormCompose supplies hidden fallbacks
-for checkboxes, radio groups, multi-checkboxes, and multiple selects. Other than
-a single checkbox's configured fallback, these submit `''` under the base name
-without `[]`. `fallback(false)` permits omission instead.
+Clearing a multiple selection still submits an empty value, so previously selected
+items are not restored. Checkboxes and other choice controls include the needed
+hidden fallback inputs automatically.
 
-`disabled()` disables the input, choices, and fallback, registering no native
-submitted names. Individual `ChoiceConfig` attributes can disable one choice.
-HTML readonly has no effect on selects, checkboxes, or radio buttons; enforce
-allowed changes through application authorization and validation.
+`disabled()` disables the control and its fallbacks. Use CakePHP validation for
+rules such as “choose at least two topics”; marking a checkbox group required
+does not make every checkbox mandatory.

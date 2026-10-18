@@ -1,31 +1,29 @@
 ---
 title: Reusable forms
-description: Choose inline controls, reusable configuration snapshots, or PHP form blueprints.
+description: Share field settings, markup, or an entire field collection without changing how forms bind data.
 ---
 
 # Reusable forms
 
-Bound fields and application-owned templates are the foundation. Reuse only the
-layer that repeats in your application.
+Start with ordinary controls. Extract the part that repeats:
 
-## Choose the right layer
-
-| Repeated concern | Use |
+| What repeats? | Use |
 | --- | --- |
-| One control's settings | `FieldConfig` snapshot |
-| HTML structure and classes | PHP element or theme |
-| A collection of fields and embeds | Form blueprint |
-| A one-off page arrangement | Ordinary view HTML |
+| One field's settings | A `FieldConfig`. |
+| Markup and classes | A [PHP element](/templates) or [theme](/themes). |
+| A set of fields | A [form blueprint](/blueprints). |
 
 ## Keep local configuration inline
 
+Inside an open form:
+
 ```php
 echo $form->control('email')
-    ->label('Email address')
+    ->type('email')
     ->required();
 ```
 
-To share settings without a blueprint:
+If several fields need those same settings, define a preset instead:
 
 ```php
 use FormCompose\Configuration\FieldConfig;
@@ -33,55 +31,35 @@ use FormCompose\Configuration\FieldConfig;
 $email = FieldConfig::builder()
     ->type('email')
     ->required();
+
 echo $form->control('email', config: $email);
+echo $form->control('billing.email', config: $email)->label('Billing email');
 ```
 
-`FieldConfig::builder()` returns a `FieldConfig`, and each fluent call returns a
-new config. Form, rendering, and declaration builders update their attached
-occurrence. See
-[field configuration](/field-options) for constructors, merging, and every setter.
+Configs are immutable: deriving a new config leaves the preset unchanged.
+See [field configuration](/field-options#reuse-configuration) for named arguments
+and combining presets.
 
 ## Extract a reusable form
 
-Declare fields with `add()` in a `FormBlueprint::configure()` hook. Use
-`#[Form('article')]` for an alias. Hooks can call translation functions, read the
-current context, and use injected choice services. See [form blueprints](/blueprints)
-for the complete class.
-
-## Render all declared fields
+A blueprint declares a collection once, then renders it wherever needed:
 
 ```php
 echo $this->Form
     ->form($article)
     ->blueprint('article')
-    ->submit('Save');
+    ->submit('Save article');
 ```
 
-The complete form includes opening/closing markup and the default action. Use
-`withoutSubmit()` to omit that action. An optional blueprint layout arranges the
-collection; field templates still arrange each individual control.
-Append another `blueprint('article_more')` call to combine independent field
-collections in one form. See [blueprint composition](/composition#combine-blueprints)
-for layout and collision rules.
+The [blueprint guide](/blueprints#declare-and-use-a-blueprint) defines `article` and
+shows both automatic rendering and a manual view. Validation and saving continue
+through your existing CakePHP application.
 
 ## Use blueprint defaults with a manual layout {#select-defaults-for-the-whole-binding}
 
-```php
-<?php
-$form = $this->Form
-    ->form($article)
-    ->blueprint('article')
-    ->bind();
-?>
-<?= $form->open() ?>
-<section class="article-main">
-    <?= $form->controls(['title', 'body']) ?>
-</section>
-<?= $form->control('published') ?>
-<?= $form->submit('Save') ?>
-<?= $form->close() ?>
-```
+Select the blueprint before `bind()`, then use the session's `open()`, `control()`,
+and `close()` calls. Follow the [manual-view example](/blueprints#blueprint-selection).
 
-Selection supplies defaults; it does not force automatic rendering. Use
-[nested blueprints](/composition) for associations and [repeated embeds](/repeated-embeds)
-for keyed rows. Validation and persistence remain in the application.
+For several independent sections, [combine blueprints](/composition#combine-blueprints).
+For related records, use [nested blueprints](/composition#compose-an-association)
+or [repeated rows](/repeated-embeds).

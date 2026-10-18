@@ -11,9 +11,10 @@ submission behavior, renderer implementations, and service subclasses.
 
 ## Custom field types
 
-The [custom field types guide](/custom-fields) covers `#[AsFieldType]`,
-`CompositeType`, `SingleInputType`, and advanced `FieldTypeInterface` contracts.
-It includes complete application examples with PHP layouts and submission behavior.
+Start with [custom field types](/custom-fields) for a scalar editor or
+[composite fields](/custom-fields#create-a-date-range) for a group of native inputs. The
+[custom field reference](/custom-field-reference) covers lower-level submission
+contracts.
 
 ## Custom renderers
 
@@ -25,40 +26,11 @@ Fields, forms, buttons, and hidden inputs all use this same contract. Native
 rendering performs no binding or security mutations; the lifecycle commits state
 only after the relevant rendering succeeds.
 
-### CakePHP form protection
-
-The `Security\FormProtection` integration directly uses Cake's `FormProtector`.
-Cake marks this class internal, so compatibility tests against supported Cake
-versions are required when upgrading that integration.
-
-Dynamic collection protocols, reactive validation, and frontend state
-synchronization can be implemented as application integrations.
-
 ## Subclassing services
 
-Service classes support subclassing, with protected methods and dependencies for
-specialization. Use theme elements for markup changes and `FieldTypeInterface` for
-new control semantics. To adjust built-in behavior, these hooks connect subclasses
-to the normal form-building API:
-
-| Class | Extension points |
-| --- | --- |
-| `FormHelper` | `createSession()` selects the session returned by `bind()` |
-| `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
-| `FieldResolver` | `inferType()` and factories for bound fields, field types, child resolution, values, and field conventions |
-| `FieldConventions` | `choices()` and `resolve()` specialize choice discovery and association defaults; `ContextFeedback` handles messages through `FieldResolver::createContextFeedback()` |
-| `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
-| `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
-| `BlueprintCompiler` | `createBuilder()` supplies the hook builder; `createRepeatedCompiler()` supplies row compilation |
-| `BlueprintRenderer` | `createView()` supplies the scoped layout API |
-| `BlueprintView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
-| `ValueResolver` | `fromSources()` specializes request/context lookup |
-| `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
-| `NativeType` | `choice()` and `createChoices()` specialize standard controls |
-| `PhpRenderer` | `layered()` and `element()` customize template lookup and execution |
-
-For example, an application helper can select a session that uses a custom resolver.
-These three files connect a website-field convention to the public `bind()` API:
+Use a service subclass when binding behavior needs an application convention.
+For example, the following helper selects a session whose resolver infers URL
+controls for `website`. Create all three classes, then load the helper below.
 
 ::: code-group
 
@@ -125,12 +97,6 @@ class AppFieldResolver extends FieldResolver
 
 :::
 
-When overriding `createSession()`, accept and forward its third `BlueprintFactory`
-argument. This keeps application dependencies and custom discovery configuration
-available to local `$form->blueprint('profile')` calls in the session subclass.
-Direct `new FormSession($binding, $rendering)` construction supports
-dependency-free blueprints; pass the factory as the optional third constructor argument when needed.
-
 Load the helper in `AppView::initialize()`:
 
 ```php
@@ -139,8 +105,34 @@ use App\View\Helper\AppFormHelper;
 $this->addHelper('Form', ['className' => AppFormHelper::class]);
 ```
 
-Now resolving the `website` field through the helper's form builder infers `url`. Explicit field types
-still take priority over type inference. Override `FieldResolver::createFieldConventions()`
+Resolving `website` through this helper now infers `url`. Explicit field types
+still take priority over type inference.
+
+### Other extension points
+
+| Class | Extension points |
+| --- | --- |
+| `FormHelper` | `createSession()` selects the session returned by `bind()` |
+| `FormSession` | `createFieldResolver()` and `createLifecycle()` supply collaborators |
+| `FieldResolver` | `inferType()` and factories for bound fields, field types, child resolution, values, and field conventions |
+| `FieldConventions` | `choices()` and `resolve()` specialize choice discovery and association defaults; `ContextFeedback` handles messages through `FieldResolver::createContextFeedback()` |
+| `FormHelper` | `createBlueprintFactory()` supplies blueprint construction and discovery |
+| `BlueprintFactory` | `createCompiler()`, `createInstance()`, and `attributes()` specialize construction and discovery |
+| `BlueprintCompiler` | `createBuilder()` supplies the hook builder; `createRepeatedCompiler()` supplies row compilation |
+| `BlueprintRenderer` | `createView()` supplies the scoped layout API |
+| `BlueprintView` | `control()`, `field()`, `embedded()`, and `qualify()` customize layout behavior |
+| `ValueResolver` | `fromSources()` specializes request/context lookup |
+| `BoundField` | Field-part methods and `createFieldAttributes()` customize field presentation |
+| `NativeType` | `choice()` and `createChoices()` specialize standard controls |
+| `PhpRenderer` | `layered()` and `element()` customize template lookup and execution |
+
+When overriding `createSession()`, accept and forward its third `BlueprintFactory`
+argument. This keeps application dependencies and custom discovery configuration
+available to local `$form->blueprint('profile')` calls in the session subclass.
+Direct `new FormSession($binding, $rendering)` construction supports
+dependency-free blueprints; pass the factory as the optional third constructor argument when needed.
+
+Override `FieldResolver::createFieldConventions()`
 to supply application-specific association or choice-list conventions. The default
 `FieldConventions` uses the binding and the rendering context's optional live
 `viewVariable` lookup. `Choices`, `ChoiceAttributes`, and
@@ -184,15 +176,37 @@ value and escaping contracts stay consistent. Small stateless utilities such as
 
 ## Custom summary targets
 
-Implement `Field\ErrorTargetProviderInterface` alongside `FieldTypeInterface`
-when a composite control needs a summary link to an input other than its main ID:
+The date-range type normally links group errors to its first eligible input.
+To link them to the departure date instead, extend the
+[documented date-range type](/custom-fields#create-a-date-range) and select
+`type('departure-date-range')`:
 
-```php
-public function errorTarget(BoundField $field, Attributes $attributes): ?string
+`src/Form/Field/DepartureFirstDateRangeType.php`
+
+```php [src/Form/Field/DepartureFirstDateRangeType.php]
+<?php
+declare(strict_types=1);
+
+namespace App\Form\Field;
+
+use FormCompose\Attribute\AsFieldType;
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
+#[AsFieldType('departure-date-range')]
+class DepartureFirstDateRangeType extends DateRangeType
 {
-    return $field->state->id . '-end';
+    public function errorTarget(BoundField $field, Attributes $attributes): ?string
+    {
+        return $field->inputs['end']->focusTarget;
+    }
 }
 ```
+
+The child's `focusTarget` is set only after an eligible input renders; it is null
+when that child did not emit a focusable control. `CompositeType` already implements
+`ErrorTargetProviderInterface`, so this overrides its default target selection.
+For a lower-level type, implement that interface alongside `FieldTypeInterface`.
 
 Return an actual emitted control ID without `#`, or null to show an unlinked
 message. An empty string is rejected. The method must not render, register, or

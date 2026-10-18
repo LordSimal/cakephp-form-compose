@@ -1,16 +1,23 @@
 ---
 title: Repeated embeds
-description: Compile and render keyed association rows using fluent blueprint declarations.
+description: Render a reusable comment form for every loaded or submitted association row.
 ---
 
 # Repeated embeds
 
-A repeated embed compiles one child occurrence per selected key. It preserves
-original collection keys and nested submission names while sharing one form.
+Use a repeated embed when a collection needs the same fields for each row. This
+example edits an article's comments within the article form.
 
 ## Define a row and its parent
 
-```php
+Create the comment blueprint, declare its repeated embed in the existing
+[article blueprint](/blueprints), and place the collection in the article's layout.
+The tabs show those additions and the rendering call. Load the article with its
+Comments association in your controller first.
+
+::: code-group
+
+```php [src/Form/CommentForm.php]
 <?php
 declare(strict_types=1);
 
@@ -32,39 +39,58 @@ class CommentForm extends FormBlueprint
 }
 ```
 
-In the parent article blueprint's hook:
-
-```php
-$form->add('title');
+```php [Add to ArticleForm::configure()]
 $form->embedMany('comments', 'comment')->label('Comments');
 ```
 
-Null keys infer rows from the configured binding value sources. A submitted
-collection, including an explicit empty collection, is authoritative over entity
-rows. Each row hook sees its own scoped context; paths submit as
-`comments[2][body]`, for example.
+```php [Add inside templates/element/forms/article.php]
+<?= $form->embeddedMany('comments') ?>
+```
+
+```php [templates/Articles/edit.php]
+<?php
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->submit('Save article');
+```
+
+:::
+
+Each comment supplies a row. Its fields submit under paths such as
+`comments[0][id]` and `comments[0][body]`. After a failed submission, submitted
+rows take precedence over the loaded collection, including an empty collection.
 
 ## Select rows or add blank presentations
 
+To choose an order and include a blank row, replace the parent declaration with:
+
 ```php
-// Parent blueprint hook: explicit order, preserving sparse keys.
-$form->embedMany('comments', 'comment')->keys([2, 7, 'new_row']);
+$form->embedMany('comments', 'comment')
+    ->label('Comments')
+    ->keys([2, 7, 'new_row']);
 ```
 
-`keys([])` compiles no rows. Keys must be unique valid path segments. Selecting
-keys happens before row hooks run; excluded rows are not compiled. A blank row
-only supplies a presentation—it does not create or save an entity.
+Keys are preserved in submitted names, so the blank textarea submits
+`comments[new_row][body]`. A blank row renders inputs; it does not create or save
+an entity. Your CakePHP submission handler still marshals and saves the data.
 
 ## Arrange rows with a PHP element
 
-Select a collection layout in the parent hook:
+To wrap each row, select a collection template in the parent declaration and
+create the element in the second tab:
 
-```php
-$form->embedMany('comments', 'comment')->template('forms/comments');
+::: code-group
+
+```php [Inside ArticleForm::configure()]
+$form->embedMany('comments', 'comment')
+    ->label('Comments')
+    ->template('forms/comments');
 ```
 
-```php
+```php [templates/element/forms/comments.php]
 <?php
+declare(strict_types=1);
 
 use FormCompose\Rendering\Html;
 
@@ -74,10 +100,10 @@ use FormCompose\Rendering\Html;
  * @var \FormCompose\Rendering\Attributes $attributes
  */
 ?>
-<section<?= (string)$attributes ?>>
+<section<?= $attributes ?>>
     <h2><?= Html::text($embed->label()) ?></h2>
     <?= $embed->errors() ?>
-    <?php foreach ($rows as $key => $row): ?>
+    <?php foreach ($rows as $row): ?>
         <article class="comment-row">
             <?= $row->render() ?>
         </article>
@@ -85,28 +111,18 @@ use FormCompose\Rendering\Html;
 </section>
 ```
 
-Save this as `templates/element/forms/comments.php`. `$row` is a scoped layout
-view. Use `$row->controls(['id', 'body'])` instead of `render()` when arranging row
-fields manually. Do not render both. Collection errors belong to `$embed`;
-row errors remain on their bound fields.
+:::
+
+`$row->render()` uses the child blueprint's layout. To arrange fields yourself,
+use `$row->controls(['id', 'body'])` instead. Render each row once.
 
 ## Configure and render in PHP
 
-Inside an open session, a new repeated occurrence can be configured directly:
+In a custom article blueprint layout, render the declared collection with:
 
 ```php
-echo $form->embedMany('comments', 'comment')
-    ->keys([2, 7])
-    ->label('Comments');
+<?= $form->embeddedMany('comments') ?>
 ```
 
-Inside a blueprint layout, render the already compiled occurrence:
-
-```php
-<?= $form->embeddedMany('comments')->attributes(['class' => 'comments']) ?>
-```
-
-Layout presentation does not recompile rows. Configure keys in the declaration
-before binding; selecting different keys on a compiled layout occurrence fails.
-Use `errors(false)` to suppress collection-level errors and `partAttributes('errors', ...)`
-for their attributes. Custom collection layouts must render enabled feedback.
+For view-created occurrences without a parent declaration, or exact key and
+feedback rules, see [repeated blueprint configuration](/blueprint-reference#repeated-blueprints-and-occurrence-options).

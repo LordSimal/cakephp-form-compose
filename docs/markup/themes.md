@@ -1,25 +1,19 @@
 ---
 title: Create a theme
-description: Connect a control() call to your own PHP element and reuse the layout across CakePHP forms.
+description: Make your PHP elements and default attributes apply across forms.
 ---
 
 # Create a theme
 
-A theme chooses the PHP element directories and default HTML attributes used by
-a form. Use it when your markup should become the shared default across forms.
-You only need to provide the elements you want to change; bundled elements
-supply the remaining parts.
+A theme makes your elements the shared defaults. You only create the files you
+want to change; bundled templates supply the rest.
 
-A **layer** is one directory in the theme's search list. A **variant** is an
-optional named presentation inside those directories. If these terms are new,
-start with [How rendering works](/rendering).
+## Select your element directory {#select-theme}
 
-This example gives email controls an icon beside the input. It changes their
-presentation while keeping their bound values, feedback, and submission behavior.
+This example gives every email field a decorated input. Configure the helper,
+create the element, then use ordinary controls in your views:
 
-## 1. Select your element directory {#select-theme}
-
-Configure the theme once when loading the helper in `AppView::initialize()`:
+::: code-group
 
 ```php [src/View/AppView.php]
 <?php
@@ -43,7 +37,25 @@ class AppView extends View
 }
 ```
 
-Forms inherit that theme without repeating it at each binding:
+```php [templates/element/forms/application/email/control.php]
+<?php
+declare(strict_types=1);
+
+/**
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ */
+?>
+<div<?= $attributes->merge(['class' => 'contact-field']) ?>>
+    <?= $field->label() ?>
+    <div class="input-with-icon">
+        <span aria-hidden="true">@</span>
+        <?= $field->input() ?>
+    </div>
+    <?= $field->help() ?>
+    <?= $field->errors() ?>
+</div>
+```
 
 ```php [templates/Users/edit.php]
 <?php
@@ -55,71 +67,34 @@ $form = $this->Form->form($user)->bind();
 <?= $form->close() ?>
 ```
 
-The `forms/application` prefix maps to your application's
-`templates/element/forms/application/` directory. For this email control,
-FormCompose looks for `email/control.php`, then a generic `control.php`.
-
-You can also [select a theme for one form](#select-a-theme-for-one-form).
-
-## 2. Write the control element
-
-Create this file in the selected layer:
-
-```php [templates/element/forms/application/email/control.php]
-<?php
-declare(strict_types=1);
-
-/**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
- */
-?>
-<div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
-    <?= $field->label() ?>
-    <div class="input-with-icon">
-        <span aria-hidden="true">@</span>
-        <?= $field->input() ?>
-    </div>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
-</div>
-```
-
-The outer container preserves the supplied attributes and adds your class.
-`$field->input()` renders the input part at the position you choose. The other
-calls render their corresponding parts, returning empty content when disabled or
-not applicable.
-
-Every email control in a form using this theme now gets this layout. Other types
-continue to use the base control element, and all parts without overrides still
-use their base elements.
-
-::: tip Change just one control
-For an individual field, call `template('forms/special-email')` on its control builder. This directly selects `templates/element/forms/special-email.php`
-without changing the theme. [Use your own templates](/templates)
-shows a complete example and how to replace individual parts.
 :::
 
-## 3. Add default classes
+The theme directory `forms/application` maps to
+`templates/element/forms/application/`. Its `email/control.php` handles email
+controls. Other types and parts continue to use the bundled markup.
 
-Put shared class and attribute defaults in the theme. Replace the `Theme` passed
-to the helper's `theme` setting with this instance, or select it with the form builder's `theme($theme)` method
-before binding:
+A directory in the theme's search list is called a **layer**. For a one-off
+selection, use [an explicit template](/templates) instead.
+
+## Add default classes
+
+Replace the helper configuration in `AppView::initialize()` with:
 
 ```php
-$theme = new Theme(
-    layers: ['forms/application'],
-    defaults: [
-        'input' => ['class' => 'field-input'],
-        'email.input' => ['class' => 'email-input'],
-        'label' => ['class' => 'field-label'],
-    ],
-);
+$this->addHelper('Form', [
+    'className' => 'FormCompose.Form',
+    'theme' => new Theme(
+        layers: ['forms/application'],
+        defaults: [
+            'input' => ['class' => 'field-input'],
+            'label' => ['class' => 'field-label'],
+            'help' => ['class' => 'field-help'],
+        ],
+    ),
+]);
 ```
 
-The email-specific input class replaces the generic input class. Per-field
-and local attributes then merge on top. Add a class or an integration attribute
-for one field like this:
+Now inputs, labels, and help receive those classes. Field attributes merge on top:
 
 ```php
 echo $form->control('email')
@@ -127,14 +102,15 @@ echo $form->control('email')
     ->attributes(['class' => 'wide', 'x-model' => 'email']);
 ```
 
-Its input receives the classes `email-input wide` and the `x-model` attribute.
-The attribute bag merges class tokens and ARIA references; it does not resolve
-conflicting CSS utilities.
+The input has `field-input wide` and the integration attribute `x-model="email"`.
+Style those classes in your application stylesheet.
 
-## 4. Customize another part when needed
+## Customize another part when needed
 
-Follow the same approach for a label, button, or form structure. For example,
-this button element adds decorative markup before its label:
+Use the same directory for other parts. A shared submit button lives at
+`forms/application/button/control.php`:
+
+`templates/element/forms/application/button/control.php`
 
 ```php [templates/element/forms/application/button/control.php]
 <?php
@@ -142,28 +118,23 @@ declare(strict_types=1);
 
 use FormCompose\Rendering\Html;
 
+/**
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var string|\FormCompose\Rendering\Html $label
+ */
 ?>
-<button<?= (string)$attributes ?>>
+<button<?= $attributes ?>>
     <span aria-hidden="true">→</span>
     <?= Html::text($label) ?>
 </button>
 ```
 
-`$form->submit('Save')` selects this button template through the same theme.
-The decorative span is hidden from assistive technology; the button label remains
-its accessible name.
-
-::: tip Changing every control
-A layer's generic `control.php` applies to all types without a more specific
-control template. Preserve fieldset and legend semantics for radios and checkbox
-groups when replacing it. A type-specific element is useful for layouts that
-only make sense for one control type, such as the email icon above.
-:::
+`$form->submit('Save')` now uses this element. See
+[template filenames and variables](/template-reference) for other parts.
 
 ## Select a theme for one form
 
-Forms and standalone actions inherit the helper's configured theme. Select a
-`Theme` instance on a form builder for a local override:
+Override the helper's theme on the form builder before binding:
 
 ```php
 use FormCompose\Rendering\Theme;
@@ -172,53 +143,31 @@ $form = $this->Form
     ->form($user)
     ->theme(new Theme(['forms/compact']))
     ->bind();
-// Or use the bundled markup for this binding:
-$form = $this->Form
-    ->form($user)
-    ->theme(Theme::base())
-    ->bind();
 ```
 
-Omitting `theme()` or passing null inherits the helper setting.
-Standalone actions also support the named helper argument `theme: $theme`. An explicit theme
-replaces the configured theme, including its layers and attribute defaults.
-Compose multiple layers inside one `Theme` when you want them combined.
-
-The default setting is `'Base'`; setting helper `theme` to null also selects the
-base theme. `setConfig('theme', $theme)` changes future bindings and action calls.
-Existing form sessions retain their selected theme, and other helper instances
-keep their own settings. Unsupported strings, arrays, and unrelated objects fail
-when the configured theme is selected.
+Use `theme(Theme::base())` for bundled markup. Omit `theme()` to inherit the
+helper's setting. See [theme configuration](/template-reference#theme-api) for
+replacement behavior and accepted helper values.
 
 ## Share and layer themes
 
-A theme can search more than one element directory. Put application overrides
-first, a shared design-system plugin next, and let bundled base elements supply
-any remaining parts:
+To override a shared design-system plugin, put application elements first:
 
 ```php
+use FormCompose\Rendering\Theme;
+
 $theme = new Theme(layers: ['forms/application', 'MyDesignSystem.forms']);
 ```
 
-The renderer searches every candidate in the first layer before moving to the
-next. For an email control without a variant, it tries:
-
-```text
-forms/application/email/control
-forms/application/control
-MyDesignSystem.forms/email/control
-MyDesignSystem.forms/control
-FormCompose.form/base/email/control
-FormCompose.form/base/control
-```
-
-The first existing file wins. An earlier layer's generic `control.php` therefore
-wins over a later layer's type-specific element. Each field part repeats this
-search independently.
+Each part searches the application layer before the plugin and bundled layers.
+An earlier generic `control.php` wins over a later type-specific element. For
+exact candidates, see [lookup order](/template-reference#lookup-order).
 
 ### Wrap the next layer with `$parent()`
 
-To decorate a shared layout, call `$parent()` from the application element:
+An application element can wrap the shared layout:
+
+`templates/element/forms/application/control.php`
 
 ```php [templates/element/forms/application/control.php]
 <?php
@@ -231,42 +180,19 @@ declare(strict_types=1);
 </section>
 ```
 
-Here `$parent()` renders the control from the **next layer**, starting with
-`MyDesignSystem.forms`. It skips the remaining candidates in the current layer.
-Calling it from a variant also moves to the next layer; it does not try the
-current layer's type-specific or generic control.
-
-In an [explicit template override](/templates), `$parent()` starts normal
-lookup from the first theme layer instead. This lets an exceptional element
-wrap the themed presentation.
+`$parent()` continues in the next layer. In an explicit template override, it
+starts normal theme lookup. See [parent lookup](/template-reference#calling-the-parent-layer).
 
 ## Offer a named alternative
 
-Use `variant('compact')` when a caller should choose an alternative layout
-inside this theme. Create `variants/compact/control.php` in a layer; fields
-requesting that variant try it before that layer's type-specific and generic
-files. Other fields keep their ordinary layout.
-
-Follow [Use variants](/variants) for a complete file, control call, styling,
-and fallback explanation.
-
-## Debug template selection
-
-Enable `themeDebug` to see attempted candidates and the selected element in page
-source. Follow [Debug template selection](/theme-debug) for configuration,
-an annotated trace, and renderer details.
+Use [variants](/variants) when callers should choose a presentation such as compact.
+Use [template debugging](/theme-debug) to see why a particular element was selected.
 
 ## Use your CSS framework
 
-Themes belong to your application or a separate plugin. Use the markup and
-classes required by Tailwind, daisyUI, Bootstrap, or your own design system.
-FormCompose's base theme supplies plain semantic HTML.
-
-For Tailwind, write complete class names and include your theme element files in
-source scanning. Integration attributes such as `x-model` and `data-*` can be
-passed through [field attributes](/field-options#attributes). For the complete
-`Theme`, attribute-bag, and trusted-markup APIs, see the
-[template reference](/template-reference#theme-api).
+Theme elements can use Bootstrap, Tailwind, daisyUI, or your own CSS. For Tailwind,
+write complete class names and include your element files in source scanning.
+The base theme uses semantic HTML without a CSS framework.
 
 ## A complete starter theme
 
@@ -277,6 +203,8 @@ single checkbox, and grouped choices.
 ::: details Complete starter: control element, form, and CSS
 
 Start with a generic control element:
+
+`templates/element/forms/starter/control.php`
 
 ```php [templates/element/forms/starter/control.php]
 <?php
@@ -309,6 +237,8 @@ All other parts fall back to the bundled elements, retaining escaped values,
 choice labels, help/error IDs, and hidden fallbacks.
 
 Use the theme in an existing article view:
+
+`templates/Articles/edit.php`
 
 ```php [templates/Articles/edit.php]
 <?php
@@ -398,10 +328,6 @@ to your design system:
 }
 ```
 
-The browser regression suite uses this control element and the same defaults
-with nested names, validation feedback, disabled controls, choices, and a file
-upload. It checks native validity, unique IDs, matching ARIA references, and an
-accepted multipart POST through CakePHP protection. The theme requires no
-JavaScript or CSS framework.
+The theme requires no JavaScript or CSS framework.
 
 :::
