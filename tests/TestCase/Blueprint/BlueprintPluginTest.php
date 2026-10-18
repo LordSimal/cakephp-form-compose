@@ -10,14 +10,12 @@ use Cake\Container\Container;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
 use Cake\Core\Plugin;
+use Cake\Event\EventManager;
 use FormCompose\Blueprint\BlueprintFactory;
 use FormCompose\FormComposePlugin;
 use FormCompose\Test\Fixture\Blueprint\CustomBlueprintFactory;
-use FormCompose\Test\Fixture\Blueprint\Valid\ConditionalForm;
 use FormCompose\Test\Fixture\BlueprintApplication;
-use FormCompose\Test\Fixture\BlueprintAppView;
 use FormCompose\Test\FormTestCase;
-use FormCompose\View\Helper\FormHelper;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -26,6 +24,23 @@ use PHPUnit\Framework\Attributes\DataProvider;
  */
 class BlueprintPluginTest extends FormTestCase
 {
+    protected EventManager $originalEvents;
+
+    /** Isolate plugin event registrations from other application instances. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->originalEvents = EventManager::instance();
+        EventManager::instance(new EventManager());
+    }
+
+    /** Restore the application's global event manager after each test. */
+    protected function tearDown(): void
+    {
+        EventManager::instance($this->originalEvents);
+        parent::tearDown();
+    }
+
     /**
      * @return array<string, array{array{debug: bool, cache: string|false}}>
      */
@@ -41,7 +56,7 @@ class BlueprintPluginTest extends FormTestCase
      * @param array{debug: bool, cache: string|false} $mode Runtime mode and expected default cache.
      */
     #[DataProvider('debugModes')]
-    public function testBootstrapSuppliesDefaultsWithoutFactoryConstruction(array $mode): void
+    public function testBootstrapSuppliesDiscoveryDefaults(array $mode): void
     {
         $plugins = Plugin::getCollection();
         $app = new BlueprintApplication(dirname(__DIR__, 2) . '/test_app/config/');
@@ -153,28 +168,11 @@ class BlueprintPluginTest extends FormTestCase
         static::assertSame($factory, $container->get(BlueprintFactory::class));
     }
 
-    public function testApplicationServicesReachTheHelperThroughViewConfiguration(): void
+    public function testEventsWithoutApplicationBootstrapPreserveTheManager(): void
     {
-        $plugins = Plugin::getCollection();
-        $app = new BlueprintApplication(dirname(__DIR__, 2) . '/test_app/config/');
-        try {
-            $app->addPlugin(new FormComposePlugin(['path' => dirname(__DIR__, 3) . '/']));
-            /** @var mixed $factory */
-            $factory = $app->getContainer()->get(BlueprintFactory::class);
-            static::assertInstanceOf(BlueprintFactory::class, $factory);
-            $view = new BlueprintAppView($this->helper()->getView()->getRequest(), viewOptions: ['viewVars' => [
-                'blueprints' => $factory,
-            ]]);
-            $helper = $view->helpers()->get('Form');
-            static::assertInstanceOf(FormHelper::class, $helper);
-            $form = $helper->form()->blueprint(ConditionalForm::class)->bind();
-            static::assertSame(
-                ['work' => 'Work <address>', 'home' => 'Home'],
-                $form->field('kind')->resolve()->state->config->choices,
-            );
-        } finally {
-            Plugin::setCollection($plugins);
-        }
+        $events = new EventManager();
+        static::assertSame($events, new FormComposePlugin()->events($events));
+        static::assertSame([], $events->listeners('Controller.beforeRender'));
     }
 
     public function testFactoryDoesNotConfigureMissingCollections(): void

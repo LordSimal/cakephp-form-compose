@@ -5,9 +5,13 @@ namespace FormCompose;
 
 use Cake\AttributeResolver\AttributeResolver;
 use Cake\Container\ContainerInterface;
+use Cake\Controller\Controller;
 use Cake\Core\BasePlugin;
 use Cake\Core\Configure;
+use Cake\Core\ContainerApplicationInterface;
 use Cake\Core\PluginApplicationInterface;
+use Cake\Event\EventInterface;
+use Cake\Event\EventManagerInterface;
 use FormCompose\Blueprint\BlueprintFactory;
 
 /**
@@ -21,11 +25,19 @@ class FormComposePlugin extends BasePlugin
 {
     protected ?string $name = 'FormCompose';
 
+    protected ?BlueprintFactory $blueprints = null;
+
     /**
      * Supply discovery defaults once during plugin bootstrap, preserving application overrides.
      */
     public function bootstrap(PluginApplicationInterface $app): void
     {
+        if ($this->isEnabled('events') && $app instanceof ContainerApplicationInterface) {
+            $factory = $app->getContainer()->get(BlueprintFactory::class);
+            assert($factory instanceof BlueprintFactory, 'The application factory must extend BlueprintFactory.');
+            $this->blueprints = $factory;
+        }
+
         parent::bootstrap($app);
         if (AttributeResolver::getConfig('formCompose') === null) {
             AttributeResolver::setConfig('formCompose', [
@@ -39,8 +51,8 @@ class FormComposePlugin extends BasePlugin
     /**
      * Register the construction boundary using the application's existing container.
      *
-     * Inject this service into a controller action and pass it to the view helper's
-     * blueprintFactory option; blueprint classes never receive the container itself.
+     * The plugin supplies this service to controller-created views;
+     * blueprint classes receive ordinary dependencies rather than the container.
      */
     public function services(ContainerInterface $container): void
     {
@@ -52,5 +64,32 @@ class FormComposePlugin extends BasePlugin
             BlueprintFactory::class,
             static fn(): BlueprintFactory => new BlueprintFactory($container),
         );
+    }
+
+    /**
+     * Carry the application factory into view options before helpers initialize.
+     * Bootstrap supplies the factory before CakePHP calls this hook. View options
+     * keep services out of template variables, and explicit configuration wins.
+     */
+    public function events(EventManagerInterface $eventManager): EventManagerInterface
+    {
+        $factory = $this->blueprints;
+        if (!$factory instanceof BlueprintFactory) {
+            return $eventManager;
+        }
+
+        $eventManager->on('Controller.beforeRender', static function (EventInterface $event) use ($factory): void {
+            $controller = $event->getSubject();
+            if (!$controller instanceof Controller) {
+                return;
+            }
+
+            $builder = $controller->viewBuilder();
+            if ($builder->getOption('formCompose.blueprintFactory') === null) {
+                $builder->setOption('formCompose.blueprintFactory', $factory);
+            }
+        });
+
+        return $eventManager;
     }
 }

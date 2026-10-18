@@ -89,14 +89,16 @@ CakePHP helper loading still uses CakePHP's own configuration array:
 $this->addHelper('Form', [
     'className' => 'FormCompose.Form',
     'theme' => $theme,
-    'blueprintFactory' => $blueprints,
 ]);
 ```
 
 The helper also accepts `passwordFields`, `typeMap`, `contextFactory`,
 `themeDebug`, and `autoActionScript`. Use a form builder for `valueSources`,
 custom type instances, and a renderer. Per-form settings override helper defaults.
-See [blueprint services](/blueprint-configuration) for dependency injection.
+During normal controller rendering, the plugin supplies the application's
+container-backed blueprint factory automatically. The optional helper setting
+`blueprintFactory` takes precedence; use it for manually constructed views or a
+custom factory. See [blueprint services](/blueprint-configuration) for examples.
 
 ## open() {#open}
 
