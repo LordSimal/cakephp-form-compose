@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Blueprint;
 
 use Cake\View\Form\ArrayContext;
+use FormCompose\Configuration\EmbedConfig;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\BodyForm;
 use FormCompose\Test\Fixture\Repeat\CommentForm;
@@ -18,16 +19,15 @@ class RepeatedLayoutTest extends FormTestCase
 {
     public function testRepeatWrapperIdentitiesParticipateInDuplicateChecks(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        $form->embedMany(
-            'comments',
-            CommentForm::class,
-            keys: [],
-            options: ['template' => 'repeat/comments', 'attributes' => ['id' => 'comments-wrapper']],
-        );
+        $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+            ->keys([])
+            ->partTemplate('control', 'repeat/comments')
+            ->attributes(['id' => 'comments-wrapper'])
+            ->render();
         $this->expectException(LogicException::class);
-        $form->control('other', ['id' => 'comments-wrapper']);
+        $form->control('other')->id('comments-wrapper')->render();
     }
 
     public function testDefaultLayoutRendersRowsAndErrorsWithoutAWrapper(): void
@@ -36,10 +36,10 @@ class RepeatedLayoutTest extends FormTestCase
             'defaults' => ['comments' => [2 => ['body' => 'First'], 'new' => ['body' => 'Second']]],
             'errors' => ['comments' => ['count' => 'Add another comment']],
         ]);
-        $form = $this->helper()->bind($context);
+        $form = $this->helper()->form($context)->bind();
         $form->open();
 
-        $html = $form->embedMany('comments', BodyForm::class);
+        $html = $form->embedMany(path: 'comments', blueprint: BodyForm::class)->render();
         $xpath = $this->xpath($html);
         static::assertSame(2, $xpath->query('/html/body/div/input')->length);
         static::assertSame(1, $xpath->query('/html/body/ul/li')->length);
@@ -53,15 +53,17 @@ class RepeatedLayoutTest extends FormTestCase
 
     public function testWrapperAttributesRequireACustomTemplateAndCanBeRetried(): void
     {
-        $form = $this->helper(['comments' => [2 => ['body' => 'Comment']]])->bind();
+        $form = $this->helper(['comments' => [2 => ['body' => 'Comment']]])
+            ->form()
+            ->bind();
         $form->open();
 
-        $options = [
-            'attributes' => ['id' => 'comments-wrapper', 'data-heading' => '<Comments>'],
-            'label' => 'Discussion <comments>',
-        ];
+        $options = EmbedConfig::builder()
+            ->attributes(['id' => 'comments-wrapper', 'data-heading' => '<Comments>'])
+            ->label('Discussion <comments>')
+            ->config();
         try {
-            $form->embedMany('comments', CommentForm::class, options: $options);
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)->apply($options)->render();
             static::fail('Expected wrapper attributes to require a custom template.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertSame(
@@ -70,10 +72,10 @@ class RepeatedLayoutTest extends FormTestCase
             );
         }
 
-        $html = $form->embedMany('comments', CommentForm::class, options: [
-            ...$options,
-            'template' => 'repeat/comments',
-        ]);
+        $html = $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+            ->apply($options)
+            ->template('repeat/comments')
+            ->render();
         static::assertStringContainsString('<section id="comments-wrapper" data-heading="&lt;Comments&gt;"', $html);
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringContainsString('<h2>Discussion &lt;comments&gt;</h2>', $html);
@@ -82,30 +84,38 @@ class RepeatedLayoutTest extends FormTestCase
 
     public function testThemeWrapperAttributesRequireACustomTemplate(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(defaults: [
-            'embed-many.control' => ['class' => 'comments'],
-        ]));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(defaults: [
+                'embed-many.control' => ['class' => 'comments'],
+            ]))
+            ->bind();
         $form->open();
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Repeated embed wrapper attributes require a custom control template.');
-        $form->embedMany('comments', CommentForm::class, keys: []);
+        $form->embedMany(path: 'comments', blueprint: CommentForm::class)->keys([])->render();
     }
 
     public function testOmittedWrapperAttributesDoNotReserveIdsOrRequireATemplate(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(defaults: [
-            'embed-many.control' => ['id' => 'unused-wrapper', 'class' => 'comments'],
-        ]));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(defaults: [
+                'embed-many.control' => ['id' => 'unused-wrapper', 'class' => 'comments'],
+            ]))
+            ->bind();
         $form->open();
-        static::assertSame('', $form->embedMany(
-            'comments',
-            CommentForm::class,
-            keys: [],
-            options: [
-                'attributes' => ['id' => null, 'class' => null, 'hidden' => false],
-            ],
-        ));
-        static::assertStringContainsString('id="unused-wrapper"', $form->control('other', ['id' => 'unused-wrapper']));
+        static::assertSame(
+            '',
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)
+                ->keys([])
+                ->attributes(['id' => null, 'class' => null, 'hidden' => false])
+                ->render(),
+        );
+        static::assertStringContainsString(
+            'id="unused-wrapper"',
+            $form->control('other')->id('unused-wrapper')->render(),
+        );
         $form->close();
     }
 }

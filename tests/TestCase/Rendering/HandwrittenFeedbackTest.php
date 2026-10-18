@@ -16,12 +16,12 @@ class HandwrittenFeedbackTest extends FormTestCase
 {
     public function testHandwrittenFeedbackReservesConfiguredIdsWithoutAddingSubmissions(): void
     {
-        $form = $this->helper(attributes: ['formTokenData' => []])->bind();
-        $field = $form->field('title', [
-            'help' => 'Helpful text',
-            'partAttributes' => ['help' => ['id' => 'title-hint']],
-        ]);
-        $html = $form->open() . $field->input();
+        $form = $this->helper(attributes: ['formTokenData' => []])->form()->bind();
+        $field = $form->field('title')
+            ->help('Helpful text')
+            ->partAttributes('help', ['id' => 'title-hint'])
+            ->resolve();
+        $html = $form->open() . $field->input()->render();
         $html .= '<p' . (string)$field->attributes('help') . '>Handwritten help</p>';
         $form->registerFeedback($field, 'help');
         $html .= $form->close();
@@ -34,8 +34,10 @@ class HandwrittenFeedbackTest extends FormTestCase
 
     public function testHandwrittenInputMustAlsoSupplyItsReferencedErrors(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['title' => ['bad' => 'Fix title']]]));
-        $field = $form->field('title');
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['title' => ['bad' => 'Fix title']]]))
+            ->bind();
+        $field = $form->field('title')->resolve();
         $form->open();
         $html = '<input' . (string)$field->attributes() . '>';
         $field->register();
@@ -54,10 +56,10 @@ class HandwrittenFeedbackTest extends FormTestCase
 
     public function testHandwrittenFeedbackCannotReuseARenderedIdentity(): void
     {
-        $form = $this->helper()->bind();
-        $field = $form->field('title', ['help' => 'Hint']);
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('title')->help('Hint')->resolve();
         $form->open();
-        $field->help();
+        $field->help()->render();
         $this->expectException(LogicException::class);
         $form->registerFeedback($field, 'help');
     }
@@ -65,10 +67,10 @@ class HandwrittenFeedbackTest extends FormTestCase
     #[DataProvider('invalidParts')]
     public function testOnlyFeedbackPartsCanBeRegistered(string $part): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $this->expectException(InvalidArgumentException::class);
-        $form->registerFeedback($form->field('title'), $part);
+        $form->registerFeedback($form->field('title')->resolve(), $part);
     }
 
     /**

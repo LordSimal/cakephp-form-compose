@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\Fixture;
 
+use FormCompose\Builder\PartBuilder;
 use FormCompose\Form\Field\BoundField;
 
 /**
@@ -13,10 +14,9 @@ class ContactField extends BoundField
     /**
      * Add application label metadata while preserving normal label presentation.
      *
-     * @param array<string, mixed> $attributes Label attributes.
      */
-    public function label(array $attributes = []): string
+    public function label(): PartBuilder
     {
-        return parent::label(['data-contact-label' => true] + $attributes);
+        return parent::label()->attributes(['data-contact-label' => true]);
     }
 }

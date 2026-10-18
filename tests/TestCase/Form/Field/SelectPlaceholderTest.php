@@ -3,57 +3,61 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase\Form\Field;
 
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Test\FormTestCase;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use TypeError;
 
 /**
  * Verifies empty selection semantics preserve explicit values and application choices.
  */
 class SelectPlaceholderTest extends FormTestCase
 {
-    /**
-     * @param array<string, mixed> $options Select options.
-     */
     #[DataProvider('emptyOptions')]
-    public function testEmptyOptionBehavior(array $options, int $expected): void
+    public function testEmptyOptionBehavior(FieldConfig $options, int $expected): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('status', ['type' => 'select', 'options' => ['a' => 'A']] + $options);
+        $html = $form->control('status')
+            ->apply($options->merge(FieldConfig::builder()->type('select')->choices(['a' => 'A'])->config()))
+            ->render();
         static::assertSame((float)$expected, $this->xpath($html)->evaluate('count(//option[@value=""])'));
         $form->close();
     }
 
     /**
-     * @return array<string, array{array<string, mixed>, int}>
+     * @return array<string, array{\FormCompose\Configuration\FieldConfig, int}>
      */
     public static function emptyOptions(): array
     {
         return [
-            'optional' => [[], 1],
-            'required' => [['required' => true], 0],
-            'disabled' => [['empty' => false], 0],
-            'explicit blank' => [['empty' => true], 1],
-            'explicit label' => [['empty' => 'Choose…'], 1],
-            'empty label' => [['empty' => ''], 1],
-            'multiple' => [['multiple' => true], 0],
-            'explicit multiple' => [['multiple' => true, 'empty' => true], 1],
+            'optional' => [FieldConfig::builder()->config(), 1],
+            'required' => [FieldConfig::builder()->required(true)->config(), 0],
+            'disabled' => [FieldConfig::builder()->placeholder(false)->config(), 0],
+            'explicit blank' => [FieldConfig::builder()->placeholder(true)->config(), 1],
+            'explicit label' => [FieldConfig::builder()->placeholder('Choose…')->config(), 1],
+            'empty label' => [FieldConfig::builder()->placeholder('')->config(), 1],
+            'multiple' => [FieldConfig::builder()->multiple(true)->config(), 0],
+            'explicit multiple' => [FieldConfig::builder()->multiple(true)->placeholder(true)->config(), 1],
         ];
     }
 
     public function testEmptyLabelsEscapeAndDoNotReplaceExistingEmptyChoices(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('status', ['options' => ['a' => 'A'], 'empty' => '<Choose>']);
+        $html = $form->control('status')
+            ->choices(['a' => 'A'])
+            ->placeholder('<Choose>')
+            ->render();
         static::assertStringContainsString('&lt;Choose&gt;', $html);
-        $existing = $form->control('other', [
-            'options' => ['Group' => ['' => 'Existing', 'a' => 'A']],
-            'empty' => 'Ignored',
-        ]);
+        $existing = $form->control('other')
+            ->choices(['Group' => ['' => 'Existing', 'a' => 'A']])
+            ->placeholder('Ignored')
+            ->render();
         static::assertSame(1.0, $this->xpath($existing)->evaluate('count(//option[@value=""])'));
         static::assertStringContainsString('Existing', $existing);
         static::assertStringNotContainsString('Ignored', $existing);
@@ -62,11 +66,17 @@ class SelectPlaceholderTest extends FormTestCase
 
     public function testZeroAndFalseAreNotSelectedAsTheEmptyPlaceholder(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('zero', ['options' => [0 => 'Zero'], 'value' => 0]);
-        $html .= $form->control('off', ['options' => [0 => 'Off'], 'value' => false]);
+        $html = $form->control('zero')
+            ->choices([0 => 'Zero'])
+            ->value(0)
+            ->render();
+        $html .= $form->control('off')
+            ->choices([0 => 'Off'])
+            ->value(false)
+            ->render();
         static::assertSame(2.0, $this->xpath($html)->evaluate('count(//option[@value="0"][@selected])'));
         static::assertSame(0.0, $this->xpath($html)->evaluate('count(//option[@value=""][@selected])'));
         $form->close();
@@ -74,44 +84,47 @@ class SelectPlaceholderTest extends FormTestCase
 
     public function testInvalidEmptyOptionFailsBeforeRegisteringInputs(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
+        $this->expectException(TypeError::class);
         try {
-            $form->control('status', ['options' => [], 'empty' => []]);
-            static::fail('Expected invalid empty configuration to fail.');
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertSame(
-                'The empty option must be a boolean or a string.',
-                $invalidArgumentException->getMessage(),
-            );
+            $this->invokeBuilder($form->control('status')->choices([]), 'placeholder', []);
+        } finally {
+            static::assertStringContainsString('name="status"', $form->control('status')->render());
+            $form->close();
         }
-
-        static::assertStringContainsString('name="status"', $form->control('status'));
-        $form->close();
     }
 
     /**
      * @param mixed $value Bound value.
-     * @param array<string, mixed> $options Explicit selection behavior.
      */
     #[DataProvider('retainedSelections')]
-    public function testRetainedBlankOptionsRespectBoundValues(mixed $value, array $options, string $selected): void
-    {
-        $form = $this->helper()->bind();
+    public function testRetainedBlankOptionsRespectBoundValues(
+        mixed $value,
+        FieldConfig $options,
+        string $selected,
+    ): void {
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('status', [
-            'options' => [
-                ['value' => 'a', 'text' => 'A'],
-                'Other' => ['b' => 'B'],
-                'Group' => [
-                    ['value' => '0', 'text' => 'Zero'],
-                    ['value' => '', 'text' => 'Existing <blank>', 'data-empty' => 'kept'],
-                ],
-                ['value' => '', 'text' => 'Second blank'],
-            ],
-            'value' => $value,
-        ] + $options);
+        $html = $form->control('status')
+            ->apply(
+                $options->merge(
+                    FieldConfig::builder()
+                        ->choices([
+                            new ChoiceConfig('a', 'A', []),
+                            'Other' => ['b' => 'B'],
+                            'Group' => [
+                                new ChoiceConfig('0', 'Zero', []),
+                                new ChoiceConfig('', 'Existing <blank>', ['data-empty' => 'kept']),
+                            ],
+                            new ChoiceConfig('', 'Second blank', []),
+                        ])
+                        ->value($value)
+                        ->config(),
+                ),
+            )
+            ->render();
         $xpath = $this->xpath($html);
         static::assertSame(
             $selected === 'none' ? '' : $selected,
@@ -124,16 +137,16 @@ class SelectPlaceholderTest extends FormTestCase
         $form->close();
     }
 
-    /** @return array<string, array{mixed, array<string, mixed>, string}> */
+    /** @return array<string, array{mixed, \FormCompose\Configuration\FieldConfig, string}> */
     public static function retainedSelections(): array
     {
         return [
-            'null' => [null, [], ''],
-            'nonempty' => ['a', [], 'a'],
-            'zero' => [0, [], '0'],
-            'false' => [false, [], '0'],
-            'disabled placeholder' => [null, ['empty' => false], 'none'],
-            'multiple' => [null, ['multiple' => true, 'empty' => true], 'none'],
+            'null' => [null, FieldConfig::builder()->config(), ''],
+            'nonempty' => ['a', FieldConfig::builder()->config(), 'a'],
+            'zero' => [0, FieldConfig::builder()->config(), '0'],
+            'false' => [false, FieldConfig::builder()->config(), '0'],
+            'disabled placeholder' => [null, FieldConfig::builder()->placeholder(false)->config(), 'none'],
+            'multiple' => [null, FieldConfig::builder()->multiple(true)->placeholder(true)->config(), 'none'],
         ];
     }
 }

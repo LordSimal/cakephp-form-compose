@@ -1,6 +1,5 @@
 <?php
 declare(strict_types=1);
-
 use FormCompose\Rendering\Html;
 
 /**
@@ -8,7 +7,7 @@ use FormCompose\Rendering\Html;
  * @var string $body
  * @var string $summary
  * @var string|\FormCompose\Rendering\Html|false $submit
- * @var array<string, mixed> $submitOptions
+ * @var \FormCompose\Configuration\ButtonConfig $submitConfig
  * @var array{caption?: string} $templateData
  */
 ?>
@@ -17,9 +16,10 @@ use FormCompose\Rendering\Html;
     <?= $summary ?>
     <div data-form-body><?= $body ?></div>
     <footer>
-        <?= $form->submit('Check', ['name' => 'intent', 'value' => 'check', 'formnovalidate' => true]) ?>
+        <?= (string) $form
+            ->submit('Check')->name('intent')->value('check')->attributes(['formnovalidate' => true]) ?>
         <?php if ($submit !== false): ?>
-            <?= $form->submit($submit, $submitOptions) ?>
+            <?= (string) $form->submit($submit)->apply($submitConfig) ?>
         <?php endif; ?>
     </footer>
 </article>

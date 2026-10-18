@@ -19,7 +19,7 @@ class RepeatedErrorsTest extends FormTestCase
     public function testNestedRowErrorsAreExcludedRegardlessOfSubmittedKeys(mixed $submitted): void
     {
         $helper = $this->helper(['comments' => $submitted]);
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'defaults' => ['comments' => [0 => ['body' => 'Loaded']]],
             'errors' => [
                 'comments' => [
@@ -29,7 +29,8 @@ class RepeatedErrorsTest extends FormTestCase
                     'unknown' => ['author' => ['name' => ['required' => 'Unloaded nested row']]],
                 ],
             ],
-        ]));
+        ]))
+            ->bind();
         static::assertSame(['Add another comment'], RepeatedErrors::messages(
             FormContext::fromBinding($form->binding),
             'comments',
@@ -51,17 +52,19 @@ class RepeatedErrorsTest extends FormTestCase
 
     public function testDirectListMessagesAreRetainedInsideAScopedContext(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => [
-                'post' => [
-                    'comments' => [
-                        'First direct error',
-                        'Second direct error',
-                        'omitted' => ['body' => ['required' => 'Child error']],
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => [
+                    'post' => [
+                        'comments' => [
+                            'First direct error',
+                            'Second direct error',
+                            'omitted' => ['body' => ['required' => 'Child error']],
+                        ],
                     ],
                 ],
-            ],
-        ]));
+            ]))
+            ->bind();
         static::assertSame(['First direct error', 'Second direct error'], RepeatedErrors::messages(
             FormContext::fromBinding($form->binding)->at('post'),
             'comments',

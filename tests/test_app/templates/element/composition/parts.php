@@ -1,12 +1,21 @@
 <?php
 declare(strict_types=1);
 
+use FormCompose\Configuration\FieldConfig;
+
 /** @var \FormCompose\Blueprint\BlueprintView $form */
-$email = $form->field('email', array_replace(['label' => 'Explicit email'], ['help' => '<Parts help>']));
+$email = $form->field('email')
+    ->apply(
+        FieldConfig::builder()
+            ->label('Explicit email')
+            ->config()
+            ->merge(FieldConfig::builder()->help('<Parts help>')->config()),
+    )
+    ->resolve();
 ?>
 <aside data-parts>
-    <?= $email->label() ?>
-    <?= $email->input() ?>
-    <?= $email->help() ?>
-    <?= $email->errors() ?>
+    <?= (string) $email->label() ?>
+    <?= (string) $email->input() ?>
+    <?= (string) $email->help() ?>
+    <?= (string) $email->errors() ?>
 </aside>

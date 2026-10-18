@@ -1,185 +1,116 @@
 ---
-title: Repeat embedded forms
-description: Render a child blueprint for each associated row while retaining CakePHP paths, validation feedback, and form protection.
+title: Repeated embeds
+description: Compile and render keyed association rows using fluent blueprint declarations.
 ---
 
-# Repeat embedded forms
+# Repeated embeds
 
-`Embed` mounts one child blueprint. `EmbedMany` repeats a child blueprint for
-multiple associated records. Each row keeps relative field paths and its own
-configuration and layout, sharing the parent form's session and protection.
+A repeated embed compiles one child occurrence per selected key. It preserves
+original collection keys and nested submission names while sharing one form.
 
 ## Define a row and its parent
 
-```php [src/Form/CommentForm.php]
+```php
 <?php
 declare(strict_types=1);
 
 namespace App\Form;
 
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\Blueprint\FormBlueprint;
+use Attribute\Form;
+use Blueprint\BlueprintBuilder;
+use Blueprint\FormBlueprint;
+use Blueprint\FormContext;
+use FormComposeBlueprintBuilder;
+use FormComposeForm;
+use FormComposeFormBlueprint;
+use FormComposeFormContext;
 
 #[Form('comment')]
-#[Field('id')]
-#[Field('body', type: 'textarea', label: 'Comment')]
 class CommentForm extends FormBlueprint
 {
+    public function configure(BlueprintBuilder $form, FormContext $context): void
+    {
+        $form->add('id')->type('hidden');
+        $form->add('body')->type('textarea');
+    }
 }
 ```
 
-```php [src/Form/PostForm.php]
-<?php
-declare(strict_types=1);
-
-namespace App\Form;
-
-use FormCompose\Attribute\EmbedMany;
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\Blueprint\FormBlueprint;
-
-#[Form('post')]
-#[Field('title')]
-#[EmbedMany('comments', 'comment')]
-class PostForm extends FormBlueprint
-{
-}
-```
-
-With `$post->comments` loaded by the application, render the complete form:
+In the parent article blueprint's hook:
 
 ```php
-echo $this->Form->render('post', $post, submit: 'Save post');
+$form->add('title');
+$form->embedMany('comments', 'comment')->label('Comments');
 ```
 
-Rows keyed `0` and `2` render fields such as `comments.0.body` and
-`comments.2.body`, submitted as `comments[0][body]` and `comments[2][body]`.
-Keys are preserved rather than renumbered. Primary keys inferred by CakePHP's
-entity context remain hidden and locked. The plugin does not load or save rows.
+Null keys infer rows from the configured binding value sources. A submitted
+collection, including an explicit empty collection, is authoritative over entity
+rows. Each row hook sees its own scoped context; paths submit as
+`comments[2][body]`, for example.
 
 ## Select rows or add blank presentations
 
-By default, keys follow the binding's `valueSources`, normally submitted data
-before context. An explicitly cleared collection does not restore loaded rows.
-Missing or empty collections render no rows; scalar submitted values also infer
-no rows, leaving validation of that value to CakePHP.
-
-Use `keys` to select an explicit order or include an unused key for a blank row:
-
 ```php
-#[EmbedMany('comments', 'comment', keys: [0, 2, 3])]
+// Parent blueprint hook: explicit order, preserving sparse keys.
+$form->embedMany('comments', 'comment')->keys([2, 7, 'new_row']);
 ```
 
-An explicit empty list renders no rows. Keys can be integers or strings matching
-one field-path segment; dots and bracket notation are not valid row keys.
-Duplicate keys are rejected before row hooks run.
-
-::: warning Row keys are presentation keys
-Keys select which rows to render and in what order. They do not authorize access
-or identify records for persistence. Creating and deleting associated records
-remains part of the application's normal CakePHP workflow.
-:::
+`keys([])` compiles no rows. Keys must be unique valid path segments. Selecting
+keys happens before row hooks run; excluded rows are not compiled. A blank row
+only supplies a presentation—it does not create or save an entity.
 
 ## Arrange rows with a PHP element
 
-Select an occurrence template on the attribute:
+Select a collection layout in the parent hook:
 
 ```php
-#[EmbedMany(
-    'comments',
-    'comment',
-    options: [
-        'template' => 'forms/comments',
-        'templateData' => ['heading' => 'Comments'],
-        'attributes' => ['class' => 'comments'],
-    ],
-)]
+$form->embedMany('comments', 'comment')->template('forms/comments');
 ```
 
-The element receives keyed, scoped `BlueprintView` instances as `$rows` and a
-`RepeatedView` as `$embed` for collection-owned errors:
-
-```php [templates/element/forms/comments.php]
+```php
 <?php
-use FormCompose\Rendering\Html;
-/**
- * @var array<int|string, \FormCompose\Blueprint\BlueprintView> $rows
- * @var \FormCompose\Blueprint\RepeatedView $embed
- * @var \FormCompose\Rendering\Attributes $attributes
- * @var array{heading: string} $templateData
- */
+
+use FormCompose\Blueprint\BlueprintView;
+use FormCompose\Blueprint\RepeatedView;
+use FormCompose\Rendering\Attributes;
+use FormComposeHtml;
+use Rendering\Html;
+
+/** @var RepeatedView $embed */
+/** @var array<int|string, BlueprintView> $rows */
+/** @var Attributes $attributes */
 ?>
 <section<?= (string)$attributes ?>>
-    <h2><?= Html::text($templateData['heading']) ?></h2>
-    <?php foreach ($rows as $row): ?>
+    <h2><?= Html::text($embed->label()) ?></h2>
+    <?= $embed->errors() ?>
+    <?php foreach ($rows as $key => $row): ?>
         <article class="comment-row">
             <?= $row->render() ?>
         </article>
     <?php endforeach; ?>
-    <?= $embed->errors() ?>
 </section>
 ```
 
-`$row->render()` uses the child's own layout. For a table or a different field
-arrangement, use `$row->control('body')` or its independently renderable parts.
-Guard conditional fields with `$row->has('body')`. Extract a wrapper into an
-ordinary CakePHP element when needed; there is no separate row-template layer.
-
-The base element renders rows in order followed by direct collection errors,
-without a wrapper. Wrapper `attributes` require a custom control template, selected
-on the occurrence or supplied by a theme layer. The base element rejects emitted
-wrapper attributes instead of discarding them or inventing markup. Null and false
-attribute values are omitted and do not require a wrapper. Preserve `$attributes`
-on your custom wrapper so configured IDs appear in the markup and remain subject
-to duplicate-ID checks.
-
-Theme lookup uses `embed-many/control.php` and `embed-many/errors.php`, including
-normal type and variant lookup. Explicit `templates['errors']` can replace the
-error element.
-
-Collection errors are direct messages on the collection property. Nested row
-error trees are excluded even when submitted data clears the collection or
-replaces its keys. `errors => false` suppresses them; `partAttributes['errors']`
-customizes their attributes. `$embed->hasErrors()`, `$embed->messages`,
-`$embed->label()`, and `$embed->rows()` are available without rendering inputs.
+Save this as `templates/element/forms/comments.php`. `$row` is a scoped layout
+view. Use `$row->controls(['id', 'body'])` instead of `render()` when arranging row
+fields manually. Do not render both. Collection errors belong to `$embed`;
+row errors remain on their bound fields.
 
 ## Configure and render in PHP
 
-A parent blueprint hook can add rows and then adjust their qualified fields:
+Inside an open session, a new repeated occurrence can be configured directly:
 
 ```php
-public function configure(BlueprintBuilder $form, FormContext $context): void
-{
-    $form->embedMany('comments', 'comment', keys: [0, 3]);
-    $form->with('comments.3.body', ['label' => 'New comment']);
-    $form->remove('comments.0.id');
-}
+echo $form->embedMany('comments', 'comment')->keys([2, 7])->label('Comments');
 ```
 
-Import `FormCompose\Blueprint\BlueprintBuilder` and `FormCompose\Blueprint\FormContext` in that class.
-Row hooks run once before the parent hook, including rows declared with
-attributes. They can read relative values using `$context->value('body')`, which
-honors binding value sources; `$context->path` exposes the absolute row mount.
-The public `$context->request` remains the original request.
-
-In a parent blueprint layout, use `<?= $form->embeddedMany('comments') ?>` to
-render already compiled rows. Repeated embeds can contain ordinary embeds and
-further repeated embeds. Removing a collection or row removes its subtree;
-removed fields retain the existing `has()` and omission behavior.
-
-For an ordinary open session, without a parent blueprint:
+Inside a blueprint layout, render the already compiled occurrence:
 
 ```php
-echo $form->embedMany('comments', 'comment');
+<?= $form->embeddedMany('comments')->attributes(['class' => 'comments']) ?>
 ```
 
-Each blueprint occurrence compiles into an independent configuration snapshot.
-Rendered inputs, IDs, and
-feedback IDs are committed only when the enclosing repeated layout succeeds;
-a failed row or wrapper rolls back its pending registrations. Dynamic browser
-add/remove controls and a repeater submission protocol are outside this API.
-
-Rendered row errors and direct collection errors also participate in optional
-[error summaries](/error-summaries), respecting `errors => false`.
+Layout presentation does not recompile rows. Configure keys in the declaration
+before binding; selecting different keys on a compiled layout occurrence fails.
+Use `errors(false)` to suppress collection-level errors and `partAttributes('errors', ...)`
+for their attributes. Custom collection layouts must render enabled feedback.

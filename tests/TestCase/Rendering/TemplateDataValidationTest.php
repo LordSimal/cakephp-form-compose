@@ -4,24 +4,17 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use FormCompose\Test\FormTestCase;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use stdClass;
+use TypeError;
 
-/**
- * Rejects invalid metadata containers and verifies safe retries before registration.
- */
+/** Rejects invalid template data at authoring time before rendering side effects. */
 class TemplateDataValidationTest extends FormTestCase
 {
-    /**
-     * Exercise each public rendering scope with invalid metadata container types.
-     *
-     * @return iterable<string, array{string, mixed}>
-     */
+    /** @return iterable<string, array{string, mixed}> */
     public static function invalidData(): iterable
     {
         foreach (['form', 'field', 'button'] as $scope) {
-            /** @var mixed $data */
             foreach ([
                 'null' => null,
                 'boolean' => false,
@@ -35,48 +28,24 @@ class TemplateDataValidationTest extends FormTestCase
     }
 
     #[DataProvider('invalidData')]
-    public function testInvalidContainersAreRejected(string $scope, mixed $data): void
+    public function testInvalidContainersLeaveBuildersUsable(string $scope, mixed $data): void
     {
-        $form = $this->helper()->bind();
-        if ($scope !== 'form') {
-            $form->open();
-        }
-
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The templateData option must be an array.');
-        match ($scope) {
-            'form' => $form->open(['templateData' => $data]),
-            'field' => $form->control('email', ['templateData' => $data]),
-            default => $form->submit('Save', ['templateData' => $data]),
+        $formBuilder = $this->helper()->form();
+        $form = $formBuilder->bind();
+        $builder = match ($scope) {
+            'form' => $formBuilder,
+            'field' => $form->control('email'),
+            default => $form->submit('Save'),
         };
-    }
-
-    public function testInvalidFieldDataDoesNotRegisterAnInput(): void
-    {
-        $form = $this->helper()->bind();
-        $form->open();
+        $this->expectException(TypeError::class);
         try {
-            $form->control('email', ['templateData' => null]);
-            static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
-        }
-
-        static::assertStringContainsString('name="email"', $form->control('email'));
-        $form->close();
-    }
-
-    public function testInvalidOpeningDataLeavesTheFormAvailableForRetry(): void
-    {
-        $form = $this->helper()->bind(null, ['templateData' => null]);
-        try {
+            $this->invokeBuilder($builder, 'templateData', $data);
+        } finally {
+            static::assertSame([], $builder->config()->presentation->templateData);
             $form->open();
-            static::fail('Expected invalid template metadata to fail.');
-        } catch (InvalidArgumentException $invalidArgumentException) {
-            static::assertSame('The templateData option must be an array.', $invalidArgumentException->getMessage());
+            static::assertStringContainsString('name="email"', $form->control('email')->render());
+            static::assertStringContainsString('<button', $form->submit('Save')->render());
+            $form->close();
         }
-
-        static::assertStringContainsString('<form', $form->open(['templateData' => []]));
-        $form->close();
     }
 }

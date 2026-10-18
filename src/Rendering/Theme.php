@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Rendering;
 
+use FormCompose\Builder\ThemeBuilder;
 use InvalidArgumentException;
 
 /**
@@ -17,7 +18,7 @@ use InvalidArgumentException;
  *     layers: ['forms/application'],
  *     defaults: ['input' => ['class' => 'control']],
  * );
- * $form = $this->Form->bind($article, theme: $theme);
+ * $form = $this->Form->form($article)->theme($theme)->bind();
  * ```
  */
 final readonly class Theme
@@ -35,6 +36,12 @@ final readonly class Theme
                 throw new InvalidArgumentException('Theme layers must be nonempty element prefixes without traversal.');
             }
         }
+    }
+
+    /** Author layers and defaults through the fluent theme API. */
+    public static function builder(): ThemeBuilder
+    {
+        return new ThemeBuilder();
     }
 
     /**

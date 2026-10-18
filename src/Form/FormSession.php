@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace FormCompose\Form;
 
+use Closure;
 use FormCompose\Binding\FieldResolver;
 use FormCompose\Binding\FormBinding;
 use FormCompose\Blueprint\BlueprintFactory;
@@ -10,26 +11,43 @@ use FormCompose\Blueprint\BlueprintRenderer;
 use FormCompose\Blueprint\FormContext;
 use FormCompose\Blueprint\FormDefinition;
 use FormCompose\Blueprint\RepeatedDefinition;
+use FormCompose\Builder\ButtonBuilder;
+use FormCompose\Builder\ButtonConfigBuilder;
+use FormCompose\Builder\ControlBatch;
+use FormCompose\Builder\ControlBuilder;
+use FormCompose\Builder\EmbedBuilder;
+use FormCompose\Builder\EmbedConfigBuilder;
+use FormCompose\Builder\FieldBuilder;
+use FormCompose\Builder\FieldConfigBuilder;
+use FormCompose\Builder\PartBuilder;
+use FormCompose\Builder\SummaryBuilder;
+use FormCompose\Builder\SummaryConfigBuilder;
+use FormCompose\Configuration\ButtonConfig;
+use FormCompose\Configuration\EmbedConfig;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
+use FormCompose\Configuration\PresentationConfig;
+use FormCompose\Configuration\SummaryConfig;
 use FormCompose\Form\Field\BoundField;
-use FormCompose\Form\Field\ControlList;
+use FormCompose\Form\Field\FieldSpec;
+use FormCompose\Rendering\CompleteFormRenderer;
 use FormCompose\Rendering\ErrorSummaryRenderer;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
 use InvalidArgumentException;
 use Throwable;
-use function Cake\I18n\__;
 
 /**
  * Coordinates the public API for building and rendering one bound form.
  *
- * Created by FormHelper::bind(). Uses the binding to resolve fields, the renderer
+ * Created by FormBuilder::bind(). Uses the binding to resolve fields, the renderer
  * to produce themed markup, and the lifecycle to track submitted inputs and tokens.
  * A session can open once; render its inputs before closing it. Override
  * createFieldResolver() or createLifecycle() to supply specialized collaborators.
  *
  * ```php
- * $form = $this->Form->bind($article);
+ * $form = $this->Form->form($article)->bind();
  * echo $form->open(), $form->control('title');
  * echo $form->submit('Save'), $form->close();
  * ```
@@ -67,55 +85,25 @@ class FormSession
      * A null blueprint uses binding defaults; without defaults the body is empty.
      * A null label translates Submit at rendering time; false omits the button.
      * The form/layout element receives the buffered body, summary, submit label,
-     * and submitOptions while the session remains open for custom action buttons.
-     * Select it with options['template'] or templates['layout']; blueprint layouts
+     * and submitConfig while the session remains open for custom action buttons.
+     * Select it with template() on the form builder before binding; blueprint layouts
      * continue to arrange the fields inside the body.
      * Returns all markup without echoing. Exceptions retain the existing lifecycle
      * state at the failed step; retry a complete form using a new session.
      *
-     * @param array<string, mixed> $options Opening options and form attributes.
-     * @param array<string, mixed> $submitOptions Button attributes and presentation options.
      */
-    public function render(
-        ?string $blueprint = null,
-        array $options = [],
-        string|Html|false|null $submit = null,
-        array $submitOptions = [],
-    ): string {
-        $summary = $this->summaries->options($options, $this->binding->options);
-        unset($options['errorSummary']);
-        $html = $this->open($options);
-        $body = $this->blueprint($blueprint);
-        $summary = $summary === null ? '' : $this->errorSummary($summary);
-        $state = $this->lifecycle->assertOpen();
-        $html .= $this->rendering->renderer->render(
-            'layout',
-            new RenderNode(
-                'form',
-                $state->method,
-                [
-                    'form' => $this,
-                    'state' => $state,
-                    'body' => $body,
-                    'summary' => $summary,
-                    'submit' => $submit ?? __('Submit'),
-                    'submitOptions' => $submitOptions,
-                ],
-                $state->presentation,
-            ),
-        );
-
-        return $html . $this->close();
+    public function render(): string
+    {
+        return $this->createCompleteRenderer()->render($this, fn(): FormState => $this->lifecycle->assertOpen());
     }
 
     /**
      * Prepare and render the opening through the same theme system as fields.
      *
-     * @param array<string, mixed> $attributes Form options and HTML attributes.
      */
-    public function open(array $attributes = []): string
+    public function open(): string
     {
-        $state = $this->lifecycle->prepare($this->rendering->theme, $attributes);
+        $state = $this->lifecycle->prepare($this->rendering->theme, new FormConfig());
         $html = $this->rendering->renderer->render(
             'open',
             new RenderNode(
@@ -169,49 +157,66 @@ class FormSession
     /**
      * Resolve a field snapshot without emitting markup or registering submissions.
      *
-     * @param array<string, mixed> $options Per-field overrides.
      */
-    public function field(string $field, array $options = []): BoundField
+    public function field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder
     {
-        return $this->createFieldResolver()->resolve($field, $options, $this->lifecycle);
+        return $this->createFieldBuilder($field, FieldConfig::capture($config));
     }
 
-    /**
-     * Render a complete field using the same bound state as manual composition.
-     *
-     * Set template to a CakePHP element name for this control's layout, or use
-     * templates to override individual parts. Conflicting control overrides fail.
-     * templateData supplies a separate data bag to the control and all its parts.
-     *
-     * @param array<string, mixed> $options Field options.
-     */
-    public function control(string $field, array $options = []): string
+    /** Create a configurable field through an application extension point. */
+    protected function createFieldBuilder(string $field, FieldConfig $config): FieldBuilder
     {
-        return $this->field($field, $options)->control();
+        return new FieldBuilder(fn(FieldConfig $settings): BoundField => $this->createFieldResolver()->resolve(
+            $field,
+            $settings,
+            $this->lifecycle,
+        ), $config);
+    }
+
+    /** Configure a complete control, deferring resolution and registration until rendering. */
+    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
+    {
+        return $this->createControlBuilder($field, FieldConfig::capture($config));
+    }
+
+    /** Create a renderable control while retaining field() customization. */
+    protected function createControlBuilder(string $field, FieldConfig $config): ControlBuilder
+    {
+        return new ControlBuilder(
+            fn(FieldConfig $settings): BoundField => $this->field($field, $settings)->resolve(),
+            $config,
+            $this,
+        );
     }
 
     /**
      * Render ordered controls without a wrapper, committing inputs as one batch.
      *
-     * Entries are indexed paths or path => options.
+     * Entries are paths, FieldSpec objects, or controls from this session.
      * Failed batches roll back their input registrations, like blueprint layouts.
      * Each control uses this session's existing defaults and extension points.
      *
-     * @param array<array-key, mixed> $fields Batch control declarations.
+     * @param iterable<array-key, mixed> $fields Batch control declarations.
      * @throws \InvalidArgumentException For invalid batch declarations.
      */
-    public function controls(array $fields): string
+    public function controls(iterable $fields): ControlBatch
     {
-        $definitions = ControlList::normalize($fields);
+        return $this->controlBatch($fields, fn(FieldSpec $field): string => $this->control(
+            $field->path,
+            $field->config,
+        )->render());
+    }
 
-        return $this->lifecycle->inputs->render(function () use ($definitions): string {
-            $html = '';
-            foreach ($definitions as $definition) {
-                $html .= $this->control($definition->path, $definition->options);
-            }
-
-            return $html;
-        });
+    /**
+     * Share registration transactions with scoped blueprint views.
+     *
+     * @param iterable<array-key, mixed> $fields Paths, specs, or controls from this session.
+     * @param \Closure(FieldSpec): string $control Scoped control renderer.
+     * @internal Used by blueprint layout views.
+     */
+    public function controlBatch(iterable $fields, Closure $control): ControlBatch
+    {
+        return new ControlBatch($fields, $control, $this, $this->lifecycle->inputs->render(...));
     }
 
     /**
@@ -224,13 +229,17 @@ class FormSession
      * at mounts relative fields at a root context path. Blueprint layout options
      * stay local.
      *
-     * @param array<string, mixed> $options Blueprint presentation overrides.
      */
-    public function blueprint(
-        ?string $blueprint = null,
-        ?string $at = null,
-        array $options = [],
-    ): string {
+    public function blueprint(?string $blueprint = null, ?string $at = null): PartBuilder
+    {
+        return new PartBuilder(
+            fn(PresentationConfig $presentation): string => $this->renderBlueprint($blueprint, $at, $presentation),
+        );
+    }
+
+    /** Compile an explicit occurrence only at its rendering boundary. */
+    protected function renderBlueprint(?string $blueprint, ?string $at, PresentationConfig $presentation): string
+    {
         $this->lifecycle->assertOpen();
         $context = FormContext::fromBinding($this->binding);
         if ($at !== null) {
@@ -241,65 +250,67 @@ class FormSession
             ? $this->binding->definition ?? new FormDefinition([])
             : $this->blueprintFactory->compile($blueprint, $context);
 
-        return $this->renderDefinition($definition, $at, $options);
+        return $this->renderDefinition($definition, $at, $presentation);
     }
 
     /**
      * Render compiled layout state without resolving its blueprint again.
      *
-     * @param array<string, mixed> $options Local presentation overrides.
      * @internal Used by scoped blueprint views.
      */
-    public function renderDefinition(FormDefinition $definition, ?string $at = null, array $options = []): string
-    {
+    public function renderDefinition(
+        FormDefinition $definition,
+        ?string $at = null,
+        PresentationConfig $presentation = new PresentationConfig(),
+    ): string {
         $this->lifecycle->assertOpen();
 
         return $this->lifecycle->inputs->render(
-            fn(): string => $this->blueprintRenderer->render($this, $definition, $at ?? '', $options),
+            fn(): string => $this->blueprintRenderer->render($this, $definition, $at ?? '', $presentation),
         );
     }
 
     /**
      * Render a repeated blueprint at an association path in this open session.
      *
-     * @param list<int|string>|null $keys Null infers row keys from the binding's value sources.
-     * @param array<string, mixed> $options Wrapper presentation, label, and collection feedback.
      */
     public function embedMany(
         string $path,
         string $blueprint,
-        ?array $keys = null,
-        array $options = [],
-    ): string {
-        $this->lifecycle->assertOpen();
-        $repeat = new RepeatedDefinition($path, $blueprint, $keys);
-        $context = FormContext::fromBinding($this->binding);
-        $compiled = $this->blueprintFactory->repeated($repeat, $context);
+        EmbedConfig|EmbedConfigBuilder|null $config = null,
+    ): EmbedBuilder {
+        return new EmbedBuilder(function (EmbedConfig $settings) use ($path, $blueprint): string {
+            $this->lifecycle->assertOpen();
+            $repeat = new RepeatedDefinition($path, $blueprint, $settings->keys, $settings);
+            $compiled = $this->blueprintFactory->repeated($repeat, FormContext::fromBinding($this->binding));
 
-        return $this->renderRepeated($path, $compiled, $options);
+            return $this->renderRepeated($path, $compiled);
+        }, EmbedConfig::capture($config));
     }
 
     /**
      * Render compiled rows at their existing absolute mount.
      *
-     * @param array<string, mixed> $options Occurrence overrides.
      * @internal Used by scoped blueprint views without re-running hooks.
      */
-    public function renderRepeated(string $path, RepeatedDefinition $compiled, array $options = []): string
-    {
+    public function renderRepeated(
+        string $path,
+        RepeatedDefinition $compiled,
+        EmbedConfig|EmbedConfigBuilder|null $config = null,
+    ): string {
         $this->lifecycle->assertOpen();
         $compiled = new RepeatedDefinition(
             $path,
             $compiled->blueprint,
             $compiled->keys,
-            $compiled->options,
+            $compiled->config,
             $compiled->rows,
         );
 
         return $this->lifecycle->inputs->render(fn(): string => $this->blueprintRenderer->renderMany(
             $this,
             $compiled,
-            $options,
+            EmbedConfig::capture($config),
             $this->lifecycle->inputs,
         ));
     }
@@ -308,13 +319,14 @@ class FormSession
      * Summarize successfully rendered controls and repeated sections in this open form.
      *
      * Render or buffer the body first; inspecting fields never contributes entries.
-     * @param array<string, mixed> $options Title and template/attribute presentation.
      */
-    public function errorSummary(array $options = []): string
+    public function errorSummary(SummaryConfig|SummaryConfigBuilder|null $config = null): SummaryBuilder
     {
-        $this->lifecycle->assertOpen();
+        return new SummaryBuilder(function (SummaryConfig $settings): string {
+            $this->lifecycle->assertOpen();
 
-        return $this->summaries->render($this, $this->lifecycle->inputs, $options);
+            return $this->summaries->render($this, $this->lifecycle->inputs, $settings);
+        }, SummaryConfig::capture($config));
     }
 
     /**
@@ -340,29 +352,43 @@ class FormSession
     /**
      * Render a themed button and register its optional submission only after rendering succeeds.
      *
-     * @param array<string, mixed> $attributes Button attributes and optional templates, variant, or templateData.
      */
-    public function submit(string|Html $label, array $attributes = []): string
+    public function submit(string|Html $label, ButtonConfig|ButtonConfigBuilder|null $config = null): ButtonBuilder
+    {
+        return new ButtonBuilder(fn(ButtonConfig $settings): string => $this->renderButton(
+            $label,
+            $settings,
+        ), ButtonConfig::capture($config));
+    }
+
+    /** Commit a named button only after its template has succeeded. */
+    protected function renderButton(string|Html $label, ButtonConfig $config): string
     {
         $this->lifecycle->assertOpen();
-        $options = array_intersect_key($attributes, array_flip(['templates', 'variant', 'templateData']));
-        unset($attributes['templates'], $attributes['variant'], $attributes['templateData']);
-        $type = (string)($attributes['type'] ?? 'submit');
-        $bag = $this->rendering->theme->attributes('button', $type)->merge(['type' => 'submit'])->merge($attributes);
+        $attributes = $this->rendering
+            ->theme
+            ->attributes('button', $config->type)
+            ->merge($config->presentation->attributes)
+            ->replace([
+                'type' => $config->type,
+                'name' => $config->name,
+                'value' => $config->value,
+                'disabled' => $config->disabled,
+            ]);
         $html = $this->rendering->renderer->render(
             'control',
             new RenderNode(
                 'button',
-                $type,
+                $config->type,
                 [
                     'form' => $this,
                     'label' => $label,
-                    'attributes' => $bag,
+                    'attributes' => $attributes,
                 ],
-                $options,
+                $config->presentation,
             ),
         );
-        $this->lifecycle->button($bag);
+        $this->lifecycle->button($attributes);
 
         return $html;
     }
@@ -371,9 +397,8 @@ class FormSession
      * Render prepared infrastructure fields through themed hidden-input elements.
      *
      * @param list<\FormCompose\Rendering\Attributes> $fields Method, CSRF, or final protection fields.
-     * @param array<string, mixed> $presentation Form template and variant options.
      */
-    public function hiddenFields(array $fields, array $presentation = []): string
+    public function hiddenFields(array $fields, PresentationConfig $presentation = new PresentationConfig()): string
     {
         $html = '';
         foreach ($fields as $field) {
@@ -408,5 +433,11 @@ class FormSession
     protected function createFieldResolver(): FieldResolver
     {
         return new FieldResolver($this->binding, $this->rendering);
+    }
+
+    /** Supply complete-form orchestration through an application extension point. */
+    protected function createCompleteRenderer(): CompleteFormRenderer
+    {
+        return new CompleteFormRenderer($this->rendering);
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace FormCompose\Form\Field;
 
 use FormCompose\Rendering\Attributes;
-use InvalidArgumentException;
 
 /**
  * Supplies an explicit empty selection for optional single-select controls.
@@ -26,11 +25,7 @@ final class SelectPlaceholder
             return $choices;
         }
 
-        /** @var mixed $empty */
-        $empty = $state->options['empty'] ?? !$attributes->has('multiple') && !$attributes->has('required');
-        if (!is_bool($empty) && !is_string($empty)) {
-            throw new InvalidArgumentException('The empty option must be a boolean or a string.');
-        }
+        $empty = $state->config->placeholder ?? !$attributes->has('multiple') && !$attributes->has('required');
 
         if ($empty === false) {
             return $choices;
@@ -53,7 +48,7 @@ final class SelectPlaceholder
      * Retain an existing blank option, selecting it for a null single-select value.
      *
      * @param list<\FormCompose\Form\Field\Choice> $choices Prepared options.
-     * @return list<\FormCompose\Form\Field\Choice>|null Null when no blank option exists.
+     * @return list<\FormCompose\Form\Field\Choice>|null
      */
     private static function retainEmpty(array $choices, FieldState $state, Attributes $attributes): ?array
     {

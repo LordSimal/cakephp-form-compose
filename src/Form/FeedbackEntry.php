@@ -40,7 +40,7 @@ final readonly class FeedbackEntry
         }
 
         /** @var string|Html|false $label */
-        $label = $field->state->options['label'] ?? FieldPath::label($field->state->path);
+        $label = $field->state->config->label ?? FieldPath::label($field->state->path);
 
         return new self(
             $label === false || $label === '' ? FieldPath::label($field->state->path) : $label,

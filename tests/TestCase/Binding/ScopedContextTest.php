@@ -20,12 +20,12 @@ class ScopedContextTest extends AssociationTestCase
         /** @var list<Entity> $comments */
         $comments = $article->get('comments');
         $comments[0]->setError('body', ['invalid' => '<Invalid comment>']);
-        $form = $this->helper(['comments' => [['body' => 'Submitted <comment>']]])->bind(
-            $article,
-            ['context' => ['table' => $this->articles]],
-            blueprint: ScopedArticleForm::class,
-        );
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $this->helper(['comments' => [['body' => 'Submitted <comment>']]])
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->blueprint(ScopedArticleForm::class)
+            ->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         $xpath = $this->xpath($html);
         static::assertTrue($xpath->evaluate('boolean(//input[@name="comments[0][id]"][@type="hidden"][@value="10"])'));
         static::assertTrue($xpath->evaluate(
@@ -47,7 +47,10 @@ class ScopedContextTest extends AssociationTestCase
         $details = $article->get('details');
         $details->setError('summary', ['required' => '<Summary required>']);
 
-        $form = $this->helper()->bind($article, ['context' => ['table' => $this->articles]]);
+        $form = $this->helper()
+            ->form($article)
+            ->context(['table' => $this->articles])
+            ->bind();
         $root = $form->binding->context;
         $scoped = new FormContext($root, $form->binding->request)->at('details')->context;
         static::assertSame('Summary', $scoped->val('summary'));
@@ -66,9 +69,12 @@ class ScopedContextTest extends AssociationTestCase
 
     public function testUnloadedAssociationsStillExposeSchemaAndValidationMetadata(): void
     {
-        $form = $this->helper()->bind(new Entity([], ['source' => 'Articles']), ['context' => [
-            'table' => $this->articles,
-        ]]);
+        $form = $this->helper()
+            ->form(new Entity([], ['source' => 'Articles']))
+            ->context([
+                'table' => $this->articles,
+            ])
+            ->bind();
         $context = new FormContext($form->binding->context, $form->binding->request)->at('details')->context;
         static::assertNull($context->val('summary'));
         static::assertSame('string', $context->type('summary'));

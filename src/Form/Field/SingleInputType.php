@@ -10,7 +10,7 @@ use FormCompose\Rendering\RenderNode;
  * Renders one editable scalar input through the shared PHP element pipeline.
  *
  * Extend this for textarea/editor-style widgets with one submitted name. Set
- * $template to an application element; local templates['widget'] overrides it.
+ * $template to an application element; a local partTemplate('widget', ...) overrides it.
  * Hidden values, files, checkboxes, and other special submission protocols use
  * native child fields or a dedicated FieldTypeInterface implementation instead.
  */
@@ -25,18 +25,17 @@ class SingleInputType implements FieldTypeInterface
      */
     public function render(BoundField $field, Attributes $attributes): string
     {
-        $options = $field->state->options;
+        $presentation = $field->state->config->presentation;
         if ($this->template !== null) {
-            /** @var array<string, string> $templates */
-            $templates = $options['templates'] ?? [];
-            $options['templates'] = $templates + [$this->part => $this->template];
+            $templates = $presentation->templates;
+            $presentation = $presentation->withTemplates($templates + [$this->part => $this->template]);
         }
 
         return $field->renderer->render($this->part, new RenderNode(
             'field',
             $field->state->type,
             ['field' => $field, 'attributes' => $attributes] + $this->variables($field),
-            $options,
+            $presentation,
         ));
     }
 
@@ -51,7 +50,7 @@ class SingleInputType implements FieldTypeInterface
             $attributes->has('disabled')
                 ? []
                 : [
-                    new Submission($field->state->name, ($field->state->options['secure'] ?? true) !== false),
+                    new Submission($field->state->name, $field->state->config->secure),
                 ]
         );
     }

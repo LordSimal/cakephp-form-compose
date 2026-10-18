@@ -14,6 +14,9 @@ use Cake\Routing\Attribute\Scope;
 use Cake\View\Form\ArrayContext;
 use Cake\View\View;
 use DateTimeImmutable;
+use FormCompose\Configuration\ButtonConfig;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Authoring\HttpCommentForm;
 use FormCompose\Test\Fixture\Authoring\LayoutForm;
@@ -46,43 +49,52 @@ class FormsController extends Controller
         $helper = new FormHelper(new View($this->getRequest()), [
             'themeDebug' => $this->getRequest()->getQuery('themeDebug') === '1',
         ]);
-        $form = $helper->bind(
-            $this->createContext(),
-            theme: $this->createTheme(),
-        );
-        $opening = $form->open(['url' => '/forms/save', 'type' => 'file']);
-        $html = $form->control('id', ['type' => 'hidden', 'value' => 42]);
-        $html .= $form->control('empty_select', ['type' => 'select', 'options' => [], 'empty' => false]);
-        $html .= $form->control('author_id', [
-            'options' => [1 => 'Ada', 'Authors' => [2 => 'Grace', '' => 'Unassigned']],
-            'value' => null,
-        ]);
-        $html .= $form->control('topics', [
-            'type' => 'multicheckbox',
-            'options' => ['a' => 'A', 'b' => 'B'],
-            'required' => true,
-            'value' => ['a'],
-        ]);
-        $html .= $form->control('active', ['type' => 'checkbox', 'value' => false]);
-        $html .= $form->control('visibility', [
-            'type' => 'radio',
-            'options' => ['public' => 'Public', 'private' => 'Private'],
-        ]);
-        $html .= $form->control('tags._ids', ['options' => [1 => 'PHP', 2 => 'CakePHP'], 'multiple' => true]);
-        $html .= $form->control('email', [
-            'type' => 'email',
-            'value' => 'reader@example.test',
-            'help' => 'Work address',
-            'partAttributes' => ['help' => ['id' => 'email-hint'], 'errors' => ['id' => 'email-feedback']],
-        ]);
-        $html .= $form->control('author.name', ['value' => 'Ada']);
-        $html .= $form->control('bio', ['type' => 'textarea', 'value' => 'Hello <world>']);
-        $html .= $form->control('attachment', ['type' => 'file']);
-        $html .= $form->control('disabled', ['disabled' => true]);
-        $html .= $form->embedMany('comments', HttpCommentForm::class, options: [
-            'template' => 'repeat/comments',
-        ]);
-        $html = $opening . $form->errorSummary() . $html . $form->submit('Save') . $form->close();
+        $form = $helper->form($this->createContext())
+            ->theme($this->createTheme())
+            ->url('/forms/save')
+            ->multipart()
+            ->bind();
+        $opening = $form->open();
+        $html = $form->control('id')->type('hidden')->value(42)->render();
+        $html .= $form->control('empty_select')
+            ->type('select')
+            ->choices([])
+            ->placeholder(false)
+            ->render();
+        $html .= $form->control('author_id')
+            ->choices([1 => 'Ada', 'Authors' => [2 => 'Grace', '' => 'Unassigned']])
+            ->value(null)
+            ->render();
+        $html .= $form->control('topics')
+            ->type('multicheckbox')
+            ->choices(['a' => 'A', 'b' => 'B'])
+            ->required(true)
+            ->value(['a'])
+            ->render();
+        $html .= $form->control('active')->type('checkbox')->value(false)->render();
+        $html .= $form->control('visibility')
+            ->type('radio')
+            ->choices(['public' => 'Public', 'private' => 'Private'])
+            ->render();
+        $html .= $form->control('tags._ids')
+            ->choices([1 => 'PHP', 2 => 'CakePHP'])
+            ->multiple(true)
+            ->render();
+        $html .= $form->control('email')
+            ->type('email')
+            ->value('reader@example.test')
+            ->help('Work address')
+            ->partAttributes('help', ['id' => 'email-hint'])
+            ->partAttributes('errors', ['id' => 'email-feedback'])
+            ->render();
+        $html .= $form->control('author.name')->value('Ada')->render();
+        $html .= $form->control('bio')->type('textarea')->value('Hello <world>')->render();
+        $html .= $form->control('attachment')->type('file')->render();
+        $html .= $form->control('disabled')->disabled(true)->render();
+        $html .= $form->embedMany(path: 'comments', blueprint: HttpCommentForm::class)
+            ->partTemplate('control', 'repeat/comments')
+            ->render();
+        $html = $opening . $form->errorSummary()->render() . $html . $form->submit('Save')->render() . $form->close();
 
         return $this->getResponse()
             ->withType('html')
@@ -100,22 +112,19 @@ class FormsController extends Controller
     public function complete(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()), ['themeDebug' => true]);
-        $html = $helper->render(
-            LayoutForm::class,
-            new ArrayContext([
-                'defaults' => ['id' => 42, 'title' => 'A complete form'],
-                'errors' => ['title' => ['invalid' => 'Review the title']],
-            ]),
-            [
-                'url' => '/forms/save',
-                'type' => 'file',
-                'template' => 'forms/editor',
-                'templateData' => ['caption' => 'Complete form'],
-                'errorSummary' => true,
-            ],
-            submit: 'Save complete form',
-            submitOptions: ['name' => 'intent', 'value' => 'save'],
-        );
+        $html = $helper->form(new ArrayContext([
+            'defaults' => ['id' => 42, 'title' => 'A complete form'],
+            'errors' => ['title' => ['invalid' => 'Review the title']],
+        ]))
+            ->blueprint(LayoutForm::class)
+            ->url('/forms/save')
+            ->multipart()
+            ->partTemplate('layout', 'forms/editor')
+            ->templateData(['caption' => 'Complete form'])
+            ->errorSummary(true)
+            ->submit('Save complete form')
+            ->submitConfig(ButtonConfig::builder()->name('intent')->value('save')->config())
+            ->render();
 
         return $this->getResponse()
             ->withType('html')
@@ -150,7 +159,7 @@ class FormsController extends Controller
     public function temporal(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'schema' => [
                 'day' => ['type' => 'date'],
                 'clock' => ['type' => 'time'],
@@ -165,18 +174,29 @@ class FormsController extends Controller
                 'fractional_clock' => new Time('00:00:01.500000'),
                 'fractional_instant' => new DateTimeImmutable('2026-10-15 00:00:02.500'),
             ],
-        ]));
+        ]))
+            ->url('/forms/save')
+            ->bind();
         $html =
-            $form->open(['url' => '/forms/save'])
+            $form->open()
             . $form->controls([
                 'day',
                 'clock',
                 'instant',
-                'fractional_clock' => ['attributes' => ['step' => '1.5', 'min' => '00:00:00']],
-                'fractional_instant' => ['attributes' => ['step' => '2.5', 'min' => '2026-10-15T00:00:00']],
-            ]);
-        $html .= $form->control('week', ['type' => 'week', 'value' => new Date('2027-01-01')]);
-        $html .= $form->submit('Save temporal') . $form->close();
+                new FieldSpec(
+                    'fractional_clock',
+                    FieldConfig::builder()->attributes(['step' => '1.5', 'min' => '00:00:00'])->config(),
+                ),
+                new FieldSpec(
+                    'fractional_instant',
+                    FieldConfig::builder()->attributes(['step' => '2.5', 'min' => '2026-10-15T00:00:00'])->config(),
+                ),
+            ])->render();
+        $html .= $form->control('week')
+            ->type('week')
+            ->value(new Date('2027-01-01'))
+            ->render();
+        $html .= $form->submit('Save temporal')->render() . $form->close();
 
         return $this->getResponse()
             ->withType('html')
@@ -190,12 +210,14 @@ class FormsController extends Controller
     public function composition(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
-        $form = $helper->bind(new ArrayContext(['errors' => ['title' => ['invalid' => 'Review the title']]]));
-        $field = $form->field('title', ['help' => 'Use a descriptive title', 'value' => 'Example']);
-        $html = $form->open(['url' => '/forms/save']) . $field->label() . $field->input();
+        $form = $helper->form(new ArrayContext(['errors' => ['title' => ['invalid' => 'Review the title']]]))
+            ->url('/forms/save')
+            ->bind();
+        $field = $form->field('title')->help('Use a descriptive title')->value('Example')->resolve();
+        $html = $form->open() . $field->label()->render() . $field->input()->render();
         $html .= '<p' . (string)$field->attributes('help') . '>Use a descriptive title</p>';
         $form->registerFeedback($field, 'help');
-        $html .= $field->errors() . $form->submit('Save composition') . $form->close();
+        $html .= $field->errors()->render() . $form->submit('Save composition')->render() . $form->close();
 
         return $this->getResponse()
             ->withType('html')
@@ -209,15 +231,22 @@ class FormsController extends Controller
     public function enums(): Response
     {
         $helper = new FormHelper(new View($this->getRequest()));
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'schema' => [
                 'status' => ['type' => EnumType::from(PublicationStatus::class)],
                 'priority' => ['type' => EnumType::from(Priority::class)],
             ],
             'data' => ['status' => PublicationStatus::Published, 'priority' => Priority::Normal],
-        ]));
-        $html = $form->open(['url' => '/forms/save']) . $form->controls(['status', 'priority' => ['type' => 'radio']]);
-        $html .= $form->submit('Save enums') . $form->close();
+        ]))
+            ->url('/forms/save')
+            ->bind();
+        $html =
+            $form->open()
+            . $form->controls([
+                'status',
+                new FieldSpec('priority', FieldConfig::builder()->type('radio')->config()),
+            ])->render();
+        $html .= $form->submit('Save enums')->render() . $form->close();
 
         return $this->getResponse()
             ->withType('html')

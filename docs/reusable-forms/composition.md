@@ -1,241 +1,129 @@
 ---
 title: Nested blueprints
-description: Embed reusable child blueprints at association paths and compose their layouts within one form.
+description: Compose reusable field collections at association paths with scoped layouts.
 ---
 
 # Nested blueprints
 
-Use embedded blueprints when a form includes a reusable child section, such as
-an author inside a post. Each child keeps relative field paths and its own layout,
-while sharing the enclosing form's session and submission protection.
-
-For arranging the fields of one blueprint, start with
-[blueprint layouts](/blueprints#keep-control-of-the-layout). This page focuses
-on mounting child blueprints and rendering their layouts together.
+Embed a child blueprint when a related collection has its own reusable settings
+or layout. A child shares its enclosing form session and submission protection.
 
 ## Define a reusable child {#select-a-layout}
 
-This child declares paths relative to an author. It can render on its own or be
-embedded under a parent association:
-
-```php [src/Form/AuthorForm.php]
+```php
 <?php
 declare(strict_types=1);
 
 namespace App\Form;
 
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\Blueprint\FormBlueprint;
+use Attribute\Form;
+use Blueprint\BlueprintBuilder;
+use Blueprint\FormBlueprint;
+use Blueprint\FormContext;
+use FormComposeBlueprintBuilder;
+use FormComposeForm;
+use FormComposeFormBlueprint;
+use FormComposeFormContext;
+use I18n\__;
+use function Cake__;
 
-#[Form('author', template: 'forms/author')]
-#[Field('first_name', label: 'First name')]
-#[Field('last_name', label: 'Last name')]
-#[Field('email', type: 'email')]
+#[Form('author')]
 class AuthorForm extends FormBlueprint
 {
-}
-```
-
-Its layout only arranges the child fields:
-
-```php [templates/element/forms/author.php]
-<?php
-/**
- * @var \FormCompose\Blueprint\BlueprintView $form
- * @var \FormCompose\Rendering\Attributes $attributes
- */
-?>
-<section<?= (string)$attributes ?>>
-    <?= $form->controls(['first_name', 'last_name']) ?>
-    <?php if ($form->has('email')): ?>
-        <section class="contact-details">
-            <?= $form->control('email') ?>
-        </section>
-    <?php endif; ?>
-</section>
-```
-
-## Compose an association
-
-Mount the author blueprint inside a post blueprint:
-
-```php [src/Form/PostForm.php]
-<?php
-declare(strict_types=1);
-
-namespace App\Form;
-
-use FormCompose\Attribute\Embed;
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\Blueprint\FormBlueprint;
-
-#[Form('post', template: 'forms/post')]
-#[Field('title')]
-#[Embed('author', 'author')]
-#[Field('body', type: 'textarea')]
-class PostForm extends FormBlueprint
-{
-}
-```
-
-The parent layout chooses where to render its compiled child:
-
-```php [templates/element/forms/post.php]
-<?php /** @var \FormCompose\Blueprint\BlueprintView $form */ ?>
-<?= $form->control('title') ?>
-<?= $form->embedded('author') ?>
-<?= $form->control('body') ?>
-```
-
-Render the parent as one complete form, with `$post` supplied by your controller
-and its author association loaded:
-
-```php [templates/Posts/edit.php]
-<?= $this->Form->render('post', $post, submit: 'Save post') ?>
-```
-
-`embedded('author')` renders the already configured child using its selected
-layout. It preserves changes made by the parent's hook and does not run the
-child's hook again. Calling `blueprint('author', at: 'author')` on the
-outer session instead resolves a new, independent occurrence.
-
-When binding `$post`, mount its association at `author`. The child's relative
-`email` becomes `author.email`, producing `author[email]` and a qualified input ID.
-Use `post.author` only when the bound root actually has a `post` property.
-Embeds can contain further embeds, and both class names and discovered aliases
-are accepted.
-
-For a standalone section, mount the same blueprint directly:
-
-```php
-echo $form->blueprint('author', at: 'author');
-```
-
-Explicit indexed paths such as `comments.0.author` work too. For multiple rows, use [EmbedMany](/repeated-embeds), which expands row keys
-without introducing a browser repeater lifecycle.
-
-## Conditional fields and parent overrides
-
-Children resolve before their parent's `configure()` hook. The parent can adjust
-or remove qualified fields:
-
-```php
-public function configure(BlueprintBuilder $form, FormContext $context): void
-{
-    $form->with('author.email', ['label' => 'Contact email']);
-
-    if (!$context->request->getAttribute('canEditAuthorEmail')) {
-        $form->remove('author.email');
+    public function configure(BlueprintBuilder $form, FormContext $context): void
+    {
+        $form->add('name')->label(__('Author name'));
+        $form->add('email')->type('email');
+        $form->presentation()->template('forms/author');
     }
 }
 ```
 
-Import `FormCompose\Blueprint\BlueprintBuilder` and `FormCompose\Blueprint\FormContext` in that class.
-`remove('author')` removes the entire embedded subtree.
-
-The element receives a scoped `BlueprintView` as `$form`. Its paths are relative
-to this collection, and it can only render configured fields or embedded children:
-
 ```php
-<!-- In templates/element/forms/author.php, replacing the email block: -->
-<?php if ($form->has('email')): ?>
-    <?php $email = $form->field('email'); ?>
-    <section class="contact-details">
-        <?= $email->label() ?>
-        <?= $email->input() ?>
-        <?= $email->help() ?>
-        <?= $email->errors() ?>
-    </section>
-<?php endif; ?>
+<?php
+
+use FormCompose\Blueprint\BlueprintView;
+use FormCompose\Rendering\Attributes;
+
+/** @var BlueprintView $form */
+/** @var Attributes $attributes */
+?>
+<section<?= (string)$attributes ?>>
+    <?= $form->controls(['name', 'email']) ?>
+</section>
 ```
 
-See the [scoped layout API](/blueprint-reference#blueprintview) for all
-methods and how removed fields differ from unknown paths.
+Save the layout as `templates/element/forms/author.php`.
 
-Unknown names raise `InvalidArgumentException`, so typos are visible. Guard
-optional field parts and static wrappers with `has()`. Removing a field does not
-automatically remove static markup written around it. A field with type `hidden`
-still renders and participates in submission; removing a field omits it.
+## Compose an association
 
-Layout access is limited to the compiled definition. The outer `FormSession`
-continues to support ordinary `field()` and `control()` calls for additional
-fields. Selecting a blueprint at `bind()` supplies defaults but does not render
-its layout. Calls on the outer session can still explicitly request fields that
-a blueprint removed; omission is a presentation decision, not authorization.
+In the parent article blueprint's hook:
 
-An embedded hook uses relative context lookups, such as
-`$context->context->val('email')`. Values, type information, requirements, and errors
-are delegated to the original Cake context at the mount path. The request remains
-the original request. Form-wide `isCreate()` and primary-key metadata remain those
-of the root binding; `fieldNames()` lists loaded child fields and is empty for an
-unloaded child.
+```php
+$form->add('title');
+$form->embed('author', 'author')->attributes(['class' => 'article-author']);
+```
+
+The first argument is the context mount; the second is the child's declared
+alias. `AuthorForm::class` is an explicit alternative. The child uses relative
+paths such as `email`; its input submits `author[email]`. No child opens a form.
+
+In a parent layout, position the occurrence with:
+
+```php
+<?= $form->control('title') ?>
+<?= $form->embedded('author') ?>
+```
+
+## Conditional fields and parent overrides
+
+```php
+$form->embed('author', 'author');
+$form->field('author.email')->label(__('Contact email'));
+
+if (!$context->request->getAttribute('canEditAuthorName')) {
+    $form->remove('author.name');
+}
+```
+
+These are parent-hook statements. Qualified edits apply after child compilation,
+so the child must declare the target. Misspellings fail during compilation.
+For optional parts in a layout, check `has()` before resolving a field. A removed
+control emits nothing, but removing it does not remove application authorization
+requirements.
 
 ## Build compositions in PHP
 
-The builder can resolve an alias or class with the same container and scoped
-context as attribute embeds:
+Use `embed()` in hooks for reusable structure. For an occurrence placed directly
+in a view, render a blueprint inside an open session:
 
 ```php
-public function configure(BlueprintBuilder $form, FormContext $context): void
-{
-    $form->embed('author', 'author');
-    $form->embed('comments.0.author', 'author');
-}
+echo $form->blueprint('author', at: 'author')->attributes(['class' => 'article-author']);
 ```
 
-This is an alternative to declaring those same mounts with attributes, so do not
-declare them twice. The factory-supplied builder resolves blueprint references
-in the current scope before returning, so parent overrides can apply immediately.
-Use `$form->presentation(['template' => 'forms/post'])` when the hook should select
-a layout; that element must arrange the fields and embeds in the resulting blueprint.
-
-Add runtime fields with paths and option arrays:
-
-```php
-public function configure(BlueprintBuilder $form, FormContext $context): void
-{
-    $form->add('summary', ['type' => 'textarea', 'label' => 'Summary']);
-    $form->embed('author', 'author');
-}
-```
-
-This replaces the corresponding declarations; do not add the same path twice.
+This local occurrence does not replace the binding's selected defaults. Do not
+render it twice at the same input IDs. Repeated collections use
+[`embedMany()`](/repeated-embeds).
 
 ## Isolation and failures
 
-A child is compiled once for each occurrence and keeps its own relative layout.
-Children resolve before the parent's hook, allowing parent overrides such as
-`with('author.email', ...)`. Circular embeddings, duplicate paths, unknown
-references, and incompatible field/embed declarations are errors.
-
-All layouts share the enclosing form's lifecycle and submission registry.
-Membership checks and configuration register nothing. If a layout fails, its
-staged input registrations are rolled back; previously rendered controls remain
-registered. See [lifecycle and failures](/form-reference#lifecycle-and-failures).
-
-CakePHP owns association marshalling, validation, and persistence. Embedding a
-form does not load associations or authorize submitted changes.
+Each occurrence has its own hook/context scope. Parent hooks run before child
+compilation; no request-dependent compiled tree enters discovery caches.
+Cycles and duplicate field/embed identities fail. A failed layout rolls back
+input registrations, preserving the enclosing session for a corrected retry.
 
 ## Select a template for one embed
 
-The normal `Embed` attribute accepts occurrence presentation options too:
-
 ```php
-#[Embed(
-    'author',
-    'author',
-    options: [
-        'template' => 'forms/post-author',
-        'templateData' => ['heading' => 'Written by'],
-    ],
-)]
+// Parent blueprint hook.
+$form->embed('author', 'author')->template('forms/compact-author');
 ```
 
-The selected element receives the scoped child as `$form`. It can call
-`$form->render()` to wrap the child's own layout, or arrange its fields directly.
-Occurrence options apply only at this mount; the child definition keeps its own
-presentation. Options passed to `embedded('author', [...])` override those declared
-on the attribute. `template`, `templates`, `templateData`, `variant`, and `attributes`
-use the ordinary blueprint presentation contract.
+Or override presentation in the parent layout:
+
+```php
+<?= $form->embedded('author')->template('forms/compact-author') ?>
+```
+
+Presentation changes do not rerun the child's hook. Use the common
+`variant()`, `templateData()`, and `partAttributes()` methods as needed.

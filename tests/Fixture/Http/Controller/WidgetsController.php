@@ -36,21 +36,21 @@ class WidgetsController extends Controller
     #[Get('')]
     public function index(): Response
     {
-        $form = new FormHelper(new View($this->getRequest()))->bind(
-            new ArrayContext([
-                'errors' => ['period' => ['invalid' => 'Check dates']],
-            ]),
-            ['types' => ['range' => new DateRangeType(), 'markdown' => new MarkdownType()]],
-        );
-        $html = $form->open(['url' => '/widgets/save']);
-        $controls = $form->control('period', [
-            'type' => 'range',
-            'help' => 'Choose your stay',
-            'value' => ['start' => '2026-10-01', 'end' => '2026-10-17'],
-            'templates' => ['composite' => 'widgets/inline'],
-        ]);
-        $controls .= $form->control('body', ['type' => 'markdown', 'value' => 'Hello <world>']);
-        $html .= $form->errorSummary() . $controls . $form->submit('Save widgets') . $form->close();
+        $form = new FormHelper(new View($this->getRequest()))->form(new ArrayContext([
+            'errors' => ['period' => ['invalid' => 'Check dates']],
+        ]))
+            ->types(['range' => new DateRangeType(), 'markdown' => new MarkdownType()])
+            ->url('/widgets/save')
+            ->bind();
+        $html = $form->open();
+        $controls = $form->control('period')
+            ->type('range')
+            ->help('Choose your stay')
+            ->value(['start' => '2026-10-01', 'end' => '2026-10-17'])
+            ->partTemplate('composite', 'widgets/inline')
+            ->render();
+        $controls .= $form->control('body')->type('markdown')->value('Hello <world>')->render();
+        $html .= $form->errorSummary()->render() . $controls . $form->submit('Save widgets')->render() . $form->close();
 
         return $this->getResponse()
             ->withType('html')

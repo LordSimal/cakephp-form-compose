@@ -5,6 +5,9 @@ namespace FormCompose\Rendering;
 
 use Cake\View\View;
 use Closure;
+use FormCompose\Configuration\ActionConfig;
+use FormCompose\Configuration\ButtonConfig;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\PostAction;
 use FormCompose\Form\PostActionSubmission;
@@ -21,7 +24,7 @@ class PostActionRenderer
     /**
      * Retain the view and ordinary binding entry point, preserving session overrides.
      *
-     * @param \Closure(array<string, mixed>, \FormCompose\Rendering\RenderContext): \FormCompose\Form\FormSession $bind Session factory.
+     * @param \Closure(\FormCompose\Configuration\FormConfig, \FormCompose\Rendering\RenderContext): \FormCompose\Form\FormSession $bind Session factory.
      */
     public function __construct(protected readonly View $view, protected readonly Closure $bind)
     {
@@ -30,22 +33,24 @@ class PostActionRenderer
     /**
      * Return a complete action without changing an existing form session.
      *
-     * @param array|string|null $url Cake route or URL.
-     * @param array<string, mixed> $options Action metadata and trigger presentation.
      */
     public function render(
         string|Html $label,
         array|string|null $url,
-        array $options,
+        ActionConfig $config,
         string $kind,
         RenderContext $rendering,
     ): string {
-        $action = new PostAction($kind, $url, $options);
+        $action = new PostAction($kind, $url, $config);
         $form = ($this->bind)($action->form, $rendering);
         $html = $form->open();
         /** @var mixed $value */
         foreach ($action->data as $path => $value) {
-            $html .= $form->control($path, ['type' => 'hidden', 'value' => $value, 'secure' => true]);
+            $html .= $form->control(
+                $path,
+                new FieldConfig(type: 'hidden')->withValue($value)
+                    ->withSecure(true),
+            )->render();
         }
 
         $trigger = $this->trigger($label, $action, $form, $rendering);
@@ -69,19 +74,23 @@ class PostActionRenderer
         FormSession $form,
         RenderContext $rendering,
     ): string {
-        $options = $action->options;
+        $presentation = $action->presentation;
+        $attributes = $presentation->attributes;
         if ($action->kind === 'button') {
-            PostActionSubmission::button($action->data, $options['name'] ?? null);
+            PostActionSubmission::button($action->data, $attributes['name'] ?? null);
+            $config = new ButtonConfig(
+                name: isset($attributes['name']) ? (string)$attributes['name'] : null,
+                value: $attributes['value'] ?? null,
+            )->withDisabled(($attributes['disabled'] ?? false) !== false)
+                ->withPresentation($presentation->withAttributes(['form' => $form->binding->id]));
 
-            return $form->submit($label, ['form' => $form->binding->id] + $options);
+            return $form->submit($label, $config)->render();
         }
 
-        $presentation = array_intersect_key($options, array_flip(['templates', 'variant', 'templateData']));
-        unset($options['templates'], $options['variant'], $options['templateData'], $options['type']);
         $attributes = $rendering
             ->theme
             ->attributes('action.control', 'link')
-            ->merge($options)
+            ->merge($attributes)
             ->replace([
                 'href' => '#' . rawurlencode($form->binding->id),
                 'data-form-compose-action' => $form->binding->id,

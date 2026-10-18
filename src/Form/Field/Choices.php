@@ -6,20 +6,23 @@ namespace FormCompose\Form\Field;
 use BackedEnum;
 use Cake\Database\Type\EnumLabelInterface;
 use Cake\Utility\Inflector;
+use FormCompose\Binding\EnumChoices;
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\ChoiceGroupConfig;
+use FormCompose\Configuration\ChoiceList;
+use FormCompose\Configuration\Unspecified;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\Theme;
 use InvalidArgumentException;
-use ReflectionEnum;
-use ReflectionEnumUnitCase;
 use UnitEnum;
 
 /**
  * Turns native choice options and backed enums into a tree of Choice records.
  *
  * Used by NativeType for selects, radios, and checkbox groups. Supports simple
- * value/label pairs, backed enum classes or cases, nested groups, and entries
- * with value, text, and attributes. Assigns unique choice IDs and prepares label
+ * value/label pairs, backed enum classes or cases, nested groups, and typed choice/group
+ * configurations. Assigns unique choice IDs and prepares label
  * and wrapper defaults from the theme before passing the records to templates. Override
  * createChoiceAttributes() to supply custom per-option attribute rules.
  */
@@ -43,77 +46,84 @@ class Choices
      */
     public function resolve(FieldState $state, Attributes $attributes, iterable|string $options): array
     {
-        if (is_string($options)) {
-            if (!enum_exists($options) || !is_subclass_of($options, BackedEnum::class)) {
-                throw new InvalidArgumentException('Choice enum classes must be backed enums.');
-            }
-
-            $options = array_map(
-                static fn(ReflectionEnumUnitCase $case): UnitEnum => $case->getValue(),
-                new ReflectionEnum($options)->getCases(),
-            );
-        }
+        $options = is_string($options) ? EnumChoices::cases($options) : $options;
 
         $choices = [];
         /** @var mixed $label */
         foreach ($options as $value => $label) {
-            if (is_array($label) && !array_key_exists('value', $label)) {
+            /** @var mixed $label */
+            $label = ChoiceList::item($label);
+            if (is_array($label)) {
+                $label = new ChoiceGroupConfig((string)$value, $label);
+            }
+
+            if ($label instanceof ChoiceGroupConfig) {
                 $choices[] = new Choice(
                     'group',
-                    (string)$value,
-                    $this->theme->attributes('choice-group', $state->type),
-                    $this->resolve($state, $attributes, $label),
+                    $label->label,
+                    $this->theme->attributes('choice-group', $state->type)->merge($label->attributes),
+                    $this->resolve($state, $attributes, $label->choices),
                 );
                 continue;
             }
 
-            $option = $this->option($value, $label);
-            $id = (string)($option['id'] ?? $state->id . '-' . rawurlencode(NativeValue::scalar($option['value'])));
-            $base = $id;
-            $suffix = 0;
-            while (isset($this->ids[$id])) {
-                $id = $base . '-' . ++$suffix;
-            }
-
-            $this->ids[$id] = true;
-            $option['id'] = $id;
-            /** @var mixed $text */
-            $text = $option['text'] ?? '';
-            $choices[] = new Choice(
-                'item',
-                $text instanceof Html ? $text : (string)$text,
-                $this->createChoiceAttributes()->resolve($state, $attributes, $option),
-                [],
-                [
-                    'label' => $this->theme->attributes('choice-label', $state->type)->replace(['for' => $id]),
-                    'container' => $this->theme->attributes('choice-container', $state->type),
-                ],
-            );
+            $choices[] = $this->item($state, $attributes, $this->option($value, $label));
         }
 
         return $choices;
     }
 
+    /** Prepare one choice's stable identity, native attributes, and label presentation. */
+    protected function item(FieldState $state, Attributes $attributes, ChoiceConfig $option): Choice
+    {
+        $id = (string)(
+            $option->id
+            ?? $option->attributes['id']
+            ?? $state->id
+            . '-'
+            . rawurlencode(NativeValue::scalar($option->value))
+        );
+        $base = $id;
+        $suffix = 0;
+        while (isset($this->ids[$id])) {
+            $id = $base . '-' . ++$suffix;
+        }
+
+        $this->ids[$id] = true;
+        $option = $option->withId($id);
+        /** @var mixed $text */
+        $text = $option->label === Unspecified::Value ? '' : $option->label;
+
+        return new Choice(
+            'item',
+            $text instanceof Html ? $text : (string)$text,
+            $this->createChoiceAttributes()->resolve($state, $attributes, $option),
+            [],
+            [
+                'label' => $this->theme->attributes('choice-label', $state->type)->replace(['for' => $id]),
+                'container' => $this->theme->attributes('choice-container', $state->type),
+            ],
+        );
+    }
+
     /**
      * Expand enum cases without replacing explicitly supplied choice text or metadata.
      *
-     * @return array<string, mixed> Choice data containing value and optional text/attributes.
      */
-    protected function option(int|string $value, mixed $label): array
+    protected function option(int|string $value, mixed $label): ChoiceConfig
     {
-        /** @var array<string, mixed> $option */
         $option = match (true) {
-            is_array($label) => $label,
-            $label instanceof UnitEnum => ['value' => $label],
-            default => ['value' => $value, 'text' => $label],
+            $label instanceof ChoiceConfig => $label,
+            $label instanceof UnitEnum => new ChoiceConfig($label),
+            default => new ChoiceConfig($value, $label instanceof Html || $label === null ? $label : (string)$label),
         };
-        if ($option['value'] instanceof UnitEnum) {
-            if (!$option['value'] instanceof BackedEnum) {
+        if ($option->value instanceof UnitEnum) {
+            if (!$option->value instanceof BackedEnum) {
                 throw new InvalidArgumentException('Choice enum cases must be backed enums.');
             }
 
-            if (!array_key_exists('text', $option)) {
-                $option['text'] = $this->enumLabel($option['value']);
+            if ($option->label === Unspecified::Value) {
+                return $option->withLabel($this->enumLabel($option->value));
             }
         }
 

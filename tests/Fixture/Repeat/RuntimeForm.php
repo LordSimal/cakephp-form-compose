@@ -15,11 +15,11 @@ class RuntimeForm extends FormBlueprint
 {
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->embedMany('comments', CommentForm::class, keys: [0, 3]);
-        $form->with('comments.3.body', ['label' => 'New comment']);
+        $form->embedMany(path: 'comments', blueprint: CommentForm::class)->keys([0, 3]);
+        $form->field('comments.3.body')->label('New comment');
         $form->remove('comments.0.id');
 
         $form->embed('post', RuntimePostForm::class);
-        $form->with('post.comments.0.body', ['label' => 'Nested blank']);
+        $form->field('post.comments.0.body')->label('Nested blank');
     }
 }

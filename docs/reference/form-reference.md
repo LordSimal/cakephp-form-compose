@@ -1,472 +1,259 @@
 ---
 title: Helper and form session
-description: Signatures, options, return values, and lifecycle contracts for the helper and a bound form session.
+description: Typed fluent form setup, binding, rendering, and submission lifecycle contracts.
 ---
 
 # Helper and form session
 
-`$this->Form` is `FormCompose\View\Helper\FormHelper`. Its `bind()` method returns
-a `FormCompose\Form\FormSession`, called `$form` throughout these docs. These objects
-have different jobs and methods. Follow [Your first form](/getting-started)
-for a walkthrough, or jump directly to [field options](/field-options).
+`FormHelper::form()` creates a mutable builder. `bind()` captures its configuration
+in an isolated `FormSession`. Rendering uses the session's input registry and
+CakePHP protection metadata.
 
-All rendering methods return HTML strings; they do not echo automatically.
-
-## registerFeedback() {#register-feedback}
-
-`$form->registerFeedback($field, 'help', $attributes = [])` registers a handwritten
-help element after it is emitted with `$field->attributes('help', $attributes)`.
-Use `'errors'` for handwritten errors. It requires an open session and reserves
-the configured ID without rendering or registering submitted inputs. Do not also
-render that element with `help()` or `errors()`.
-
-Closing verifies generated input descriptions have rendered or registered targets.
-A missing target throws `LogicException` and leaves the session open for correction.
-Application-owned descriptions pointing to unrelated elements remain the
-application's responsibility. See [field composition](/field-parts#preserve-feedback-and-accessible-names).
-
-## postButton() and postLink() {#post-actions}
-
-Helper shortcuts create independent protected action forms:
+## form() and bind() {#bind}
 
 ```php
-echo $this->Form->postButton('Delete', ['action' => 'delete', $article->id], [
-    'method' => 'delete',
-    'data' => ['version' => $article->version],
-]);
+use Configuration\FormConfig;
+use FormComposeFormConfig;
+
+$form = $this->Form
+    ->form($article, config: new FormConfig(method: 'patch'))
+    ->url(['action' => 'edit', $article->id])
+    ->attributes(['class' => 'article-form'])
+    ->bind();
 ```
 
-Both accept a label, URL, options, and optional named `theme` and `renderer`.
-`postLink()` permits an omitted URL and requires JavaScript. `postButton()` is
-native; optional `confirm` adds confirmation with a native dialog or an application
-event handler. `block` buffers the
-independent form outside a parent form. See [POST buttons and links](/post-actions)
-for signatures, options, asset handling, and template contracts.
-
-## bind() {#bind}
-
-```php
-public function bind(
-    mixed $data = null,
-    array $options = [],
-    Theme|string|null $theme = null,
-    ?RendererInterface $renderer = null,
-    ?string $blueprint = null,
-): FormSession;
-```
-
-Creates an isolated session. `$data` accepts an entity, CakePHP `Form`, array
-context data, an existing `ContextInterface`, or null. It supplies metadata and
-values; binding neither renders fields nor changes or saves the data.
-
-```php
-$form = $this->Form->bind($article, [
-    'id' => 'article-editor',
-    'url' => ['action' => 'edit', $article->id],
-]);
-```
-
-`$theme` accepts null, `'Base'`, or a `FormCompose\Rendering\Theme` instance.
-Null uses the helper's configured `theme`, which defaults to the base theme.
-An explicit `Theme` replaces the configured theme; `'Base'` forces the bundled
-base theme for this binding. Other strings fail. `$renderer` accepts a
-`RendererInterface`; omitted, it uses `PhpRenderer`. `$blueprint` accepts a
-blueprint class name or discovered alias. It installs field defaults without
-rendering fields or their collection layout. After opening, call `blueprint()`
-to render the selected blueprint, or call `control()` for each field you want to
-arrange manually. Session `render()` renders the complete selected form.
-See [blueprint defaults and manual layouts](/reusable-forms#select-defaults-for-the-whole-binding).
-
-Helper option `themeDebug` defaults to `false`. Set it to `true` when loading the
-helper or through `setConfig()` to annotate default PHP rendering with HTML
-comments describing template lookup. It is a helper setting, rather than a binding
-or HTML attribute option. Existing sessions retain their setting, and explicitly
-supplied renderers keep their own diagnostics. See [Debug template selection](/theme-debug).
+`form(mixed $data = null, FormConfig|FormConfigBuilder|null $config = null): FormBuilder` accepts ORM
+entities, CakePHP `Form` objects, array contexts, `ContextInterface`, or null.
+`bind(): FormSession` creates a fresh session each time; later builder changes do
+not change existing sessions. There is no helper-level `bind()` method.
 
 ### Binding options
 
-| Option | Type | Default and effect |
-| --- | --- | --- |
-| `id` | `string` | Generated `form-compose-N` across FormCompose helpers sharing the same Cake view. Also prefixes generated input IDs. Set explicit unique IDs when needed. |
-| `context` | `array` | `[]`. Additional options passed to CakePHP's context factory; not used when `$data` is already a context. |
-| `valueSources` | Nonempty list of `data`, `context`, `query` | `['data', 'context']`. Field value lookup order. |
-| `passwordFields` | List of terminal field names | Inherits helper configuration, normally `['password', 'passwd']`. Replaces the names that infer password inputs, including nested paths. An empty list disables name-based inference; explicit password controls never prefill values. |
-| `typeMap` | Map of schema names to control aliases | Inherits helper overrides. Binding entries override matching helper entries; native defaults remain for other schema types. |
-| `types` | Map of aliases to `FieldTypeInterface` instances | `[]`. Explicit types override discovered types. |
-| `template` / `templates['layout']` | Element name / part map | Select the complete-form layout used by `render()`. It receives the buffered body, summary, and action configuration; never emitted as HTML attributes. |
-| `errorSummary` | `bool` or summary options array | `false`. Opt-in presentation for complete-form `render()`; never emitted as a form attribute. |
-| Form-opening options | See below | Stored for `open()`; local opening options replace matching keys. |
+These are methods on `FormBuilder` and `FormConfig::builder()`:
 
-Form IDs are reserved at binding time for the owning Cake view.
-Automatic IDs skip explicit reservations; duplicate explicit form IDs throw
-`LogicException`. A separate Cake view starts an independent sequence. Form IDs
-must be nonempty and contain no whitespace.
+| Method | Contract |
+| --- | --- |
+| `url(array\|string\|false\|null)` | Cake route or URL; null uses the request URL, false omits the action. |
+| `method(?string)` | GET, POST, PUT, PATCH, or DELETE. Null uses context defaults. Non-native methods use a POST method override. |
+| `id(?string)` | Explicit page-unique form ID; null generates one. |
+| `multipart(bool = true)` | Enable multipart uploads without changing the HTTP method. |
+| `enctype(?string)`, `encoding(?string)` | Form encoding and accepted character set. |
+| `valueSources(array)` | Ordered list of `data`, `query`, and `context`; default `['data', 'context']`. |
+| `context(array)` | CakePHP context-provider options. |
+| `passwordFields(array)` | Replace the terminal password field names; default `['password', 'passwd']`. |
+| `typeMap(array)` | Override schema-type to control-type mappings. |
+| `types(array)` | Register aliases mapped to `FieldTypeInterface` instances. |
+| `blueprint(?string)` | Select reusable field defaults and body declarations by alias or class. |
+| `theme(Theme\|ThemeBuilder\|null)`, `renderer(?RendererInterface)` | Per-form rendering collaborators. |
+| `errorSummary(bool\|SummaryConfig\|SummaryConfigBuilder = true)` | Configure the complete form's summary. |
+| `submit(string\|Html\|false\|null, ?ButtonConfig)` | Configure the complete form's action; null uses translated Submit. |
+| `withoutSubmit()` | Omit that action. |
+| `submitConfig(ButtonConfig\|ButtonConfigBuilder)` | Configure its presentation and native button state. |
 
-The binding ID is fixed at `bind()`. Changing `id` in `open()` does not change it.
-Likewise context, types, type mappings, password field names, and value sources are binding settings, not opening
-settings. See [Fields and values](/usage#data-and-value-sources).
+All setters return the same builder. `apply(FormConfig|FormConfigBuilder)` overlays explicitly
+configured settings; `config()` optionally returns an immutable snapshot. Configuration arguments
+also accept the matching builder and capture it immediately. Common settings
+also have named constructor arguments: `new FormConfig(url: ..., method: ..., id: ...)`.
+The shared [presentation API](/field-options#templates) configures attributes,
+templates, variants, and template data.
 
 ### Helper configuration
 
-Set these with `addHelper()`. Binding settings can also use the helper's
-`setConfig()` before binding; `autoActionScript` is read during initialization:
-
-| Setting | Value and default |
-| --- | --- |
-| `theme` | A `Theme` instance, `'Base'`, or null. Defaults to `'Base'`; null also selects base. Used when `bind()`, `postButton()`, or `postLink()` omits `theme:`; helper `render()` inherits it through binding. |
-| `passwordFields` | Defaults to `['password', 'passwd']`. A list of terminal names, such as `['password', 'passwd', 'passphrase', 'password_confirmation']`. Each binding snapshots this list; its own `passwordFields` option replaces the helper default. Explicit field types and primary-key conventions take precedence. |
-| `typeMap` | Additional schema-to-control mappings, default `[]`. Each binding snapshots helper overrides over the native defaults; its own entries override matching keys. Reset helper overrides with `setConfig('typeMap')`. |
-| `autoActionScript` | Boolean, true by default. Registers the deferred `FormCompose.actions` asset in the `script` view block when the helper initializes, including pages with no initial actions. Render `$this->fetch('script')` in the layout. Set false before initialization to load or replace the behavior yourself. See [loading and dynamic fragments](/post-actions#load-the-enhancement). |
-| `contextFactory` | A CakePHP `ContextFactory`; otherwise uses CakePHP's default providers. |
-| `blueprintFactory` | A `BlueprintFactory` instance; otherwise creates a factory for dependency-free declarations. Invalid non-null instances fail. |
+CakePHP helper loading still uses CakePHP's own configuration array:
 
 ```php
-// AppView::initialize(); $blueprints is an application-provided factory.
 $this->addHelper('Form', [
     'className' => 'FormCompose.Form',
-    'blueprintFactory' => $this->get('blueprints'),
+    'theme' => $theme,
+    'blueprintFactory' => $blueprints,
 ]);
 ```
 
-See [blueprint services](/blueprint-configuration#inject-application-services)
-for supplying this view variable from the application container.
-
-Password names can be configured without a helper subclass:
-
-```php
-$this->Form->setConfig('passwordFields', ['password', 'passwd', 'passphrase']);
-$form = $this->Form->bind($account, [
-    'passwordFields' => ['password', 'passwd', 'new_password'],
-]);
-```
-
-Helper settings use CakePHP's normal array merging. To replace the helper list
-instead of extending it, call `setConfig('passwordFields', $names, false)`.
-Binding options always replace the inherited list.
-Lists use exact, case-sensitive terminal names rather than full paths or patterns.
-For example, `new_password` matches `account.new_password`. Changing helper
-configuration affects future bindings; a binding override does not change the
-helper default. Password-name configuration is never emitted as a form attribute.
-
-See [Create a theme](/themes#select-theme) for configuring
-an application theme in `AppView`. Helper configuration is local to that instance;
-changing `theme` affects future bindings and action calls, while existing sessions
-retain their selected theme. Per-call overrides never modify the configured default.
+The helper also accepts `passwordFields`, `typeMap`, `contextFactory`,
+`themeDebug`, and `autoActionScript`. Use a form builder for `valueSources`,
+custom type instances, and a renderer. Per-form settings override helper defaults.
+See [blueprint services](/blueprint-configuration) for dependency injection.
 
 ## open() {#open}
 
 ```php
-public function open(array $attributes = []): string;
+echo $form->open();
 ```
 
-Renders the opening form tag and initial hidden inputs. Options replace matching
-binding options; remaining HTML attributes apply to the form tag.
-
-```php
-$form = $this->Form->bind($article);
-echo $form->open(['class' => 'article-editor', 'method' => 'patch']);
-```
+`open(): string` renders the form tag, CSRF field where supplied by CakePHP,
+and method override. Configure it **before** `bind()`; `open()` accepts no options.
+Existing entities default to PUT, new entities to POST. GET uses native query submission.
+A file input requires a multipart form.
 
 ### Form-opening options
 
-| Option | Type | Default and effect |
-| --- | --- | --- |
-| `url` | Route `array`, URL `string`, `false`, or `null` | Current request target. Route arrays/strings pass through CakePHP routing. `false` omits the action attribute. |
-| `type` | `string` | `post` for new contexts, `put` for existing ones. `file` enables multipart encoding while retaining the context's default method. Otherwise selects the method unless `method` is supplied. |
-| `method` | `string` | Overrides the method chosen through `type`. Accepts GET, POST, PUT, PATCH, DELETE, HEAD, or OPTIONS, case-insensitively. |
-| `enctype` | `string` | Omitted, or `multipart/form-data` when `type` is `file`. |
-| `encoding` | `string` | `App.encoding`, otherwise `UTF-8`; emitted as lowercase `accept-charset`. |
-| `template` | `string` | Selects the complete-form `layout` part for `render()`. |
-| `templates` | `array<string, string>` | Overrides complete-form `layout`, `open`, `close`, or infrastructure `hidden` elements. |
-| `variant` | `string` | Named variant for form templates; omitted by default. Does not select variants on fields or buttons. See [Use variants](/variants). |
-| `templateData` | `array<string, mixed>` | `[]`. Data for the complete-form layout, opening, closing, and infrastructure hidden-input templates. |
-| Other HTML attributes | Attribute values | For example `class`, `novalidate`, and `data-*`, supplied directly in this array. |
-
-GET renders `method="get"`; other effective methods render `method="post"`.
-Methods other than GET/POST add `_method`. A request CSRF token is included for
-non-GET forms. Final tamper-protection fields are rendered at `close()`.
-
-Use plural `templates` for form elements. Singular `template` is a field/blueprint
-shorthand, not a form-opening option. See [template reference](/template-reference#form-and-button-templates)
-when customizing infrastructure markup.
+Use the form builder's `url()`, `method()`, `id()`, `multipart()`, `enctype()`,
+`encoding()`, and `attributes()` methods. Select opening/closing elements with
+`partTemplate('open', ...)` and `partTemplate('close', ...)`. `template()` selects
+the complete form's `layout` element.
 
 ## control() {#control}
 
 ```php
-public function control(string $field, array $options = []): string;
+echo $form->control('email')
+    ->label('Email address')
+    ->required()
+    ->attributes(['autocomplete' => 'email']);
 ```
 
-Resolves a field and renders its complete presentation using its control element.
-Hidden fields render only their input part. Requires an open session when its
-input renders. Accepts every option in [Field options](/field-options).
-
-```php
-echo $form->control('title', [
-    'label' => 'Article title',
-    'attributes' => ['placeholder' => 'Enter a title'],
-]);
-```
-
-A string is a context path, not a submitted bracket name. For example,
-`comments.0.body` resolves nested metadata and submits `comments[0][body]`.
-Per-call options override selected blueprint defaults.
+`control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder` configures
+a complete control. Echo or `render(): string` resolves its final settings and
+renders it. Creating or configuring a control renders nothing. See
+[field configuration](/field-options) for every setter.
 
 ## controls() {#controls}
 
 ```php
-public function controls(array $fields): string;
-```
-
-Renders a batch in order, adding no wrapper. Accepted entries are indexed path
-strings or `path => options` pairs.
-
-```php
 echo $form->controls([
     'title',
-    'body' => ['type' => 'textarea'],
-    'published' => ['type' => 'checkbox'],
+    $form->control('body')->type('textarea')->attributes(['rows' => 12]),
+    $form->control('published')->type('checkbox'),
 ]);
 ```
 
-An empty array returns `''`; nonempty batches require an open form. Invalid
-entries throw `InvalidArgumentException` before rendering begins. Failed batches
-roll back their input registrations, preserving previously rendered inputs.
+Accepts an iterable of paths, `FieldSpec` objects, or `ControlBuilder` objects
+from this session. It validates declarations and ownership before rendering.
+The batch has no wrapper and rolls back registrations if any control fails.
+Use `new FieldSpec('email', $emailConfig)` for reusable configured lists.
+`path => option-array` entries are no longer accepted.
 
 ## field() {#field}
 
 ```php
-public function field(string $field, array $options = []): BoundField;
+$title = $form->field('title')->help('Visible in article lists.')->resolve();
+$currentTitle = $title->state->value;
 ```
 
-Returns a resolved snapshot without HTML or input-registration side effects.
-It may be called before opening. Uses the same [options](/field-options) and
-configuration precedence as `control()`.
-
-```php
-$title = $form->field('title', ['help' => 'Displayed above the article.']);
-// Inside an open form:
-echo $title->label(), $title->input(), $title->help(), $title->errors();
-```
-
-See [Bound fields](/field-reference) for state and part methods.
+`field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder` configures a
+field; `resolve(): BoundField` captures immutable state. Resolution, state reads,
+and attribute inspection render nothing and register no inputs. Use
+[bound field parts](/field-reference) to arrange custom HTML.
 
 ## blueprint() {#blueprint}
 
 ```php
-public function blueprint(
-    ?string $blueprint = null,
-    ?string $at = null,
-    array $options = [],
-): string;
+echo $form->blueprint('article')->template('forms/article');
 ```
 
-Renders a collection inside the current open session, without opening/closing tags
-or a submit button. With no argument, uses the collection selected at `bind()`;
-without one, the default layout returns `''`.
-
-```php
-// The 'author' blueprint declares relative paths such as 'email'.
-echo $form->blueprint('author', at: 'author');
-```
-
-Strings resolve a blueprint locally; they do not replace binding defaults. `at`
-mounts relative field paths at a context path. `$options` are
-[blueprint presentation options](/blueprint-reference#presentation-options),
-not field options. Rendering shares the session's theme and submission registry.
-See [layouts and composition](/composition) for examples.
+`blueprint(?string $blueprint = null, ?string $at = null): PartBuilder` renders
+a collection inside an open form. Null uses the binding's selected blueprint.
+An explicit selection stays local to this occurrence. `at: 'author'` scopes it
+to that context path. Layout presentation uses the shared fluent methods.
 
 ## embedMany() {#embed-many}
 
 ```php
-public function embedMany(
-    string $path,
-    string $blueprint,
-    ?array $keys = null,
-    array $options = [],
-): string;
+echo $form->embedMany('comments', 'comment')->keys([0, 2])->label('Comments');
 ```
 
-Render rows at an association path inside the open session. Null `keys` infers
-original keys using binding value sources; `[]` renders no rows. Options select
-the repeated wrapper and collection-owned error presentation. Use layout `embeddedMany()` to render already compiled rows while preserving
-their hook results and parent adjustments.
-See [Repeated embeds](/repeated-embeds) for layouts and blank-row selection.
+`embedMany(string $path, string $blueprint, EmbedConfig|EmbedConfigBuilder|null $config = null): EmbedBuilder`
+compiles and renders repeated rows at that path. Null keys infer bound keys;
+`[]` renders no rows. See [repeated embeds](/repeated-embeds).
 
 ## submit() {#submit}
 
 ```php
-public function submit(string|Html $label, array $attributes = []): string;
+echo $form->submit('Save')->name('intent')->value('save')->attributes(['class' => 'button']);
 ```
 
-Renders a themed button inside an open form. Ordinary labels are escaped; `Html`
-labels are explicitly trusted. HTML attributes go directly in the second argument.
-
-```php
-echo $form->submit('Save article', [
-    'class' => 'button-primary',
-    'name' => 'intent',
-    'value' => 'save',
-]);
-```
-
-| Option | Default and behavior |
-| --- | --- |
-| `type` | `submit`. Use `button` or `reset` for other native button behavior. |
-| `templates` | `[]`. The `control` key selects the button element. |
-| `variant` | Omitted. Selects a [button template variant](/variants#buttons-and-form-layouts-have-their-own-variants). |
-| `templateData` | `[]`. Application data scoped to the button element. |
-| HTML attributes | For example `class`, `disabled`, `name`, and `value`; escaped on output. |
-
-A named button is registered as an optional submission only after its template
-succeeds. Use `templates['control']`, not the field-only `template` shorthand.
+`submit(string|Html $label, ButtonConfig|ButtonConfigBuilder|null $config = null): ButtonBuilder` creates
+a renderable button. Setters include `type(string)`, `name(?string)`,
+`value(mixed)`, `disabled(bool = true)`, and common presentation methods.
+Named enabled buttons participate in the submission contract after successful
+rendering. Ordinary labels are escaped; trusted markup requires `Html`.
 
 ## close() {#close}
 
-```php
-public function close(): string;
-```
-
-Generates final tamper-protection inputs and the closing form markup. Takes no
-arguments; form presentation is selected through binding/opening options. Call it
-after every input and button. The session cannot reopen after closing.
+`close(): string` validates rendered identities and feedback targets, renders
+final tamper-protection fields, and closes the form. Inputs may only render while
+it is open. Configure CakePHP's CSRF middleware and FormProtectionComponent in
+the application; loading this helper does not enable them.
 
 ## Complete-form render() {#render}
 
-The helper creates a session; the session version uses an existing fresh binding:
-
-::: code-group
-
-```php [FormHelper::render()]
-public function render(
-    string $blueprint,
-    mixed $data = null,
-    array $options = [],
-    string|Html|false|null $submit = null,
-    array $submitOptions = [],
-): string;
-```
-
-```php [FormSession::render()]
-public function render(
-    ?string $blueprint = null,
-    array $options = [],
-    string|Html|false|null $submit = null,
-    array $submitOptions = [],
-): string;
-```
-
-:::
-
-Both open, render the blueprint, optionally render a button, and close. Null
-`submit` uses the translated **Submit** label; false omits the button.
-`submitOptions` uses the same options as `submit()`.
-
 ```php
-echo $this->Form->render(
-    'article',
-    $article,
-    options: ['url' => ['action' => 'edit', $article->id]],
-    submit: 'Save article',
-    submitOptions: ['class' => 'button-primary'],
-);
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary()
+    ->submit('Save article');
 ```
 
-Helper `options` go to `bind()`. Session `options` go to `open()`. Use binding
-first when selecting a custom theme or renderer:
-
-```php
-use FormCompose\Rendering\Theme;
-
-$theme = new Theme(layers: ['forms/application']);
-$form = $this->Form->bind($article, theme: $theme, blueprint: 'article');
-echo $form->render(submit: 'Save article');
-```
-
-The session's explicit blueprint stays local and does not replace defaults.
-Without an explicit or selected blueprint, the body is empty. Use a fresh
-binding to retry a failed complete-form rendering.
+`FormBuilder::render()` binds a fresh session and renders the whole form.
+Echoing the builder has the same effect. `FormSession::render(): string` opens
+that existing session, buffers its selected blueprint, renders the summary and
+layout, then closes it. Configure complete rendering before binding; session
+`render()` accepts no settings.
 
 ### Application-owned complete-form layouts
 
-Put `form/layout.php` in the configured theme when you need shared action buttons
-or wrappers around the summary and blueprint body. Complete-form rendering finds
-it automatically:
+`template('forms/editor')` on the form builder selects the complete form layout.
+Its variables are `$form`, `$state`, `$body`, `$summary`, `$submit`, `$submitConfig`,
+`$attributes`, and `$templateData`. The opening tag has already rendered; emit
+the buffered body once and do not open or close another form.
 
 ```php
-<?= $this->Form->render(
-    'article',
-    $article,
-    options: ['errorSummary' => true],
-    submit: 'Save article',
-) ?>
+<?php
+
+use FormCompose\Configuration\ButtonConfig;
+use FormCompose\Form\FormSession;
+
+/** @var FormSession $form */
+/** @var ButtonConfig $submitConfig */
+?>
+<?= $summary ?>
+<section<?= (string)$attributes ?>><?= $body ?></section>
+<?php if ($submit !== false): ?>
+    <?= $form->submit($submit, config: $submitConfig) ?>
+<?php endif;
 ```
-
-The plugin buffers the blueprint, prepares its summary, renders the selected form
-layout with the session still open, then closes the form. The layout receives
-`$form`, `$state`, `$body`, `$summary`, `$submit`, `$submitOptions`, `$templateData`,
-and `$parent`. This uses the shared PHP template system; a custom renderer receives
-scope `form`, the effective method as its type, and part `layout`.
-
-::: info Keep the two template choices separate
-`#[Form(template: ...)]` chooses the blueprint body layout. `form/layout.php`
-chooses the complete-form presentation used by `render()`, including the summary
-and actions. The theme supplies that layout automatically. For a one-form
-exception, use `options['template']` or `options['templates']['layout']`.
-
-See the [complete layout example](/error-summaries#keep-custom-layouts-and-actions-without-manual-buffering)
-and [template contract](/template-reference#complete-form-layouts).
-:::
 
 ## errorSummary() {#error-summary}
 
 ```php
-public function errorSummary(array $options = []): string;
+echo $form->errorSummary()->title('Please review these fields')->attributes(['class' => 'errors']);
 ```
 
-Summarize eligible controls and repeated sections successfully rendered in this
-open session. Returns `''` when none have errors. Render or buffer the body first;
-field inspection does not register feedback. Summary rendering registers no inputs.
-
-| Option | Default and behavior |
-| --- | --- |
-| `title` | Translated “Please correct the following errors.” Text or trusted `Html`. |
-| `attributes` | Summary element attributes; default ID is the binding ID plus `-error-summary`. |
-| `partAttributes['title']` | Heading attributes; default ID is the summary ID plus `-title`. |
-| `template` / `templates['control']` | Explicit summary element; otherwise normal `error-summary/control` theme lookup. |
-| `variant` | Named theme variant. |
-| `templateData` | Custom data bag for the summary element. |
-
-Complete-form `render()` supports `options: ['errorSummary' => true]` or an
-options array in place of true. It renders the buffered controls after the summary.
-Local false overrides binding opt-in. See [Error summaries](/error-summaries)
-for scope, target selection, custom elements, and manual placement.
+`errorSummary(SummaryConfig|SummaryConfigBuilder|null $config = null): SummaryBuilder` renders a summary
+of errors from successfully rendered controls. Render it after the controls;
+buffer their HTML first if the summary should appear above them. Inspection
+alone adds no summary entries. `errors(false)` suppresses that field's entry.
+See [error summaries](/error-summaries).
 
 ## hiddenFields() {#hidden-fields}
 
-```php
-public function hiddenFields(array $fields, array $presentation = []): string;
-```
+`hiddenFields(array $fields, PresentationConfig $presentation = new PresentationConfig()): string`
+renders internal metadata name/value pairs through the shared hidden element.
+For application fields, prefer `control('record_id')->type('hidden')` so binding,
+registration, and protection use the normal field workflow.
 
-Template-facing utility for the prepared `list<Attributes>` of infrastructure
-inputs. It renders them through `form/hidden.php`; it does not declare ordinary
-application fields or register handwritten inputs.
+## registerFeedback() {#register-feedback}
 
-```php
-// In a form opening or closing element:
-echo $form->hiddenFields($hidden, $state->presentation);
-```
+`registerFeedback(BoundField $field, string $part, array $attributes = []): void`
+registers a handwritten help or errors element after you emit it. It reserves
+its configured ID and participates in rollback without registering submissions.
+See [handwritten feedback](/field-parts#preserve-feedback-and-accessible-names).
 
-For an application hidden value, use `control('token', ['type' => 'hidden'])`.
+## postButton() and postLink() {#post-actions}
+
+The helper's standalone actions return `ActionBuilder`. Use `method()`, `data()`,
+`confirm()`, `block()`, `form(FormConfig)`, and common presentation setters.
+`block()` takes a nonempty block name or null. See [POST actions](/post-actions)
+for delegated JavaScript, blocks, and protection contracts.
 
 ## Lifecycle and failures
 
-A session opens once. Inputs, buttons, and `blueprint()` require an open form;
-`field()` and state inspection do not. Duplicate rendered input IDs and file
-inputs outside multipart forms throw `LogicException`.
+Open a session once, render inputs, close once. Repeated opening or closing,
+rendering inputs before opening or after closing, and reusing rendered IDs fail
+with `LogicException`. Renderable builders do not cache HTML; rendering one twice
+attempts to render it twice. Do not use both a whole control and its input.
 
-Opening, closing, and button template failures do not commit their failed step;
-closing failure restores the open phase. A failed input template does not register
-that input. Batch and blueprint rendering stage registrations and roll them back
-on failure. Exceptions propagate to the application. Complete-form rendering does
-not return partial HTML or automatically close after a failure; retry it with a
-fresh session.
+Failed control, batch, and blueprint renders roll back pending registrations.
+A failed close leaves the session open, allowing missing feedback to be emitted
+before retrying. Exceptions propagate; configuration and inspection never unlock
+fields to bypass protection.

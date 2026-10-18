@@ -4,11 +4,9 @@ declare(strict_types=1);
 namespace FormCompose\Blueprint;
 
 use Closure;
-use FormCompose\Attribute\Embed;
-use FormCompose\Attribute\EmbedMany;
 
 /**
- * Compiles inherited declarations and nested blueprints before the parent's hook.
+ * Runs blueprint authoring, then compiles its final child declarations.
  *
  * Request-dependent definitions never enter discovery caches. Override
  * createBuilder() through BlueprintFactory::createCompiler() to specialize
@@ -26,42 +24,23 @@ class BlueprintCompiler
     }
 
     /**
-     * Compile parent-to-child declarations, then configure this occurrence once.
+     * Configure this occurrence once, then compile its children.
      *
      * Cloning the blueprint seed isolates object-valued container registrations.
-     * Inherited fields merge options in place; redeclared embeds replace their
-     * child definition in place. Same-level duplicate paths remain errors.
+     * Inherited hooks use normal parent::configure() calls. Parent field edits
+     * overlay compiled child defaults. Duplicate declarations remain errors.
      */
     public function compile(FormBlueprint $blueprint, FormContext $context): FormDefinition
     {
         $blueprint = clone $blueprint;
-        $declarations = BlueprintDeclarations::read($blueprint);
-        $entries = [];
-        foreach ($declarations['entries'] as $entry) {
-            $entries[] = match (true) {
-                $entry instanceof Embed => new EmbeddedDefinition(
-                    $entry->path,
-                    $this->resolve($entry->blueprint, $context->at($entry->path)),
-                    $entry->options,
-                ),
-                $entry instanceof EmbedMany => $this->repeated(new RepeatedDefinition(
-                    $entry->path,
-                    $entry->blueprint,
-                    $entry->keys,
-                    $entry->options,
-                ), $context),
-                default => $entry,
-            };
-        }
-
-        $builder = $this->createBuilder(new FormDefinition($entries, $declarations['options']), $context);
+        $builder = $this->createBuilder(new FormDefinition([]), $context);
         $blueprint->configure($builder, $context);
 
         return $builder->build();
     }
 
     /**
-     * Compile only the requested repeated occurrence before parent configuration.
+     * Compile only the repeated rows selected during parent configuration.
      */
     public function repeated(RepeatedDefinition $entry, FormContext $context): RepeatedDefinition
     {

@@ -6,6 +6,7 @@ namespace FormCompose\Binding;
 use Cake\Http\ServerRequest;
 use Cake\View\Form\ContextInterface;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FormConfig;
 use InvalidArgumentException;
 
 /**
@@ -28,20 +29,17 @@ final readonly class FormBinding
     /**
      * Capture binding inputs independently of rendering state.
      *
-     * @param array<string, mixed> $options Form creation options, valueSources, passwordFields, and typeMap.
      * @throws \InvalidArgumentException For malformed password field names or type mappings.
      */
     public function __construct(
         public ContextInterface $context,
         public ServerRequest $request,
         public string $id,
-        public array $options = [],
+        public FormConfig $config = new FormConfig(),
         public ?FormDefinition $definition = null,
     ) {
         /** @var mixed $names */
-        $names = array_key_exists('passwordFields', $options)
-            ? $options['passwordFields']
-            : self::DEFAULT_PASSWORD_FIELDS;
+        $names = $config->passwordFields;
         if (!is_array($names) || !array_is_list($names)) {
             throw new InvalidArgumentException('The passwordFields option must be a list of terminal field names.');
         }
@@ -58,7 +56,7 @@ final readonly class FormBinding
 
         $this->passwordFields = $passwordFields;
         $this->typeMap = array_replace(TypeMap::DEFAULTS, TypeMap::normalize(
-            array_key_exists('typeMap', $options) ? $options['typeMap'] : [],
+            $config->typeMap,
         ));
     }
 }

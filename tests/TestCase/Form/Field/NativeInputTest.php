@@ -15,7 +15,13 @@ class NativeInputTest extends FormTestCase
 {
     public function testChoicesWithoutIdsAreSkippedWhenFindingAFocusTarget(): void
     {
-        $state = $this->helper()->bind()->field('status', ['type' => 'radio'])->state;
+        $state = $this->helper()
+            ->form()
+            ->bind()
+            ->field('status')
+            ->type('radio')
+            ->resolve()
+            ->state;
         $missing = new Choice('group', 'No target', new Attributes(), [
             new Choice('item', 'No identity', new Attributes(['value' => 'a'])),
         ]);

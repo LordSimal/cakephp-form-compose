@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Form\Field;
 
 use FormCompose\Binding\FieldPath;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Rendering\Html;
 
 /**
@@ -19,7 +20,7 @@ final readonly class FieldState
     /**
      * Capture field identity, value, configuration, constraints, and validation feedback.
      *
-     * @param array{name: string, id: string, messages: list<string>, requiredMessage: ?string, composite: bool, constraints: array<string, mixed>, options: array<string, mixed>} $data Presentation metadata.
+     * @param array{name: string, id: string, messages: list<string>, requiredMessage: ?string, composite: bool, constraints: array<string, mixed>, config: \FormCompose\Configuration\FieldConfig} $data Presentation metadata.
      */
     public function __construct(public string $path, public string $type, public mixed $value, array $data)
     {
@@ -29,7 +30,7 @@ final readonly class FieldState
         $this->requiredMessage = $data['requiredMessage'];
         $this->composite = $data['composite'];
         $this->constraints = $data['constraints'];
-        $this->options = $data['options'];
+        $this->config = $data['config'];
     }
 
     public string $name;
@@ -47,8 +48,8 @@ final readonly class FieldState
     /** @var array<string, mixed> */
     public array $constraints;
 
-    /** @var array<string, mixed> */
-    public array $options;
+    /** Immutable effective field configuration. */
+    public FieldConfig $config;
 
     /**
      * Identify controls that require a group legend.
@@ -63,7 +64,7 @@ final readonly class FieldState
      */
     public function hasHelp(): bool
     {
-        return isset($this->options['help']) && $this->options['help'] !== false && $this->options['help'] !== '';
+        return isset($this->config->help) && $this->config->help !== false && $this->config->help !== '';
     }
 
     /**
@@ -71,7 +72,7 @@ final readonly class FieldState
      */
     public function hasErrors(): bool
     {
-        return ($this->options['errors'] ?? true) !== false && $this->messages !== [];
+        return $this->config->errors !== false && $this->messages !== [];
     }
 
     /**
@@ -79,8 +80,8 @@ final readonly class FieldState
      */
     public function labelText(): string
     {
-        /** @var string|Html|false $label */
-        $label = $this->options['label'] ?? FieldPath::label($this->path);
+        /** @var string|Html|false $label Resolved by FieldText before state construction. */
+        $label = $this->config->label ?? FieldPath::label($this->path);
 
         return Html::text($label instanceof Html ? $label : (string)$label);
     }
@@ -90,8 +91,8 @@ final readonly class FieldState
      */
     public function helpText(): string
     {
-        /** @var string|Html|false $help */
-        $help = $this->options['help'] ?? '';
+        /** @var string|Html|false $help Resolved by FieldText before state construction. */
+        $help = $this->config->help ?? '';
 
         return Html::text($help instanceof Html ? $help : (string)$help);
     }

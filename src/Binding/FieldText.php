@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Binding;
 
 use Closure;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\Translated;
 use FormCompose\Rendering\Html;
 use InvalidArgumentException;
@@ -26,19 +27,12 @@ final class FieldText
      * configuration bags remain untouched. Exceptions from application closures
      * propagate before rendering or submission registration can occur.
      *
-     * @param array<string, mixed> $options Merged field configuration.
-     * @return array<string, mixed>
      * @throws \InvalidArgumentException When a text closure returns an unsupported value.
      */
-    public static function resolve(array $options): array
+    public static function resolve(FieldConfig $config): FieldConfig
     {
         foreach (['label', 'help'] as $key) {
-            if (!array_key_exists($key, $options)) {
-                continue;
-            }
-
-            /** @var mixed $text */
-            $text = $options[$key];
+            $text = $key === 'label' ? $config->label : $config->help;
             if ($text instanceof Closure) {
                 /** @var mixed $text */
                 $text = $text();
@@ -59,9 +53,9 @@ final class FieldText
                 $text = $text->translate();
             }
 
-            $options[$key] = $text;
+            $config = $key === 'label' ? $config->withLabel($text) : $config->withHelp($text);
         }
 
-        return $options;
+        return $config;
     }
 }

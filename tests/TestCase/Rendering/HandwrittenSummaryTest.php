@@ -21,8 +21,10 @@ class HandwrittenSummaryTest extends FormTestCase
         $options = static function (): Generator {
             yield 'a' => 'A';
         };
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['status' => ['invalid' => 'Choose one']]]));
-        $field = $form->field('status', ['type' => $type, 'options' => $options()]);
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['status' => ['invalid' => 'Choose one']]]))
+            ->bind();
+        $field = $form->field('status')->type($type)->choices($options())->resolve();
         $form->open();
 
         $body =
@@ -33,15 +35,16 @@ class HandwrittenSummaryTest extends FormTestCase
                 ])
             . '>';
         $field->register();
-        $body .= $field->errors();
-        $summary = $form->errorSummary();
+        $body .= $field->errors()->render();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('Status: Choose one', $summary);
         static::assertStringNotContainsString('<a ', $summary);
         static::assertStringContainsString('id="form-compose-1-status"', $body);
         static::assertStringNotContainsString('id="form-compose-1-status-a"', $body);
-        static::assertStringContainsString('id="form-compose-1-status-a"', $form->control('other', [
-            'id' => 'form-compose-1-status-a',
-        ]));
+        static::assertStringContainsString(
+            'id="form-compose-1-status-a"',
+            $form->control('other')->id('form-compose-1-status-a')->render(),
+        );
         $form->close();
     }
 
@@ -53,14 +56,16 @@ class HandwrittenSummaryTest extends FormTestCase
 
     public function testHandwrittenRetryAfterFailedRenderingDoesNotReuseTheRenderedTarget(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['status' => ['invalid' => 'Choose one']]]));
-        $field = $form->field('status', [
-            'type' => 'radio',
-            'options' => ['a' => 'A'],
-            'partAttributes' => ['container' => ['id' => 'occupied']],
-        ]);
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['status' => ['invalid' => 'Choose one']]]))
+            ->bind();
+        $field = $form->field('status')
+            ->type('radio')
+            ->choices(['a' => 'A'])
+            ->partAttributes('container', ['id' => 'occupied'])
+            ->resolve();
         $form->open();
-        $form->control('other', ['id' => 'occupied']);
+        $form->control('other')->id('occupied')->render();
         try {
             $field->control();
             static::fail('Expected container collision after native rendering.');
@@ -69,32 +74,35 @@ class HandwrittenSummaryTest extends FormTestCase
         }
 
         $field->register();
-        $field->errors();
+        $field->errors()->render();
 
-        $summary = $form->errorSummary();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('Status: Choose one', $summary);
         static::assertStringNotContainsString('<a ', $summary);
-        static::assertStringContainsString('id="form-compose-1-status-a"', $form->control('spare', [
-            'id' => 'form-compose-1-status-a',
-        ]));
+        static::assertStringContainsString(
+            'id="form-compose-1-status-a"',
+            $form->control('spare')->id('form-compose-1-status-a')->render(),
+        );
         $form->close();
     }
 
     public function testClearedCollectionsDoNotSummarizeStaleChildErrors(): void
     {
-        $form = $this->helper(['comments' => []])->bind(new ArrayContext([
-            'defaults' => ['comments' => [0 => ['body' => 'Loaded']]],
-            'errors' => [
-                'comments' => [
-                    'count' => 'Add a comment',
-                    0 => ['body' => ['required' => 'Old row error']],
+        $form = $this->helper(['comments' => []])
+            ->form(new ArrayContext([
+                'defaults' => ['comments' => [0 => ['body' => 'Loaded']]],
+                'errors' => [
+                    'comments' => [
+                        'count' => 'Add a comment',
+                        0 => ['body' => ['required' => 'Old row error']],
+                    ],
                 ],
-            ],
-        ]));
+            ]))
+            ->bind();
         $form->open();
-        $form->embedMany('comments', BodyForm::class);
+        $form->embedMany(path: 'comments', blueprint: BodyForm::class)->render();
 
-        $summary = $form->errorSummary();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('Comments: Add a comment', $summary);
         static::assertStringNotContainsString('Old row error', $summary);
         static::assertStringNotContainsString('<a ', $summary);

@@ -4,12 +4,13 @@ declare(strict_types=1);
 namespace FormCompose\Binding;
 
 use BackedEnum;
+use FormCompose\Configuration\FieldConfig;
 use InvalidArgumentException;
 
 /**
- * Chooses a field value from explicit options, request data, and the CakePHP context.
+ * Chooses a field value from explicit configuration, request data, and the CakePHP context.
  *
- * An explicit value option wins, including null. Otherwise the form's valueSources
+ * An explicit configured value wins, including null. Otherwise the form's valueSources
  * are consulted in order (data then context by default), followed by the field's
  * default. Request lookups preserve explicit empty values; backed enums are
  * converted to their scalar value before being stored in FieldState. Subclasses
@@ -27,12 +28,11 @@ class ValueResolver
     /**
      * Read explicit values, configured sources, and defaults in order.
      *
-     * @param array<string, mixed> $options Field value options.
      */
-    public function resolve(string $path, array $options): mixed
+    public function resolve(string $path, FieldConfig $config): mixed
     {
         /** @var mixed $value */
-        $value = array_key_exists('value', $options) ? $options['value'] : $this->fromSources($path, $options);
+        $value = $config->hasValue ? $config->value : $this->fromSources($path, $config);
 
         return $value instanceof BackedEnum ? $value->value : $value;
     }
@@ -40,24 +40,22 @@ class ValueResolver
     /**
      * Consult request data or context without treating false, zero, and null as absence.
      *
-     * @param array<string, mixed> $options Field value options.
      */
-    protected function fromSources(string $path, array $options): mixed
+    protected function fromSources(string $path, FieldConfig $config): mixed
     {
-        /** @var list<string> $sources */
-        $sources = $this->binding->options['valueSources'] ?? ['data', 'context'];
+        $sources = $this->binding->config->valueSources;
         if ($sources === [] || array_diff($sources, ['data', 'context', 'query']) !== []) {
             throw new InvalidArgumentException('Value sources must contain data, context, or query.');
         }
 
         /** @var mixed $default */
-        $default = $options['default'] ?? null;
+        $default = $config->defaultValue;
         foreach ($sources as $source) {
             if ($source === 'context') {
                 /** @var mixed $value */
                 $value = $this->binding->context->val($path, [
                     'default' => $default,
-                    'schemaDefault' => $options['schemaDefault'] ?? true,
+                    'schemaDefault' => $config->schemaDefault,
                 ]);
                 if ($value !== null) {
                     return $value;

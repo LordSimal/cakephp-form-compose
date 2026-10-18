@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace FormCompose\Form\Field;
 
+use FormCompose\Builder\PartBuilder;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormLifecycle;
 use FormCompose\Rendering\Attributes;
@@ -27,6 +29,8 @@ use FormCompose\Rendering\RenderNode;
  */
 class BoundField
 {
+    use FieldPartsTrait;
+
     /** @var array<string, \FormCompose\Form\Field\BoundField> Child fields, resolved without registration. */
     public array $inputs {
         get => $this->children->resolve($this, $this->fieldType);
@@ -38,6 +42,13 @@ class BoundField
     }
 
     protected ?Attributes $activeAttributes = null;
+
+    protected ?PresentationConfig $activePresentation = null;
+
+    /** Effective presentation while rendering this input and its native children. */
+    public PresentationConfig $presentation {
+        get => $this->activePresentation ?? $this->state->config->presentation;
+    }
 
     /** @internal Effective attributes while rendering this input's children. */
     public Attributes $inputAttributes {
@@ -86,7 +97,7 @@ class BoundField
     public function control(): string
     {
         if ($this->state->type === 'hidden') {
-            return $this->input();
+            return $this->input()->render();
         }
 
         $attributes = $this->attributes('container');
@@ -100,35 +111,10 @@ class BoundField
     /**
      * Render and register an input only after its template succeeds.
      *
-     * @param array<string, mixed> $attributes Input attributes.
      */
-    public function input(array $attributes = []): string
+    public function input(): PartBuilder
     {
-        $this->lifecycle->assertInput($this);
-        $bag = $this->attributes('input', $attributes);
-
-        return $this->lifecycle->inputs->render(function () use ($bag): string {
-            $previous = $this->activeAttributes;
-            $this->activeAttributes = $bag;
-            try {
-                $html = $this->renderer->render('input', RenderNode::field($this, $bag));
-            } finally {
-                $this->activeAttributes = $previous;
-            }
-
-            $ids = $this->fieldType instanceof InputIdentityProviderInterface
-                ? $this->fieldType->inputIds($this, $bag)
-                : [];
-            $this->lifecycle->register($this, $this->fieldType->submissions($this, $bag), $ids);
-            $this->lifecycle->inputs->references->record($this, $bag, $this->fieldType, $ids);
-            $this->lifecycle->inputs->recordTarget($this, $this->fieldType, $bag);
-            $this->lifecycle->inputs->feedback->record(
-                $this->state->id,
-                FeedbackEntry::field($this, $this->fieldType, $bag),
-            );
-
-            return $html;
-        });
+        return new PartBuilder($this->inputMarkup(...), 'input');
     }
 
     /**
@@ -162,58 +148,28 @@ class BoundField
     /**
      * Render a label or group legend unless suppressed by presentation options.
      *
-     * @param array<string, mixed> $attributes Label attributes.
      */
-    public function label(array $attributes = []): string
+    public function label(): PartBuilder
     {
-        if (($this->state->options['label'] ?? null) === false) {
-            return '';
-        }
-
-        $bag = $this->attributes('label', $attributes);
-
-        return $this->lifecycle->inputs->render(
-            fn(): string => $this->renderer->render('label', RenderNode::field($this, $bag)),
-            $bag,
-        );
+        return new PartBuilder($this->labelMarkup(...), 'label');
     }
 
     /**
      * Render help content when enabled.
      *
-     * @param array<string, mixed> $attributes Help attributes.
      */
-    public function help(array $attributes = []): string
+    public function help(): PartBuilder
     {
-        if (!$this->state->hasHelp()) {
-            return '';
-        }
-
-        $bag = $this->attributes('help', $attributes);
-
-        return $this->lifecycle->inputs->render(
-            fn(): string => $this->renderer->render('help', RenderNode::field($this, $bag)),
-            $bag,
-        );
+        return new PartBuilder($this->helpMarkup(...), 'help');
     }
 
     /**
      * Render validation messages when enabled.
      *
-     * @param array<string, mixed> $attributes Error attributes.
      */
-    public function errors(array $attributes = []): string
+    public function errors(): PartBuilder
     {
-        if (!$this->state->hasErrors()) {
-            return '';
-        }
-
-        $bag = $this->attributes('errors', $attributes);
-
-        return $this->lifecycle->inputs->render(
-            fn(): string => $this->renderer->render('errors', RenderNode::field($this, $bag)),
-            $bag,
-        );
+        return new PartBuilder($this->errorsMarkup(...), 'errors');
     }
 
     /**

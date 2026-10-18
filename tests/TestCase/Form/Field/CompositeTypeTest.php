@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Form\Field;
 
 use Cake\View\Form\ArrayContext;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Test\Fixture\ContactField;
 use FormCompose\Test\Fixture\ContactFormHelper;
 use FormCompose\Test\Fixture\Widget\ConfiguredType;
@@ -21,12 +23,22 @@ class CompositeTypeTest extends FormTestCase
     public function testOneDeclarationSupportsDefaultAndReorderedPartLayouts(): void
     {
         $helper = $this->helper(['period' => ['start' => '2026-10-01', 'end' => '2026-10-17']]);
-        foreach ([[], ['templates' => ['composite' => 'widgets/inline']]] as $layout) {
-            $form = $helper->bind(null, ['types' => ['date-range' => new DateRangeType()]]);
-            $field = $form->field(
-                'period',
-                $layout + ['type' => 'date-range', 'templateData' => ['caption' => '<Range>']],
-            );
+        foreach ([
+            new FieldConfig(),
+            FieldConfig::builder()->partTemplate('composite', 'widgets/inline')->config(),
+        ] as $layout) {
+            $form = $helper->form()
+                ->types(['date-range' => new DateRangeType()])
+                ->bind();
+            $field = $form->field('period')
+                ->apply(
+                    FieldConfig::builder()
+                        ->type('date-range')
+                        ->templateData(['caption' => '<Range>'])
+                        ->config()
+                        ->merge($layout),
+                )
+                ->resolve();
             static::assertTrue($field->state->grouped());
             static::assertSame($field->inputs['start'], $field->inputs['start']);
             $initialTarget = $field->focusTarget;
@@ -38,7 +50,7 @@ class CompositeTypeTest extends FormTestCase
             static::assertSame(1.0, $xpath->evaluate('count(//fieldset/legend[text()="Period"])'));
             static::assertSame(2.0, $xpath->evaluate('count(//input[@type="date"])'));
             static::assertSame($field->inputs['start']->state->id, $field->focusTarget);
-            if ($layout === []) {
+            if ($layout->presentation->templates === []) {
                 static::assertStringNotContainsString('inline-range', $html);
                 continue;
             }
@@ -51,20 +63,26 @@ class CompositeTypeTest extends FormTestCase
 
     public function testNestedNamesCustomIdentitiesAndExplicitEmptyValuesArePreserved(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['details' => new ConfiguredType([
-            'zero' => [],
-            'no' => [],
-            'empty' => [],
-            'null' => [],
-            'missing' => ['default' => 'fallback'],
-            'address.post-code' => ['name' => 'postal', 'id' => 'postal-id'],
-        ])]]);
-        $field = $form->field('items.0.details', [
-            'type' => 'details',
-            'name' => 'order[details]',
-            'id' => 'details-id',
-            'value' => ['zero' => 0, 'no' => false, 'empty' => '', 'null' => null],
-        ]);
+        $form = $this->helper()
+            ->form()
+            ->types(['details' => new ConfiguredType([
+                new FieldSpec('zero', FieldConfig::builder()->config()),
+                new FieldSpec('no', FieldConfig::builder()->config()),
+                new FieldSpec('empty', FieldConfig::builder()->config()),
+                new FieldSpec('null', FieldConfig::builder()->config()),
+                new FieldSpec('missing', FieldConfig::builder()->default('fallback')->config()),
+                new FieldSpec(
+                    'address.post-code',
+                    FieldConfig::builder()->name('postal')->id('postal-id')->config(),
+                ),
+            ])])
+            ->bind();
+        $field = $form->field('items.0.details')
+            ->type('details')
+            ->name('order[details]')
+            ->id('details-id')
+            ->value(['zero' => 0, 'no' => false, 'empty' => '', 'null' => null])
+            ->resolve();
         foreach (['zero' => 0, 'no' => false, 'empty' => '', 'null' => null, 'missing' => null] as $name => $value) {
             static::assertSame($value, $field->inputs[$name]->state->value);
             static::assertSame('order[details][' . $name . ']', $field->inputs[$name]->state->name);
@@ -79,23 +97,36 @@ class CompositeTypeTest extends FormTestCase
     public function testMissingChildrenResolveContextDefaultsAndExplicitChildValuesWin(): void
     {
         $context = new ArrayContext(['defaults' => ['period' => ['start' => 'context', 'end' => 'context-end']]]);
-        $form = $this->helper(['period' => ['start' => null]])->bind($context, ['types' => [
-            'range' => new ConfiguredType(['start' => [], 'end' => [], 'explicit' => ['value' => false]]),
-        ]]);
-        $field = $form->field('period', ['type' => 'range']);
+        $form = $this->helper(['period' => ['start' => null]])
+            ->form($context)
+            ->types([
+                'range' => new ConfiguredType([
+                    new FieldSpec('start', FieldConfig::builder()->config()),
+                    new FieldSpec('end', FieldConfig::builder()->config()),
+                    new FieldSpec('explicit', FieldConfig::builder()->value(false)->config()),
+                ]),
+            ])
+            ->bind();
+        $field = $form->field('period')->type('range')->resolve();
         static::assertNull($field->inputs['start']->state->value);
         static::assertSame('context-end', $field->inputs['end']->state->value);
         static::assertFalse($field->inputs['explicit']->state->value);
-        static::assertSame([], $form->field('ordinary')->inputs);
+        static::assertSame([], $form->field('ordinary')->resolve()->inputs);
     }
 
     public function testDifferentNestedCompositeTypesResolveThroughTheSameBinding(): void
     {
-        $form = $this->helper(['booking' => ['dates' => ['start' => '2026-10-01']]])->bind(null, ['types' => [
-            'booking' => new ConfiguredType(['dates' => ['type' => 'range']]),
-            'range' => new DateRangeType(),
-        ]]);
-        $field = $form->field('booking', ['type' => 'booking']);
+        $form = $this->helper(['booking' => ['dates' => ['start' => '2026-10-01']]])
+            ->form()
+            ->types([
+                'booking' => new ConfiguredType([new FieldSpec(
+                    'dates',
+                    FieldConfig::builder()->type('range')->config(),
+                )]),
+                'range' => new DateRangeType(),
+            ])
+            ->bind();
+        $field = $form->field('booking')->type('booking')->resolve();
         $child = $field->inputs['dates']->inputs['start'];
         static::assertSame('booking[dates][start]', $child->state->name);
         static::assertSame('2026-10-01', $child->state->value);
@@ -106,12 +137,26 @@ class CompositeTypeTest extends FormTestCase
 
     public function testNativeChildrenRetainChoiceFallbackMultipleAndHiddenProtocols(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['settings' => new ConfiguredType([
-            'id' => ['type' => 'hidden', 'value' => 7],
-            'active' => ['type' => 'checkbox', 'value' => false],
-            'tags' => ['type' => 'select', 'multiple' => true, 'options' => ['a' => 'A', 'b' => 'B'], 'value' => ['b']],
-        ])]]);
-        $html = $form->open() . $form->control('settings', ['type' => 'settings']) . $form->close();
+        $form = $this->helper()
+            ->form()
+            ->types(['settings' => new ConfiguredType([
+                new FieldSpec('id', FieldConfig::builder()->type('hidden')->value(7)->config()),
+                new FieldSpec('active', FieldConfig::builder()->type('checkbox')->value(false)->config()),
+                new FieldSpec(
+                    'tags',
+                    FieldConfig::builder()
+                        ->type('select')
+                        ->multiple(true)
+                        ->choices(['a' => 'A', 'b' => 'B'])
+                        ->value(['b'])
+                        ->config(),
+                ),
+            ])])
+            ->bind();
+        $html =
+            $form->open()
+            . $form->control('settings')->type('settings')->render()
+            . $form->close();
         $xpath = $this->xpath($html);
         static::assertSame('7', $xpath->evaluate('string(//input[@name="settings[id]"]/@value)'));
         static::assertSame('0', $xpath->evaluate('string(//input[@name="settings[active]"][@type="hidden"]/@value)'));
@@ -121,11 +166,14 @@ class CompositeTypeTest extends FormTestCase
 
     public function testChildFilesRequireMultipartAndFailedCompositeCanBeRetried(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['upload' => new ConfiguredType([
-            'name' => [],
-            'file' => ['type' => 'file'],
-        ])]]);
-        $field = $form->field('upload', ['type' => 'upload']);
+        $form = $this->helper()
+            ->form()
+            ->types(['upload' => new ConfiguredType([
+                new FieldSpec('name', FieldConfig::builder()->config()),
+                new FieldSpec('file', FieldConfig::builder()->type('file')->config()),
+            ])])
+            ->bind();
+        $field = $form->field('upload')->type('upload')->resolve();
         $form->open();
         try {
             $field->control();
@@ -135,14 +183,19 @@ class CompositeTypeTest extends FormTestCase
         }
 
         static::assertNull($field->inputs['name']->focusTarget);
-        static::assertStringContainsString('name="upload[name]"', $field->inputs['name']->input());
+        static::assertStringContainsString('name="upload[name]"', $field->inputs['name']->input()->render());
         $form->close();
-        $multipart = $this->helper()->bind(null, ['types' => ['upload' => new ConfiguredType(['file' => [
-            'type' => 'file',
-        ]])]]);
+        $multipart = $this->helper()
+            ->form()
+            ->types(['upload' => new ConfiguredType([new FieldSpec(
+                'file',
+                FieldConfig::builder()->type('file')->config(),
+            )])])
+            ->multipart()
+            ->bind();
         $html =
-            $multipart->open(['type' => 'file'])
-            . $multipart->control('upload', ['type' => 'upload'])
+            $multipart->open()
+            . $multipart->control('upload')->type('upload')->render()
             . $multipart->close();
         static::assertStringContainsString('enctype="multipart/form-data"', $html);
         static::assertStringContainsString('type="file"', $html);
@@ -150,31 +203,37 @@ class CompositeTypeTest extends FormTestCase
 
     public function testRecursiveDeclarationsFailBeforeUnboundedRendering(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['recursive' => new ConfiguredType(['again' => [
-            'type' => 'recursive',
-        ]])]]);
-        $field = $form->field('tree', ['type' => 'recursive']);
+        $form = $this->helper()
+            ->form()
+            ->types(['recursive' => new ConfiguredType([new FieldSpec(
+                'again',
+                FieldConfig::builder()->type('recursive')->config(),
+            )])])
+            ->bind();
+        $field = $form->field('tree')->type('recursive')->resolve();
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage('Recursive composite field type: recursive');
         static::assertNotEmpty($field->inputs['again']->inputs);
     }
 
-    public function testInvalidChildPathsAreRejectedDuringInspection(): void
+    public function testInvalidChildPathsAreRejectedDuringAuthoring(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['invalid' => new ConfiguredType(['bad/path' => []])]]);
         $this->expectException(InvalidArgumentException::class);
-        static::assertNotEmpty($form->field('sample', ['type' => 'invalid'])->inputs);
+        new FieldSpec('bad/path');
     }
 
     public function testDocumentedMoneyWidgetPreservesZeroAndSelectsTheCurrency(): void
     {
-        $form = $this->helper()->bind(null, ['types' => ['money' => new MoneyType()]]);
+        $form = $this->helper()
+            ->form()
+            ->types(['money' => new MoneyType()])
+            ->bind();
         $html =
             $form->open()
-            . $form->control('price', [
-                'type' => 'money',
-                'value' => ['amount' => 0, 'currency' => 'EUR'],
-            ])
+            . $form->control('price')
+                ->type('money')
+                ->value(['amount' => 0, 'currency' => 'EUR'])
+                ->render()
             . $form->close();
         $xpath = $this->xpath($html);
         static::assertSame('0', $xpath->evaluate('string(//input[@name="price[amount]"]/@value)'));
@@ -189,8 +248,10 @@ class CompositeTypeTest extends FormTestCase
     public function testChildrenUseTheApplicationsResolverAndBoundFieldSubclass(): void
     {
         $helper = new ContactFormHelper($this->helper()->getView());
-        $form = $helper->bind(null, ['types' => ['range' => new DateRangeType()]]);
-        $field = $form->field('period', ['type' => 'range']);
+        $form = $helper->form()
+            ->types(['range' => new DateRangeType()])
+            ->bind();
+        $field = $form->field('period')->type('range')->resolve();
         static::assertInstanceOf(ContactField::class, $field->inputs['start']);
         $html = $form->open() . $field->control() . $form->close();
         static::assertSame(3, substr_count($html, 'data-contact-label'));

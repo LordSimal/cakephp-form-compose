@@ -5,6 +5,7 @@ namespace FormCompose\Test\Fixture;
 
 use FormCompose\Binding\FieldResolver;
 use FormCompose\Binding\ValueResolver;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Form\Field\FieldState;
 use FormCompose\Form\FormLifecycle;
@@ -17,11 +18,10 @@ class ContactFieldResolver extends FieldResolver
     /**
      * Infer URLs for website fields and retain schema inference for other fields.
      *
-     * @param array<string, mixed> $options Explicit field options.
      */
-    protected function inferType(string $path, array $options): string
+    protected function inferType(string $path, FieldConfig $config): string
     {
-        return $path === 'website' ? 'url' : parent::inferType($path, $options);
+        return $path === 'website' ? 'url' : parent::inferType($path, $config);
     }
 
     /**

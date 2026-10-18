@@ -3,10 +3,19 @@ declare(strict_types=1);
 
 namespace FormCompose\Blueprint;
 
-use FormCompose\Form\Field\BoundField;
-use FormCompose\Form\Field\ControlList;
+use FormCompose\Builder\ControlBatch;
+use FormCompose\Builder\ControlBuilder;
+use FormCompose\Builder\EmbedBuilder;
+use FormCompose\Builder\FieldBuilder;
+use FormCompose\Builder\FieldConfigBuilder;
+use FormCompose\Builder\OmittedControlBuilder;
+use FormCompose\Builder\PartBuilder;
+use FormCompose\Builder\PresentationBuilder;
+use FormCompose\Configuration\EmbedConfig;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
+use FormCompose\Form\Field\FieldSpec;
 use FormCompose\Form\FormSession;
-use FormCompose\Rendering\TemplateOptions;
 use InvalidArgumentException;
 
 /**
@@ -39,103 +48,87 @@ class BlueprintView
     /**
      * Resolve an available field for independently renderable parts.
      *
-     * @param array<string, mixed> $options Per-call field overrides.
      * @throws \InvalidArgumentException For removed or unknown fields; guard optional parts with has().
      */
-    public function field(string $field, array $options = []): BoundField
+    public function field(string $field, FieldConfig|FieldConfigBuilder|null $config = null): FieldBuilder
     {
         $configured = $this->definition->field($field);
 
-        return $this->session->field($this->qualify($field), array_replace($configured->options, $options));
+        return $this->session->field($this->qualify($field), $configured->config->merge(FieldConfig::capture($config)));
     }
 
-    /**
-     * Render a configured control, or omit a deliberately removed field.
-     *
-     * @param array<string, mixed> $options Per-call field overrides.
-     */
-    public function control(string $field, array $options = []): string
+    /** Configure a scoped control, preserving deliberately removed fields as empty output. */
+    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
     {
         if ($this->definition->index->wasRemoved($field)) {
-            return '';
+            return new OmittedControlBuilder($this->session, FieldConfig::capture($config));
         }
 
         $configured = $this->definition->field($field);
 
-        return $this->session->control($this->qualify($field), array_replace($configured->options, $options));
-    }
-
-    /**
-     * Render ordered relative controls inside this blueprint's layout transaction.
-     *
-     * Like control(), removed fields produce nothing and unknown fields fail.
-     * Calls this view's control() so subclasses retain their layout behavior.
-     *
-     * @param array<array-key, mixed> $fields Indexed paths or paths mapped to options.
-     * @throws \InvalidArgumentException For invalid entries or unknown fields.
-     */
-    public function controls(array $fields): string
-    {
-        $definitions = ControlList::normalize($fields);
-        $html = '';
-        foreach ($definitions as $definition) {
-            $html .= $this->control($definition->path, $definition->options);
-        }
-
-        return $html;
-    }
-
-    /**
-     * Render an already compiled embed with its own layout and parent adjustments.
-     *
-     * @param array<string, mixed> $options Local blueprint presentation overrides.
-     */
-    public function embedded(string $path, array $options = []): string
-    {
-        if ($this->definition->index->wasRemoved($path)) {
-            return '';
-        }
-
-        return $this->session->renderDefinition(
-            $this->definition->embedded($path),
-            at: $this->qualify($path),
-            options: array_replace(
-                TemplateOptions::normalize($this->definition->index->embedOptions[$path] ?? []),
-                TemplateOptions::normalize($options),
-            ),
+        return $this->session->control(
+            $this->qualify($field),
+            $configured->config->merge(FieldConfig::capture($config)),
         );
     }
 
-    /**
-     * Render the child layout independently of an occurrence wrapper template.
-     *
-     * @param array<string, mixed> $options Local blueprint presentation.
-     */
-    public function render(array $options = []): string
+    /** @param iterable<array-key, mixed> $fields Ordered relative field declarations. */
+    public function controls(iterable $fields): ControlBatch
+    {
+        return $this->session->controlBatch(
+            $fields,
+            fn(FieldSpec $field): string => $this->control($field->path, $field->config)->render(),
+        );
+    }
+
+    /** Render an already compiled child without rerunning its hook. */
+    public function embedded(string $path): PartBuilder
+    {
+        return new PartBuilder(function (PresentationConfig $presentation) use ($path): string {
+            if ($this->definition->index->wasRemoved($path)) {
+                return '';
+            }
+
+            $defaults = $this->definition->index->embedPresentation[$path] ?? new PresentationConfig();
+
+            return $this->session->renderDefinition(
+                $this->definition->embedded($path),
+                $this->qualify($path),
+                $defaults->merge($presentation),
+            );
+        });
+    }
+
+    /** Render this child's layout at its existing path without another form lifecycle. */
+    public function render(PresentationConfig|PresentationBuilder|null $presentation = null): string
     {
         return $this->session->renderDefinition(
             $this->definition,
-            at: $this->path === '' ? null : $this->path,
-            options: $options,
+            $this->path === '' ? null : $this->path,
+            PresentationConfig::capture($presentation),
         );
     }
 
-    /**
-     * Render compiled repeated rows without re-running their blueprint hooks.
-     *
-     * @param array<string, mixed> $options Occurrence presentation overrides.
-     */
-    public function embeddedMany(string $path, array $options = []): string
+    /** Configure an already compiled repeated occurrence without rerunning row hooks. */
+    public function embeddedMany(string $path): EmbedBuilder
     {
-        if ($this->definition->index->wasRemoved($path)) {
-            return '';
-        }
+        return new EmbedBuilder(function (EmbedConfig $config) use ($path): string {
+            if ($this->definition->index->wasRemoved($path)) {
+                return '';
+            }
 
-        $repeat =
-            $this->definition->index->repeats[$path] ?? throw new InvalidArgumentException('Unknown repeated embed: '
-                . $path);
+            $repeat =
+                $this->definition->index->repeats[$path] ?? throw new InvalidArgumentException('Unknown repeated embed: '
+                    . $path);
 
-        return $this->session->renderRepeated($this->qualify($path), $repeat, $options);
+            if ($config->keys !== null && $config->keys !== $repeat->keys) {
+                throw new InvalidArgumentException(
+                    'Select repeated row keys in the blueprint declaration before binding.',
+                );
+            }
+
+            return $this->session->renderRepeated($this->qualify($path), $repeat, $config);
+        });
     }
 
     /**

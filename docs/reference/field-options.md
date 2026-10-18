@@ -1,349 +1,223 @@
 ---
-title: Field options
-description: All built-in field options for control(), field(), and blueprint Field declarations.
+title: Field configuration
+description: Fluent setters, immutable FieldConfig snapshots, merge rules, and native control behavior.
 ---
 
-# Field options
+# Field configuration
 
-These options apply to `$form->control($field, $options)` and
-`$form->field($field, $options)`. They also apply to `BlueprintBuilder::add()` / `with()` and
-the `options` argument of a blueprint's `Field` attribute. Custom field types may
-define additional options.
+Field behavior uses typed methods. HTML attributes and application-owned data
+remain arrays because their keys are intentionally open-ended.
 
 ## Start with a control
 
 ```php
-// Inside an open form.
-echo $form->control('title', [
-    'type' => 'text',
-    'label' => 'Article title',
-    'help' => 'Displayed above the article.',
-    'required' => true,
-    'attributes' => [
-        'class' => 'title-input',
-        'placeholder' => 'Enter a title',
-    ],
-    'partAttributes' => ['container' => ['class' => 'article-field']],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->label('Email address')
+    ->help('Used for account notifications.')
+    ->required()
+    ->attributes(['autocomplete' => 'email'])
+    ->partAttributes('container', ['class' => 'account-field']);
 ```
 
-Field options configure behavior; `attributes` configures the input's HTML
-attributes. For example, use top-level `id`, but put `class`, `placeholder`,
-`data-*`, and `x-model` inside `attributes`. Arbitrary top-level keys are not
-forwarded to the input as HTML attributes.
+`control()` returns a mutable `ControlBuilder`. Echo or `render()` resolves and
+renders it. `field()` returns a `FieldBuilder`; call `resolve()` for an immutable
+`BoundField` whose parts can be arranged independently.
+
+### Reuse configuration
+
+```php
+use Configuration\FieldConfig;
+use FormComposeFieldConfig;
+
+$emailConfig = FieldConfig::builder(new FieldConfig(type: 'email', label: 'Email address'))
+    ->required()
+    ->attributes(['autocomplete' => 'email'])
+    ->config();
+
+echo $form->control('email', config: $emailConfig);
+echo $form->control('billing.email', config: $emailConfig)->label('Billing email');
+```
+
+The constructor names common settings (`type`, `label`, `help`); the builder
+exposes all settings. Start an empty builder with `FieldConfig::builder()`.
+`apply()` overlays a configuration or another builder. `config()` is optional:
+use it when you explicitly want to store an immutable snapshot.
+
+Every public authoring configuration argument accepts its matching builder directly and captures
+it immediately. Later edits to that builder cannot change an existing field
+specification, control, or form configuration. For example:
+
+```php
+use Configuration\FieldConfig;
+use Form\Field\FieldSpec;
+use FormComposeFieldConfig;
+use FormComposeFieldSpec;
+
+$currency = new FieldSpec(
+    'currency',
+    FieldConfig::builder()->label('Currency')->choices(['EUR' => 'Euro', 'USD' => 'US dollar']),
+);
+```
+
+Ordinary controls use direct chains: `$form->control('currency')->choices(...)`.
+Parts render when echoed: `<?= $field->input() ?>`. Explicit `render()` is useful
+when assigning HTML to a variable; it is unnecessary inside echo/short echo tags.
+Immutable config `with…()` methods return new configs rather than mutating them.
 
 ## Identity and type
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `type` | `string` | Inferred from conventions and context; overrides inference. Native HTML input types, `textarea`, `select`, `radio`, `multicheckbox`, or a registered custom type. |
-| `name` | `string` | Bracket notation derived from the path: `comments.0.body` becomes `comments[0][body]`. Overrides the submitted name, not the context lookup path. |
-| `id` | `string` | Binding ID plus the path; dots are retained and literal hyphens become `:2d`. Set a unique explicit ID for repeated presentations. |
+| Setter | Behavior |
+| --- | --- |
+| `type(string)` | Override inference: native input type, `textarea`, `select`, `radio`, `multicheckbox`, or custom alias. |
+| `name(string)` | Override the submitted bracket name, keeping the original context path. |
+| `id(string)` | Set a unique explicit input ID. |
 
-Paths must be nonempty dot-separated segments containing letters, digits,
-underscores, or hyphens. Names must use valid bracket notation. IDs must be
-nonempty and unique among rendered elements in the session, including choices,
-feedback, and configured container IDs. Type names must begin with a lowercase
-letter and contain only lowercase letters, digits, underscores, or hyphens.
-
-Generated field IDs distinguish `author.name` from `author-name` and reserve
-hyphens for feedback and choice suffixes. Read IDs from `$field->state->id`;
-use `document.getElementById()` or `CSS.escape()` with JavaScript selectors.
-Explicit IDs remain application-owned and must be unique.
+Paths are nonempty dot-separated letters, digits, underscores, or hyphens.
+`comments.0.body` submits `comments[0][body]`. Generated IDs include the binding ID;
+dots remain dots and literal hyphens are encoded as `:2d` to avoid collisions.
+Read IDs from `$field->state->id`; use `getElementById()` or `CSS.escape()` in JS.
+All rendered input, choice, container, and feedback IDs must be unique.
 
 ### Type inference
 
-An explicit `type` always wins. Otherwise, FormCompose applies these conventions
-before the schema `typeMap`, in order:
+An explicit type wins. Otherwise inference applies association selectors and
+primary keys, password terminal names, choices (including schema enums), exact
+email/telephone terminal names, then schema mappings. Password fields never
+prefill, even if choices or a value are supplied.
 
-1. Association selectors such as `tags._ids` become multiple selects; context
-   primary keys become hidden inputs; foreign-key paths ending in `_id` become selects.
-2. Paths ending in `password` or `passwd` infer password inputs, including nested
-   paths. Password inputs never prefill from request, context, defaults, or explicit
-   values. Configure `passwordFields` to replace the default terminal names; include
-   the defaults when adding application-specific names.
-3. A non-null `options` value or discovered choice list infers a select, except
-   where a password name takes precedence. Backed enums from CakePHP `enum-*`
-   schema types are discovered before view-variable choices.
-4. Terminal `email` infers `email`; `tel`, `telephone`, or `phone` infer `tel`,
-   including nested paths. Names are exact and case-sensitive, so `email_address`
-   and `cellphone` do not match.
-5. Other fields use the schema `typeMap`, falling back to `text` for unmapped types.
-
-Configure mappings once on the helper or override individual entries per binding:
-
-```php
-$this->Compose->setConfig('typeMap', [
-    'money' => 'currency',
-    'json' => 'textarea',
-]);
-$form = $this->Compose->bind($invoice, [
-    'types' => ['currency' => $currencyType],
-]);
-echo $form->open();
-echo $form->control('total'); // money schema uses the registered currency control.
-echo $form->close();
-```
-
-Explicit `['type' => 'number']` still overrides the mapping. A binding option such
-as `['typeMap' => ['money' => 'number']]` overrides the schema mapping for one form.
-Mapping overrides merge in this order: native defaults, helper configuration, binding options. They do not
-change schema types, constraints, values, or submitted names. Association,
-primary-key, password, choice, and email/telephone conventions take precedence
-over schema mappings. Map values must be valid native control names or registered
-aliases; malformed maps fail at binding time. Types may still be registered
-without a schema mapping and selected explicitly.
-
-Native non-choice controls do not consume choice iterators or reserve choice IDs,
-even when their configuration includes `options`. Explicit choice lists and
-non-choice `type` overrides remain authoritative.
-
-| Context type | Control type |
+| Schema type | Control |
 | --- | --- |
 | `boolean` | `checkbox` |
 | `text` | `textarea` |
-| `integer`, `tinyinteger`, `smallinteger`, `biginteger`, `decimal`, `float` | `number` |
+| Integer, decimal, float types | `number` |
 | `date`, `time` | `date`, `time` |
-| `datetime`, `timestamp`, `datetimefractional`, `timestampfractional`, `timestamptimezone` | `datetime-local` |
+| Datetime and timestamp types | `datetime-local` |
 | `binary` | `file` |
-| Other or unknown | `text` |
+| Other | `text` |
+
+Foreign keys ending in `_id` infer selects; `tags._ids` infers a multiple select.
+Terminal `email` infers email; `tel`, `telephone`, and `phone` infer tel. Names are
+case-sensitive. Override schema mappings with the form builder's `typeMap()` and
+register custom aliases with `types()`. Non-choice types do not consume choice
+iterators or reserve choice IDs.
 
 ## Values
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `value` | `mixed` | Absent: resolve from binding sources. When supplied, wins even when null, false, zero, or an empty string. |
-| `default` | `mixed` | `null`. Used when no configured source supplies a value; also passed to context lookup. |
-| `schemaDefault` | `bool` | `true`. Passed to the context to control schema defaults. |
-| `timezone` | `string`, `DateTimeZone`, or `null` | `null`. For temporal inputs, convert date/time objects or integer Unix timestamps to this timezone without changing the original object. Date-only and time-only objects reject timezone conversion. |
+| Setter | Behavior |
+| --- | --- |
+| `value(mixed)` | Explicit override, including null, false, zero, and empty string. |
+| `default(mixed)` | Fallback when no source supplies a value; also passed to context lookup. |
+| `schemaDefault(bool = true)` | Allow context schema defaults. |
+| `timezone(DateTimeZone\|string\|null)` | Convert temporal objects/timestamps for native rendering; null preserves object timezone. |
 
-Source order belongs to binding [`valueSources`](/form-reference#binding-options),
-not to individual fields. The default order is request data, then context.
+Default lookup is explicit value, submitted `data`, then `context`, then default.
+A submitted null counts as found; a context null falls through. Change source
+order on the form builder with `valueSources()`. File and password inputs never
+prefill. Enums become scalar backing values; native controls accept scalar or
+stringable values, choice arrays, and supported temporal objects.
 
-::: info A submitted null is still a submitted value
-A request key containing null counts as found and stops lookup. A context's null
-result falls through to the next source or the field's default. This preserves the
-difference between a missing request key and a key explicitly submitted as null.
-:::
-
-Backed enums become their scalar values. Native controls accept scalar or
-stringable values, with arrays of scalars or backed enum cases for multiple
-choices and date/time objects for native date/time formatting. Composite values
-need a custom field type.
-
-```php
-// Inside an open form; these are three independent fields.
-echo $form->control('title', ['default' => 'Untitled', 'schemaDefault' => false]);
-echo $form->control('summary', ['value' => '']);
-echo $form->control('reviewed_at', ['value' => null]);
-```
-
-`default` fills missing values; `value` deliberately overrides found values.
-Password and file inputs never prefill values. Date/time objects use native HTML
-formats; false becomes `'0'` when rendered as a native scalar.
-
-Native `date`, `month`, `week`, `time`, and `datetime-local` inputs format PHP
-date/time objects and CakePHP `Date` and `Time` objects without localized strings.
-Week values use the ISO week year. Date-only objects support date/month/week;
-time-only objects support time. Integer Unix timestamps use UTC unless `timezone`
-is configured. Strings, including submitted values, must already use the native
-input format and pass through unchanged: they represent local wall-clock values
-and are not parsed or converted again. Invalid strings are never replaced with
-the current date.
-
-Time and datetime inputs default to `step="1"` so nonzero seconds remain valid.
-Fractional datetime schema types default to `step="0.001"`. Positive non-integer
-steps, including intervals above one second such as `step="1.5"`, and `step="any"`
-format object values with milliseconds; precision beyond milliseconds
-cannot be represented by native browser inputs. Override `attributes['step']`
-to choose another interval or remove the attribute with null.
+Temporal strings pass through as local wall-clock values. Date/time objects use
+native HTML formats; integer Unix timestamps use UTC unless a timezone is set.
+Date-only and time-only objects reject timezone conversion. Time inputs default
+to `step="1"`; fractional schemas use `step="0.001"`. Fractional steps and `any`
+format milliseconds. Set or clear the step through `attributes(['step' => ...])`.
 
 ## Labels and feedback
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `label` | `string`, `Html`, `Translated`, `false`, `null`, or `Closure` | Humanized field path; association selectors use the related name. `false` suppresses the label or group legend. |
-| `help` | `string`, `Html`, `Translated`, `false`, `null`, or `Closure` | Omitted. Nonempty help renders and adds an ARIA description reference. `false` or an empty string suppresses it. |
-| `errors` | `bool` | `true`. Renders available context messages. `false` suppresses inline errors, summary entries, and generated error ARIA references. |
+| Setter | Behavior |
+| --- | --- |
+| `label(string\|Html\|Translated\|Closure\|false\|null)` | Null infers a humanized label; false suppresses it. Groups use a legend. |
+| `help(string\|Html\|Translated\|Closure\|false\|null)` | Nonempty text renders associated help; false/null omit it. |
+| `errors(bool = true)` | Enable inline feedback, summary entries, and generated error descriptions. |
 
-`Html` means `FormCompose\Rendering\Html`, the explicit
-[trusted-markup wrapper](/template-reference#trusted-markup). Ordinary strings
-are escaped. `errors` toggles presentation; it does not replace validation messages.
-For radios and multi-checkboxes, the label is a group legend.
-
-`FormCompose\Form\Field\Translated` stores a source message, formatting arguments, domain,
-and context, then translates through CakePHP when the field is resolved. Use it
-for translated text in attributes:
+Ordinary text is escaped; trusted HTML requires `FormCompose\Rendering\Html`.
+Call CakePHP translation functions in templates or blueprint hooks:
 
 ```php
-#[Field(
-    'title',
-    label: new Translated('Article title'),
-    help: new Translated('Displayed above the article.'),
-)]
+use I18n\__;
+use function Cake__;
+
+echo $form->control('email')->label(__('Email address'))->help(__('We keep this private.'));
 ```
 
-Import `FormCompose\Attribute\Field` and `FormCompose\Form\Field\Translated` for this example.
-Translated text is escaped normally. Plain strings are used as supplied.
-
-Label/help closures take no arguments and return `string`, `Html`, `Translated`,
-`false`, or `null`. They run once per resolved field after blueprint defaults
-and per-call options merge; a returned message is translated in that resolution. Returned strings are escaped; false suppresses the part; null uses
-the inferred label or omits help. Other return types throw
-`InvalidArgumentException`. Reading or rendering an already resolved field reuses
-its text. See [translating blueprints](/blueprints#translate-a-blueprint) for
-attribute syntax, locale timing, and runtime configuration examples.
-
-In a template, call translation functions directly:
-
-```php
-// Inside an open form; import Cake\I18n\__.
-echo $form->control('title', [
-    'label' => __('Article title'),
-    'help' => __('Displayed above the article.'),
-]);
-```
-
-Use deferred text when declaring translations in PHP attributes or when storing
-configuration whose text should be evaluated at field resolution.
+Deferred `Translated` values and zero-argument closures are available for reusable
+configs. They resolve once per field snapshot after overrides merge. Closures
+return string, Html, Translated, false, or null. See [translation timing](/blueprints#translate-a-blueprint).
 
 ## Constraints and state
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `required` | `bool` | Inferred from context validation metadata, otherwise `false`. Forced off for hidden or disabled fields. |
-| `disabled` | `bool` | Omitted. `true` disables the input, its choices, and fallback; disabled native controls register no submitted names. |
-| `readonly` | `bool` | Omitted. Sets the native attribute; browser support depends on the control type. |
-| `multiple` | `bool` | Omitted, except inferred `_ids` selectors. Multiple select/file names gain `[]`; multi-checkbox names always gain `[]`. |
+| Setter | Behavior |
+| --- | --- |
+| `required(?bool = true)` | Override or restore inferred required state. |
+| `disabled(bool = true)` | Disable inputs, choices, fallbacks, and native submission registration. |
+| `readonly(bool = true)` | Read-only where supported by native HTML. |
+| `multiple(?bool = true)` | Override or restore inferred multiple selection. |
 
-Context text-length limits supply `maxlength`. Numeric schema types supply `step`
-(`any` for decimals/floats, `1` for integers). Put additional browser constraints,
-such as `min`, `max`, `step`, `maxlength`, or `pattern`, in `attributes` to override
-or extend the prepared input attributes. Server-side validation remains in CakePHP. The context's required-validation
-text is available separately as `$field->state->requiredMessage`; templates can
-use it for optional enhancements without automatic inline JavaScript.
-
-For `multicheckbox`, `required` describes the group requirement in field state;
-it does not emit `required` on each checkbox, which would require every choice.
-Validate an “at least one” rule in CakePHP. Radio groups retain native `required`.
-
-```php
-echo $form->control('reading_minutes', [
-    'type' => 'number',
-    'required' => false,
-    'attributes' => ['min' => 1, 'max' => 120, 'step' => 1],
-]);
-```
+CakePHP validation supplies browser constraints where possible. Configure
+additional native constraints with input attributes. Required checkbox groups do
+not make every box required; validate collection cardinality in the application.
 
 ## Choices and fallbacks
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `options` | `iterable` or backed enum class name | Discovered CakePHP schema enum choices, then conventional view-variable choices, otherwise `[]`. Explicit `options` overrides discovery. Accepts value/label maps, backed enum cases, nested groups, and extended entries. See [enum choices](/choices#backed-enums) for labels and selection. |
-| `empty` | `bool`, `string`, or `null` | `null`/omitted: prepend a blank option for optional single selects. `true`: prepend a blank label; a string: use that label; `false`: do not prepend. Required and multiple selects have no automatic blank option. |
-| `checkedValue` | Scalar or stringable | `'1'`. Submitted value for a checked single checkbox. |
-| `uncheckedValue` | Scalar or stringable | `'0'`. Hidden fallback value for an unchecked single checkbox. |
-| `hiddenField` | `bool` | `true`. Enables fallback inputs for checkboxes, radios, multi-checkboxes, and multiple selects. |
+| Setter | Behavior |
+| --- | --- |
+| `choices(iterable\|string\|null)` | Map, typed choices/groups, enum cases, or backed enum class. Explicit null/[] opts out of discovery. |
+| `placeholder(bool\|string\|null)` | Select placeholder; false disables, true requests blank, null uses default behavior. |
+| `checkedValue(mixed)` | Single checkbox submitted value; default `'1'`. |
+| `uncheckedValue(mixed)` | Its hidden fallback value; default `'0'`. |
+| `fallback(bool = true)` | Enable hidden fallbacks for unchecked/empty choices. |
 
-Use `empty` to configure a select placeholder. Empty-string choice values remain
-supported for application data and backed enums. An explicit empty-value option,
-including one in an optgroup, keeps its label and prevents an additional
-placeholder. `empty => false` does not remove explicit choices. A placeholder and
-an empty-string choice both submit `''`.
-
-Radio and multiple-choice fallbacks submit an empty string when nothing is
-selected. Null and empty-string values select the automatic
-blank option; zero and false retain their own selection. The blank value is an
-empty string in the HTTP request; CakePHP's normal marshalling handles nullable
-associations. A select with no enabled options and no fallback registers no
-submitted name, matching the browser. Group and per-choice data shapes are
-demonstrated in [Choice controls](/choices).
-
-Checkbox selection compares the bound scalar value with `checkedValue`. To
-explicitly override its checked attribute, use `attributes => ['checked' => true]`
-or `false`. Radio and multi-checkbox selection follows the bound field value.
+Optional single selects get a blank placeholder unless a real empty-string
+choice exists. Other choice fallbacks submit an empty string under the base
+name. Multiple names gain `[]`. Disabled controls disable their fallbacks too.
+See [choices](/choices) for `ChoiceConfig`, `ChoiceGroupConfig`, and enums.
 
 ## Attributes
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `attributes` | `array<string, mixed>` | `[]`. Attributes for the input part. |
-| `partAttributes` | Map of part names to attribute arrays | `[]`. Configure `container`, `input`, `label`, `help`, or `errors`. |
+`attributes(array)` configures the input's HTML attributes; `partAttributes(string, array)`
+configures a named part such as `container`, `label`, `help`, or `errors`.
+Arbitrary `data-*`, Alpine, HTMX, and other integration attributes are supported.
+Native identity/state belongs in typed setters. A null attribute removes an
+inherited value; false omits a boolean attribute. Values are escaped.
 
-Input attributes are assembled from theme defaults, resolved metadata,
-`partAttributes['input']`, `attributes`, and local `$field->input([...])`
-attributes, in that order. Classes and ARIA ID references merge; ordinary
-attributes are overwritten. Null removes an attribute, false omits it, and true
-emits its name alone.
-
-```php
-echo $form->control('title', [
-    'id' => 'article-title',
-    'attributes' => ['class' => 'wide', 'data-controller' => 'title'],
-    'partAttributes' => [
-        'container' => ['class' => 'field'],
-        'label' => ['class' => 'caption'],
-        'help' => ['class' => 'hint'],
-        'errors' => ['class' => 'feedback'],
-    ],
-]);
-```
-
-Input attribute bags reject `name`, `id`, `type`, `value`, `escape`, `secure`,
-`options`, and `val`. Configure supported identity/behavior options at the field
-level. Use `value` for values and `Html` for trusted text markup. Preserve generated
-label, help, and error associations when customizing other parts.
-
-Configure feedback identities through `partAttributes`, for example
-`'help' => ['id' => 'email-hint']`. Generated `aria-describedby` references use
-these IDs. Setting an ID to null or false omits that reference. Passing `id` to
-`$field->help([...])` or `$field->errors([...])` is rejected so a later rendering
-call cannot invalidate the input's already resolved association.
+Attribute layers merge by key, combine classes, and deduplicate ARIA ID lists.
+`replaceAttributes()` and `replacePartAttributes()` explicitly discard inherited
+bags. Generated feedback identities are still managed for accessibility.
 
 ## Templates
 
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `template` | Nonempty `string` | Omitted. Explicit CakePHP element for the complete control. Shorthand for `templates['control']`. |
-| `templates` | `array<string, string>` | `[]`. Part-to-element overrides, such as `input`, `help`, or `native`. |
-| `variant` | `string` | Omitted. Requests alternative templates in `variants/{name}/` before type-specific and generic files within each layer. See [Use variants](/variants). |
-| `templateData` | `array<string, mixed>` | `[]`. Application data available to this field's control and all its parts. |
+All configuration and rendering builders share:
 
-Element names omit `.php`. Conflicting `template` and `templates['control']`
-values throw `InvalidArgumentException`. Hidden controls render their input part
-instead of an outer control layout. Follow [Use your own templates](/templates)
-for worked examples, or the [template reference](/template-reference)
-for all part names, variables, and lookup rules.
+| Setter | Behavior |
+| --- | --- |
+| `template(string)` | Select the primary element: control, field part, blueprint layout, or complete form layout. |
+| `partTemplate(string, string)` | Select an explicit element for one named part. |
+| `variant(?string)` | Select or clear a theme variant. |
+| `templateData(array)` | Merge application-owned variables, available in `$templateData`. |
+| `replaceTemplates(array)` | Replace the complete part-to-element map. |
+| `replaceTemplateData(array)` | Replace the entire template data bag. |
+
+A field's template data is inherited by its parts. Local part settings stay local.
+Templates use [lookup precedence](/template-reference#lookup-order). A config's
+`presentation` property is a typed `PresentationConfig`, keeping these settings
+separate from field behavior and bound state.
 
 ## Submission protection
 
-For custom controls, see [custom field submission protection](/custom-fields#submission-protection),
-including composite children, locked hidden values, and explicit unlocking.
-
-| Option | Type | Default and behavior |
-| --- | --- | --- |
-| `secure` | `bool` | `true`. Includes the native input in tamper protection; hidden values are also locked to their rendered value. `false` explicitly unlocks that submitted field. |
-
-Use the default for ordinary controls. A custom control describes its actual
-submitted names through its [field type](/extending#custom-field-types).
-Inspecting fields registers nothing; successful input rendering performs
-registration. Handwritten inputs must use [`register()`](/field-reference#register).
+`secure(bool = true)` controls CakePHP tamper protection for the field. Keep it
+enabled for normal inputs. Disabled controls submit nothing. Rendering registers
+the actual submitted names; inspecting a field registers nothing. Custom types
+must describe their real submission contract. See [custom fields](/custom-fields).
 
 ## Configuration precedence
 
-For each field, later configuration wins:
-
-1. Field defaults selected at `bind(..., blueprint: ...)`.
-2. Per-call options.
-
-Matching top-level option keys are replaced. Nested arrays such as `attributes`,
-`templates`, and `templateData` are replaced as whole values at this stage. This
-is separate from the subsequent attribute-bag merging described above.
-Blueprint declaration and hook precedence is documented in the
-[blueprint reference](/blueprint-reference#configuration-order).
-
-Malformed core `attributes`, `partAttributes`, `templates`, and choice `options`
-bags fail during field resolution with `InvalidArgumentException`. Attribute and
-part keys must be nonempty strings; template values must be nonempty element
-names. Unknown option keys and arbitrary integration attributes remain available
-to application controls and templates.
+Blueprint defaults are overlaid by an explicit per-call config and then fluent
+edits. A builder's `config()` captures its authored settings;
+`resolve()->state->config` exposes the final merged field settings. Only explicitly
+supplied settings override earlier values. Explicit null
+is preserved where accepted. Presentation maps merge by key, with class/ARIA
+combining; replacement setters preserve their intent across config snapshots.
+`extensionData(array)` is an explicit application/custom-type configuration bag
+read through `$field->state->config->extensionData`; it replaces its previous bag.
+Use `templateData()` for presentation variables instead.

@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace FormCompose\Test\Fixture\Composition;
 
 use FormCompose\Blueprint\BlueprintView;
+use FormCompose\Builder\ControlBuilder;
+use FormCompose\Builder\FieldConfigBuilder;
+use FormCompose\Configuration\FieldConfig;
 
 /**
  * Adds application layout behavior while keeping scoped field resolution intact.
@@ -11,12 +14,11 @@ use FormCompose\Blueprint\BlueprintView;
 class CustomBlueprintView extends BlueprintView
 {
     /**
-     * Annotate controls through ordinary field options.
+     * Annotate controls through typed field configuration.
      *
-     * @param array<string, mixed> $options Per-call overrides.
      */
-    public function control(string $field, array $options = []): string
+    public function control(string $field, FieldConfig|FieldConfigBuilder|null $config = null): ControlBuilder
     {
-        return parent::control($field, array_replace($options, ['label' => 'Application layout field']));
+        return parent::control($field, FieldConfig::capture($config)->withLabel('Application layout field'));
     }
 }

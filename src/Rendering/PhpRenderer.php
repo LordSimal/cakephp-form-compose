@@ -40,8 +40,7 @@ class PhpRenderer implements RendererInterface
     {
         $this->renderDepth++;
         try {
-            /** @var array<string, string> $templates */
-            $templates = $node->options['templates'] ?? [];
+            $templates = $node->presentation->templates;
             if (isset($templates[$part])) {
                 $element = $templates[$part];
                 $html = $this->element($element, $node, fn(): string => $this->renderParent($part, $node));

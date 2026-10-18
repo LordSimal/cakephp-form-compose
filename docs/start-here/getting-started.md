@@ -6,7 +6,7 @@ description: Install FormCompose and build an article editing form with values, 
 # Your first form
 
 This walkthrough assumes you already use CakePHP controllers, entities, and view
-templates. You will render an article editing form, add field options, and see
+templates. You will render an article editing form, configure fluent controls, and see
 how a control connects to an application-owned PHP element.
 
 For the motivation and a side-by-side markup example, read
@@ -69,7 +69,8 @@ $this->addHelper('Form', ['className' => 'FormCompose.Form']);
 ```php [Keep core FormHelper alongside it]
 $this->addHelper('Form');
 $this->addHelper('Compose', ['className' => 'FormCompose.Form']);
-// Use $this->Compose->bind(...) in templates.
+
+// Use $this->Compose->form(...)->bind() in templates.
 ```
 
 :::
@@ -84,7 +85,7 @@ controller or your existing application services.
 
 ```php [templates/Articles/edit.php]
 <?php
-$form = $this->Form->bind($article);
+$form = $this->Form->form($article)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
@@ -94,7 +95,7 @@ $form = $this->Form->bind($article);
 <?= $form->close() ?>
 ```
 
-1. `bind()` creates an isolated form session using the entity's CakePHP context.
+1. `form($article)->bind()` creates an isolated form session using the entity's CakePHP context.
 2. `open()` renders the opening tag and initial method/CSRF inputs.
 3. `control()` renders a complete field: label, input, help, and errors.
 4. `submit()` renders a button. `close()` adds final protection fields and closes
@@ -115,20 +116,19 @@ APIs; loading the helper does not enable them.
 Replace the title control with:
 
 ```php
-echo $form->control('title', [
-    'label' => 'Article title',
-    'help' => 'Choose a title readers can recognize.',
-    'attributes' => [
+echo $form->control('title')
+    ->label('Article title')
+    ->help('Choose a title readers can recognize.')
+    ->attributes([
         'class' => 'article-title',
         'placeholder' => 'For example: Our autumn release',
         'autocomplete' => 'off',
-    ],
-]);
+    ]);
 ```
 
 `label` and `help` configure field presentation. `attributes` supplies HTML
 attributes for the input. To style the wrapper or label, use `partAttributes`.
-[Field options](/field-options) lists the supported options, defaults, and
+[Field configuration](/field-options) lists the supported setters, defaults, and
 where each applies.
 
 ## Show validation feedback

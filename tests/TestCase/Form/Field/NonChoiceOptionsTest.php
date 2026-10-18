@@ -24,13 +24,14 @@ class NonChoiceOptionsTest extends FormTestCase
             yield 'a' => 'A';
         };
         $choices = $options();
-        $form = $this->helper()->bind(null, ['type' => 'file']);
-        $field = $form->field('sample', ['type' => $type, 'options' => $choices]);
+        $form = $this->helper()->form()->multipart()->bind();
+        $field = $form->field('sample')->type($type)->choices($choices)->resolve();
         $form->open();
-        $field->input();
+        $field->input()->render();
         static::assertFalse($consumption->started);
-        static::assertSame($choices, $field->state->options['options']);
-        $html = $form->control('actual', ['id' => $field->state->id . '-a']);
+        static::assertSame($choices, $field->state->config->choices);
+        $html = $form->control('actual')->id($field->state->id . '-a')
+            ->render();
         static::assertStringContainsString('id="' . $field->state->id . '-a"', $html);
         $form->close();
     }
@@ -61,13 +62,14 @@ class NonChoiceOptionsTest extends FormTestCase
         };
         $helper = $this->helper(attributes: ['formTokenData' => []]);
         $helper->getView()->set('passwords', $options());
-        $form = $helper->bind();
-        $field = $form->field('password');
+        $form = $helper->form()->bind();
+        $field = $form->field('password')->resolve();
         $html = $form->open() . '<input type="password"' . (string)$field->attributes() . '>';
         $field->register();
         static::assertSame('password', $field->state->type);
         static::assertFalse($consumption->started);
-        $html .= $form->control('actual', ['id' => $field->state->id . '-a']) . $form->close();
+        $html .= $form->control('actual')->id($field->state->id . '-a')
+            ->render() . $form->close();
         static::assertStringContainsString('_Token[fields]', $html);
     }
 
@@ -75,9 +77,11 @@ class NonChoiceOptionsTest extends FormTestCase
     {
         $helper = $this->helper();
         $helper->getView()->set('passwords', ['a' => 'A']);
-        $form = $helper->bind();
-        $html = $form->open() . $form->control('password');
-        $html .= $form->control('actual', ['id' => 'form-compose-1-password-a']) . $form->close();
+        $form = $helper->form()->bind();
+        $html = $form->open() . $form->control('password')->render();
+        $html .=
+            $form->control('actual')->id('form-compose-1-password-a')->render()
+            . $form->close();
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//*[@id="form-compose-1-password-a"])'));
     }
 }

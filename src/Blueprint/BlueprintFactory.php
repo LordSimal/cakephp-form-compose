@@ -43,9 +43,9 @@ class BlueprintFactory
     /**
      * Resolve a class or discovery alias into immutable configuration for one binding.
      *
-     * Parent declarations precede child declarations. Redeclaring a path replaces
-     * its options at the original position; duplicate paths on one class are rejected.
      * The concrete blueprint's hook runs once, using ordinary PHP method inheritance.
+     * Child compilation follows authoring; qualified parent edits overlay child defaults.
+     * Duplicate declarations are rejected; remove a path before replacing it.
      *
      * @throws \InvalidArgumentException For unknown aliases or invalid declarations.
      */

@@ -5,11 +5,13 @@ namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
+use TypeError;
 
 /**
  * Verifies explicit control layouts through inline options and reusable definitions.
@@ -18,20 +20,20 @@ class TemplateOverrideTest extends FormTestCase
 {
     public function testShorthandOverridesThemeLookupWhilePreservingPartTemplates(): void
     {
-        $form = $this->helper(['email' => 'posted@example.test'])->bind(
-            new ArrayContext(['errors' => ['email' => ['invalid' => '<Invalid address>']]]),
-            theme: new Theme(['themes/application']),
-        );
+        $form = $this->helper(['email' => 'posted@example.test'])
+            ->form(new ArrayContext(['errors' => ['email' => ['invalid' => '<Invalid address>']]]))
+            ->theme(new Theme(['themes/application']))
+            ->bind();
         $form->open();
 
-        $html = $form->control('email', [
-            'type' => 'email',
-            'variant' => 'compact',
-            'template' => 'themes/custom/control',
-            'templates' => ['input' => 'themes/custom/input'],
-            'help' => '<Work address>',
-            'attributes' => ['x-model' => 'email'],
-        ]);
+        $html = $form->control('email')
+            ->type('email')
+            ->variant('compact')
+            ->partTemplate('control', 'themes/custom/control')
+            ->partTemplate('input', 'themes/custom/input')
+            ->help('<Work address>')
+            ->attributes(['x-model' => 'email'])
+            ->render();
         $form->close();
 
         static::assertStringContainsString('data-control="custom"', $html);
@@ -52,13 +54,10 @@ class TemplateOverrideTest extends FormTestCase
 
     public function testPluralControlOverrideStillWorks(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('email', [
-            'type' => 'email',
-            'templates' => ['control' => 'themes/custom/control'],
-        ]);
+        $html = $form->control('email')->type('email')->partTemplate('control', 'themes/custom/control')->render();
         $form->close();
 
         static::assertStringContainsString('data-control="custom"', $html);
@@ -67,41 +66,50 @@ class TemplateOverrideTest extends FormTestCase
 
     public function testMatchingControlOverridesAreAcceptedAndNormalized(): void
     {
-        $form = $this->helper()->bind();
-        $field = $form->field('email', [
-            'template' => 'themes/custom/control',
-            'templates' => ['control' => 'themes/custom/control'],
-        ]);
-        static::assertSame(['templates' => ['control' => 'themes/custom/control']], $field->state->options);
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('email')
+            ->template('themes/custom/control')
+            ->partTemplate('control', 'themes/custom/control')
+            ->resolve();
+        static::assertSame(['control' => 'themes/custom/control'], $field->state->config->presentation->templates);
         $form->open();
         static::assertStringContainsString('data-control="custom"', $field->control());
         $form->close();
     }
 
-    public function testConflictingControlOverridesAreRejectedBeforeRendering(): void
+    public function testLaterControlSelectionsReplaceEarlierSelections(): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The template option conflicts with templates[control].');
-        $this->helper()
+        $field = $this->helper()
+            ->form()
             ->bind()
-            ->field('email', [
-                'template' => 'themes/custom/control',
-                'templates' => ['control' => 'themes/application/control'],
-            ]);
+            ->field('email')
+            ->template('themes/custom/control')
+            ->partTemplate('control', 'themes/application/control')
+            ->resolve();
+        static::assertSame(['control' => 'themes/application/control'], $field->state->config->presentation->templates);
     }
 
     public function testDefinitionsKeepTheirShorthandWhileBoundFieldsUseCanonicalOptions(): void
     {
         $contact = new FormDefinition([])->add(
-            new FieldDefinition('email', ['type' => 'email', 'template' => 'themes/custom/control']),
+            new FieldDefinition(
+                'email',
+                FieldConfig::builder()->type('email')->partTemplate('control', 'themes/custom/control')->config(),
+            ),
         );
-        $form = $this->helper()->bind();
-        $selected = $form->field($contact->field('email')->path, array_replace($contact->field('email')->options, [
-            'template' => 'themes/library/control',
-        ]));
-        static::assertSame(['control' => 'themes/library/control'], $selected->state->options['templates']);
-        static::assertArrayNotHasKey('template', $selected->state->options);
-        static::assertSame('themes/custom/control', $contact->field('email')->options['template']);
+        $form = $this->helper()->form()->bind();
+        $selected = $form->field($contact->field('email')->path)
+            ->apply(
+                $contact->field('email')->config->merge(
+                        FieldConfig::builder()->partTemplate('control', 'themes/library/control')->config(),
+                    ),
+            )
+            ->resolve();
+        static::assertSame(['control' => 'themes/library/control'], $selected->state->config->presentation->templates);
+        static::assertSame(
+            'themes/custom/control',
+            $contact->field('email')->config->presentation->templates['control'],
+        );
         $form->open();
         static::assertStringContainsString('data-control="custom"', $form->renderDefinition($contact));
         $form->close();
@@ -109,13 +117,13 @@ class TemplateOverrideTest extends FormTestCase
 
     public function testParentResumesThemeLookupWithoutApplyingShorthandToChildParts(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(['themes/application']));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(['themes/application']))
+            ->bind();
         $form->open();
 
-        $html = $form->control('email', [
-            'type' => 'email',
-            'template' => 'themes/library/control',
-        ]);
+        $html = $form->control('email')->type('email')->partTemplate('control', 'themes/library/control')->render();
         $form->close();
 
         static::assertSame(1, substr_count($html, 'data-layout="library"'));
@@ -142,8 +150,11 @@ class TemplateOverrideTest extends FormTestCase
     #[DataProvider('invalidTemplates')]
     public function testInvalidShorthandIsRejected(mixed $template): void
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('The template option must be a nonempty element name.');
-        $this->helper()->bind()->field('email', ['template' => $template]);
+        $this->expectException(is_string($template) ? InvalidArgumentException::class : TypeError::class);
+        if (is_string($template)) {
+            $this->expectExceptionMessage('Template parts and element names must be nonempty strings.');
+        }
+
+        $this->invokeBuilder(FieldConfig::builder(), 'partTemplate', 'control', $template);
     }
 }

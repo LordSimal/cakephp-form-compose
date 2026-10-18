@@ -31,9 +31,9 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 ::: code-group
 
 ```php [templates/Articles/edit.php]
-<?php $form = $this->Form->bind($article); ?>
+<?php $form = $this->Form->form($article)->bind(); ?>
 <?= $form->open() ?>
-<?= $form->control('title', ['template' => 'forms/article-title']) ?>
+<?= $form->control('title')->template('forms/article-title') ?>
 <?= $form->control('body') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
@@ -41,9 +41,13 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 
 ```php [templates/element/forms/article-title.php]
 <?php
+
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
 /**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
+ * @var BoundField $field
+ * @var Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes ?>>
@@ -56,8 +60,8 @@ in a PHP element. `control()` binds the data; the element arranges its parts.
 
 ```php [Arrange parts directly in the view]
 <?php
-$form = $this->Form->bind($article);
-$title = $form->field('title');
+$form = $this->Form->form($article)->bind();
+$title = $form->field('title')->resolve();
 ?>
 <?= $form->open() ?>
 <section class="article-title">
@@ -80,4 +84,4 @@ CakePHP continues to supply values, validation metadata, routing, and submission
 protection. No CSS framework or JavaScript runtime is required.
 
 [Why FormCompose?](/why) · [Your first form](/getting-started) ·
-[All control options](/field-options)
+[Field configuration](/field-options)

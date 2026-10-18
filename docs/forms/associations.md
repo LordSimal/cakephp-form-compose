@@ -33,7 +33,7 @@ $this->set(compact('article', 'authors', 'tags'));
 Then render the fields without repeating conventional choice configuration:
 
 ```php [templates/Articles/edit.php]
-<?php $form = $this->Form->bind($article); ?>
+<?php $form = $this->Form->form($article)->bind(); ?>
 
 <?= $form->open() ?>
 <?= $form->control('author_id') ?>
@@ -55,7 +55,7 @@ Selecting author 7 and tags 2 and 5 produces request data shaped like:
 [
     'author_id' => '7',
     'tags' => ['_ids' => ['2', '5']],
-]
+];
 ```
 
 Your normal `patchEntity()` call applies this data according to the application's
@@ -74,15 +74,12 @@ pluralization. Other inferred choice fields use the pluralized final property,
 following CakePHP's convention; for example `status` can use `$statuses`.
 
 View variables must be iterable. Discovery reads the current view when resolving
-each field, so lists set after `bind()` are available too. Explicit `options` wins,
+each field, so lists set after `bind()` are available too. Explicit `choices()` wins,
 including an empty array. Pass lists directly when using nonconventional foreign
 key names or when you want to avoid name-based discovery:
 
 ```php
-echo $form->control('tags._ids', [
-    'options' => $availableTags,
-    'label' => 'Choose topics',
-]);
+echo $form->control('tags._ids')->choices($availableTags)->label('Choose topics');
 ```
 
 Here `$availableTags` is an application-supplied iterable choice list. The explicit
@@ -90,13 +87,13 @@ list replaces discovery for this field. All ordinary [field options](/field-opti
 and [template overrides](/usage#choose-a-template-for-one-control) still apply.
 
 Explicit types are preserved. An inferred `._ids` control defaults to a multiple
-select; if you specify `type => 'select'` yourself, also specify `multiple => true`
-when needed. `multiple => false` overrides the inferred multiple-selection default.
+select; if you specify `type('select')` yourself, also specify `multiple()`
+when needed. `multiple(false)` overrides the inferred multiple-selection default.
 
 For a checkbox group, use the plugin's explicit field type:
 
 ```php
-echo $form->control('tags._ids', ['type' => 'multicheckbox']);
+echo $form->control('tags._ids')->type('multicheckbox');
 ```
 
 The group still discovers `$tags`, selects the loaded IDs, and uses “Tags” as its
@@ -164,7 +161,7 @@ ORM. Definitions, templates, and form sessions do not load or persist associatio
 
 ## Reuse associated field configuration
 
-For a blueprint declared with `#[Form('author')]`, use `#[Embed('author', 'author')]`
+For a blueprint declared with `#[Form('author')]`, use `$form->embed('author', 'author')` in the parent hook
 to compose it, or render it with `$form->blueprint('author', at: 'author')`.
 The child keeps its own PHP layout and relative field names. See
 [nested blueprints and layouts](/composition#compose-an-association).

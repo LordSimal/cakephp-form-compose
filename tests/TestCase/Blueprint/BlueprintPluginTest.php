@@ -167,10 +167,10 @@ class BlueprintPluginTest extends FormTestCase
             ]]);
             $helper = $view->helpers()->get('Form');
             static::assertInstanceOf(FormHelper::class, $helper);
-            $form = $helper->bind(blueprint: ConditionalForm::class);
+            $form = $helper->form()->blueprint(ConditionalForm::class)->bind();
             static::assertSame(
                 ['work' => 'Work <address>', 'home' => 'Home'],
-                $form->field('kind')->state->options['options'],
+                $form->field('kind')->resolve()->state->config->choices,
             );
         } finally {
             Plugin::setCollection($plugins);

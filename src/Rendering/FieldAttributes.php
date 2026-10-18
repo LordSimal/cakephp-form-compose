@@ -41,13 +41,11 @@ class FieldAttributes
             'errors' => ['id' => $state->id . '-errors'],
             default => [],
         };
-        /** @var array<string, array<string, mixed>> $parts */
-        $parts = $state->options['partAttributes'] ?? [];
+        $parts = $state->config->presentation->partAttributes;
         $configured = $parts[$part] ?? [];
         if ($part === 'input') {
-            /** @var array<string, mixed> $input */
-            $input = $state->options['attributes'] ?? [];
-            $configured = array_replace($configured, $input);
+            $input = $state->config->presentation->attributes;
+            $configured = new Attributes($configured)->merge($input)->values;
             $reserved = array_intersect(array_keys($configured + $extra), [
                 'name',
                 'id',

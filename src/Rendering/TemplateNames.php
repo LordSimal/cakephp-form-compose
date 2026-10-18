@@ -22,8 +22,7 @@ final class TemplateNames
      */
     public static function resolve(string $part, RenderNode $node): array
     {
-        /** @var mixed $variant */
-        $variant = $node->options['variant'] ?? null;
+        $variant = $node->presentation->variant ?? null;
         /** @var mixed $name */
         foreach ([$part, $node->scope, $node->type, $variant ?? 'default'] as $name) {
             if (!is_string($name) || !preg_match('/^[a-z][a-z0-9_-]*$/D', $name)) {
@@ -34,7 +33,7 @@ final class TemplateNames
         $prefix = $node->scope === 'field' ? '' : $node->scope . '/';
         $names = [$prefix . $node->type . '/' . $part, $prefix . $part];
         if ($variant !== null) {
-            array_unshift($names, $prefix . 'variants/' . (string)$variant . '/' . $part);
+            array_unshift($names, $prefix . 'variants/' . $variant . '/' . $part);
         }
 
         return $names;

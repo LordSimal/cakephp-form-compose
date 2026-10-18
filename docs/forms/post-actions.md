@@ -10,11 +10,10 @@ Each call creates its own form session, preserving CakePHP routing, CSRF, method
 overrides, and form protection without opening or closing another bound form.
 
 ```php
-<?= $this->Form->postButton(
-    'Delete',
-    ['action' => 'delete', $article->id],
-    ['method' => 'delete', 'class' => 'button-danger'],
-) ?>
+<?= $this->Form
+    ->postButton(label: 'Delete', url: ['action' => 'delete', $article->id])
+    ->method('delete')
+    ->attributes(['class' => 'button-danger']) ?>
 ```
 
 This renders a form containing a native submit button. It works without
@@ -31,11 +30,10 @@ See [theme configuration](/themes#select-theme).
 ## Render a link or request confirmation
 
 ```php
-<?= $this->Form->postLink(
-    'Delete',
-    ['action' => 'delete', $article->id],
-    ['method' => 'delete', 'confirm' => 'Delete this article?'],
-) ?>
+<?= $this->Form
+    ->postLink(label: 'Delete', url: ['action' => 'delete', $article->id])
+    ->method('delete')
+    ->confirm('Delete this article?') ?>
 ```
 
 `postLink()` renders an anchor associated with a hidden action form. It requires
@@ -125,10 +123,14 @@ The helper's generated `form-compose-N` counter belongs to one helper instance;
 it cannot coordinate IDs across separate HTTP responses:
 
 ```php
-<?= $this->Form->postLink('Delete', ['action' => 'delete', $article->id], [
-    'method' => 'delete',
-    'form' => ['id' => 'delete-article-' . $article->id],
-]) ?>
+<?php
+use FormCompose\Configuration\FormConfig;
+
+?>
+<?= $this->Form
+    ->postLink(label: 'Delete', url: ['action' => 'delete', $article->id])
+    ->method('delete')
+    ->form(FormConfig::builder()->id('delete-article-' . $article->id)) ?>
 ```
 
 If the same record appears more than once, include a unique occurrence identifier
@@ -192,9 +194,9 @@ action is canceled.
 ## Pass protected data
 
 ```php
-<?= $this->Form->postButton('Archive', ['action' => 'archive', $article->id], [
-    'data' => ['version' => $article->version, 'audit' => ['source' => 'index']],
-]) ?>
+<?= $this->Form
+    ->postButton(label: 'Archive', url: ['action' => 'archive', $article->id])
+    ->data(['version' => $article->version, 'audit' => ['source' => 'index']]) ?>
 ```
 
 `data` accepts nested arrays with scalar, null, or stringable leaves. Each leaf
@@ -217,21 +219,21 @@ optional button registration cannot unlock the hidden payload.
 Use `block` to put the independent action form outside the surrounding form:
 
 ```php
-<?php $form = $this->Form->bind($article); ?>
+<?php $form = $this->Form->form($article)->bind(); ?>
 <?= $form->open() ?>
 <?= $form->control('title') ?>
-<?= $this->Form->postButton('Delete', ['action' => 'delete', $article->id], [
-    'method' => 'delete',
-    'block' => 'postActions',
-]) ?>
+<?= $this->Form
+    ->postButton(label: 'Delete', url: ['action' => 'delete', $article->id])
+    ->method('delete')
+    ->block('postActions') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 
 <?= $this->fetch('postActions') ?>
 ```
 
-Both methods accept `block`: true selects `postActions`, and a nonempty string
-selects a named CakePHP view block. Render that block after the surrounding form
+`block('postActions')` selects that CakePHP view block. Any nonempty name
+selects another block; null restores inline output. Render that block after the surrounding form
 or in the layout outside all forms. The visible button uses the native `form`
 attribute to submit its independent form, including when JavaScript is disabled.
 A post link uses its associated form ID. Neither submits the surrounding form's
@@ -240,33 +242,19 @@ form at the call site, so call it outside other forms.
 
 ## Options and presentation
 
-```php
-public function postButton(
-    string|Html $label,
-    array|string $url,
-    array $options = [],
-    Theme|string|null $theme = null,
-    ?RendererInterface $renderer = null,
-): string;
+Both methods return `ActionBuilder`. Optional `config: $actionConfig` accepts an
+immutable `ActionConfig` or an inline `ActionConfig::builder()` chain. The helper
+captures builders immediately; `config()` is only needed for an explicit snapshot.
 
-public function postLink(
-    string|Html $label,
-    array|string|null $url = null,
-    array $options = [],
-    Theme|string|null $theme = null,
-    ?RendererInterface $renderer = null,
-): string;
-```
-
-| Option | Behavior |
+| Setter | Behavior |
 | --- | --- |
-| `method` | POST by default. Accepts POST, PUT, PATCH, or DELETE, case-insensitively. Overrides `form.method`. |
-| `data` | Explicit locked hidden data; defaults to an empty array. |
-| `form` | Opening options and HTML attributes for the independent form, including an explicit unique `id` or form `templates`. The URL argument determines its target; form `type` cannot change its method. |
-| `block` | Inline by default. True selects `postActions`; a string selects another view block. |
-| `confirm` | Confirmation message. Null, false, or an empty string disables confirmation. |
-| `template`, `templates`, `variant`, `templateData` | Customize the trigger through the normal PHP template pipeline. |
-| Other options | HTML attributes on the visible button or link. A link's `target` applies to its associated form. |
+| `method(string)` | POST, PUT, PATCH, or DELETE; overrides the nested form method. |
+| `data(array)` | Nested locked hidden payload. |
+| `form(FormConfig)` | Typed configuration of the independent form. Its URL is controlled by the action URL argument. |
+| `block(?string)` | Inline for null; a nonempty CakePHP view block name otherwise. |
+| `confirm(?string)` | Confirmation text; null or empty string disables it. |
+| `attributes(array)` | Attributes on the visible button/link, including optional button name/value. |
+| `template()`, `partTemplate()`, `variant()`, `templateData()` | Shared trigger presentation. |
 
 Omitting the URL for `postLink()` uses the current request target. Managed
 attributes such as `href`, `formaction`, and `formmethod` cannot redirect the
@@ -278,13 +266,13 @@ Both reuse the existing `form` and hidden-field templates. The script tag is
 registered through CakePHP's HTML helper, independently of action themes and
 renderers; use `autoActionScript` to control its loading.
 
-Pass a `Theme` or custom renderer using the same named arguments as `bind()`:
+Pass a `Theme` or custom renderer with the helper's named `theme` and `renderer` arguments:
 
 ```php
-<?= $this->Form->postButton('Delete', ['action' => 'delete', $article->id], [
-    'method' => 'delete',
-    'template' => 'forms/delete-button',
-], theme: $theme) ?>
+<?= $this->Form
+    ->postButton(label: 'Delete', url: ['action' => 'delete', $article->id], theme: $theme)
+    ->method('delete')
+    ->template('forms/delete-button') ?>
 ```
 
 Custom button elements preserve `$attributes`, including `type` and `form`.

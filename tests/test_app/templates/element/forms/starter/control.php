@@ -10,13 +10,13 @@ $tag = $field->state->grouped() ? 'fieldset' : 'div';
 <<?= $tag ?><?= (string)$attributes->merge(['class' => 'form-field']) ?>>
     <?php if ($field->state->type === 'checkbox'): ?>
         <div class="checkbox-row">
-            <?= $field->input() ?>
-            <?= $field->label() ?>
+            <?= (string) $field->input() ?>
+            <?= (string) $field->label() ?>
         </div>
     <?php else: ?>
-        <?= $field->label() ?>
-        <?= $field->input() ?>
+        <?= (string) $field->label() ?>
+        <?= (string) $field->input() ?>
     <?php endif; ?>
-    <?= $field->help() ?>
-    <?= $field->errors() ?>
+    <?= (string) $field->help() ?>
+    <?= (string) $field->errors() ?>
 </<?= $tag ?>>

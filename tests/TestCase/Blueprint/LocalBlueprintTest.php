@@ -38,15 +38,15 @@ class LocalBlueprintTest extends BlueprintTestCase
         $helper = $this->helper(['email' => 'posted@example.test']);
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
-        $form = $helper->bind();
-        $html = $form->open() . $form->blueprint($definition) . $form->close();
+        $form = $helper->form()->bind();
+        $html = $form->open() . $form->blueprint(blueprint: $definition)->render() . $form->close();
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('value="posted@example.test"', $html);
         static::assertStringContainsString('Full &lt;name&gt;', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);
         static::assertNull($form->binding->definition);
-        static::assertSame('email', $form->field('email')->state->type);
-        static::assertSame([], $form->field('email')->state->options);
+        static::assertSame('email', $form->field('email')->resolve()->state->type);
+        static::assertNull($form->field('email')->resolve()->state->config->type);
     }
 
     public function testMultipleDefinitionsShareOneSessionAndPreserveCallSiteOrder(): void
@@ -54,13 +54,17 @@ class LocalBlueprintTest extends BlueprintTestCase
         $helper = $this->helper();
         $helper->setConfig('blueprintFactory', new BlueprintFactory(collection: 'testBlueprints'));
 
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'data' => ['billing' => ['street' => 'Main Street', 'city' => 'Brussels']],
-        ]));
+        ]))
+            ->bind();
         $html = $form->open();
-        $html .= $form->blueprint('profile');
-        $html .= '<section class="billing">' . $form->blueprint(BillingAddressForm::class) . '</section>';
-        $html .= $form->control('notes') . $form->submit('Save') . $form->close();
+        $html .= $form->blueprint(blueprint: 'profile')->render();
+        $html .=
+            '<section class="billing">'
+            . $form->blueprint(blueprint: BillingAddressForm::class)->render()
+            . '</section>';
+        $html .= $form->control('notes')->render() . $form->submit('Save')->render() . $form->close();
         static::assertSame(1, substr_count($html, '<form '));
         static::assertSame(1, substr_count($html, '</form>'));
         static::assertStringContainsString('value="Main Street"', $html);
@@ -73,16 +77,16 @@ class LocalBlueprintTest extends BlueprintTestCase
 
     public function testLocalBlueprintsOverrideAndPreserveSelectedDefaults(): void
     {
-        $form = $this->helper()->bind(blueprint: SessionEmailForm::class);
+        $form = $this->helper()->form()->blueprint(SessionEmailForm::class)->bind();
         $defaults = $form->binding->definition;
-        $html = $form->open() . $form->blueprint(ProfileForm::class);
+        $html = $form->open() . $form->blueprint(blueprint: ProfileForm::class)->render();
         static::assertStringContainsString('type="email"', $html);
         static::assertStringContainsString('Use &lt;work&gt; email.', $html);
         static::assertStringNotContainsString('Session email', $html);
         static::assertStringNotContainsString('name="unrendered"', $html);
         static::assertSame($defaults, $form->binding->definition);
-        static::assertSame('Session email', $form->field('email')->state->options['label']);
-        static::assertSame('text', $form->field('email')->state->type);
+        static::assertSame('Session email', $form->field('email')->resolve()->state->config->label);
+        static::assertSame('text', $form->field('email')->resolve()->state->type);
         $form->close();
     }
 
@@ -91,8 +95,8 @@ class LocalBlueprintTest extends BlueprintTestCase
         $helper = new ContactFormHelper($this->helper(attributes: ['canManageAccounts' => true])->getView());
         $helper->setConfig('blueprintFactory', new BlueprintFactory(new Container(), 'testBlueprints'));
 
-        $form = $helper->bind(new ArrayContext(['data' => ['label' => 'Runtime label']]));
-        $html = $form->open() . $form->blueprint('conditional') . $form->close();
+        $form = $helper->form(new ArrayContext(['data' => ['label' => 'Runtime label']]))->bind();
+        $html = $form->open() . $form->blueprint(blueprint: 'conditional')->render() . $form->close();
         static::assertStringContainsString('Runtime label', $html);
         static::assertStringContainsString('Work &lt;address&gt;', $html);
         static::assertStringContainsString('name="active"', $html);
@@ -104,8 +108,8 @@ class LocalBlueprintTest extends BlueprintTestCase
     public function testHelperFactoryOverridesAreRetainedForLocalCompilation(): void
     {
         $helper = new BlueprintFormHelper($this->helper()->getView());
-        $form = $helper->bind();
-        $html = $form->open() . $form->blueprint(ProfileForm::class) . $form->close();
+        $form = $helper->form()->bind();
+        $html = $form->open() . $form->blueprint(blueprint: ProfileForm::class)->render() . $form->close();
         static::assertStringContainsString('Custom builder', $html);
         static::assertStringContainsString('name="custom"', $html);
         static::assertNull($form->binding->definition);
@@ -113,42 +117,42 @@ class LocalBlueprintTest extends BlueprintTestCase
 
     public function testLocalCompilationRequiresAnOpenSessionBeforeCallingHooks(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $this->expectException(LogicException::class);
-        $form->blueprint(FailingForm::class);
+        $form->blueprint(blueprint: FailingForm::class)->render();
     }
 
     public function testLocalCompilationCannotRunAfterClosing(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         $form->close();
         $this->expectException(LogicException::class);
-        $form->blueprint(FailingForm::class);
+        $form->blueprint(blueprint: FailingForm::class)->render();
     }
 
     public function testUnknownLocalAliasesDoNotInstallDefaults(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         try {
-            $form->blueprint('missing');
+            $form->blueprint(blueprint: 'missing')->render();
             static::fail('Expected unknown local blueprint to fail.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('Unknown form blueprint', $invalidArgumentException->getMessage());
         }
 
         static::assertNull($form->binding->definition);
-        static::assertStringContainsString('name="ordinary"', $form->control('ordinary'));
+        static::assertStringContainsString('name="ordinary"', $form->control('ordinary')->render());
         $form->close();
     }
 
     public function testOverlappingDefinitionsRetainDuplicateInputProtection(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
-        $form->blueprint(ProfileForm::class);
+        $form->blueprint(blueprint: ProfileForm::class)->render();
         $this->expectException(LogicException::class);
-        $form->blueprint(ProfileForm::class);
+        $form->blueprint(blueprint: ProfileForm::class)->render();
     }
 }

@@ -5,6 +5,7 @@ namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
 use FormCompose\Blueprint\FormDefinition;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use FormCompose\Rendering\Html;
 use FormCompose\Rendering\PhpRenderer;
@@ -20,14 +21,19 @@ class TemplateDataTest extends FormTestCase
 {
     public function testExplicitAndParentThemeTemplatesReceiveDataAndEscapeAtOutput(): void
     {
-        $form = $this->helper()->bind(theme: new Theme(['themes/data']));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(['themes/data']))
+            ->bind();
         $form->open();
 
-        $html = $form->control('email', [
-            'template' => 'themes/data/control',
-            'templateData' => ['marker' => 'contact', 'content' => '<script>alert(1)</script>'],
-        ]);
-        $trusted = $form->control('name', ['templateData' => ['content' => new Html('<strong>Trusted</strong>')]]);
+        $html = $form->control('email')
+            ->partTemplate('control', 'themes/data/control')
+            ->templateData(['marker' => 'contact', 'content' => '<script>alert(1)</script>'])
+            ->render();
+        $trusted = $form->control('name')
+            ->templateData(['content' => new Html('<strong>Trusted</strong>')])
+            ->render();
         $form->close();
 
         static::assertSame(2, substr_count($html, 'data-template-marker="contact"'));
@@ -41,9 +47,11 @@ class TemplateDataTest extends FormTestCase
     {
         $helper = $this->helper();
         $renderer = new RecordingRenderer(new PhpRenderer($helper->getView()));
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'errors' => ['status' => ['invalid' => 'Invalid']],
-        ]), renderer: $renderer);
+        ]))
+            ->renderer($renderer)
+            ->bind();
         $account = new stdClass();
         $data = ['marker' => 'shared', 'account' => $account, 'off' => false, 'zero' => 0, 'nil' => null];
         $parts = [
@@ -60,19 +68,19 @@ class TemplateDataTest extends FormTestCase
         ];
         $templates = array_fill_keys($parts, 'themes/data/part');
         $form->open();
-        $html = $form->control('status', [
-            'type' => 'radio',
-            'options' => ['Group' => ['a' => 'A']],
-            'help' => 'Help',
-            'templates' => $templates,
-            'templateData' => $data,
-        ]);
-        $html .= $form->control('category', [
-            'options' => ['Group' => ['a' => 'A']],
-            'multiple' => true,
-            'templates' => $templates,
-            'templateData' => $data,
-        ]);
+        $html = $form->control('status')
+            ->type('radio')
+            ->choices(['Group' => ['a' => 'A']])
+            ->help('Help')
+            ->templateData($data)
+            ->replaceTemplates($templates)
+            ->render();
+        $html .= $form->control('category')
+            ->choices(['Group' => ['a' => 'A']])
+            ->multiple(true)
+            ->templateData($data)
+            ->replaceTemplates($templates)
+            ->render();
         $form->close();
 
         $rendered = [];
@@ -96,12 +104,20 @@ class TemplateDataTest extends FormTestCase
 
     public function testDefinitionsAndInlineOverridesReplaceTheBagWithoutMutatingSharedData(): void
     {
-        $contact = new FormDefinition([])->add(new FieldDefinition('email', [
-            'template' => 'themes/data/control',
-            'templateData' => ['marker' => 'original', 'content' => 'Original'],
-        ]));
-        $customized = $contact->with('email', ['templateData' => ['marker' => 'customized']]);
-        $form = $this->helper()->bind();
+        $contact = new FormDefinition([])->add(
+            new FieldDefinition(
+                'email',
+                FieldConfig::builder()
+                    ->partTemplate('control', 'themes/data/control')
+                    ->templateData(['marker' => 'original', 'content' => 'Original'])
+                    ->config(),
+            ),
+        );
+        $customized = $contact->with(
+            'email',
+            FieldConfig::builder()->replaceTemplateData(['marker' => 'customized'])->config(),
+        );
+        $form = $this->helper()->form()->bind();
         $form->open();
 
         $html = $form->renderDefinition($customized);
@@ -110,35 +126,32 @@ class TemplateDataTest extends FormTestCase
         static::assertStringNotContainsString('Original', $html);
         static::assertSame(
             ['marker' => 'original', 'content' => 'Original'],
-            $contact->field('email')->options['templateData'],
+            $contact->field('email')->config->presentation->templateData,
         );
-        $inline = $form->field($contact->field('email')->path, array_replace(
-            $contact->field('email')->options,
-            ['templateData' => []],
-        ));
-        static::assertSame([], $inline->state->options['templateData']);
+        $inline = $form->field($contact->field('email')->path)
+            ->apply($contact->field('email')->config->merge(FieldConfig::builder()->replaceTemplateData([])->config()))
+            ->resolve();
+        static::assertSame([], $inline->state->config->presentation->templateData);
     }
 
     public function testFormDataIsLocalToFormPartsAndButtonDataIsIndependent(): void
     {
         $helper = $this->helper(attributes: ['csrfToken' => bin2hex(random_bytes(16)), 'formTokenData' => []]);
         $renderer = new RecordingRenderer(new PhpRenderer($helper->getView()));
-        $form = $helper->bind(
-            null,
-            [
-                'method' => 'patch',
-                'templateData' => ['marker' => 'binding', 'extra' => 'replaced'],
-                'templates' => array_fill_keys(['open', 'close', 'hidden'], 'themes/data/part'),
-            ],
-            renderer: $renderer,
-        );
-        $html = $form->open(['templateData' => ['marker' => 'form']]);
-        $html .= $form->control('email');
-        $html .= $form->submit('Save', [
-            'templates' => ['control' => 'themes/data/part'],
-            'templateData' => ['marker' => 'button'],
-        ]);
-        $html .= $form->submit('Cancel');
+        $form = $helper->form()
+            ->method('patch')
+            ->templateData(['marker' => 'binding', 'extra' => 'replaced'])
+            ->replaceTemplates(array_fill_keys(['open', 'close', 'hidden'], 'themes/data/part'))
+            ->renderer($renderer)
+            ->replaceTemplateData(['marker' => 'form'])
+            ->bind();
+        $html = $form->open();
+        $html .= $form->control('email')->render();
+        $html .= $form->submit('Save')
+            ->partTemplate('control', 'themes/data/part')
+            ->templateData(['marker' => 'button'])
+            ->render();
+        $html .= $form->submit('Cancel')->render();
         $html .= $form->close();
         $buttonData = [];
         $formParts = [];
@@ -169,17 +182,18 @@ class TemplateDataTest extends FormTestCase
     public function testBindingDataAndEmptyOpeningOverridesFollowNormalPrecedence(): void
     {
         $helper = $this->helper();
-        $first = $helper->bind(null, [
-            'templateData' => ['marker' => 'bound'],
-            'templates' => ['open' => 'themes/data/part'],
-        ]);
+        $first = $helper->form()
+            ->templateData(['marker' => 'bound'])
+            ->partTemplate('open', 'themes/data/part')
+            ->bind();
         static::assertStringContainsString('template-data: bound', $first->open());
         $first->close();
-        $second = $helper->bind(null, [
-            'templateData' => ['marker' => 'bound'],
-            'templates' => ['open' => 'themes/data/part'],
-        ]);
-        static::assertStringContainsString('template-data: empty', $second->open(['templateData' => []]));
+        $second = $helper->form()
+            ->templateData(['marker' => 'bound'])
+            ->partTemplate('open', 'themes/data/part')
+            ->replaceTemplateData([])
+            ->bind();
+        static::assertStringContainsString('template-data: empty', $second->open());
         $second->close();
     }
 }

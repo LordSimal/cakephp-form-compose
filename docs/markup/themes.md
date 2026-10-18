@@ -27,8 +27,10 @@ declare(strict_types=1);
 
 namespace App\View;
 
-use Cake\View\View;
-use FormCompose\Rendering\Theme;
+use CakeView;
+use FormComposeTheme;
+use Rendering\Theme;
+use View\View;
 
 class AppView extends View
 {
@@ -46,9 +48,9 @@ class AppView extends View
 Forms inherit that theme without repeating it at each binding:
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->bind($user); ?>
+<?php $form = $this->Form->form($user)->bind(); ?>
 <?= $form->open() ?>
-<?= $form->control('email', ['type' => 'email']) ?>
+<?= $form->control('email')->type('email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -67,9 +69,12 @@ Create this file in the selected layer:
 <?php
 declare(strict_types=1);
 
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
 /**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
+ * @var BoundField $field
+ * @var Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes->merge(['class' => 'contact-field']) ?>>
@@ -93,8 +98,7 @@ continue to use the base control element, and all parts without overrides still
 use their base elements.
 
 ::: tip Change just one control
-For an individual field, pass `['template' => 'forms/special-email']` to
-`control()`. This directly selects `templates/element/forms/special-email.php`
+For an individual field, use `control('email')->template('forms/special-email')`. This directly selects `templates/element/forms/special-email.php`
 without changing the theme. [Use your own templates](/templates)
 shows a complete example and how to replace individual parts.
 :::
@@ -102,8 +106,8 @@ shows a complete example and how to replace individual parts.
 ## 3. Add default classes
 
 Put shared class and attribute defaults in the theme. Replace the `Theme` passed
-to the helper's `theme` setting with this instance, or pass it as `theme: $theme`
-when binding a form:
+to the helper's `theme` setting with this instance, or select it with `form($data)->theme($theme)`
+before binding:
 
 ```php
 $theme = new Theme(
@@ -121,10 +125,7 @@ and local attributes then merge on top. Add a class or an integration attribute
 for one field like this:
 
 ```php
-echo $form->control('email', [
-    'type' => 'email',
-    'attributes' => ['class' => 'wide', 'x-model' => 'email'],
-]);
+echo $form->control('email')->type('email')->attributes(['class' => 'wide', 'x-model' => 'email']);
 ```
 
 Its input receives the classes `email-input wide` and the `x-model` attribute.
@@ -140,7 +141,9 @@ this button element adds decorative markup before its label:
 <?php
 declare(strict_types=1);
 
-use FormCompose\Rendering\Html;
+use FormComposeHtml;
+use Rendering\Html;
+
 ?>
 <button<?= (string)$attributes ?>>
     <span aria-hidden="true">→</span>
@@ -161,18 +164,23 @@ only make sense for one control type, such as the email icon above.
 
 ## Select a theme for one form
 
-The configured theme also applies to helper `render()`, `postButton()`, and
-`postLink()`. Use `theme:` for a per-call override:
+Forms and standalone actions inherit the helper's configured theme. Select a
+`Theme` instance on a form builder for a local override:
 
 ```php
-use FormCompose\Rendering\Theme;
+use FormComposeTheme;
+use Rendering\Theme;
 
-$form = $this->Form->bind($user, theme: new Theme(['forms/compact']));
+$form = $this->Form
+    ->form($user)
+    ->theme(new Theme(['forms/compact']))
+    ->bind();
 // Or use the bundled markup for this binding:
-$form = $this->Form->bind($user, theme: 'Base');
+$form = $this->Form->form($user)->theme(Theme::base())->bind();
 ```
 
-Omitting `theme:` or passing null inherits the helper setting. An explicit theme
+Omitting `theme()` or passing null inherits the helper setting.
+Standalone actions also support the named helper argument `theme: $theme`. An explicit theme
 replaces the configured theme, including its layers and attribute defaults.
 Compose multiple layers inside one `Theme` when you want them combined.
 
@@ -234,7 +242,7 @@ wrap the themed presentation.
 
 ## Offer a named alternative
 
-Use `variant => 'compact'` when a caller should choose an alternative layout
+Use `variant('compact')` when a caller should choose an alternative layout
 inside this theme. Create `variants/compact/control.php` in a layer; fields
 requesting that variant try it before that layer's type-specific and generic
 files. Other fields keep their ordinary layout.
@@ -274,9 +282,12 @@ Start with a generic control element:
 <?php
 declare(strict_types=1);
 
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
 /**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
+ * @var BoundField $field
+ * @var Attributes $attributes
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>
@@ -304,33 +315,33 @@ Use the theme in an existing article view:
 
 ```php [templates/Articles/edit.php]
 <?php
-use FormCompose\Rendering\Theme;
 
-$form = $this->Form->bind($article, theme: new Theme(
-    layers: ['forms/starter'],
-    defaults: [
-        'input' => ['class' => 'field-input'],
-        'choice' => ['class' => 'choice-input'],
-        'label' => ['class' => 'field-label'],
-        'help' => ['class' => 'field-help'],
-        'errors' => ['class' => 'field-errors'],
-    ],
-));
+use FormComposeTheme;
+use Rendering\Theme;
+
+$form = $this->Form
+    ->form($article)
+    ->theme(new Theme(
+        layers: ['forms/starter'],
+        defaults: [
+            'input' => ['class' => 'field-input'],
+            'choice' => ['class' => 'choice-input'],
+            'label' => ['class' => 'field-label'],
+            'help' => ['class' => 'field-help'],
+            'errors' => ['class' => 'field-errors'],
+        ],
+    ))
+    ->multipart()
+    ->bind();
 ?>
-<?= $form->open(['type' => 'file']) ?>
-<?= $form->control('title', ['help' => 'Shown in the article list.']) ?>
-<?= $form->control('body', ['type' => 'textarea']) ?>
-<?= $form->control('author_id', ['options' => $authors, 'empty' => 'No author']) ?>
-<?= $form->control('published', ['type' => 'checkbox']) ?>
-<?= $form->control('visibility', [
-    'type' => 'radio',
-    'options' => ['public' => 'Public', 'private' => 'Private'],
-]) ?>
-<?= $form->control('topics', [
-    'type' => 'multicheckbox',
-    'options' => ['php' => 'PHP', 'cakephp' => 'CakePHP'],
-]) ?>
-<?= $form->control('attachment', ['type' => 'file']) ?>
+<?= $form->open() ?>
+<?= $form->control('title')->help('Shown in the article list.') ?>
+<?= $form->control('body')->type('textarea') ?>
+<?= $form->control('author_id')->choices($authors)->placeholder('No author') ?>
+<?= $form->control('published')->type('checkbox') ?>
+<?= $form->control('visibility')->type('radio')->choices(['public' => 'Public', 'private' => 'Private']) ?>
+<?= $form->control('topics')->type('multicheckbox')->choices(['php' => 'PHP', 'cakephp' => 'CakePHP']) ?>
+<?= $form->control('attachment')->type('file') ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```

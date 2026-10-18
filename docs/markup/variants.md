@@ -6,7 +6,7 @@ description: Build a compact field variant from its PHP file to the control call
 # Use variants
 
 A **variant** is a name that asks the theme for alternative templates. For
-example, `variant => 'compact'` asks for files under `variants/compact/`.
+example, `variant('compact')` asks for files under `variants/compact/`.
 You create those files and their styling. Setting the option alone does not
 make a field smaller or add a CSS class.
 
@@ -23,7 +23,7 @@ templates/element/forms/application/
 ├── control.php                   Optional default layout
 └── variants/
     └── compact/
-        └── control.php           Layout requested by variant => 'compact'
+        └── control.php           Layout requested by variant('compact')
 ```
 
 This variant places the label and input side by side. It uses a fieldset for
@@ -33,9 +33,12 @@ grouped choices, letting the label part render a legend:
 <?php
 declare(strict_types=1);
 
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
 /**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
+ * @var BoundField $field
+ * @var Attributes $attributes
  */
 $tag = $field->state->grouped() ? 'fieldset' : 'div';
 ?>
@@ -72,12 +75,17 @@ Select the layer and pass the variant on the field that needs it:
 
 ```php [templates/Users/edit.php]
 <?php
-use FormCompose\Rendering\Theme;
 
-$form = $this->Form->bind($user, theme: new Theme(['forms/application']));
+use FormComposeTheme;
+use Rendering\Theme;
+
+$form = $this->Form
+    ->form($user)
+    ->theme(new Theme(['forms/application']))
+    ->bind();
 ?>
 <?= $form->open() ?>
-<?= $form->control('email', ['type' => 'email', 'variant' => 'compact']) ?>
+<?= $form->control('email')->type('email')->variant('compact') ?>
 <?= $form->control('name') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
@@ -88,7 +96,7 @@ wrapper and side-by-side layout. The name field uses the ordinary control layout
 Both keep their normal values, validation feedback, and submission behavior.
 
 If you already [configured this theme on the helper](/themes#select-theme),
-you can omit the `theme:` argument.
+you can omit the `theme()` call.
 
 ## 3. Understand what gets selected
 
@@ -153,14 +161,16 @@ under the `button` scope:
 ::: code-group
 
 ```php [Inside an open form]
-echo $form->submit('Save', ['variant' => 'primary']);
+echo $form->submit('Save')->variant('primary');
 ```
 
 ```php [templates/element/forms/application/button/variants/primary/control.php]
 <?php
 declare(strict_types=1);
 
-use FormCompose\Rendering\Html;
+use FormComposeHtml;
+use Rendering\Html;
+
 ?>
 <button<?= (string)$attributes->merge(['class' => 'button-primary']) ?>>
     <?= Html::text($label) ?>
@@ -175,9 +185,9 @@ This adds your `button-primary` class. Style it in the application stylesheet.
 | --- | --- |
 | `control()` or `field()` | `variants/compact/control.php` |
 | `submit()` | `button/variants/primary/control.php` |
-| `bind()` form options | `form/variants/compact/open.php` and `form/variants/compact/close.php` |
-| Complete-form `render()` form options | `form/variants/compact/layout.php` |
-| `blueprint()` layout options | `blueprint/variants/compact/control.php` |
+| Form builder `variant()` | `form/variants/compact/open.php` and `form/variants/compact/close.php` |
+| Form builder `variant()` | `form/variants/compact/layout.php` |
+| Blueprint occurrence `variant()` | `blueprint/variants/compact/control.php` |
 
 ## When a variant seems to do nothing
 

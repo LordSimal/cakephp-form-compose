@@ -24,13 +24,16 @@ class ThemeDebugTest extends FormTestCase
         foreach ([false, true] as $enabled) {
             $helper = $this->helper();
             $helper->setConfig('themeDebug', $enabled);
-            $form = $helper->bind(null, ['id' => 'comparison', 'types' => ['range' => new DateRangeType()]]);
+            $form = $helper->form()
+                ->id('comparison')
+                ->types(['range' => new DateRangeType()])
+                ->bind();
             $outputs[] =
                 $form->open()
-                . $form->control('title', ['value' => '<Secret>', 'help' => 'Private help'])
-                . $form->control('period', ['type' => 'range'])
-                . $form->control('notes', ['type' => 'textarea', 'value' => 'Text <content>'])
-                . $form->submit('Save')
+                . $form->control('title')->value('<Secret>')->help('Private help')->render()
+                . $form->control('period')->type('range')->render()
+                . $form->control('notes')->type('textarea')->value('Text <content>')->render()
+                . $form->submit('Save')->render()
                 . $form->close();
         }
 
@@ -54,14 +57,14 @@ class ThemeDebugTest extends FormTestCase
     public function testDebugSettingIsCapturedByBindingsAndLocalToEachHelper(): void
     {
         $helper = $this->helper();
-        $plain = $helper->bind();
+        $plain = $helper->form()->bind();
         $helper->setConfig('themeDebug', true);
-        $traced = $helper->bind();
+        $traced = $helper->form()->bind();
         $helper->setConfig('themeDebug', false);
         static::assertStringNotContainsString('FormCompose BEGIN', $plain->render());
         static::assertStringContainsString('FormCompose BEGIN', $traced->render());
-        static::assertStringNotContainsString('FormCompose BEGIN', $helper->bind()->render());
-        static::assertStringNotContainsString('FormCompose BEGIN', $this->helper()->bind()->render());
+        static::assertStringNotContainsString('FormCompose BEGIN', $helper->form()->bind()->render());
+        static::assertStringNotContainsString('FormCompose BEGIN', $this->helper()->form()->bind()->render());
     }
 
     public function testSuppliedRenderersKeepTheirOwnDebugConfiguration(): void
@@ -69,10 +72,14 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('themeDebug', true);
 
-        $plain = $helper->bind(renderer: new RecordingRenderer(new PhpRenderer($helper->getView())));
+        $plain = $helper->form()
+            ->renderer(new RecordingRenderer(new PhpRenderer($helper->getView())))
+            ->bind();
         static::assertStringNotContainsString('FormCompose BEGIN', $plain->render());
         $helper->setConfig('themeDebug', false);
-        $traced = $helper->bind(renderer: new RecordingRenderer(new PhpRenderer($helper->getView(), themeDebug: true)));
+        $traced = $helper->form()
+            ->renderer(new RecordingRenderer(new PhpRenderer($helper->getView(), themeDebug: true)))
+            ->bind();
         static::assertStringContainsString('FormCompose BEGIN', $traced->render());
     }
 
@@ -81,9 +88,11 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('themeDebug', true);
 
-        $html = $helper->render(PostForm::class, new ArrayContext([
+        $html = $helper->form(new ArrayContext([
             'defaults' => ['comments' => [2 => ['id' => 12, 'body' => 'Comment value']]],
-        ]));
+        ]))
+            ->blueprint(PostForm::class)
+            ->render();
         static::assertStringContainsString('scope: blueprint', $html);
         static::assertStringContainsString('scope: embed-many', $html);
         static::assertStringContainsString('field: comments.2.body', $html);
@@ -99,15 +108,21 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('themeDebug', true);
 
-        $button = $helper->postButton('Delete', '/delete');
+        $button = $helper->postButton(label: 'Delete', url: '/delete')->render();
         static::assertStringContainsString("scope: form\npart: open", $button);
         static::assertStringContainsString('scope: button', $button);
-        $link = $helper->postLink('Delete', '/delete');
+        $link = $helper->postLink(label: 'Delete', url: '/delete')->render();
         static::assertStringContainsString('scope: action', $link);
         static::assertStringContainsString('scope: form', $link);
         $helper->setConfig('themeDebug', false);
-        static::assertStringNotContainsString('FormCompose BEGIN', $helper->postButton('Delete', '/delete'));
-        static::assertStringNotContainsString('FormCompose BEGIN', $helper->postLink('Delete', '/delete'));
+        static::assertStringNotContainsString(
+            'FormCompose BEGIN',
+            $helper->postButton(label: 'Delete', url: '/delete')->render(),
+        );
+        static::assertStringNotContainsString(
+            'FormCompose BEGIN',
+            $helper->postLink(label: 'Delete', url: '/delete')->render(),
+        );
     }
 
     public function testProtectedInputsStillValidateAndSecretsAreAbsentFromComments(): void
@@ -116,12 +131,12 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper(attributes: ['csrfToken' => $csrf, 'formTokenData' => []]);
         $helper->setConfig('themeDebug', true);
 
-        $form = $helper->bind(null, ['url' => '/articles/save']);
+        $form = $helper->form()->url('/articles/save')->method('patch')->bind();
         $html =
-            $form->open(['method' => 'patch'])
-            . $form->control('id', ['type' => 'hidden', 'value' => 'locked-private-value'])
-            . $form->control('title', ['value' => 'Submitted title'])
-            . $form->control('ignored', ['disabled' => true])
+            $form->open()
+            . $form->control('id')->type('hidden')->value('locked-private-value')->render()
+            . $form->control('title')->value('Submitted title')->render()
+            . $form->control('ignored')->disabled(true)->render()
             . $form->close();
         $xpath = $this->xpath($html);
         $fields = $xpath->evaluate('string(//input[@name="_Token[fields]"]/@value)');
@@ -185,9 +200,9 @@ class ThemeDebugTest extends FormTestCase
         Configure::write('debug', false);
         try {
             $helper = $this->helper();
-            static::assertStringNotContainsString('FormCompose BEGIN', $helper->bind()->render());
+            static::assertStringNotContainsString('FormCompose BEGIN', $helper->form()->bind()->render());
             $helper->setConfig('themeDebug', true);
-            static::assertStringContainsString('FormCompose BEGIN', $helper->bind()->render());
+            static::assertStringContainsString('FormCompose BEGIN', $helper->form()->bind()->render());
         } finally {
             Configure::write('debug', $cakeDebug);
         }
@@ -198,17 +213,22 @@ class ThemeDebugTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('themeDebug', true);
 
-        $form = $helper->bind(null, ['types' => ['range' => new DateRangeType()]]);
+        $form = $helper->form()
+            ->types(['range' => new DateRangeType()])
+            ->bind();
         $opening = $form->open();
         $this->expectOutputString('');
         try {
-            $form->control('period', ['type' => 'range', 'templates' => ['composite' => 'widgets/failure']]);
+            $form->control('period')->type('range')->partTemplate('composite', 'widgets/failure')->render();
             static::fail('Expected the composite template to throw.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Composite layout failed', $runtimeException->getMessage());
         }
 
-        $html = $opening . $form->control('period', ['type' => 'range']) . $form->close();
+        $html =
+            $opening
+            . $form->control('period')->type('range')->render()
+            . $form->close();
         static::assertStringNotContainsString('widgets/failure', $html);
         static::assertMatchesRegularExpression('/^<!-- FormCompose BEGIN\nscope: field\npart: control/m', $html);
         static::assertSame(1.0, $this->xpath($html)->evaluate('count(//input[@name="period[start]"])'));

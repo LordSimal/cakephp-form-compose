@@ -22,13 +22,15 @@ class FormSessionCompositionTest extends CompositionTestCase
 {
     public function testCustomLayoutsUseCompiledChildrenAndParentOverrides(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'data' => [
-                'title' => 'Post <title>',
-                'author' => ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'label' => 'Family name'],
-            ],
-        ]));
-        $html = $form->open() . $form->blueprint('composed-post') . $form->close();
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'data' => [
+                    'title' => 'Post <title>',
+                    'author' => ['first_name' => 'Ada', 'last_name' => 'Lovelace', 'label' => 'Family name'],
+                ],
+            ]))
+            ->bind();
+        $html = $form->open() . $form->blueprint(blueprint: 'composed-post')->render() . $form->close();
         $xpath = $this->xpath($html);
         static::assertSame(1.0, $xpath->evaluate('count(//article[@data-post]/section[@data-author])'));
         static::assertSame(2.0, $xpath->evaluate('count(//div[@class="grid grid-cols-2 gap-4"]//input)'));
@@ -38,36 +40,38 @@ class FormSessionCompositionTest extends CompositionTestCase
         static::assertStringContainsString('Family name', $html);
         static::assertStringContainsString('Author name from parent', $html);
         static::assertStringNotContainsString('name="author[internal]"', $html);
-        static::assertSame(['author', 'post'], array_column($this->probe->calls, 'name'));
+        static::assertSame(['post', 'author'], array_column($this->probe->calls, 'name'));
         static::assertNull($form->binding->definition);
-        static::assertSame([], $form->field('author.first_name')->state->options);
+        static::assertNull($form->field('author.first_name')->resolve()->state->config->label);
     }
 
     public function testDefaultLayoutPreservesOrderingAndHonorsChildLayouts(): void
     {
-        $form = $this->helper()->bind(blueprint: OrderedAuthorForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $this->helper()->form()->blueprint(OrderedAuthorForm::class)->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         static::assertLessThan(strpos($html, 'data-author'), strpos($html, 'name="before"'));
         static::assertLessThan(strpos($html, 'name="after"'), strpos($html, 'name="author[id]"'));
         static::assertSame(1, substr_count($html, '<form '));
         static::assertSame(1, substr_count($html, '</form>'));
-        static::assertSame('hidden', $form->field('author.id')->state->type);
+        static::assertSame('hidden', $form->field('author.id')->resolve()->state->type);
     }
 
     public function testDirectMountScopesHooksAndKeepsRenderOptionsLocal(): void
     {
-        $form = $this->helper(['billing' => ['first_name' => 'Submitted']])->bind(new ArrayContext([
-            'data' => [
-                'billing' => ['label' => 'Billing surname'],
-                'shipping' => ['label' => 'Shipping surname'],
-            ],
-        ]));
+        $form = $this->helper(['billing' => ['first_name' => 'Submitted']])
+            ->form(new ArrayContext([
+                'data' => [
+                    'billing' => ['label' => 'Billing surname'],
+                    'shipping' => ['label' => 'Shipping surname'],
+                ],
+            ]))
+            ->bind();
         $html = $form->open();
-        $html .= $form->blueprint(AuthorForm::class, at: 'billing', options: [
-            'attributes' => ['data-scope' => '<billing>'],
-            'templateData' => ['heading' => '<Billing>'],
-        ]);
-        $html .= $form->blueprint('composed-author', at: 'shipping');
+        $html .= $form->blueprint(blueprint: AuthorForm::class, at: 'billing')
+            ->attributes(['data-scope' => '<billing>'])
+            ->templateData(['heading' => '<Billing>'])
+            ->render();
+        $html .= $form->blueprint(blueprint: 'composed-author', at: 'shipping')->render();
         $html .= $form->close();
         static::assertStringContainsString('name="billing[first_name]"', $html);
         static::assertStringContainsString('value="Submitted"', $html);
@@ -82,24 +86,33 @@ class FormSessionCompositionTest extends CompositionTestCase
 
     public function testBuilderEmbedsSupportIndependentIndexedOccurrences(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'data' => [
-                'author' => ['first_name' => 'Root', 'label' => 'Root surname'],
-                'comments' => [['author' => ['first_name' => 'Nested', 'label' => 'Nested surname']]],
-                'details' => ['summary' => 'Summary'],
-            ],
-        ]), blueprint: DynamicPostForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'data' => [
+                    'author' => ['first_name' => 'Root', 'label' => 'Root surname'],
+                    'comments' => [['author' => ['first_name' => 'Nested', 'label' => 'Nested surname']]],
+                    'details' => ['summary' => 'Summary'],
+                ],
+            ]))
+            ->blueprint(DynamicPostForm::class)
+            ->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         static::assertStringContainsString('name="comments[0][author][first_name]"', $html);
         static::assertStringContainsString('value="Nested"', $html);
         static::assertStringContainsString('value="Root"', $html);
         static::assertStringContainsString('value="Summary"', $html);
-        static::assertSame('Root surname', $form->field('author.last_name')->state->options['label']);
-        static::assertSame('Nested surname', $form->field('comments.0.author.last_name')->state->options['label']);
-        static::assertSame(['calls' => 1], $form->field('author.first_name')->state->options['templateData']);
+        static::assertSame('Root surname', $form->field('author.last_name')->resolve()->state->config->label);
+        static::assertSame(
+            'Nested surname',
+            $form->field('comments.0.author.last_name')->resolve()->state->config->label,
+        );
         static::assertSame(
             ['calls' => 1],
-            $form->field('comments.0.author.first_name')->state->options['templateData'],
+            $form->field('author.first_name')->resolve()->state->config->presentation->templateData,
+        );
+        static::assertSame(
+            ['calls' => 1],
+            $form->field('comments.0.author.first_name')->resolve()->state->config->presentation->templateData,
         );
         static::assertCount(2, $this->probe->calls);
     }
@@ -107,43 +120,46 @@ class FormSessionCompositionTest extends CompositionTestCase
     public function testDeepEmbedsAccumulateTheirScopeWithoutAddingForms(): void
     {
         $helper = $this->helper();
-        $form = $helper->bind(new ArrayContext(['data' => ['post' => ['author' => ['first_name' => 'Deep']]]]));
-        $html = $form->open() . $form->blueprint(EnvelopeForm::class) . $form->close();
+        $form = $helper->form(new ArrayContext(['data' => ['post' => ['author' => ['first_name' => 'Deep']]]]))->bind();
+        $html = $form->open() . $form->blueprint(blueprint: EnvelopeForm::class)->render() . $form->close();
         static::assertStringContainsString('name="post[author][first_name]"', $html);
         static::assertStringContainsString('id="form-compose-1-post.author.first_name"', $html);
         static::assertStringContainsString('value="Deep"', $html);
-        static::assertSame('Deep', $this->probe->calls[0]['context']->context->val('first_name'));
+        static::assertSame('Deep', $this->probe->calls[1]['context']->context->val('first_name'));
         static::assertSame($helper->getView()->getRequest(), $this->probe->calls[0]['context']->request);
         static::assertSame(1, substr_count($html, '<form '));
     }
 
     public function testRemovedFieldsDoNotReappearAndConditionalWrappersDisappear(): void
     {
-        $form = $this->helper(attributes: ['stripParentEmail' => true])->bind(blueprint: PostForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $this->helper(attributes: ['stripParentEmail' => true])->form()->blueprint(PostForm::class)->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         static::assertStringNotContainsString('data-email', $html);
         static::assertStringNotContainsString('name="author[email]"', $html);
         static::assertStringNotContainsString('name="author[internal]"', $html);
         static::assertStringContainsString('name="author[id]"', $html);
         static::assertNotNull($form->binding->definition);
         static::assertFalse($form->binding->definition->has('author.email'));
-        static::assertSame('email', $form->field('author.email')->state->type);
+        static::assertSame('email', $form->field('author.email')->resolve()->state->type);
     }
 
     public function testDefinitionThemeFallbackAndPerCallOverrides(): void
     {
         $definition = new FormDefinition([])->add(new FieldDefinition('title'));
-        $form = $this->helper()->bind(theme: new Theme(['themes/blueprint']));
+        $form = $this->helper()
+            ->form()
+            ->theme(new Theme(['themes/blueprint']))
+            ->bind();
         $html = $form->open() . $form->renderDefinition($definition) . $form->close();
         static::assertStringContainsString('data-default-definition', $html);
         static::assertStringContainsString('name="title"', $html);
 
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $html =
             $form->open()
-            . $form->blueprint(AuthorForm::class, options: [
-                'template' => 'themes/blueprint/blueprint/control',
-            ])
+            . $form->blueprint(blueprint: AuthorForm::class)
+                ->partTemplate('control', 'themes/blueprint/blueprint/control')
+                ->render()
             . $form->close();
         static::assertStringContainsString('data-default-definition', $html);
         static::assertStringNotContainsString('data-author', $html);
@@ -156,7 +172,7 @@ class FormSessionCompositionTest extends CompositionTestCase
         $helper = new ContactFormHelper($this->helper()->getView());
         $helper->setConfig('blueprintFactory', $this->factory);
 
-        $form = $helper->bind();
+        $form = $helper->form()->bind();
         $definition = new FormDefinition([])->embed(
             'author',
             new FormDefinition([])->add(new FieldDefinition('name')),

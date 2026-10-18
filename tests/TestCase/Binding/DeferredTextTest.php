@@ -39,19 +39,22 @@ class DeferredTextTest extends FormTestCase
         );
         try {
             I18n::setLocale('en_US');
-            $form = $this->helper()->bind(new ArrayContext([
-                'errors' => ['title' => ['invalid' => 'Invalid title']],
-            ]), blueprint: ArticleForm::class);
-            static::assertInstanceOf(Closure::class, $form->binding->definition?->field('title')->options['label']);
+            $form = $this->helper()
+                ->form(new ArrayContext([
+                    'errors' => ['title' => ['invalid' => 'Invalid title']],
+                ]))
+                ->blueprint(ArticleForm::class)
+                ->bind();
+            static::assertInstanceOf(Closure::class, $form->binding->definition?->field('title')->config->label);
             I18n::setLocale('fr_FR');
-            $field = $form->field('title');
-            static::assertSame('Titre <public>', $field->state->options['label']);
-            static::assertSame('Visible <partout>', $field->state->options['help']);
+            $field = $form->field('title')->resolve();
+            static::assertSame('Titre <public>', $field->state->config->label);
+            static::assertSame('Visible <partout>', $field->state->config->help);
             I18n::setLocale('en_US');
-            static::assertSame('Article title', $form->field('title')->state->options['label']);
+            static::assertSame('Article title', $form->field('title')->resolve()->state->config->label);
             static::assertSame('Titre &lt;public&gt;', $field->state->labelText());
             $form->open();
-            static::assertSame('', $form->errorSummary());
+            static::assertSame('', $form->errorSummary()->render());
             $html = $field->control();
             static::assertStringContainsString('Titre &lt;public&gt;', $html);
             static::assertStringContainsString('Visible &lt;partout&gt;', $html);
@@ -59,7 +62,7 @@ class DeferredTextTest extends FormTestCase
                 'aria-describedby="form-compose-1-title-help form-compose-1-title-errors"',
                 $html,
             );
-            static::assertStringContainsString('Titre &lt;public&gt;: Invalid title', $form->errorSummary());
+            static::assertStringContainsString('Titre &lt;public&gt;: Invalid title', $form->errorSummary()->render());
             $form->close();
         } finally {
             I18n::clear();
@@ -71,38 +74,41 @@ class DeferredTextTest extends FormTestCase
     {
         $calls = new ArrayObject(['label' => 0, 'help' => 0]);
         $other = static fn(): string => 'Application callback';
-        $form = $this->helper()->bind();
-        $field = $form->field('title', [
-            'label' => static function () use ($calls): Html {
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('title')
+            ->label(static function () use ($calls): Html {
                 $calls['label']++;
 
                 return new Html('<em>Title</em>');
-            },
-            'help' => static function () use ($calls): Html {
+            })
+            ->help(static function () use ($calls): Html {
                 $calls['help']++;
 
                 return new Html('<strong>Help</strong>');
-            },
-            'templateData' => ['callback' => $other],
-        ]);
+            })
+            ->templateData(['callback' => $other])
+            ->resolve();
         $field->attributes();
         $field->state->labelText();
         $field->state->helpText();
 
         $html = $form->open() . $field->control() . $form->close();
         static::assertSame(['label' => 1, 'help' => 1], $calls->getArrayCopy());
-        static::assertSame(['callback' => $other], $field->state->options['templateData']);
+        static::assertSame(['callback' => $other], $field->state->config->presentation->templateData);
         static::assertStringContainsString('<em>Title</em>', $html);
         static::assertStringContainsString('<strong>Help</strong>', $html);
     }
 
     public function testPerCallOptionsReplaceBlueprintClosuresBeforeTheyExecute(): void
     {
-        $form = $this->helper()->bind(blueprint: OverriddenForm::class);
-        $html = $form->open() . $form->control('title', ['label' => false, 'help' => null]) . $form->close();
+        $form = $this->helper()->form()->blueprint(OverriddenForm::class)->bind();
+        $html =
+            $form->open()
+            . $form->control('title')->label(false)->help(null)->render()
+            . $form->close();
         static::assertStringNotContainsString('<label', $html);
         static::assertStringNotContainsString('title-help', $html);
-        static::assertInstanceOf(Closure::class, $form->binding->definition?->field('title')->options['label']);
+        static::assertInstanceOf(Closure::class, $form->binding->definition?->field('title')->config->label);
     }
 
     /**
@@ -111,13 +117,13 @@ class DeferredTextTest extends FormTestCase
     #[DataProvider('suppressedText')]
     public function testEmptyCallbackResultsPreserveLabelAndHelpSemantics(string|false|null $text): void
     {
-        $form = $this->helper()->bind();
-        $field = $form->field('article_title', [
-            'label' => static fn(): string|false|null => $text,
-            'help' => static fn(): string|false|null => $text,
-        ]);
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('article_title')
+            ->label(static fn(): string|false|null => $text)
+            ->help(static fn(): string|false|null => $text)
+            ->resolve();
         static::assertFalse($field->state->hasHelp());
-        static::assertSame($text, $field->state->options['label']);
+        static::assertSame($text, $field->state->config->label);
         static::assertSame($text === null ? 'Article Title' : '', $field->state->labelText());
         $html = $form->open() . $field->control() . $form->close();
         static::assertStringNotContainsString('aria-describedby', $html);
@@ -136,18 +142,20 @@ class DeferredTextTest extends FormTestCase
 
     public function testCallbackExceptionsPropagateWithoutRegisteringInputs(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
         try {
-            $form->control('title', ['label' => static function (): never {
-                throw new RuntimeException('Translation failed.');
-            }]);
+            $form->control('title')
+                ->label(static function (): never {
+                    throw new RuntimeException('Translation failed.');
+                })
+                ->render();
             static::fail('Expected the callback failure.');
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Translation failed.', $runtimeException->getMessage());
         }
 
-        static::assertStringContainsString('name="title"', $form->control('title'));
+        static::assertStringContainsString('name="title"', $form->control('title')->render());
         $form->close();
     }
 
@@ -161,9 +169,14 @@ class DeferredTextTest extends FormTestCase
         $this->expectExceptionMessage(
             'The ' . $key . ' closure must return a string, Html, Translated, false, or null.',
         );
-        $this->helper()
-            ->bind()
-            ->field('title', [$key => static fn(): mixed => $result]);
+        $builder = $this->helper()->form()->bind()->field('title');
+        if ($key === 'label') {
+            $builder->label(static fn(): mixed => $result);
+        } else {
+            $builder->help(static fn(): mixed => $result);
+        }
+
+        $builder->resolve();
     }
 
     /**

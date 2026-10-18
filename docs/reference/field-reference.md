@@ -5,7 +5,8 @@ description: Inspect BoundField state and look up rendering, attribute, and hand
 
 # Bound fields
 
-`$form->field()` returns a `FormCompose\Form\Field\BoundField`. It connects immutable
+`$form->field()` returns a `FieldBuilder`; `resolve()` captures a
+`FormCompose\Form\Field\BoundField`. It connects immutable
 resolved state with independently renderable parts. See
 [Compose field parts](/field-parts) for a full view example.
 
@@ -24,10 +25,10 @@ resolved state with independently renderable parts. See
 | `composite` | `bool` | Whether the type declares independently bound children. |
 | `requiredMessage` | `?string` | Required-validation text supplied by the CakePHP context, or null. Plain text for application templates and enhancements. |
 | `constraints` | `array<string, mixed>` | Inferred/explicit browser constraints. |
-| `options` | `array<string, mixed>` | Merged field configuration. |
+| `config` | `FieldConfig` | Typed merged field configuration, including its `PresentationConfig`. |
 
 ```php
-$title = $form->field('title');
+$title = $form->field('title')->resolve();
 $currentTitle = $title->state->value;
 $hasErrors = $title->state->hasErrors();
 ```
@@ -48,11 +49,11 @@ progressive enhancement using an escaped data attribute:
 
 ```php
 // Inside an open form.
-$field = $form->field('name');
+$field = $form->field('name')->resolve();
 $message = $field->attributes()->has('required')
     ? $field->state->requiredMessage
     : null;
-echo $field->input(['data-required-message' => $message]);
+echo $field->input()->attributes(['data-required-message' => $message]);
 ```
 
 Keep the value as text and let attribute rendering escape it. Server-side
@@ -73,27 +74,27 @@ public function control(): string;
 ```
 
 Renders the complete field through its control template, or only `input()` for a
-hidden field. It uses the options supplied when the field was resolved; it accepts
+hidden field. It uses the configuration supplied when the field was resolved; it accepts
 no additional options. Input rendering requires an open session.
 
 ```php
 // Inside an open form; equivalent to $form->control('title', ...).
-$title = $form->field('title', ['label' => 'Article title']);
+$title = $form->field('title')->label('Article title')->resolve();
 echo $title->control();
 ```
 
 ## input() {#input}
 
 ```php
-public function input(array $attributes = []): string;
+public function input(): PartBuilder;
 ```
 
-Renders the input element, then registers the field type's actual submitted inputs.
-Requires an open session and an unused input ID. Attributes augment this input's
+Returns a `PartBuilder`. Echo or `render()` renders the input element, then registers the field type's actual submitted inputs.
+Requires an open session and an unused input ID. The part builder's `attributes()` augments its
 prepared bag; behavior and identity belong in [field options](/field-options).
 
 ```php
-echo $title->input(['class' => 'wide', 'autocomplete' => 'off']);
+echo $title->input()->attributes(['class' => 'wide', 'autocomplete' => 'off']);
 ```
 
 Do not also call `register()` or render the same input through `control()`.
@@ -103,21 +104,23 @@ a rendered presentation.
 ## label(), help(), errors() {#parts}
 
 ```php
-public function label(array $attributes = []): string;
-public function help(array $attributes = []): string;
-public function errors(array $attributes = []): string;
+public function label(): PartBuilder;
+
+public function help(): PartBuilder;
+
+public function errors(): PartBuilder;
 ```
 
-Each method renders its own element and accepts attributes for that part. These
-methods do not register inputs. `label()` returns `''` when `label => false`.
-`help()` and `errors()` return `''` when disabled or when there is no content.
+Each method returns a renderable part builder. Use `attributes()`, `template()`,
+`variant()`, and `templateData()` on it before echo or `render()`. Rendering these
+parts registers no inputs. A disabled label/help/errors part emits an empty string.
 A grouped field uses a legend rather than an ordinary input label.
 
 ```php
-echo $title->label(['class' => 'caption']);
+echo $title->label()->attributes(['class' => 'caption']);
 echo $title->input();
-echo $title->help(['class' => 'hint']);
-echo $title->errors(['class' => 'feedback']);
+echo $title->help()->attributes(['class' => 'hint']);
+echo $title->errors()->attributes(['class' => 'feedback']);
 ```
 
 Render enabled feedback to preserve the input's generated ARIA relationships.

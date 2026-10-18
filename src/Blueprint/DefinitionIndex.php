@@ -20,8 +20,8 @@ final readonly class DefinitionIndex
     /** @var array<string, \FormCompose\Blueprint\FormDefinition> Qualified embed paths to relative children. */
     public array $embeds;
 
-    /** @var array<string, array<string, mixed>> Presentation overrides per embed occurrence. */
-    public array $embedOptions;
+    /** @var array<string, \FormCompose\Configuration\PresentationConfig> Presentation overrides per embed occurrence. */
+    public array $embedPresentation;
 
     /** @var array<string, \FormCompose\Blueprint\RepeatedDefinition> Repeated declarations and bound row snapshots. */
     public array $repeats;
@@ -44,7 +44,7 @@ final readonly class DefinitionIndex
         $embeds = [];
         $paths = [];
         $repeats = [];
-        $embedOptions = [];
+        $embedPresentation = [];
         foreach ($entries as $entry) {
             $paths[] = $entry->path;
             if ($entry instanceof FieldDefinition) {
@@ -62,9 +62,11 @@ final readonly class DefinitionIndex
             }
 
             $embeds[$entry->path] = $childDefinition;
-            $embedOptions[$entry->path] = $entry->options;
+            $embedPresentation[$entry->path] = $entry instanceof RepeatedDefinition
+                ? $entry->config->presentation
+                : $entry->presentation;
             $repeats += $this->qualify($childDefinition->index->repeats, $entry->path);
-            $embedOptions += $this->qualify($childDefinition->index->embedOptions, $entry->path);
+            $embedPresentation += $this->qualify($childDefinition->index->embedPresentation, $entry->path);
             $embeds += $this->qualify($childDefinition->index->embeds, $entry->path);
             array_push($paths, ...array_map(
                 static fn(string $path): string => $entry->path . '.' . $path,
@@ -73,7 +75,7 @@ final readonly class DefinitionIndex
             array_push($fields, ...array_map(
                 static fn(FieldDefinition $field): FieldDefinition => new FieldDefinition(
                     $entry->path . '.' . $field->path,
-                    $field->options,
+                    $field->config,
                 ),
                 $childDefinition->fields,
             ));
@@ -89,7 +91,7 @@ final readonly class DefinitionIndex
 
         $this->fields = $fields;
         $this->embeds = $embeds;
-        $this->embedOptions = $embedOptions;
+        $this->embedPresentation = $embedPresentation;
         $this->repeats = $repeats;
         $this->paths = $paths;
         $this->removed = array_values(array_unique($removed));
@@ -100,7 +102,17 @@ final readonly class DefinitionIndex
      */
     public function wasRemoved(string $path): bool
     {
-        return !in_array($path, $this->paths, true) && in_array($path, $this->removed, true);
+        if (in_array($path, $this->paths, true)) {
+            return false;
+        }
+
+        foreach ($this->removed as $removed) {
+            if ($path === $removed || str_starts_with($path, $removed . '.')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

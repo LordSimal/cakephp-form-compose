@@ -6,6 +6,7 @@ namespace FormCompose\Test\TestCase\Form;
 use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
+use FormCompose\Configuration\ActionConfig;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,15 +19,16 @@ class PostActionSecurityTest extends FormTestCase
     public function testActionsDoNotAffectTheParentFormsFieldsOrTarget(): void
     {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $parent = $helper->bind(null, ['url' => '/parent/save']);
-        $parentHtml = $parent->open() . $parent->control('title', ['value' => 'Title']);
-        $button = $helper->postButton('Delete', '/records/delete', [
-            'method' => 'delete',
-            'data' => ['record' => ['id' => 42], 'version' => 0, 'records' => [2 => ['id' => 12]]],
-            'block' => 'actions',
-            'name' => 'intent',
-            'value' => 'remove',
-        ]);
+        $parent = $helper->form()->url('/parent/save')->bind();
+        $parentHtml =
+            $parent->open()
+            . $parent->control('title')->value('Title')->render();
+        $button = $helper->postButton(label: 'Delete', url: '/records/delete')
+            ->method('delete')
+            ->data(['record' => ['id' => 42], 'version' => 0, 'records' => [2 => ['id' => 12]]])
+            ->block('actions')
+            ->attributes(['name' => 'intent', 'value' => 'remove'])
+            ->render();
         $parentHtml .= $parent->close();
         $actionHtml = $helper->getView()->fetch('actions');
         $session = $helper->getView()->getRequest()->getSession()->id();
@@ -50,24 +52,33 @@ class PostActionSecurityTest extends FormTestCase
         static::assertFalse(new FormProtector()->validate($parentData, '/records/delete', $session));
     }
 
-    /** @param array<string, mixed> $options Conflicting button identity and payload. */
+    /** Conflicting button identity and payload are rejected before rendering. */
     #[DataProvider('conflictingNames')]
-    public function testNamedButtonsCannotUnlockPayloadsOrOverrideInfrastructure(array $options): void
+    public function testNamedButtonsCannotUnlockPayloadsOrOverrideInfrastructure(ActionConfig $options): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->postButton('Delete', '/delete', $options);
+        $this->helper()->postButton(label: 'Delete', url: '/delete')->apply($options)->render();
     }
 
-    /** @return array<string, array{array<string, mixed>}> */
+    /** @return array<string, array{\FormCompose\Configuration\ActionConfig}> */
     public static function conflictingNames(): array
     {
         return [
-            'exact payload' => [['data' => ['version' => 1], 'name' => 'version']],
-            'nested leaf' => [['data' => ['record' => ['id' => 42]], 'name' => 'id']],
-            'nested path' => [['data' => ['record' => ['id' => 42]], 'name' => 'record[id]']],
-            'method field' => [['name' => '_method']],
-            'CSRF field' => [['name' => '_csrfToken']],
-            'token field' => [['name' => '_Token[fields]']],
+            'exact payload' => [ActionConfig::builder()
+                ->data(['version' => 1])
+                ->attributes(['name' => 'version'])
+                ->config()],
+            'nested leaf' => [ActionConfig::builder()
+                ->data(['record' => ['id' => 42]])
+                ->attributes(['name' => 'id'])
+                ->config()],
+            'nested path' => [ActionConfig::builder()
+                ->data(['record' => ['id' => 42]])
+                ->attributes(['name' => 'record[id]'])
+                ->config()],
+            'method field' => [ActionConfig::builder()->attributes(['name' => '_method'])->config()],
+            'CSRF field' => [ActionConfig::builder()->attributes(['name' => '_csrfToken'])->config()],
+            'token field' => [ActionConfig::builder()->attributes(['name' => '_Token[fields]'])->config()],
         ];
     }
 

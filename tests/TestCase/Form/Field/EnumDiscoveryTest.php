@@ -10,6 +10,8 @@ use Cake\ORM\Entity;
 use Cake\ORM\Table;
 use Cake\View\Form\ArrayContext;
 use FormCompose\Binding\FormBinding;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Rendering\PhpRenderer;
 use FormCompose\Rendering\RenderContext;
@@ -52,13 +54,14 @@ class EnumDiscoveryTest extends FormTestCase
     {
         $helper = $this->helper();
         $helper->getView()->set('statuses', ['unexpected' => 'Unexpected choice']);
-        $form = $helper->bind(new ArrayContext([
+        $form = $helper->form(new ArrayContext([
             'schema' => ['status' => ['type' => EnumType::from(PublicationStatus::class)]],
             'data' => ['status' => PublicationStatus::Published],
-        ]));
-        $field = $form->field('status');
+        ]))
+            ->bind();
+        $field = $form->field('status')->resolve();
         static::assertSame('select', $field->state->type);
-        static::assertSame(PublicationStatus::class, $field->state->options['options']);
+        static::assertSame(PublicationStatus::class, $field->state->config->choices);
         $form->open();
         $html = $field->control();
         static::assertSame('published', $this->xpath($html)->evaluate('string(//option[@selected]/@value)'));
@@ -68,49 +71,60 @@ class EnumDiscoveryTest extends FormTestCase
     }
 
     /**
-     * @param array<string, mixed> $options Explicit field overrides.
      * @param mixed $expectedChoices Expected retained choices, including null.
      */
     #[DataProvider('explicitOverrides')]
     public function testExplicitOptionsAndTypesRemainAuthoritative(
-        array $options,
+        FieldConfig $options,
         string $expectedType,
         mixed $expectedChoices,
     ): void {
-        $form = $this->helper()->bind(new ArrayContext([
-            'schema' => ['status' => ['type' => EnumType::from(PublicationStatus::class)]],
-        ]));
-        $field = $form->field('status', $options);
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'schema' => ['status' => ['type' => EnumType::from(PublicationStatus::class)]],
+            ]))
+            ->bind();
+        $field = $form->field('status')->apply($options)->resolve();
         static::assertSame($expectedType, $field->state->type);
-        static::assertSame($expectedChoices, $field->state->options['options'] ?? null);
+        static::assertSame($expectedChoices, $field->state->config->choices ?? null);
     }
 
     /**
-     * @return array<string, array{array<string, mixed>, string, mixed}>
+     * @return array<string, array{\FormCompose\Configuration\FieldConfig, string, mixed}>
      */
     public static function explicitOverrides(): array
     {
         return [
-            'subset' => [['options' => ['published' => 'Available']], 'select', ['published' => 'Available']],
-            'empty choices' => [['options' => []], 'select', []],
-            'explicit null opts out' => [['options' => null], 'text', null],
-            'text' => [['type' => 'text'], 'text', null],
-            'hidden' => [['type' => 'hidden'], 'hidden', null],
-            'custom type' => [['type' => 'application-status'], 'application-status', null],
-            'radio' => [['type' => 'radio'], 'radio', PublicationStatus::class],
-            'checkbox group' => [['type' => 'multicheckbox'], 'multicheckbox', PublicationStatus::class],
+            'subset' => [
+                FieldConfig::builder()->choices(['published' => 'Available'])->config(),
+                'select',
+                ['published' => 'Available'],
+            ],
+            'empty choices' => [FieldConfig::builder()->choices([])->config(), 'select', []],
+            'explicit null opts out' => [FieldConfig::builder()->choices(null)->config(), 'text', null],
+            'text' => [FieldConfig::builder()->type('text')->config(), 'text', null],
+            'hidden' => [FieldConfig::builder()->type('hidden')->config(), 'hidden', null],
+            'custom type' => [FieldConfig::builder()->type('application-status')->config(), 'application-status', null],
+            'radio' => [FieldConfig::builder()->type('radio')->config(), 'radio', PublicationStatus::class],
+            'checkbox group' => [
+                FieldConfig::builder()->type('multicheckbox')->config(),
+                'multicheckbox',
+                PublicationStatus::class,
+            ],
         ];
     }
 
     public function testSubmittedZeroAndIntegerEnumLabelsWorkWithDiscoveredRadios(): void
     {
-        $form = $this->helper(['priority' => '0'])->bind(new ArrayContext([
-            'schema' => ['priority' => ['type' => EnumType::from(Priority::class)]],
-            'data' => ['priority' => Priority::Urgent],
-        ]));
+        $form = $this->helper(['priority' => '0'])
+            ->form(new ArrayContext([
+                'schema' => ['priority' => ['type' => EnumType::from(Priority::class)]],
+                'data' => ['priority' => Priority::Urgent],
+            ]))
+            ->bind();
         $form->open();
 
-        $html = $form->control('priority', ['type' => 'radio']);
+        $html = $form->control('priority')->type('radio')->render();
         static::assertSame('0', $this->xpath($html)->evaluate('string(//input[@checked]/@value)'));
         static::assertStringContainsString('Standard &lt;priority&gt;', $html);
         static::assertStringNotContainsString('<priority>', $html);
@@ -131,10 +145,13 @@ class EnumDiscoveryTest extends FormTestCase
             'status' => PublicationStatus::Published,
             'comments' => [new Entity(['status' => PublicationStatus::InReview])],
         ]);
-        $form = $this->helper()->bind($entity, ['context' => ['table' => $table]]);
-        static::assertSame('select', $form->field('status')->state->type);
+        $form = $this->helper()
+            ->form($entity)
+            ->context(['table' => $table])
+            ->bind();
+        static::assertSame('select', $form->field('status')->resolve()->state->type);
         $form->open();
-        $html = $form->blueprint(DiscoveredForm::class, at: 'comments.0');
+        $html = $form->blueprint(blueprint: DiscoveredForm::class, at: 'comments.0')->render();
         static::assertSame('comments[0][status]', $this->xpath($html)->evaluate('string(//select/@name)'));
         static::assertSame('in-review', $this->xpath($html)->evaluate('string(//option[@selected]/@value)'));
         $form->close();
@@ -144,9 +161,12 @@ class EnumDiscoveryTest extends FormTestCase
     {
         $helper = $this->helper();
         $context = new ArrayContext(['schema' => ['status' => ['type' => 'enum-unregistered']]]);
-        static::assertSame('text', $helper->bind($context)->field('status')->state->type);
+        static::assertSame('text', $helper->form($context)->bind()->field('status')->resolve()->state->type);
         $helper->getView()->set('statuses', ['a' => 'A']);
-        static::assertSame(['a' => 'A'], $helper->bind($context)->field('status')->state->options['options']);
+        static::assertSame(
+            ['a' => 'A'],
+            $helper->form($context)->bind()->field('status')->resolve()->state->config->choices,
+        );
     }
 
     public function testDiscoveryDoesNotRequireViewVariableLookupOrRendering(): void
@@ -160,12 +180,12 @@ class EnumDiscoveryTest extends FormTestCase
                 ]),
                 $view->getRequest(),
                 'isolated',
-                [],
+                FormConfig::builder()->config(),
             ),
             new RenderContext(new PhpRenderer($view, $theme), $theme),
         );
-        $field = $form->field('status');
-        static::assertSame(PublicationStatus::class, $field->state->options['options']);
+        $field = $form->field('status')->resolve();
+        static::assertSame(PublicationStatus::class, $field->state->config->choices);
         static::assertSame('select', $field->state->type);
         $html = $form->open() . $form->close();
         static::assertStringNotContainsString('name="status"', $html);

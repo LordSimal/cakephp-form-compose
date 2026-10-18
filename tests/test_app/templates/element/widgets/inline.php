@@ -9,6 +9,6 @@ use FormCompose\Rendering\Html;
  */
 ?>
 <section id="<?= Html::text((string)$attributes->values['id']) ?>" class="inline-range" data-caption="<?= Html::text($templateData['caption'] ?? '') ?>">
-    <aside><?= $inputs['end']->label() ?><?= $inputs['end']->input() ?><?= $inputs['end']->errors() ?></aside>
-    <main><?= $inputs['start']->label() ?><?= $inputs['start']->input() ?><?= $inputs['start']->errors() ?></main>
+    <aside><?= (string) $inputs['end']->label() ?><?= (string) $inputs['end']->input() ?><?= (string) $inputs['end']->errors() ?></aside>
+    <main><?= (string) $inputs['start']->label() ?><?= (string) $inputs['start']->input() ?><?= (string) $inputs['start']->errors() ?></main>
 </section>

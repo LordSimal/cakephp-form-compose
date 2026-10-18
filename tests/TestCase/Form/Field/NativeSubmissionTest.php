@@ -6,6 +6,8 @@ namespace FormCompose\Test\TestCase\Form\Field;
 use Cake\Form\FormProtector;
 use Dom\Element;
 use Dom\NodeList;
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Rendering\Theme;
 use FormCompose\Test\Fixture\Enum\Priority;
 use FormCompose\Test\FormTestCase;
@@ -18,16 +20,26 @@ use PHPUnit\Framework\Attributes\DataProvider;
 class NativeSubmissionTest extends FormTestCase
 {
     /**
-     * @param array<string, mixed> $options Select configuration.
      * @param array<string, mixed> $submitted Actual successful browser fields.
      * @param array<string, array<string, mixed>> $defaults Theme attributes.
      */
     #[DataProvider('selectSubmissions')]
-    public function testSelectsProtectOnlySuccessfulInputs(array $options, array $submitted, array $defaults = []): void
-    {
+    public function testSelectsProtectOnlySuccessfulInputs(
+        FieldConfig $options,
+        array $submitted,
+        array $defaults = [],
+    ): void {
         $helper = $this->helper(attributes: ['formTokenData' => []]);
-        $form = $helper->bind(null, ['url' => '/articles/save'], theme: new Theme(defaults: $defaults));
-        $html = $form->open() . $form->control('author_id', ['type' => 'select'] + $options) . $form->close();
+        $form = $helper->form()
+            ->url('/articles/save')
+            ->theme(new Theme(defaults: $defaults))
+            ->bind();
+        $html =
+            $form->open()
+            . $form->control('author_id')
+                ->apply($options->merge(FieldConfig::builder()->type('select')->config()))
+                ->render()
+            . $form->close();
         $tokens = [];
         /** @var NodeList<Element>|false $nodes */
         $nodes = $this->xpath($html)->query('//input[starts-with(@name, "_Token[")]');
@@ -54,38 +66,59 @@ class NativeSubmissionTest extends FormTestCase
     }
 
     /**
-     * @return array<string, array{0: array<string, mixed>, 1: array<string, mixed>, 2?: array<string, array<string, mixed>>}>
+     * @return array<string, array{0: \FormCompose\Configuration\FieldConfig, 1: array<string, mixed>, 2?: array<string, array<string, mixed>>}>
      */
     public static function selectSubmissions(): array
     {
         return [
-            'enum class' => [['options' => Priority::class], ['author_id' => '0']],
+            'enum class' => [FieldConfig::builder()->choices(Priority::class)->config(), ['author_id' => '0']],
             'enum cases multiple' => [
-                ['options' => Priority::cases(), 'multiple' => true],
+                FieldConfig::builder()->choices(Priority::cases())->multiple(true)->config(),
                 ['author_id' => ['0', '2']],
             ],
-            'disabled enum select' => [['options' => Priority::class, 'disabled' => true], []],
+            'disabled enum select' => [FieldConfig::builder()->choices(Priority::class)->disabled(true)->config(), []],
             'disabled enum option' => [
-                ['options' => [['value' => Priority::Normal, 'disabled' => true]], 'empty' => false],
+                FieldConfig::builder()
+                    ->choices([new ChoiceConfig(Priority::Normal, null, ['disabled' => true])])
+                    ->placeholder(false)
+                    ->config(),
                 [],
             ],
-            'empty single' => [['options' => [], 'empty' => false], []],
-            'required empty single' => [['options' => [], 'required' => true], []],
-            'optional blank' => [['options' => []], ['author_id' => '']],
+            'empty single' => [FieldConfig::builder()->choices([])->placeholder(false)->config(), []],
+            'required empty single' => [FieldConfig::builder()->choices([])->required(true)->config(), []],
+            'optional blank' => [FieldConfig::builder()->choices([])->config(), ['author_id' => '']],
             'disabled options' => [
-                ['options' => [['value' => 'a', 'text' => 'A', 'disabled' => true]], 'empty' => false],
+                FieldConfig::builder()
+                    ->choices([new ChoiceConfig('a', 'A', ['disabled' => true])])
+                    ->placeholder(false)
+                    ->config(),
                 [],
             ],
-            'empty optgroup' => [['options' => ['Group' => []], 'empty' => false], []],
+            'empty optgroup' => [FieldConfig::builder()->choices(['Group' => []])->placeholder(false)->config(), []],
             'disabled optgroup' => [
-                ['options' => ['Group' => ['a' => 'A']], 'empty' => false],
+                FieldConfig::builder()
+                    ->choices(['Group' => ['a' => 'A']])
+                    ->placeholder(false)
+                    ->config(),
                 [],
                 ['choice-group' => ['disabled' => true]],
             ],
-            'enabled optgroup' => [['options' => ['Group' => ['a' => 'A']], 'empty' => false], ['author_id' => 'a']],
-            'empty multiple fallback' => [['options' => [], 'multiple' => true], ['author_id' => '']],
-            'empty multiple no fallback' => [['options' => [], 'multiple' => true, 'hiddenField' => false], []],
-            'disabled select' => [['options' => ['a' => 'A'], 'disabled' => true], []],
+            'enabled optgroup' => [
+                FieldConfig::builder()
+                    ->choices(['Group' => ['a' => 'A']])
+                    ->placeholder(false)
+                    ->config(),
+                ['author_id' => 'a'],
+            ],
+            'empty multiple fallback' => [
+                FieldConfig::builder()->choices([])->multiple(true)->config(),
+                ['author_id' => ''],
+            ],
+            'empty multiple no fallback' => [
+                FieldConfig::builder()->choices([])->multiple(true)->fallback(false)->config(),
+                [],
+            ],
+            'disabled select' => [FieldConfig::builder()->choices(['a' => 'A'])->disabled(true)->config(), []],
         ];
     }
 
@@ -95,8 +128,8 @@ class NativeSubmissionTest extends FormTestCase
             yield 'a' => 'Alpha';
             yield 'b' => 'Beta';
         };
-        $form = $this->helper(attributes: ['formTokenData' => []])->bind();
-        $field = $form->field('status', ['options' => $choices()]);
+        $form = $this->helper(attributes: ['formTokenData' => []])->form()->bind();
+        $field = $form->field('status')->choices($choices())->resolve();
         $field->attributes();
 
         $form->open();
@@ -108,17 +141,21 @@ class NativeSubmissionTest extends FormTestCase
 
     public function testRequiredCheckboxGroupsDoNotRequireEveryChoice(): void
     {
-        $form = $this->helper()->bind();
+        $form = $this->helper()->form()->bind();
         $form->open();
 
-        $html = $form->control('tags', [
-            'type' => 'multicheckbox',
-            'required' => true,
-            'options' => ['a' => 'A', 'b' => 'B'],
-        ]);
+        $html = $form->control('tags')
+            ->type('multicheckbox')
+            ->required(true)
+            ->choices(['a' => 'A', 'b' => 'B'])
+            ->render();
         static::assertSame(0.0, $this->xpath($html)->evaluate('count(//input[@type="checkbox"][@required])'));
         static::assertSame(2.0, $this->xpath($html)->evaluate('count(//input[@type="checkbox"])'));
-        $radio = $form->control('status', ['type' => 'radio', 'required' => true, 'options' => ['a' => 'A']]);
+        $radio = $form->control('status')
+            ->type('radio')
+            ->required(true)
+            ->choices(['a' => 'A'])
+            ->render();
         static::assertSame(1.0, $this->xpath($radio)->evaluate('count(//input[@type="radio"][@required])'));
         $form->close();
     }

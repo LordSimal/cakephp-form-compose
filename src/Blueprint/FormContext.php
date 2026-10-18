@@ -9,6 +9,8 @@ use FormCompose\Binding\FormBinding;
 use FormCompose\Binding\PathValue;
 use FormCompose\Binding\ScopedContext;
 use FormCompose\Binding\ValueResolver;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\Field\FieldDefinition;
 use InvalidArgumentException;
 
@@ -90,9 +92,9 @@ final readonly class FormContext
                 ->withQueryParams(is_array($query) ? $query : []);
         }
 
-        return new ValueResolver(new FormBinding($this->context, $request, '', [
-            'valueSources' => $this->valueSources,
-        ]))->resolve($path, []);
+        return new ValueResolver(
+            new FormBinding($this->context, $request, '', new FormConfig()->withValueSources($this->valueSources)),
+        )->resolve($path, new FieldConfig());
     }
 
     /**
@@ -100,8 +102,7 @@ final readonly class FormContext
      */
     public static function fromBinding(FormBinding $binding): self
     {
-        /** @var list<string> $sources */
-        $sources = $binding->options['valueSources'] ?? ['data', 'context'];
+        $sources = $binding->config->valueSources;
 
         return new self($binding->context, $binding->request, valueSources: $sources);
     }

@@ -15,8 +15,11 @@ class FormConstructionTest extends FormTestCase
         $form = $this->helper(attributes: [
             'formTokenData' => [],
             'csrfToken' => bin2hex(random_bytes(16)),
-        ])->bind(null, ['method' => 'get']);
-        $html = $form->open() . $form->control('query') . $form->close();
+        ])
+            ->form()
+            ->method('get')
+            ->bind();
+        $html = $form->open() . $form->control('query')->render() . $form->close();
         static::assertStringContainsString('method="get"', $html);
         static::assertStringNotContainsString('_csrfToken', $html);
         static::assertStringNotContainsString('_Token', $html);
@@ -25,13 +28,15 @@ class FormConstructionTest extends FormTestCase
     public function testActionCanUseCakeRoutesOrTheCurrentRequest(): void
     {
         $helper = $this->helper();
-        $routed = $helper->bind(null, ['url' => ['controller' => 'Articles', 'action' => 'edit', 4]]);
+        $routed = $helper->form()
+            ->url(['controller' => 'Articles', 'action' => 'edit', 4])
+            ->bind();
         static::assertStringContainsString('action="/Articles/edit/4"', $routed->open());
         $routed->close();
-        $current = $helper->bind(null, ['url' => false]);
+        $current = $helper->form()->url(false)->bind();
         static::assertStringNotContainsString(' action=', $current->open());
         $current->close();
-        $default = $helper->bind();
+        $default = $helper->form()->bind();
         static::assertStringContainsString('action="/articles/save"', $default->open());
         $default->close();
     }
@@ -45,7 +50,7 @@ class FormConstructionTest extends FormTestCase
             ],
             'defaults' => ['id' => 4],
         ]);
-        $form = $this->helper()->bind($context, ['type' => 'file']);
+        $form = $this->helper()->form($context)->multipart()->bind();
         $open = $form->open();
         static::assertStringContainsString('multipart/form-data', $open);
         static::assertStringContainsString('value="PUT"', $open);
@@ -55,15 +60,15 @@ class FormConstructionTest extends FormTestCase
     public function testUnsupportedMethodIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind(null, ['method' => 'invalid'])->open();
+        $this->helper()->form()->method('invalid')->bind()->open();
     }
 
     public function testProductionModeDoesNotExposeDebugSecurityData(): void
     {
         Configure::write('debug', false);
         try {
-            $form = $this->helper(attributes: ['formTokenData' => []])->bind();
-            $html = $form->open() . $form->control('name') . $form->close();
+            $form = $this->helper(attributes: ['formTokenData' => []])->form()->bind();
+            $html = $form->open() . $form->control('name')->render() . $form->close();
             static::assertStringContainsString('_Token[fields]', $html);
             static::assertStringNotContainsString('_Token[debug]', $html);
         } finally {

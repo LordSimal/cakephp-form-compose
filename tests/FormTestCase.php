@@ -5,6 +5,7 @@ namespace FormCompose\Test;
 
 use Cake\Http\ServerRequest;
 use Cake\View\View;
+use Closure;
 use Dom\HTMLDocument;
 use Dom\XPath;
 use FormCompose\View\Helper\FormHelper;
@@ -45,5 +46,19 @@ abstract class FormTestCase extends TestCase
         );
 
         return new XPath($document);
+    }
+
+    /**
+     * Exercise native PHP argument validation with deliberately untyped external values.
+     * @param mixed ...$arguments Values that may violate the public method's native types.
+     * @return mixed The public method's actual result.
+     */
+    protected function invokeBuilder(object $builder, string $method, mixed ...$arguments): mixed
+    {
+        $callable = [$builder, $method];
+        assert(is_callable($callable), 'The public builder method must exist.');
+        $invoke = Closure::fromCallable($callable);
+
+        return $invoke(...$arguments);
     }
 }

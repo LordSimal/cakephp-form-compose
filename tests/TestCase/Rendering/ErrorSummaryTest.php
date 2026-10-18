@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Rendering;
 
 use Cake\View\Form\ArrayContext;
+use FormCompose\Configuration\SummaryConfig;
 use FormCompose\Rendering\Html;
 use FormCompose\Test\Fixture\Authoring\CommentsForm;
 use FormCompose\Test\Fixture\Authoring\EmptyForm;
@@ -18,21 +19,23 @@ class ErrorSummaryTest extends FormTestCase
 {
     public function testOnlyRenderedEligibleFieldsAppearInRenderOrder(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => [
-                'first' => ['invalid' => 'First error'],
-                'second' => ['one' => 'Second one', 'two' => 'Second two'],
-                'omitted' => ['invalid' => 'Omitted error'],
-                'suppressed' => ['invalid' => 'Suppressed error'],
-            ],
-        ]));
-        $form->field('omitted')->attributes();
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => [
+                    'first' => ['invalid' => 'First error'],
+                    'second' => ['one' => 'Second one', 'two' => 'Second two'],
+                    'omitted' => ['invalid' => 'Omitted error'],
+                    'suppressed' => ['invalid' => 'Suppressed error'],
+                ],
+            ]))
+            ->bind();
+        $form->field('omitted')->resolve()->attributes();
         $form->open();
-        static::assertSame('', $form->errorSummary());
-        $body = $form->control('second', ['label' => 'Second label']);
-        $body .= $form->control('first', ['id' => 'custom:first', 'label' => false]);
-        $body .= $form->control('suppressed', ['errors' => false]);
-        $summary = $form->errorSummary();
+        static::assertSame('', $form->errorSummary()->render());
+        $body = $form->control('second')->label('Second label')->render();
+        $body .= $form->control('first')->id('custom:first')->label(false)->render();
+        $body .= $form->control('suppressed')->errors(false)->render();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('Second label: Second one', $summary);
         static::assertStringContainsString('Second label: Second two', $summary);
         static::assertStringContainsString('First: First error', $summary);
@@ -46,14 +49,18 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testLabelsTitlesAndMessagesEscapeUnlessExplicitlyTrusted(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => ['title' => ['invalid' => '<script>bad</script>'], 'trusted' => ['invalid' => 'Invalid']],
-        ]));
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => ['title' => ['invalid' => '<script>bad</script>'], 'trusted' => ['invalid' => 'Invalid']],
+            ]))
+            ->bind();
         $form->open();
-        $form->control('title', ['label' => '<Title>']);
-        $form->control('trusted', ['label' => new Html('<em>Trusted</em>')]);
+        $form->control('title')->label('<Title>')->render();
+        $form->control('trusted')
+            ->label(new Html('<em>Trusted</em>'))
+            ->render();
 
-        $summary = $form->errorSummary(['title' => '<Errors>']);
+        $summary = $form->errorSummary()->title('<Errors>')->render();
         static::assertStringContainsString('&lt;Errors&gt;', $summary);
         static::assertStringContainsString('&lt;Title&gt;: &lt;script&gt;bad&lt;/script&gt;', $summary);
         static::assertStringContainsString('<em>Trusted</em>: Invalid', $summary);
@@ -63,14 +70,16 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testHiddenAndDisabledFieldsRemainVisibleAsUnlinkedMessages(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => ['id' => ['invalid' => 'Invalid identifier'], 'locked' => ['invalid' => 'Locked value']],
-        ]));
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => ['id' => ['invalid' => 'Invalid identifier'], 'locked' => ['invalid' => 'Locked value']],
+            ]))
+            ->bind();
         $form->open();
-        $form->control('id', ['type' => 'hidden']);
-        $form->control('locked', ['disabled' => true]);
+        $form->control('id')->type('hidden')->render();
+        $form->control('locked')->disabled(true)->render();
 
-        $summary = $form->errorSummary();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('Invalid identifier', $summary);
         static::assertStringContainsString('Locked value', $summary);
         static::assertStringNotContainsString('<a ', $summary);
@@ -85,11 +94,11 @@ class ErrorSummaryTest extends FormTestCase
                 'comments' => ['count' => 'Add another', 2 => ['body' => ['invalid' => 'Fix row two']]],
             ],
         ]);
-        $form = $this->helper()->bind($context, blueprint: CommentsForm::class);
+        $form = $this->helper()->form($context)->blueprint(CommentsForm::class)->bind();
         $form->open();
-        $form->blueprint();
+        $form->blueprint()->render();
 
-        $summary = $form->errorSummary();
+        $summary = $form->errorSummary()->render();
         static::assertSame(1, substr_count($summary, 'Fix row two'));
         static::assertSame(1, substr_count($summary, 'Add another'));
         static::assertStringContainsString('href="#form-compose-1-comments.2.body"', $summary);
@@ -99,12 +108,14 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testEmptyCollectionsCanContributeTheirOwnError(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['comments' => ['count' => 'At least one']]]));
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['comments' => ['count' => 'At least one']]]))
+            ->bind();
         $form->open();
-        $form->embedMany('comments', EmptyForm::class, options: [
-            'label' => new Html('<strong>Comments</strong>'),
-        ]);
-        static::assertStringContainsString('<strong>Comments</strong>: At least one', $form->errorSummary());
+        $form->embedMany(path: 'comments', blueprint: EmptyForm::class)
+            ->label(new Html('<strong>Comments</strong>'))
+            ->render();
+        static::assertStringContainsString('<strong>Comments</strong>: At least one', $form->errorSummary()->render());
         $form->close();
     }
 
@@ -112,11 +123,12 @@ class ErrorSummaryTest extends FormTestCase
     {
         $context = new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]);
         $helper = $this->helper();
-        $ordinary = $helper->render(TitleForm::class, $context);
+        $ordinary = $helper->form($context)->blueprint(TitleForm::class)->render();
         static::assertStringNotContainsString('<section', $ordinary);
-        $html = $helper->render(TitleForm::class, $context, [
-            'errorSummary' => true,
-        ]);
+        $html = $helper->form($context)
+            ->blueprint(TitleForm::class)
+            ->errorSummary(true)
+            ->render();
         static::assertLessThan(strpos($html, 'name="title"'), strpos($html, '<section'));
         static::assertStringNotContainsString('errorSummary=', $html);
         static::assertStringContainsString('aria-labelledby="form-compose-2-error-summary-title"', $html);
@@ -124,19 +136,19 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testSummaryOptionsSelectCustomTemplatesAndAttributeDefaults(): void
     {
-        $html = $this->helper()->render(
-            TitleForm::class,
-            new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
-            [
-                'errorSummary' => [
-                    'template' => 'summary/custom',
-                    'title' => new Html('<em>Errors</em>'),
-                    'attributes' => ['id' => 'validation', 'class' => 'notice'],
-                    'partAttributes' => ['title' => ['id' => 'validation-heading']],
-                    'templateData' => ['intro' => 'Check <these>'],
-                ],
-            ],
-        );
+        $html = $this->helper()
+            ->form(new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]))
+            ->blueprint(TitleForm::class)
+            ->errorSummary(
+                SummaryConfig::builder()
+                    ->partTemplate('control', 'summary/custom')
+                    ->title(new Html('<em>Errors</em>'))
+                    ->attributes(['id' => 'validation', 'class' => 'notice'])
+                    ->partAttributes('title', ['id' => 'validation-heading'])
+                    ->templateData(['intro' => 'Check <these>'])
+                    ->config(),
+            )
+            ->render();
         static::assertStringContainsString(
             '<aside id="validation" class="notice" aria-labelledby="validation-heading">',
             $html,
@@ -148,25 +160,26 @@ class ErrorSummaryTest extends FormTestCase
     public function testAnInjectedSummaryRendererWorksThroughTheHelperShortcut(): void
     {
         $helper = new CustomHelper($this->helper()->getView());
-        $html = $helper->render(
-            TitleForm::class,
-            new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]),
-            ['errorSummary' => true],
-        );
+        $html = $helper->form(new ArrayContext(['errors' => ['title' => ['invalid' => 'Fix title']]]))
+            ->blueprint(TitleForm::class)
+            ->errorSummary(true)
+            ->render();
         static::assertStringContainsString('class="custom-summary"', $html);
     }
 
     public function testHandwrittenInputRegistrationAddsFeedbackWithoutRenderingAgain(): void
     {
-        $form = $this->helper()->bind(new ArrayContext([
-            'errors' => ['title' => ['invalid' => 'Fix handwritten title']],
-        ]));
-        $field = $form->field('title');
+        $form = $this->helper()
+            ->form(new ArrayContext([
+                'errors' => ['title' => ['invalid' => 'Fix handwritten title']],
+            ]))
+            ->bind();
+        $field = $form->field('title')->resolve();
         $form->open();
         $input = '<input' . (string)$field->attributes() . '>';
         $field->register();
-        $input .= $field->errors();
-        $summary = $form->errorSummary();
+        $input .= $field->errors()->render();
+        $summary = $form->errorSummary()->render();
         static::assertStringContainsString('id="form-compose-1-title"', $input);
         static::assertSame(1, substr_count($summary, 'Fix handwritten title'));
         static::assertStringNotContainsString('<a ', $summary);
@@ -175,12 +188,12 @@ class ErrorSummaryTest extends FormTestCase
 
     public function testSuppressedCollectionErrorsNeverEnterTheSummary(): void
     {
-        $form = $this->helper()->bind(new ArrayContext(['errors' => ['comments' => ['count' => 'Suppressed']]]));
+        $form = $this->helper()
+            ->form(new ArrayContext(['errors' => ['comments' => ['count' => 'Suppressed']]]))
+            ->bind();
         $form->open();
-        $form->embedMany('comments', EmptyForm::class, options: [
-            'errors' => false,
-        ]);
-        static::assertSame('', $form->errorSummary());
+        $form->embedMany(path: 'comments', blueprint: EmptyForm::class)->errors(false)->render();
+        static::assertSame('', $form->errorSummary()->render());
         $form->close();
     }
 }

@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace FormCompose\Test\TestCase\Form\Field;
 
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\ControlList;
 use FormCompose\Form\Field\FieldDefinition;
+use FormCompose\Form\Field\FieldSpec;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -16,20 +18,24 @@ class ControlListTest extends TestCase
 {
     public function testMixedDeclarationsPreserveOrderAndExplicitValues(): void
     {
-        $email = new FieldDefinition('email', ['type' => 'email', 'label' => 'Work email']);
+        $email = new FieldSpec('email', new FieldConfig(type: 'email', label: 'Work email'));
+        /** @var list<\FormCompose\Form\Field\FieldSpec> $fields */
         $fields = ControlList::normalize([
             'first_name',
-            'email' => ['type' => 'email', 'label' => 'Work email'],
-            'author.name' => ['label' => false, 'value' => null, 'required' => false],
-            'count' => ['value' => 0],
-            'empty' => ['value' => ''],
+            $email,
+            new FieldSpec('author.name', FieldConfig::builder()->label(false)->value(null)->required(false)->config()),
+            new FieldSpec('count', FieldConfig::builder()->value(0)->config()),
+            new FieldSpec('empty', FieldConfig::builder()->value('')->config()),
         ]);
         static::assertSame(['first_name', 'email', 'author.name', 'count', 'empty'], array_column($fields, 'path'));
-        static::assertSame($email->options, $fields[1]->options);
-        static::assertSame([], $fields[0]->options);
-        static::assertSame(['label' => false, 'value' => null, 'required' => false], $fields[2]->options);
-        static::assertSame(['value' => 0], $fields[3]->options);
-        static::assertSame(['value' => ''], $fields[4]->options);
+        static::assertSame($email, $fields[1]);
+        static::assertFalse($fields[0]->config->hasValue);
+        static::assertFalse($fields[2]->config->label);
+        static::assertTrue($fields[2]->config->hasValue);
+        static::assertNull($fields[2]->config->value);
+        static::assertFalse($fields[2]->config->required);
+        static::assertSame(0, $fields[3]->config->value);
+        static::assertSame('', $fields[4]->config->value);
         static::assertSame([], ControlList::normalize([]));
     }
 
@@ -53,7 +59,6 @@ class ControlListTest extends TestCase
             'null' => [[null]],
             'boolean' => [[false]],
             'indexed options' => [[['label' => 'Name']]],
-            'named string' => [['email' => 'email']],
             'indexed definition' => [[new FieldDefinition('email')]],
             'named definition' => [['email' => new FieldDefinition('email')]],
             'invalid path' => [['name', 'invalid path' => []]],

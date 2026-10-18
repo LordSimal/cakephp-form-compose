@@ -9,7 +9,7 @@ Use this page to look up exact paths, variables, and APIs. For a first example,
 start with [How rendering works](/rendering), then follow
 [Use your own templates](/templates), [Create a theme](/themes), or
 [Use variants](/variants). For control configuration, see
-[Field options](/field-options).
+[Field configuration](/field-options).
 
 All paths below are relative to a theme layer, such as
 `templates/element/forms/application/`.
@@ -18,13 +18,13 @@ All paths below are relative to a theme layer, such as
 
 Lookup runs independently for each rendered part:
 
-1. Use an explicit `templates[part]` element when configured.
+1. Use an explicit `partTemplate(part, element)` element when configured.
 2. Otherwise search the theme layers in their supplied order, followed by the
    bundled `FormCompose.form/base` layer.
 3. Within each layer, try the requested variant, then the type-specific file,
    then the generic part. Stop at the first match.
 
-For an email control with `variant => 'compact'`, each layer tries:
+For an email control with `variant('compact')`, each layer tries:
 
 ```text
 variants/compact/control.php
@@ -58,14 +58,11 @@ variant.
 
 ### Explicit overrides
 
-Use singular `template` to select the complete field control element. It takes
+Use `template()` to select the complete field control element. It takes
 priority over variant and layer lookup:
 
 ```php
-$form->control('email', [
-    'type' => 'email',
-    'template' => 'forms/special-email',
-]);
+echo $form->control('email')->type('email')->template('forms/special-email');
 ```
 
 Here the control uses `templates/element/forms/special-email.php`. Use CakePHP
@@ -73,37 +70,27 @@ element names without `.php`, including plugin-qualified names such as
 `MyDesignSystem.forms/email`. [Use your own templates](/templates)
 shows the call and a complete element together.
 
-Plural `templates` maps individual parts to elements. For a field's outer
+`partTemplate()` selects individual parts. For a field's outer
 wrapper, select the `control` part:
 
 ```php
-$form->control('email', [
-    'type' => 'email',
-    'templates' => [
-        'control' => 'forms/special-email',
-        'input' => 'forms/email-input',
-        'help' => 'forms/email-help',
-    ],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->template('forms/special-email')
+    ->partTemplate('input', 'forms/email-input')
+    ->partTemplate('help', 'forms/email-help');
 ```
 
-Each entry names its own element. Parts without an explicit override keep their
-normal theme lookup. You can combine `template` with `templates` entries for other
-parts. Supplying different values for `template` and its primary part override
-throws `InvalidArgumentException` before the selected element renders; identical
-values are accepted. The shorthand must be a nonempty string.
+Each setter selects one part's element. Parts without an explicit selection keep
+normal theme lookup. `template()` selects this builder's primary part, while
+`partTemplate()` names a part explicitly. Calling either again for the same part
+uses the last selection. Empty part/element names fail validation.
 
-Both spellings work through `field()` and blueprint field declarations too. During
-resolution, `template` is normalized to the primary part: `templates['control']`
-for fields and blueprints, or `templates['layout']` for complete forms. Custom
-renderers receive those canonical options.
-
-::: info The shorthand follows the rendered part
-For fields and blueprints, `template` means the outer `control` part. For a
-complete form, it means the `layout` part. Hidden fields render their input part
-directly. In `bind()`, use `templates` keys `layout`, `open`, `close`, or `hidden`;
-for a button, use `templates['control']` in `submit()`.
-:::
+For fields, blueprints, buttons, summaries, and repeated collections, the primary
+part is `control`. For a complete form it is `layout`; for a field's `input()`
+builder it is `input`, and likewise for label/help/errors. Hidden fields render
+the input directly. Configure form `open`, `close`, and `hidden` explicitly with
+`partTemplate()`. Custom renderers receive typed `$node->presentation`.
 
 ### Calling the parent layer
 
@@ -122,14 +109,13 @@ it moves to the next layer rather than trying another file in that same layer.
 
 ## Template data
 
-Pass custom presentation data through the `templateData` option. Each element
+Pass custom presentation data through `templateData(array)`. Each element
 receives it as a `$templateData` array alongside its prepared variables:
 
 ```php
-echo $form->control('email', [
-    'template' => 'forms/special-email',
-    'templateData' => ['prefix' => '@', 'account' => $account],
-]);
+echo $form->control('email')
+    ->template('forms/special-email')
+    ->templateData(['prefix' => '@', 'account' => $account]);
 ```
 
 The [template guide](/templates#pass-custom-presentation-data) shows the call and
@@ -141,10 +127,10 @@ The same applies to `$attributes`, `$parent`, and other prepared variables.
 
 | Supplied through | Available to |
 | --- | --- |
-| `control()` or `field()` options | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
-| `bind()` options or `open()` options | That form's opening, closing, and infrastructure hidden-input elements. |
-| `submit()` options | That button's element. |
-| `Form` attribute, builder `presentation()`, or `blueprint()` options | That blueprint's layout, independently of child field or embedded layout data. |
+| Field builder `templateData()` | That field's control, label, input, help, errors, native markup, choices, and fallback elements. |
+| Form builder `templateData()` before binding | That form's opening, closing, and infrastructure hidden-input elements. |
+| Button builder `templateData()` | That button's element. |
+| Blueprint `presentation()` or occurrence builder `templateData()` | That blueprint's layout, independently of child field or embedded layout data. |
 
 Theme layers, explicit overrides, and `$parent()` calls receive the same bag for
 their field, form, or button. Form data does not become a default for its fields
@@ -154,13 +140,11 @@ button HTML attributes before rendering.
 For example, form and button elements can use separate configuration:
 
 ```php
-$form = $this->Form->bind($article, [
-    'templateData' => ['layout' => 'stacked'],
-]);
+$form = $this->Form->form($article)->templateData(['layout' => 'stacked'])->bind();
 
 echo $form->open();
 echo $form->control('title');
-echo $form->submit('Save', ['templateData' => ['icon' => 'save']]);
+echo $form->submit('Save')->templateData(['icon' => 'save']);
 echo $form->close();
 ```
 
@@ -169,16 +153,15 @@ Here form elements receive `['layout' => 'stacked']`, the title field receives
 
 ### Values, replacement, and escaping
 
-When omitted, the bag is `[]`. Supplying a non-array container, including explicit
-null, throws `InvalidArgumentException` before the affected template renders or
-its submission is registered. Values *inside* the array may include objects,
-nested arrays, false, zero, null, and explicitly trusted `Html` instances. Objects
-keep their identity; metadata is not serialized, stringified, or pre-escaped.
+When omitted, the bag is `[]`. The native array parameter rejects null and
+non-array containers with `TypeError`. Values inside the bag may include objects,
+nested arrays, false, zero, null, and trusted `Html`. Objects retain their identity;
+data is not serialized, stringified, or pre-escaped.
 
-Existing option precedence applies: per-call field metadata replaces the entire
-definition bag, and `open()` metadata replaces the entire binding bag. Pass `[]`
-to clear earlier metadata. To keep existing keys, combine the arrays explicitly
-before supplying the new bag, for example with `array_replace()`.
+`templateData()` merges named entries over earlier layers. Use
+`replaceTemplateData([])` to clear inherited data, or supply another replacement
+bag. Replacement intent survives reusable config snapshots. A field's parts
+inherit its bag; local part data remains local.
 
 ::: tip Escape at the point of output
 Templates receive original PHP values. Use `Html::text()` for text; it escapes
@@ -194,7 +177,7 @@ Custom renderers receive the validated bag through
 Field elements receive `$field` (`BoundField`), `$attributes` (`Attributes`), and
 the `$templateData` array.
 The field's immutable `state` exposes its path, name, ID, type, value, messages,
-constraints, and options.
+constraints, and typed `config`.
 
 | Part | Purpose |
 | --- | --- |
@@ -266,7 +249,7 @@ do not invoke this part.
 | `$body` | Already rendered blueprint HTML, including nested/custom controls. Emit it once. |
 | `$summary` | Already rendered summary HTML, or an empty string. Emit it once. |
 | `$submit` | Requested text/trusted `Html` label, translated default Submit label, or `false`. |
-| `$submitOptions` | Button options passed to complete-form `render()`. |
+| `$submitConfig` | Immutable `ButtonConfig` configured on the form builder. |
 | `$templateData` | The form's application-owned presentation data. |
 | `$parent` | Callback that resumes normal theme lookup for this part. |
 
@@ -276,8 +259,8 @@ theme still wraps individual fields. Normal theme lookup supports method-specifi
 and variant overrides, for example `form/patch/layout.php` and
 `form/variants/compact/layout.php`.
 
-For an exceptional per-form selection, use `options['template']` or
-`options['templates']['layout']`. These overrides also work as binding defaults.
+For an exceptional per-form selection, use `template('forms/editor')` or
+`partTemplate('layout', 'forms/editor')` on the form builder before binding.
 
 The plugin outputs the opening before this layout and generates protection fields
 and closing markup afterward. The blueprint owns validation-bearing controls;
@@ -351,15 +334,14 @@ Theme defaults use part keys, with optional type prefixes:
 | `button` | Buttons. |
 | `option`, `choice`, `choice-label`, `choice-container`, `choice-group` | Choice parts. |
 
-Use a field's `attributes` option for input attributes and `partAttributes` for
+Use a field builder's `attributes()` for input attributes and `partAttributes()` for
 other parts:
 
 ```php
-$form->control('email', [
-    'type' => 'email',
-    'attributes' => ['class' => 'wide'],
-    'partAttributes' => ['label' => ['class' => 'caption']],
-]);
+echo $form->control('email')
+    ->type('email')
+    ->attributes(['class' => 'wide'])
+    ->partAttributes('label', ['class' => 'caption']);
 ```
 
 Attribute bags merge class tokens and `aria-describedby`/`aria-labelledby`
@@ -373,10 +355,11 @@ Configure input identity and behavior, such as `name`, `id`, `type`, `value`, an
 
 ## Theme API
 
-`FormCompose\Rendering\Theme` is immutable. Pass it through `bind(..., theme: $theme)`:
+`FormCompose\Rendering\Theme` is immutable. Select it with `form($data)->theme($theme)` before binding:
 
 ```php
-use FormCompose\Rendering\Theme;
+use FormComposeTheme;
+use Rendering\Theme;
 
 $theme = new Theme(
     layers: ['forms/application'],
@@ -386,7 +369,7 @@ $theme = new Theme(
         'blueprint.control' => ['class' => 'form-section'],
     ],
 );
-$form = $this->Form->bind($article, theme: $theme);
+$form = $this->Form->form($article)->theme($theme)->bind();
 ```
 
 `new Theme(array $layers = [], array $defaults = [])` stores readonly `layers`
@@ -414,12 +397,14 @@ cast to a string. It includes a leading space when attributes are present, so
 | `__toString(): string` | Escaped attributes; false/null omitted, true emitted as a bare name. |
 
 ```php
-use FormCompose\Rendering\Attributes;
+use FormComposeAttributes;
+use Rendering\Attributes;
 
 $attributes = new Attributes(['class' => 'field', 'required' => true]);
 $wide = $attributes->merge(['class' => ['wide' => true, 'hidden' => false]]);
 // (string)$wide: ' class="field wide" required'
 $replacement = $wide->replace(['class' => 'compact', 'required' => null]);
+
 // (string)$replacement: ' class="compact"'
 ```
 
@@ -434,7 +419,8 @@ The bag does not resolve conflicting CSS utilities.
 labels, help, or button content. It does not sanitize HTML.
 
 ```php
-use FormCompose\Rendering\Html;
+use FormComposeHtml;
+use Rendering\Html;
 
 // Inside an open form.
 echo $form->submit(new Html('<strong>Save article</strong>'));

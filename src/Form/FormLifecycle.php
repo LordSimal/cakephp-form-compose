@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace FormCompose\Form;
 
 use FormCompose\Binding\FormBinding;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Form\Field\BoundField;
 use FormCompose\Rendering\Attributes;
 use FormCompose\Rendering\Theme;
@@ -46,15 +47,14 @@ class FormLifecycle
     /**
      * Prepare an opening without committing the lifecycle before rendering succeeds.
      *
-     * @param array<string, mixed> $options Opening options and HTML attributes.
      */
-    public function prepare(Theme $theme, array $options): FormState
+    public function prepare(Theme $theme, FormConfig $config): FormState
     {
         if ($this->state instanceof FormState) {
             throw new LogicException('A form session can only be opened once.');
         }
 
-        return $this->construction->prepare($this->binding, $theme, $options);
+        return $this->construction->prepare($this->binding, $theme, $config);
     }
 
     /**

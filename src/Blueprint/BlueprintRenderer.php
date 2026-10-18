@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace FormCompose\Blueprint;
 
+use FormCompose\Configuration\EmbedConfig;
+use FormCompose\Configuration\PresentationConfig;
 use FormCompose\Form\FeedbackEntry;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\InputRegistry;
 use FormCompose\Rendering\RenderContext;
 use FormCompose\Rendering\RenderNode;
-use FormCompose\Rendering\TemplateOptions;
 use LogicException;
 
 /**
@@ -29,16 +30,15 @@ class BlueprintRenderer
     /**
      * Merge local presentation and render the selected or themed default layout.
      *
-     * @param array<string, mixed> $options Per-call presentation overrides.
      */
-    public function render(FormSession $session, FormDefinition $definition, string $path, array $options): string
-    {
-        $options = array_replace(
-            TemplateOptions::normalize($definition->options),
-            TemplateOptions::normalize($options),
-        );
-        /** @var array<string, mixed> $attributes */
-        $attributes = $options['attributes'] ?? [];
+    public function render(
+        FormSession $session,
+        FormDefinition $definition,
+        string $path,
+        PresentationConfig $presentation,
+    ): string {
+        $presentation = $definition->presentation->merge($presentation);
+        $attributes = $presentation->attributes;
         $node = new RenderNode(
             'blueprint',
             'default',
@@ -50,7 +50,7 @@ class BlueprintRenderer
                     ->attributes('blueprint.control', 'default')
                     ->merge($attributes),
             ],
-            $options,
+            $presentation,
         );
 
         return $this->rendering->renderer->render('control', $node);
@@ -59,12 +59,11 @@ class BlueprintRenderer
     /**
      * Render a repeated section through an optional PHP wrapper with scoped row views.
      *
-     * @param array<string, mixed> $options Occurrence overrides.
      */
     public function renderMany(
         FormSession $session,
         RepeatedDefinition $repeat,
-        array $options,
+        EmbedConfig $config,
         InputRegistry $inputs,
     ): string {
         $rowDefinition = $repeat->rows;
@@ -72,8 +71,9 @@ class BlueprintRenderer
             throw new LogicException('Repeated embeds must be compiled before rendering.');
         }
 
-        $options = array_replace(TemplateOptions::normalize($repeat->options), TemplateOptions::normalize($options));
-        $repeat = new RepeatedDefinition($repeat->path, $repeat->blueprint, $repeat->keys, $options, $repeat->rows);
+        $config = $repeat->config->merge($config);
+        $presentation = $config->presentation;
+        $repeat = new RepeatedDefinition($repeat->path, $repeat->blueprint, $repeat->keys, $config, $repeat->rows);
         $rows = [];
         foreach ($rowDefinition->entries as $entry) {
             if (!$entry instanceof EmbeddedDefinition) {
@@ -88,16 +88,15 @@ class BlueprintRenderer
         }
 
         $embed = $this->createRepeatedView($repeat, $rows, $session, $inputs);
-        /** @var array<string, mixed> $configured */
-        $configured = $options['attributes'] ?? [];
+        $configured = $presentation->attributes;
         $attributes = $this->rendering->theme->attributes('embed-many.control', 'default')->merge($configured);
 
-        return $inputs->render(function () use ($embed, $rows, $attributes, $options, $inputs, $repeat): string {
+        return $inputs->render(function () use ($embed, $rows, $attributes, $presentation, $inputs, $repeat): string {
             $html = $this->rendering->renderer->render('control', new RenderNode(
                 'embed-many',
                 'default',
                 ['embed' => $embed, 'rows' => $rows, 'attributes' => $attributes],
-                $options,
+                $presentation,
             ));
             $inputs->feedback->record(
                 'embed-many:' . $repeat->path,

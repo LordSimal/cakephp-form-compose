@@ -8,7 +8,7 @@ use function Cake\I18n\__dx;
 /**
  * Stores message metadata until a field resolves its label or help text.
  *
- * Use new Translated('Article title') in a Field attribute instead of a closure
+ * Use new Translated('Article title') in a reusable field configuration instead of a closure
  * for static messages. FieldText translates it through CakePHP in the current
  * locale after option merging. This immutable value never contains trusted HTML
  * and does not translate during construction or cache locale-specific results.

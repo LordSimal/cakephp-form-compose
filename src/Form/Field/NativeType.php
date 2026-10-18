@@ -93,7 +93,7 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, 
 
         return [new Submission(
             $field->state->name,
-            ($field->state->options['secure'] ?? true) !== false,
+            $field->state->config->secure,
             $field->state->type === 'hidden' ? NativeValue::scalar($field->state->value) : null,
         )];
     }
@@ -128,7 +128,7 @@ class NativeType implements FieldTypeInterface, InputIdentityProviderInterface, 
         }
 
         /** @var iterable<array-key, mixed>|class-string<\BackedEnum> $options */
-        $options = $field->state->options['options'] ?? [];
+        $options = $field->state->config->choices ?? [];
 
         return SelectPlaceholder::apply(
             $field->state,

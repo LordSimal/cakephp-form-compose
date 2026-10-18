@@ -26,16 +26,18 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use App\Service\StatusChoices;
-use FormCompose\Attribute\Field;
-use FormCompose\Attribute\Form;
-use FormCompose\Blueprint\BlueprintBuilder;
-use FormCompose\Blueprint\FormBlueprint;
-use FormCompose\Blueprint\FormContext;
+use AppStatusChoices;
+use Attribute\Form;
+use Blueprint\BlueprintBuilder;
+use Blueprint\FormBlueprint;
+use Blueprint\FormContext;
+use FormComposeBlueprintBuilder;
+use FormComposeForm;
+use FormComposeFormBlueprint;
+use FormComposeFormContext;
+use Service\StatusChoices;
 
 #[Form('article')]
-#[Field('title')]
-#[Field('status', type: 'select')]
 class ArticleForm extends FormBlueprint
 {
     public function __construct(protected readonly StatusChoices $statuses)
@@ -44,7 +46,8 @@ class ArticleForm extends FormBlueprint
 
     public function configure(BlueprintBuilder $form, FormContext $context): void
     {
-        $form->with('status', ['options' => $this->statuses->all()]);
+        $form->add('title');
+        $form->add('status')->choices($this->statuses->all());
     }
 }
 ```
@@ -53,11 +56,14 @@ Then add a factory argument to a controller action and pass it alongside your
 existing view data:
 
 ```php [Controller action]
-use FormCompose\Blueprint\BlueprintFactory;
+use Blueprint\BlueprintFactory;
+
+use FormComposeBlueprintFactory;
 
 public function edit(BlueprintFactory $blueprints): void
 {
     $this->set('blueprints', $blueprints);
+
     // Keep your existing record loading, authorization, and submission handling.
 }
 ```
@@ -74,7 +80,7 @@ $this->addHelper('Form', [
 Alternatively, set the option on the existing helper before binding:
 `$this->Form->setConfig('blueprintFactory', $blueprints)`.
 
-Now `$this->Form->render('article', $article)` uses the injected service
+Now `$this->Form->form($article)->blueprint('article')->render()` uses the injected service
 when compiling that blueprint.
 
 CakePHP 6 autowires concrete dependencies. Register interfaces, scalar arguments,
@@ -104,13 +110,17 @@ does not reconfigure the collection that the plugin already registered.
 For example, change the paths or cache settings like this:
 
 ```php
-use Cake\AttributeResolver\AttributeResolver;
-use Cake\Core\Configure;
+use AttributeResolver\AttributeResolver;
+use CakeAttributeResolver;
+use CakeConfigure;
+use Core\Configure;
 
 AttributeResolver::setConfig('formCompose', [
     'paths' => [
-        'src/Form/*.php', 'src/Form/**/*.php',
-        'src/Admin/Form/*.php', 'src/Admin/Form/**/*.php',
+        'src/Form/*.php',
+        'src/Form/**/*.php',
+        'src/Admin/Form/*.php',
+        'src/Admin/Form/**/*.php',
     ],
     'cache' => Configure::read('debug') ? false : '_cake_attributes_',
     'validateFiles' => false,

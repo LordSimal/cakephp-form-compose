@@ -141,7 +141,7 @@ export default defineConfig({
         text: 'API reference',
         items: [
           { text: 'Helper and form session', link: '/form-reference' },
-          { text: 'Field options', link: '/field-options' },
+          { text: 'Field configuration', link: '/field-options' },
           { text: 'Bound fields', link: '/field-reference' },
           { text: 'Blueprint reference', link: '/blueprint-reference' },
           { text: 'Template reference', link: '/template-reference' },

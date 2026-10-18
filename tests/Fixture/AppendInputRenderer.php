@@ -30,7 +30,7 @@ final class AppendInputRenderer implements RendererInterface
             $this->attempted = true;
             /** @var FormSession $form */
             $form = $node->variables['form'];
-            $form->control('late');
+            $form->control('late')->render();
         }
 
         return $this->renderer->render($part, $node);

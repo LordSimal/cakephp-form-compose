@@ -26,12 +26,12 @@ class EdgeCasesTest extends FormTestCase
 
     public function testCustomNamesAndBackedEnums(): void
     {
-        $form = $this->helper()->bind();
-        $field = $form->field('status', [
-            'name' => 'custom[status]',
-            'id' => 'custom-status',
-            'value' => Status::Published,
-        ]);
+        $form = $this->helper()->form()->bind();
+        $field = $form->field('status')
+            ->name('custom[status]')
+            ->id('custom-status')
+            ->value(Status::Published)
+            ->resolve();
         static::assertSame('published', $field->state->value);
         static::assertSame('custom[status]', $field->state->name);
         static::assertSame('custom-status', $field->state->id);
@@ -40,34 +40,47 @@ class EdgeCasesTest extends FormTestCase
     public function testCustomNameCannotInjectMarkup(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind()->field('name', ['name' => 'name" autofocus="autofocus']);
+        $this->helper()
+            ->form()
+            ->bind()
+            ->field('name')
+            ->name('name" autofocus="autofocus')
+            ->resolve();
     }
 
     public function testInvalidControlTypeIsRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->helper()->bind()->field('name', ['type' => '../invalid']);
+        $this->helper()
+            ->form()
+            ->bind()
+            ->field('name')
+            ->type('../invalid')
+            ->resolve();
     }
 
     public function testNativeChoiceContentAndClassesAreEscaped(): void
     {
-        $form = $this->helper()->bind();
-        $form->open(['url' => '/articles/save']);
+        $form = $this->helper()->form()->url('/articles/save')->bind();
+        $form->open();
 
-        $checkbox = $form->control('flag', [
-            'type' => 'checkbox',
-            'value' => '"><script>',
-            'checkedValue' => '"><script>',
-        ]);
+        $checkbox = $form->control('flag')
+            ->type('checkbox')
+            ->value('"><script>')
+            ->checkedValue('"><script>')
+            ->render();
         static::assertStringNotContainsString('<script>', $checkbox);
         static::assertStringContainsString('checked="checked"', $checkbox);
-        $group = $form->control('tags', ['type' => 'multicheckbox', 'options' => ['<script>' => ['a' => '<b>A</b>']]]);
+        $group = $form->control('tags')
+            ->type('multicheckbox')
+            ->choices(['<script>' => ['a' => '<b>A</b>']])
+            ->render();
         static::assertStringNotContainsString('<script>', $group);
         static::assertStringContainsString('&lt;script&gt;', $group);
-        $html = $form->control('plain', [
-            'attributes' => ['class' => ['wide' => true, 'hidden' => false]],
-            'hiddenField' => false,
-        ]);
+        $html = $form->control('plain')
+            ->attributes(['class' => ['wide' => true, 'hidden' => false]])
+            ->fallback(false)
+            ->render();
         static::assertStringContainsString('class="wide"', $html);
         $form->close();
     }
@@ -84,12 +97,16 @@ class EdgeCasesTest extends FormTestCase
                 return '';
             }
         };
-        $form = $this->helper()->bind(renderer: $renderer);
-        $form->open(['url' => '/articles/save']);
+        $form = $this->helper()
+            ->form()
+            ->renderer($renderer)
+            ->url('/articles/save')
+            ->bind();
+        $form->open();
 
-        $field = $form->field('name');
+        $field = $form->field('name')->resolve();
         try {
-            $field->input();
+            $field->input()->render();
         } catch (RuntimeException $runtimeException) {
             static::assertSame('Rendering failed', $runtimeException->getMessage());
         }
@@ -111,22 +128,29 @@ class EdgeCasesTest extends FormTestCase
         $helper = $this->helper();
         $helper->setConfig('contextFactory', $factory);
 
-        $form = $helper->bind('custom source');
-        static::assertSame('date', $form->field('when')->state->type);
-        $form->open(['url' => '/articles/save']);
-        static::assertStringContainsString('value="2026-10-15"', $form->control('when'));
+        $form = $helper->form('custom source')->url('/articles/save')->bind();
+        static::assertSame('date', $form->field('when')->resolve()->state->type);
+        $form->open();
+        static::assertStringContainsString('value="2026-10-15"', $form->control('when')->render());
         $form->close();
     }
 
     public function testCheckboxCanOmitItsFallbackAndOpenCanEnableMultipart(): void
     {
-        $form = $this->helper()->bind();
-        $form->open(['url' => '/articles/save', 'enctype' => 'multipart/form-data']);
-        static::assertStringNotContainsString('hidden', $form->control('flag', [
-            'type' => 'checkbox',
-            'hiddenField' => false,
-        ]));
-        static::assertStringContainsString('type="file"', $form->control('upload', ['type' => 'file']));
+        $form = $this->helper()
+            ->form()
+            ->url('/articles/save')
+            ->enctype('multipart/form-data')
+            ->bind();
+        $form->open();
+        static::assertStringNotContainsString(
+            'hidden',
+            $form->control('flag')->type('checkbox')->fallback(false)->render(),
+        );
+        static::assertStringContainsString(
+            'type="file"',
+            $form->control('upload')->type('file')->render(),
+        );
         $form->close();
     }
 }

@@ -4,114 +4,140 @@ declare(strict_types=1);
 namespace FormCompose\Blueprint;
 
 use Closure;
+use FormCompose\Builder\EmbeddedBlueprintBuilder;
+use FormCompose\Builder\FieldConfigBuilder;
+use FormCompose\Builder\PresentationBuilder;
+use FormCompose\Builder\RepeatedBlueprintBuilder;
+use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\FieldDefinition;
+use InvalidArgumentException;
 
 /**
- * Mutably assembles configuration during one blueprint's configure() hook.
- *
- * Operations replace an immutable FormDefinition internally. build() returns a
- * snapshot that subsequent builder changes cannot modify. No values or rendering
- * state are kept here. Subclasses may specialize operations used by a factory.
+ * Authors ordered field and embed declarations during one blueprint hook.
+ * Child compilation is deferred until build(); qualified parent edits then overlay
+ * compiled children. No binding, rendering, or submission state is stored here.
  */
 class BlueprintBuilder
 {
+    use ChildDeclarationsTrait;
+
+    /** @var array<string, FieldConfigBuilder|EmbeddedBlueprintBuilder|RepeatedBlueprintBuilder|EmbeddedDefinition|RepeatedDefinition> Ordered declarations. */
+    protected array $entries = [];
+
+    /** @var array<string, FieldConfigBuilder> Qualified child overrides. */
+    protected array $edits = [];
+
+    /** @var list<string> Explicit removals. */
+    protected array $removed = [];
+
+    /** @var list<string> Omission history retained from a compiled seed. */
+    protected array $omitted = [];
+
+    protected readonly PresentationBuilder $presentation;
+
     /**
-     * Assemble one blueprint with its required scoped compilation collaborators.
-     *
-     * @param \Closure(string, string): \FormCompose\Blueprint\FormDefinition $resolver Mount path and blueprint identifier.
-     * @param \Closure(\FormCompose\Blueprint\RepeatedDefinition): \FormCompose\Blueprint\RepeatedDefinition $repeated Compile one repeated occurrence.
+     * @param \Closure(string, string): FormDefinition $resolver Scoped mount and blueprint identifier.
+     * @param \Closure(RepeatedDefinition): RepeatedDefinition $repeated Scoped repeated compiler.
      */
     public function __construct(
-        protected FormDefinition $definition,
+        FormDefinition $definition,
         protected readonly Closure $resolver,
         protected readonly Closure $repeated,
     ) {
+        foreach ($definition->entries as $entry) {
+            $this->entries[$entry->path] = $entry instanceof FieldDefinition
+                ? $this->createFieldBuilder($entry->config)
+                : $entry;
+        }
+
+        $this->omitted = $definition->removed;
+        $this->presentation = new PresentationBuilder($definition->presentation);
     }
 
-    /**
-     * Append a field; duplicate paths are rejected.
-     *
-     * @param array<string, mixed> $options Field configuration.
-     */
-    public function add(string $path, array $options = []): static
+    /** Append an attached field builder; duplicate declarations fail immediately. */
+    public function add(string $path, FieldConfig|FieldConfigBuilder|null $config = null): FieldConfigBuilder
     {
-        $this->definition = $this->definition->add(new FieldDefinition($path, $options));
+        $this->assertAvailable($path);
 
-        return $this;
+        return $this->entries[$path] = $this->createFieldBuilder(FieldConfig::capture($config));
     }
 
-    /**
-     * Append a child blueprint in the current hook's scoped context.
-     *
-     * @param array<string, mixed> $options Occurrence presentation.
-     */
-    public function embed(string $path, string $blueprint, array $options = []): static
+    /** Edit a declared field or stage a qualified child override, validated during build(). */
+    public function field(string $path): FieldConfigBuilder
     {
-        $child = ($this->resolver)($path, $blueprint);
-        $this->definition = $this->definition->embed($path, $child, $options);
+        $entry = $this->entries[$path] ?? null;
+        if ($entry instanceof FieldConfigBuilder) {
+            return $entry;
+        }
 
-        return $this;
+        if ($entry !== null) {
+            throw new InvalidArgumentException('Cannot configure an embed as a field: ' . $path);
+        }
+
+        return $this->edits[$path] ??= $this->createFieldBuilder(new FieldConfig());
     }
 
-    /**
-     * Append repeated rows and make their qualified fields available to the current hook.
-     *
-     * @param list<int|string>|null $keys Explicit row keys, otherwise inferred.
-     * @param array<string, mixed> $options Repeated-embed presentation.
-     */
-    public function embedMany(
-        string $path,
-        string $blueprint,
-        ?array $keys = null,
-        array $options = [],
-    ): static {
-        $compiled = ($this->repeated)(new RepeatedDefinition($path, $blueprint, $keys, $options));
-        $this->definition = $this->definition->add($compiled);
-
-        return $this;
-    }
-
-    /**
-     * Select presentation for this blueprint's layout.
-     *
-     * @param array<string, mixed> $options Blueprint layout presentation.
-     */
-    public function presentation(array $options): static
-    {
-        $this->definition = $this->definition->presentation($options);
-
-        return $this;
-    }
-
-    /**
-     * Override an existing field's top-level options without moving it.
-     *
-     * @param array<string, mixed> $options Field overrides.
-     */
-    public function with(string $path, array $options): static
-    {
-        $this->definition = $this->definition->with($path, $options);
-
-        return $this;
-    }
-
-    /**
-     * Remove an existing field from the collection; unknown paths are rejected.
-     */
+    /** Stage a removal, including qualified children, without rendering anything. */
     public function remove(string $path): static
     {
-        $this->definition = $this->definition->remove($path);
+        $this->removed[] = $path;
 
         return $this;
     }
 
-    /**
-     * Return the current immutable configuration, independently of further changes.
-     *
-     * @internal Compiler snapshot; applications configure the supplied builder.
-     */
+    /** Configure this blueprint's layout through the common presentation API. */
+    public function presentation(): PresentationBuilder
+    {
+        return $this->presentation;
+    }
+
+    /** Compile children, apply parent edits, and return an independent immutable tree. */
     public function build(): FormDefinition
     {
-        return $this->definition;
+        $entries = [];
+        $removed = [];
+        foreach ($this->entries as $path => $entry) {
+            if (in_array($path, $this->removed, true)) {
+                $removed[] = $path;
+                continue;
+            }
+
+            $entries[] = match (true) {
+                $entry instanceof FieldConfigBuilder => new FieldDefinition($path, $entry->config()),
+                $entry instanceof EmbeddedBlueprintBuilder,
+                $entry instanceof RepeatedBlueprintBuilder,
+                    => $entry->build(),
+                default => $entry,
+            };
+        }
+
+        $definition = new FormDefinition($entries, $this->presentation->config(), [...$this->omitted, ...$removed]);
+        foreach ($this->edits as $path => $edit) {
+            $definition = $definition->with($path, $edit->config());
+        }
+
+        foreach (array_unique(array_diff($this->removed, $removed)) as $path) {
+            $definition = $definition->remove($path);
+        }
+
+        return $definition;
+    }
+
+    /** Supply field authoring behavior through a protected factory. */
+    protected function createFieldBuilder(FieldConfig $config): FieldConfigBuilder
+    {
+        return new FieldConfigBuilder($config);
+    }
+
+    /** Validate names before adding declarations or running application hooks. */
+    protected function assertAvailable(string $path): void
+    {
+        new FieldDefinition($path);
+        if (isset($this->entries[$path]) && !in_array($path, $this->removed, true)) {
+            throw new InvalidArgumentException('Blueprint declarations cannot contain duplicate field paths or embed paths: '
+                . $path);
+        }
+
+        $this->removed = array_values(array_diff($this->removed, [$path]));
     }
 }

@@ -24,8 +24,8 @@ class DefinitionExtensionTest extends CompositionTestCase
     public function testApplicationBlueprintRendererWorksThroughOrdinaryBinding(): void
     {
         $helper = new CustomCompositionHelper($this->helper()->getView());
-        $form = $helper->bind(blueprint: AuthorNameForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $helper->form()->blueprint(AuthorNameForm::class)->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         static::assertStringContainsString('name="author[name]"', $html);
         static::assertStringContainsString('Application layout field', $html);
     }
@@ -37,8 +37,8 @@ class DefinitionExtensionTest extends CompositionTestCase
             'blueprintFactory',
             new CustomBlueprintFactory(new Container(), 'testBlueprints'),
         );
-        $form = $helper->bind(blueprint: DynamicPostForm::class);
-        $html = $form->open() . $form->blueprint() . $form->close();
+        $form = $helper->form()->blueprint(DynamicPostForm::class)->bind();
+        $html = $form->open() . $form->blueprint()->render() . $form->close();
         static::assertStringContainsString('Runtime &lt;field&gt;', $html);
         static::assertStringContainsString('id="form-compose-1-body-help"', $html);
         static::assertStringContainsString('aria-describedby="form-compose-1-body-help"', $html);
@@ -47,7 +47,7 @@ class DefinitionExtensionTest extends CompositionTestCase
         static::assertNotNull($form->binding->definition);
         static::assertSame(
             'Custom builder',
-            $form->binding->definition->field('comments.0.author.custom')->options['label'],
+            $form->binding->definition->field('comments.0.author.custom')->config->label,
         );
     }
 
@@ -58,38 +58,37 @@ class DefinitionExtensionTest extends CompositionTestCase
         ], ['rowKeys' => [2]]);
         $helper->setConfig('blueprintFactory', new CustomBlueprintFactory());
 
-        $form = $helper->bind(blueprint: CommentsForm::class);
+        $form = $helper->form()->blueprint(CommentsForm::class)->bind();
         $html = $form->render();
         static::assertStringContainsString('name="comments[2][body]"', $html);
         static::assertStringNotContainsString('comments[0]', $html);
 
-        $runtime = $helper->bind(blueprint: RuntimeCommentsForm::class);
+        $runtime = $helper->form()->blueprint(RuntimeCommentsForm::class)->bind();
         $runtimeHtml = $runtime->render();
         static::assertStringContainsString('name="comments[2][body]"', $runtimeHtml);
         static::assertStringNotContainsString('comments[0]', $runtimeHtml);
 
-        $session = $helper->bind();
+        $session = $helper->form()->bind();
         $session->open();
 
-        $selected = $session->embedMany('comments', BodyForm::class);
+        $selected = $session->embedMany(path: 'comments', blueprint: BodyForm::class)->render();
         static::assertStringContainsString('Selected', $selected);
         static::assertStringNotContainsString('Skipped', $selected);
         $session->close();
 
-        $explicit = $helper->bind();
+        $explicit = $helper->form()->bind();
         $explicit->open();
-        static::assertStringContainsString('Skipped', $explicit->embedMany(
-            'comments',
-            BodyForm::class,
-            keys: [0],
-        ));
+        static::assertStringContainsString(
+            'Skipped',
+            $explicit->embedMany(path: 'comments', blueprint: BodyForm::class)->keys([0])->render(),
+        );
         $explicit->close();
 
         $helper->getView()->setRequest($helper->getView()->getRequest()->withAttribute('rowKeys', null));
-        $inferred = $helper->bind();
+        $inferred = $helper->form()->bind();
         $inferred->open();
 
-        $all = $inferred->embedMany('comments', BodyForm::class);
+        $all = $inferred->embedMany(path: 'comments', blueprint: BodyForm::class)->render();
         static::assertStringContainsString('Skipped', $all);
         static::assertStringContainsString('Selected', $all);
         $inferred->close();
@@ -101,17 +100,17 @@ class DefinitionExtensionTest extends CompositionTestCase
         $helper = $this->helper(attributes: ['rowKeys' => ['bad.key'], 'repeatCalls' => $calls]);
         $helper->setConfig('blueprintFactory', new CustomBlueprintFactory());
 
-        $form = $helper->bind();
+        $form = $helper->form()->bind();
         $form->open();
         try {
-            $form->embedMany('comments', CommentForm::class);
+            $form->embedMany(path: 'comments', blueprint: CommentForm::class)->render();
             static::fail('Expected invalid inferred keys to fail before hooks.');
         } catch (InvalidArgumentException $invalidArgumentException) {
             static::assertStringContainsString('valid field-path segments', $invalidArgumentException->getMessage());
         }
 
         static::assertSame([], $calls->getArrayCopy());
-        static::assertStringContainsString('name="comments"', $form->control('comments'));
+        static::assertStringContainsString('name="comments"', $form->control('comments')->render());
         $form->close();
     }
 }

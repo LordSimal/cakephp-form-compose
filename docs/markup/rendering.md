@@ -27,7 +27,7 @@ calling `$field->label()`, `$field->input()`, `$field->help()`, and
 `$field->errors()`. Those calls render their own elements.
 
 A **bound field** is the `$field` object: resolved data such as the value, ID,
-and errors, plus methods for rendering these parts. Resolving it with `field()`
+and errors, plus methods for rendering these parts. Resolving it with `field()->resolve()`
 produces no HTML and registers no submitted inputs.
 
 ## Templates, themes, and variants
@@ -37,8 +37,8 @@ produces no HTML and registers no submitted inputs.
 | **Template** | A PHP element that outputs one part's markup. | `forms/email.php` arranges an email control. |
 | **Theme** | Chooses element directories and default HTML attributes for a form. | `new Theme(['forms/application'])` searches your application elements before the bundled ones. |
 | **Layer** | One element directory in a theme's ordered search list. | `forms/application` maps to `templates/element/forms/application/`. |
-| **Variant** | Requests a named alternative for the parts being rendered. | `variant => 'compact'` tries `variants/compact/control.php` for a field's control. |
-| **Type** | Determines the control's input and submission behavior; also participates in template lookup. | `type => 'email'` uses an email input and allows an `email/control.php` layout. |
+| **Variant** | Requests a named alternative for the parts being rendered. | `variant('compact')` tries `variants/compact/control.php` for a field's control. |
+| **Type** | Determines the control's input and submission behavior; also participates in template lookup. | `type('email')` uses an email input and allows an `email/control.php` layout. |
 
 A theme can contain several variants. A variant is implemented by the files you
 add to that theme; the name `compact` has no built-in styling or behavior.
@@ -51,13 +51,9 @@ second tab to see the file it renders:
 ::: code-group
 
 ```php [templates/Users/edit.php]
-<?php $form = $this->Form->bind($user); ?>
+<?php $form = $this->Form->form($user)->bind(); ?>
 <?= $form->open() ?>
-<?= $form->control('email', [
-    'type' => 'email',
-    'help' => 'Use your work address.',
-    'template' => 'forms/email',
-]) ?>
+<?= $form->control('email')->type('email')->help('Use your work address.')->template('forms/email') ?>
 <?= $form->submit('Save') ?>
 <?= $form->close() ?>
 ```
@@ -66,9 +62,12 @@ second tab to see the file it renders:
 <?php
 declare(strict_types=1);
 
+use FormCompose\Form\Field\BoundField;
+use FormCompose\Rendering\Attributes;
+
 /**
- * @var \FormCompose\Form\Field\BoundField $field
- * @var \FormCompose\Rendering\Attributes $attributes
+ * @var BoundField $field
+ * @var Attributes $attributes
  */
 ?>
 <div<?= (string)$attributes ?>>
@@ -127,7 +126,7 @@ blueprint, error summary, and actions when using `render()`.
 | --- | --- |
 | `$form->control('email')` | `control.php` |
 | `$form->blueprint('article')` | `blueprint/control.php` |
-| `$form->render('article')` | `form/layout.php`, between opening and closing markup |
+| `$this->Form->form($article)->blueprint('article')->render()` | `form/layout.php`, between opening and closing markup |
 | `$form->open()` | `form/open.php` |
 | `$form->submit('Save')` | `button/control.php` |
 | `$form->close()` | `form/close.php` |

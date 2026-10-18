@@ -5,6 +5,9 @@ namespace FormCompose\Form\Field;
 
 use Closure;
 use FormCompose\Binding\PathValue;
+use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\PresentationConfig;
+use InvalidArgumentException;
 use LogicException;
 
 /**
@@ -20,7 +23,7 @@ class FieldChildren
     /**
      * Retain the owning binding and lifecycle through an explicit resolver callback.
      *
-     * @param \Closure(string, array<string, mixed>, \FormCompose\Form\Field\BoundField): \FormCompose\Form\Field\BoundField $resolve Child resolver.
+     * @param \Closure(string, \FormCompose\Configuration\FieldConfig, \FormCompose\Form\Field\BoundField): \FormCompose\Form\Field\BoundField $resolve Child resolver.
      */
     public function __construct(protected readonly Closure $resolve, public readonly ?BoundField $parent = null)
     {
@@ -53,9 +56,13 @@ class FieldChildren
         /** @var \FormCompose\Form\Field\CompositeType|\FormCompose\Form\Field\LazyFieldType $type */
         $fields = [];
         foreach (ControlList::normalize($type->inputs($field)) as $child) {
+            if (!$child instanceof FieldSpec) {
+                throw new InvalidArgumentException('Composite children must be relative FieldSpec declarations.');
+            }
+
             $fields[$child->path] = ($this->resolve)(
                 $field->state->path . '.' . $child->path,
-                $this->options($field, $child),
+                $this->configuration($field, $child),
                 $field,
             );
         }
@@ -66,23 +73,22 @@ class FieldChildren
     /**
      * Derive child identities and values, preserving explicit options and missing keys.
      *
-     * @return array<string, mixed>
      */
-    protected function options(BoundField $field, FieldDefinition $child): array
+    protected function configuration(BoundField $field, FieldSpec $child): FieldConfig
     {
         $state = $field->state;
-        $options =
-            $child->options
-            + [
-                'name' => InputNames::base($state->name) . '[' . str_replace('.', '][', $child->path) . ']',
-                'id' => $state->id . '.' . str_replace('-', ':2d', $child->path),
-            ]
-            + array_intersect_key($state->options, array_flip(['secure', 'errors', 'templateData']));
+        $config = new FieldConfig()->withName(
+            InputNames::base($state->name) . '[' . str_replace('.', '][', $child->path) . ']',
+        )
+            ->withId($state->id . '.' . str_replace('-', ':2d', $child->path))
+            ->withSecure($state->config->secure)
+            ->withErrors($state->config->errors)
+            ->withPresentation(new PresentationConfig()->withTemplateData($state->config->presentation->templateData));
         $value = PathValue::lookup(is_array($state->value) ? $state->value : [], $child->path);
-        if ($value->found || array_key_exists('value', $state->options)) {
-            $options += ['value' => $value->value];
+        if ($value->found || $state->config->hasValue) {
+            $config = $config->withValue($value->value);
         }
 
-        return $options;
+        return $config->merge($child->config);
     }
 }

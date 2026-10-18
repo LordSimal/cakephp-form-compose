@@ -36,7 +36,7 @@ class RepeatedCompiler
             $rows = $rows->embed((string)$key, $row);
         }
 
-        return new RepeatedDefinition($entry->path, $entry->blueprint, $keys, $entry->options, $rows);
+        return new RepeatedDefinition($entry->path, $entry->blueprint, $keys, $entry->config, $rows);
     }
 
     /**
