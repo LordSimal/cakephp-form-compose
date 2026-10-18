@@ -6,15 +6,18 @@ description: Inject blueprint services, configure discovery, and manage declarat
 # Blueprint services and discovery
 
 Start with [form blueprints](/blueprints) to declare and render fields. This
-page covers application services and deployment configuration. Static blueprints
-with no constructor dependencies need no additional container wiring.
+page covers application services and deployment configuration.
 
 ## Inject application services
 
-Suppose your application has a `StatusChoices` service whose `all()` method returns
-a value/label map. Inject it into the blueprint, pass the container's blueprint
-factory from your existing controller action, and configure the helper with that
-factory. The three tabs show the cooperating pieces.
+Use constructor injection when a blueprint needs application data. For example,
+a workflow service can supply the statuses allowed by your publishing rules,
+keeping that logic out of the form. In this example, `StatusChoices::all()` returns
+the value/label map for the select field.
+
+With the plugin loaded and the Form helper configured, CakePHP autowires the
+blueprint's concrete dependencies during normal controller rendering. Your
+controller needs no factory argument or extra view variables.
 
 ::: code-group
 
@@ -45,36 +48,50 @@ class ArticleForm extends FormBlueprint
 }
 ```
 
-```php [ArticlesController — import and edit() method]
-use FormCompose\Blueprint\BlueprintFactory;
-
-public function edit(BlueprintFactory $blueprints): void
-{
-    $this->set('blueprints', $blueprints);
-
-    // Keep your existing record loading, authorization, and submission handling.
-}
-```
-
-```php [Inside AppView::initialize()]
-$this->addHelper('Form', [
-    'className' => 'FormCompose.Form',
-    'blueprintFactory' => $this->get('blueprints'),
-]);
+```php [View]
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->submit('Save article');
 ```
 
 :::
 
-Add the controller import at file scope and retain your existing action body.
-Now `blueprint('article')` uses the injected service. The plugin registers
-`BlueprintFactory` in CakePHP's application container. Passing that factory to the
-helper also makes it available to local blueprint calls inside a bound session.
+Register interfaces, scalar arguments, and application-specific factories in
+`Application::services()` as usual. The same container resolves dependencies for
+[custom field types](/custom-fields), including those used by local blueprint
+calls inside a bound session.
 
-CakePHP 6 autowires concrete dependencies. Register interfaces, scalar arguments,
-and application-specific factories in `Application::services()` as usual.
-Explicit application registrations for `BlueprintFactory` are preserved. The
-factory uses `getNew()` to construct blueprints independently. Missing constructor dependencies or invalid container substitutions fail at
-construction.
+::: details Manually created views and custom factories
+The plugin supplies its container-backed `BlueprintFactory` before a controller
+creates its view. It uses view configuration, so services do not become template
+variables. This requires the plugin's event hooks to be enabled (the default).
+
+If you create a view outside that lifecycle, dependency-free forms still work.
+For constructor injection, pass a factory using your application's existing
+`$container` when loading the helper:
+
+```php
+use Cake\View\View;
+use FormCompose\Blueprint\BlueprintFactory;
+
+$view = new View();
+$view->loadHelper('Form', [
+    'className' => 'FormCompose.Form',
+    'blueprintFactory' => new BlueprintFactory($container),
+]);
+```
+
+An explicit helper `blueprintFactory` overrides the automatic factory. To replace
+the factory throughout the application, register `BlueprintFactory::class` in
+`Application::services()`; the plugin preserves that registration. For a separate
+discovery collection, construct it with
+`new BlueprintFactory($container, collection: 'myForms')`. Configure that collection
+before using it.
+
+Blueprints are constructed independently through the container's `getNew()` method.
+Missing dependencies and invalid container substitutions fail at construction.
+:::
 
 ## Discovery and cache configuration
 
@@ -114,10 +131,6 @@ AttributeResolver::setConfig('formCompose', [
 Keep both direct and recursive patterns: the current resolver glob implementation
 requires a directory below `**/`. Use `'cache' => false` in the configuration array
 when explicitly disabling persistent metadata caching.
-
-For a separately configured collection, inject
-`new BlueprintFactory($container, collection: 'myForms')` as the helper option.
-The factory consumes existing configuration and never creates it.
 
 Clear discovery metadata after changing declarations during deployment with
 `AttributeResolver::clear('formCompose')`; warming uses

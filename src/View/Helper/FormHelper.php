@@ -202,16 +202,16 @@ class FormHelper extends Helper
     }
 
     /**
-     * Use the injected application factory or support dependency-free blueprints.
+     * Use an explicit helper factory, the controller's factory, or a standalone factory.
      *
-     * Set helper option blueprintFactory to the service registered by the plugin
-     * when application constructor dependencies are needed. Subclasses may override
-     * this factory without changing form() or session construction.
+     * The plugin supplies application services through view configuration during
+     * controller rendering. Manually constructed views can set blueprintFactory on
+     * the helper. Subclasses may override this factory without changing form().
      */
     protected function createBlueprintFactory(): BlueprintFactory
     {
         /** @var mixed $factory */
-        $factory = $this->getConfig('blueprintFactory');
+        $factory = $this->getConfig('blueprintFactory', $this->getView()->getConfig('formCompose.blueprintFactory'));
         if ($factory !== null && !$factory instanceof BlueprintFactory) {
             throw new InvalidArgumentException('blueprintFactory must be a BlueprintFactory instance.');
         }

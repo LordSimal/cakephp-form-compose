@@ -31,8 +31,9 @@ class BlueprintFactory
      * Select application services and a named CakePHP resolver configuration.
      *
      * Without a container, dependency-free blueprints and field types still work.
-     * Configure helper option blueprintFactory with the application service when
-     * constructors need dependencies. Resolver paths expand across loaded plugins.
+     * Controller-created views receive the application's factory automatically.
+     * Standalone views can configure helper option blueprintFactory explicitly.
+     * Resolver paths expand across loaded plugins.
      */
     public function __construct(
         protected readonly ?ContainerInterface $container = null,
