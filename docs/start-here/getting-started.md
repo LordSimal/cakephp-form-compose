@@ -31,7 +31,7 @@ See [Migrate a core form](/migration) for the main API and option differences.
 
 The host application's Composer configuration must allow development dependencies
 with `"minimum-stability": "dev"` and `"prefer-stable": true` for the current
-CakePHP 6 dependency. CakePHP 5.4 is no longer supported.
+CakePHP 6 dependency.
 
 ```sh
 composer require josbeir/cakephp-form-compose:dev-main

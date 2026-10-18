@@ -63,36 +63,3 @@ feedback, use `$form->registerFeedback($field, 'help')` or `'errors'` after emit
 the element with its prepared attributes. To deliberately omit inline
 descriptions while keeping summary errors, pass `['aria-describedby' => null]`
 through the input builder's `attributes()` method and to `register()` for handwritten inputs.
-
-## Migrate earlier FormCompose APIs
-
-This release deliberately removes option bags and field/embed attributes.
-Start with `form($data)`, configure its builder, then call `bind()`. Configure opening and
-complete-form settings before binding. `control()` returns a renderable builder;
-`field()` returns a builder whose `resolve()` captures state. Parts return
-renderable builders too. Use `choices()`, `placeholder()`, and `fallback()` in
-place of `options`, `empty`, and `hiddenField` keys. Declare blueprints in
-`configure()` with `add()`, `field()`, `embed()`, and `embedMany()`.
-
-Reusable configs now expose fluent methods directly. Each `builder()` factory
-returns its own immutable config class; the separate configuration-builder
-classes and `with…()` methods are removed. Pass the config directly without a
-terminal conversion, and assign the returned object when changing an existing preset:
-
-```php
-use FormCompose\Configuration\FieldConfig;
-
-$email = FieldConfig::builder()->type('email');
-$requiredEmail = $email->required();
-```
-
-The original `$email` stays optional. Rendering and declaration builders remain
-mutable. Configure blueprint layouts directly with `$form->template(...)`,
-`partTemplate()`, and `templateData()` in the blueprint hook.
-
-Presentation maps now merge by key. Use `replaceAttributes()`,
-`replacePartAttributes()`, `replaceTemplates()`, or `replaceTemplateData()` when
-replacement is intentional. Custom types read `state->config` and renderers read
-`node->presentation`. Use `FieldSpec` for composite children/batches and
-`ChoiceConfig` for choice metadata. See [field configuration](/field-options)
-and the [blueprint reference](/blueprint-reference) for the full contracts.

@@ -153,4 +153,4 @@ field feedback. See [repeated embeds](/repeated-embeds).
 are immutable compiled records, not the application authoring API. Field records
 hold `FieldConfig`; collection records hold `PresentationConfig` or `EmbedConfig`.
 `FieldSpec(path, config)` is a public reusable declaration for control batches
-and composite children. No record accepts legacy option arrays.
+and composite children.

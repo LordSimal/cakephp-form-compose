@@ -103,7 +103,7 @@ echo $form->control('audience')
 ```
 
 Nested maps such as `['Public' => ['everyone' => 'Everyone']]` also create groups.
-Legacy extended entry arrays are replaced by `ChoiceConfig(value, label, attributes, id)`.
+Use `ChoiceConfig(value, label, attributes, id)` for individual choice metadata.
 `ChoiceConfig::builder()` returns `ChoiceConfig` with fluent `label()`, `id()`,
 `disabled()`, and `attributes()` methods. `ChoiceGroupConfig::builder()` returns
 `ChoiceGroupConfig` with `choices()` and `attributes()`. These are immutable configs:

@@ -123,7 +123,6 @@ Accepts an iterable of paths, `FieldSpec` objects, or `ControlBuilder` objects
 from this session. It validates declarations and ownership before rendering.
 The batch has no wrapper and rolls back registrations if any control fails.
 Use `new FieldSpec('email', $emailConfig)` for reusable configured lists.
-`path => option-array` entries are no longer accepted.
 
 ## field() {#field}
 
