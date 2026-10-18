@@ -23,26 +23,32 @@ hero:
       link: /form-reference
 ---
 
-## A control call connected to your markup
+## Simple forms and reusable blueprints
 
-When a field needs its own wrappers, icons, or feedback placement, put that markup
-in a PHP element. `control()` binds the data; the element arranges its parts.
+Start with bound controls and ordinary PHP views. Put custom field markup in a
+PHP element, and extract a blueprint when the same fields repeat. Both approaches
+use the same fluent configuration and rendering parts.
 
 ::: code-group
 
-```php [templates/Articles/edit.php]
+```php [Simple form]
 <?php
 $form = $this->Form->form($article)->bind();
 ?>
 <?= $form->open() ?>
 <?= $form->control('title')->template('forms/article-title') ?>
-<?= $form->control('body') ?>
+<?= $form->control('body')->type('textarea') ?>
+<?= $form->control('status')->choices([
+    'draft' => 'Draft',
+    'published' => 'Published',
+]) ?>
 <?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
-```php [templates/element/forms/article-title.php]
+```php [Custom field markup]
 <?php
+// templates/element/forms/article-title.php
 
 /**
  * @var \FormCompose\Form\Field\BoundField $field
@@ -57,30 +63,52 @@ $form = $this->Form->form($article)->bind();
 </div>
 ```
 
-```php [Arrange parts directly in the view]
+```php [Declare a blueprint]
 <?php
-$form = $this->Form->form($article)->bind();
-$title = $form->field('title')->resolve();
-?>
-<?= $form->open() ?>
-<section class="article-title">
-    <?= $title->label() ?>
-    <?= $title->input() ?>
-    <?= $title->help() ?>
-    <?= $title->errors() ?>
-</section>
-<?= $form->submit('Save article') ?>
-<?= $form->close() ?>
+declare(strict_types=1);
+
+namespace App\Form;
+
+use FormCompose\Attribute\Form;
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormBlueprint;
+use FormCompose\Blueprint\FormContext;
+use function Cake\I18n\__;
+
+/**
+ * Shares article fields across forms while keeping values and saving in CakePHP.
+ */
+#[Form('article')]
+class ArticleForm extends FormBlueprint
+{
+    public function configure(BlueprintBuilder $form, FormContext $context): void
+    {
+        $form->add('title');
+        $form->add('body')->type('textarea');
+        $form->add('status')->choices([
+            'draft' => __('Draft'),
+            'published' => __('Published'),
+        ]);
+    }
+}
+```
+
+```php [Render the blueprint]
+<?php
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary()
+    ->submit('Save article');
 ```
 
 :::
 
-Start with [how rendering works](/rendering), select
-[your own templates](/templates), share them with a [theme](/themes),
-or offer named presentations with [variants](/variants).
-Use optional [reusable forms](/reusable-forms) to share field configuration.
+Choose [your own templates](/templates), share markup through [themes](/themes),
+or compose [nested blueprints](/composition) and [repeated rows](/repeated-embeds).
+
 CakePHP continues to supply values, validation metadata, routing, and submission
-protection. No CSS framework or JavaScript runtime is required.
+protection. No CSS framework or JavaScript runtime is required for ordinary forms.
 
 [Why FormCompose?](/why) · [Your first form](/getting-started) ·
 [Field configuration](/field-options)
