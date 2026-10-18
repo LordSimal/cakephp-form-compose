@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use FormCompose\Configuration\FieldConfig;
 use FormCompose\Form\Field\NativeValue;
+use FormCompose\Form\Field\TemporalTimezone;
 use FormCompose\Test\FormTestCase;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -186,6 +187,13 @@ class TemporalTest extends FormTestCase
             'fractional timestamp' => ['timestampfractional', '0.001'],
             'timestamp timezone' => ['timestamptimezone', '0.001'],
         ];
+    }
+
+    public function testStandaloneTimezoneResolutionRejectsUnsupportedValues(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('The timezone option must be a timezone name or DateTimeZone.');
+        TemporalTimezone::resolve(false);
     }
 
     /**

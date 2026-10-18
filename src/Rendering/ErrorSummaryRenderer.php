@@ -6,7 +6,6 @@ namespace FormCompose\Rendering;
 use FormCompose\Configuration\SummaryConfig;
 use FormCompose\Form\FormSession;
 use FormCompose\Form\InputRegistry;
-use InvalidArgumentException;
 use function Cake\I18n\__;
 
 /**
@@ -35,12 +34,7 @@ class ErrorSummaryRenderer
             return '';
         }
 
-        /** @var mixed $title */
         $title = $config->title ?? __('Please correct the following errors.');
-        if (!is_string($title) && !$title instanceof Html) {
-            throw new InvalidArgumentException('An error summary title must be text or trusted Html.');
-        }
-
         [$attributes, $titleAttributes] = $this->attributes($session->binding->id, $config);
 
         return $inputs->render(function () use (

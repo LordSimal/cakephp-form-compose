@@ -22,7 +22,7 @@ class PartBuilder extends ConfigurationBuilder implements RenderableInterface
     /** Overlay another presentation layer. */
     public function apply(PresentationConfig $config): static
     {
-        $this->configuration = $this->configuration->merge($config);
+        $this->applyConfig($config);
 
         return $this;
     }

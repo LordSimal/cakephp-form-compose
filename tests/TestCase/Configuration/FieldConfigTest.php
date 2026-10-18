@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace FormCompose\Test\TestCase\Configuration;
 
 use FormCompose\Configuration\FieldConfig;
+use FormCompose\Configuration\FormConfig;
 use FormCompose\Rendering\Html;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 /** Checks named configuration and canonical template selection independently of discovery metadata. */
@@ -34,6 +36,13 @@ class FieldConfigTest extends TestCase
         static::assertNull($base->required);
         static::assertSame('email', $required->type);
         static::assertTrue($required->required);
+    }
+
+    public function testMergingAnUnrelatedConfigurationDomainIsRejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Configuration domains must match.');
+        FieldConfig::builder()->merge(FormConfig::builder());
     }
 
     public function testNamedConfigurationAndFluentOverridesPreserveExplicitValues(): void
