@@ -253,7 +253,8 @@ echo $form->close();
 
 `unlock(string $path): void` allows the named field and its descendants to be
 omitted, changed, or added without failing CakePHP form protection. Other fields
-and form sessions retain their protection. Use it only for application-managed
+and form sessions retain their protection. Call it before or after rendering the
+collection's controls, while the form is open. Use it only for application-managed
 inputs, and validate and authorize submitted rows in the application. It requires
 an open session and does not enable protection when FormProtectionComponent is absent.
 
