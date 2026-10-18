@@ -104,11 +104,9 @@ echo $this->Form
 
 :::
 
-Choose [your own templates](/templates), share markup through [themes](/themes),
-or compose [nested blueprints](/composition) and [repeated rows](/repeated-embeds).
+Start with [your first form](/getting-started), choose [your own templates](/templates),
+or share markup through [themes](/themes). For other tasks, see
+[search forms](/search-forms), [file uploads](/file-uploads), and [custom controls](/custom-fields).
 
-CakePHP continues to supply values, validation metadata, routing, and submission
-protection. No CSS framework or JavaScript runtime is required for ordinary forms.
-
-[Why FormCompose?](/why) · [Your first form](/getting-started) ·
-[Field configuration](/field-options)
+CakePHP supplies values, validation metadata, routing, and submission protection.
+Ordinary forms need no CSS framework or JavaScript runtime.

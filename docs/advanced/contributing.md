@@ -25,11 +25,8 @@ Rector proposes changes.
 `composer rector-fix` to apply refactorings and then format with Mago. Review the
 diff and rerun `composer check` and `composer test-coverage` before submitting it.
 
-Rector targets the PHP version declared in Composer and checks `src/` and `tests/`.
-Mago remains the formatting and linting authority. Rector skips transformations
-that conflict with CakePHP's assertion style, explicit string casts, or Mago's
-mixed-value annotations. It also preserves the existing fluent return contracts
-and normalized paths required by CakePHP's template-path validation.
+When upgrading CakePHP, verify the form-protection integration against the
+supported matrix: it uses CakePHP's internal `FormProtector` API.
 
 Coverage requires Xdebug coverage mode or PCOV. All production PHP is included,
 with a gate enforcing **strictly greater than 90% line coverage**. CI uploads the
@@ -57,7 +54,7 @@ runtime dependency of the plugin or rendered forms.
 
 ## Documentation site
 
-The site uses a pinned VitePress 2 preview. Use Node.js 24 or later:
+The site uses a pinned VitePress 2 preview. Use Node.js 22.12 or later:
 
 ```sh
 npm ci
@@ -104,9 +101,9 @@ put other pages in the section that owns the topic:
 | Sidebar section | Source directory | Content |
 | --- | --- | --- |
 | Start here | `docs/start-here/` | The problem, first form, and migration. Keep optional configuration out of the first form. |
-| Build your forms | `docs/forms/` | Recipes for values, choices, associations, custom field types, error summaries, and POST actions. |
+| Build your forms | `docs/forms/` | Focused recipes for fields, search, uploads, choices, associations, summaries, actions, custom controls, and introductory blueprints. |
 | Markup and styling | `docs/markup/` | The rendering model, field parts, templates, themes, variants, and template debugging. |
-| Reusable forms | `docs/reusable-forms/` | Reusable configuration, blueprints, nested layouts, and repeated embeds. Keep reuse optional. |
+| Reusable forms | `docs/reusable-forms/` | Reusable configuration, blueprint composition, nested layouts, and repeated embeds. The introductory blueprint recipe lives in Build your forms. |
 | API reference | `docs/reference/` | Complete signatures, return values, options, defaults, precedence, and failure contracts. |
 | Advanced and project | `docs/advanced/` | Service extensions, blueprint injection/discovery, and contributor setup. |
 
@@ -125,13 +122,24 @@ When adding a page, put it in the matching directory, add its rewrite, and add
 its sidebar entry. When moving a page, update its rewrite's source path and keep
 the destination stable. GitHub edit links use the actual source file path.
 
-Use an article form for the introductory walkthrough and focused examples for
-other tasks. Label files, identify assumed application variables, and include
-imports. Prefer minimal working examples, introducing options only when needed for
-the task. Show the corresponding PHP element whenever selecting a new template.
-Keep existing page URLs stable and update navigation, local links, and README
-entry points together. Check examples against implementation and behavior tests.
+Use an article form for the introduction and focused examples for other tasks.
+Start with a concrete goal, show the working files, and explain the result before
+adding variations. Keep API contracts in the reference; remove repeated prose.
+Label file tabs, include imports, and explain which application variables are
+assumed. Say whether tabs are required files or alternative approaches.
 
-Use VitePress code groups, callouts, and local search. Keep generated output out
-of commits. Documentation-only changes require content/example review and
-`npm ci` plus `npm run docs:build`; they do not require the PHP quality workflow.
+Use built-in VitePress features selectively: code groups for connected examples,
+line highlights for the setting being introduced, callouts for actionable caveats,
+and details blocks for optional expansions. Required setup stays visible. Short
+snippets do not need line numbers. Follow the formatting conventions in AGENTS.md.
+
+Check examples against implementation and behavior tests. Documentation-only
+changes need content/example review, `npm ci`, and `npm run docs:build`; they do
+not require the production PHP quality workflow.
+
+## Binding and rendering architecture
+
+For contributors working on the lifecycle, this diagram shows how configuration,
+field resolution, rendering, and submission registration connect:
+
+![CakePHP data and request feed bind(), then field resolution and PHP rendering; successful input rendering registers submitted names before closing the form adds protection fields.](/diagrams/formcompose-architecture.svg)

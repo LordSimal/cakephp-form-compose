@@ -11,14 +11,12 @@ with no constructor dependencies need no additional container wiring.
 
 ## Inject application services
 
-Blueprints receive ordinary constructor dependencies. The plugin registers
-`FormCompose\Blueprint\BlueprintFactory` with CakePHP's application container;
-configure the helper with that factory when blueprints or discovered field types
-need services. The session keeps the same factory for later `blueprint()` calls.
-A dependency-free blueprint needs no container wiring.
+Suppose your application has a `StatusChoices` service whose `all()` method returns
+a value/label map. Inject it into the blueprint, pass the container's blueprint
+factory from your existing controller action, and configure the helper with that
+factory. The three tabs show the cooperating pieces.
 
-For example, suppose your application already has an `App\Service\StatusChoices`
-service whose `all()` method returns a value/label map. Inject it into the blueprint:
+::: code-group
 
 ```php [src/Form/ArticleForm.php]
 <?php
@@ -47,10 +45,7 @@ class ArticleForm extends FormBlueprint
 }
 ```
 
-Then add a factory argument to a controller action and pass it alongside your
-existing view data:
-
-```php [Controller action]
+```php [ArticlesController — import and edit() method]
 use FormCompose\Blueprint\BlueprintFactory;
 
 public function edit(BlueprintFactory $blueprints): void
@@ -61,27 +56,25 @@ public function edit(BlueprintFactory $blueprints): void
 }
 ```
 
-Then configure the helper in `AppView::initialize()`:
-
-```php [src/View/AppView.php]
+```php [Inside AppView::initialize()]
 $this->addHelper('Form', [
     'className' => 'FormCompose.Form',
     'blueprintFactory' => $this->get('blueprints'),
 ]);
 ```
 
-Alternatively, set the option on the existing helper before binding:
-`$this->Form->setConfig('blueprintFactory', $blueprints)`.
+:::
 
-Now rendering a form with `blueprint('article')` uses the injected service
-when compiling that blueprint.
+Add the controller import at file scope and retain your existing action body.
+Now `blueprint('article')` uses the injected service. The plugin registers
+`BlueprintFactory` in CakePHP's application container. Passing that factory to the
+helper also makes it available to local blueprint calls inside a bound session.
 
 CakePHP 6 autowires concrete dependencies. Register interfaces, scalar arguments,
 and application-specific factories in `Application::services()` as usual.
 Explicit application registrations for `BlueprintFactory` are preserved. The
-factory uses `getNew()` to construct blueprints independently. Form classes never
-receive or look up the container themselves. Missing dependencies and invalid
-container substitutions fail instead of silently dropping fields.
+factory uses `getNew()` to construct blueprints independently. Missing constructor dependencies or invalid container substitutions fail at
+construction.
 
 ## Discovery and cache configuration
 
@@ -136,8 +129,9 @@ alias index, so it observes the resolver's refreshed collection after clearing.
 
 Put application controls in `src/Form/Field/` under `App\Form\Field`, and mark them
 with `#[AsFieldType('your-type')]`. The dedicated [custom field types guide](/custom-fields)
-explains discovery, `CompositeType`, `SingleInputType`, and lower-level contracts,
-with date-range, amount/currency, and Markdown editor examples.
+shows a complete Markdown type. [Composite fields](/custom-fields#create-a-date-range) builds a
+date range; the [custom field reference](/custom-field-reference) covers lower-level
+contracts and explicit instance overrides.
 
 Custom types share the factory's constructor injection and discovery configuration.
 Explicit binding-level type instances override discovered aliases. Discovery and

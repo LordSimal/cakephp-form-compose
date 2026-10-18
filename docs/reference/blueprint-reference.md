@@ -27,7 +27,6 @@ layout, template, or data settings. Class references remain supported explicitly
 Declare fields with `BlueprintBuilder::add(string $path, FieldConfig|null $config = null)`.
 Pass an immutable `FieldConfig` directly. The returned attached `FieldDeclarationBuilder`
 exposes all [field setters](/field-options) and compiles a field declaration during `build()`.
-There is no `Field` attribute.
 
 ### Embed
 
@@ -36,11 +35,10 @@ declares keyed rows. A single declaration returns `EmbeddedBlueprintBuilder`
 with layout presentation methods. Repeated declarations return
 `RepeatedBlueprintBuilder`, adding `keys(?array)`, `label()`, and `errors()`.
 Configure occurrence presentation on either builder.
-There are no `Embed` or `EmbedMany` attributes.
 
 ### AsFieldType
 
-`#[AsFieldType('date-range')]` remains the discovery alias for a
+`#[AsFieldType('date-range')]` declares the discovery alias for a
 `FieldTypeInterface` implementation. See [custom field types](/custom-fields).
 
 ### Declaration behavior
@@ -52,15 +50,35 @@ Cycles and collisions across embedded children also fail.
 
 ## Translation
 
-Call CakePHP's translation functions in hooks for labels, help, and choices.
-Set the locale before binding or compiling a blueprint. For reusable configs
-that evaluate text later, label/help closures accept no arguments and return
-string, Html, false, or null. See
-[translating blueprints](/blueprints#translate-a-blueprint).
+Use CakePHP's translation functions in hooks for labels, help, and choices.
+Ordinary strings capture the locale when the hook compiles at binding. Set the
+request locale before that point; bind a new form to rerun those calls.
+
+For reusable configs that must evaluate text at resolution, use a zero-argument
+label/help closure:
+
+```php
+use FormCompose\Configuration\FieldConfig;
+use function Cake\I18n\__;
+
+$title = FieldConfig::builder()
+    ->label(static fn(): string => __('Article title'));
+```
+
+Closures return string, trusted `Html`, false, or null. They run after overrides
+merge, once per bound-field snapshot; overridden callbacks do not run. An existing
+snapshot retains its text after locale changes. Resolve a fresh field to reevaluate
+its closure. Choices use ordinary translated labels or CakePHP's
+`EnumLabelInterface`. Literal translation calls, including those inside closures,
+remain visible to CakePHP's message extractor.
 
 ## configure() and BlueprintBuilder
 
 ```php
+use FormCompose\Blueprint\BlueprintBuilder;
+use FormCompose\Blueprint\FormContext;
+use function Cake\I18n\__;
+
 public function configure(BlueprintBuilder $form, FormContext $context): void
 {
     $form->add('title')->required();
@@ -70,7 +88,9 @@ public function configure(BlueprintBuilder $form, FormContext $context): void
 }
 ```
 
-This is a class method; import the blueprint classes and CakePHP's `__` function.
+Add the imports at the top of the blueprint file and the method inside its class.
+The `author` blueprint is defined in [composition](/composition#nest-a-child-blueprint);
+`forms/article` is the [article layout](/blueprints#keep-control-of-the-layout).
 
 | Method | Result |
 | --- | --- |
@@ -90,10 +110,15 @@ This is a class method; import the blueprint classes and CakePHP's `__` function
 | `context` | CakePHP context scoped to the occurrence. |
 | `path` | Absolute mount within the root form, or empty at root. |
 | `at(string)` | New context scoped below this occurrence. |
+| `value(string)` | Effective relative value using the binding's source order. |
 
-Request lookups retain full paths; context lookups are relative. Services belong
+Request lookups retain full paths; context and `value()` lookups are relative. Services belong
 in blueprint constructor dependencies. Hooks change configuration, never values,
 validation, or persistence.
+
+A layout is a CakePHP element: `$this->getRequest()->getData('author.email')`
+reads a full request path, while `$form->field('email')->resolve()->state->value`
+reads the scoped field's effective value after sources and overrides.
 
 ## Configuration order
 
@@ -123,6 +148,20 @@ open/close the session. Field inspection remains free of rendering/registration.
 Removed controls retain the full fluent API and emit nothing; resolving a removed
 field is an error, so guard manual parts with `has()`.
 
+### Inspect values in a layout
+
+Resolve a field when its effective value is needed for view logic:
+
+```php
+$title = $form->field('title')->resolve();
+$currentTitle = $title->state->value;
+```
+
+This reads the scoped value after binding sources and overrides without rendering
+or registering an input. The [bound-field reference](/field-reference) lists the
+available state. Read raw full request paths through `$this->getRequest()` when
+needed; that request is not scoped to an embedded blueprint.
+
 ## BlueprintFactory
 
 `compile(string $blueprint, FormContext $context): FormDefinition` resolves aliases
@@ -139,7 +178,11 @@ immutable `EmbedConfig`; fluent calls return new configs, and `merge(EmbedConfig
 overlays explicit settings. Constructors accept label and errors by name. Row selection belongs to `keys(?array)` on the
 `RepeatedBlueprintBuilder` returned by blueprint `embedMany()` and the
 `RepeatedEmbedBuilder` returned by session `embedMany()`. Null keys infer rows;
-empty keys render no rows. Each selected row has its own scoped blueprint hook.
+empty keys render no rows. Each selected row has its own scoped blueprint hook. Keys must be unique valid
+path segments; sparse integer and string keys are preserved. Inferred submitted
+collections, including explicit empty collections, take priority over entity rows.
+Keys are selected before row hooks run, so excluded rows are not compiled. Layout
+presentation changes do not recompile rows.
 `embeddedMany()` on a compiled layout returns `EmbedBuilder`, which only changes
 occurrence presentation and exposes no row-selection method.
 

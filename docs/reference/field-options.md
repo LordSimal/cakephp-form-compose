@@ -16,8 +16,7 @@ echo $form->control('email')
     ->label('Email address')
     ->help('Used for account notifications.')
     ->required()
-    ->attributes(['autocomplete' => 'email'])
-    ->partAttributes('container', ['class' => 'account-field']);
+    ->attributes(['autocomplete' => 'email']);
 ```
 
 `control()` returns a mutable `ControlBuilder`. Echo or `render()` resolves and
@@ -39,31 +38,14 @@ echo $form->control('billing.email', config: $emailConfig)->label('Billing email
 
 `FieldConfig` supports named constructor arguments and fluent methods on the same
 immutable object. `FieldConfig::builder()` is a convenience factory returning a
-new `FieldConfig`. There is no separate configuration builder or terminal conversion.
-Every fluent call returns a new config; keep that return value when deriving a preset.
+new `FieldConfig`. Every fluent call returns a new config; keep that return value
+when deriving a preset.
 `merge()` overlays explicitly configured settings without changing either input.
 
-Pass configurations directly to controls, field specifications, nested settings,
-and blueprint declarations. Reusing a preset cannot change an already configured
-field or form. For example:
-
-```php
-use FormCompose\Configuration\FieldConfig;
-use FormCompose\Form\Field\FieldSpec;
-
-$currency = new FieldSpec(
-    'currency',
-    FieldConfig::builder()
-        ->label('Currency')
-        ->choices(['EUR' => 'Euro', 'USD' => 'US dollar']),
-);
-```
-
-Ordinary controls accept `choices()` directly on their fluent builder.
-Parts render when echoed: `<?= $field->input() ?>`. Explicit `render()` is useful
-when assigning HTML to a variable; it is unnecessary inside echo/short echo tags.
-Config methods return new configs; rendering and declaration builder methods update
-the attached occurrence and return the same builder.
+Pass configs directly wherever a field config is accepted. Configuration setters
+return new configs; rendering and declaration builders update their attached
+occurrence. Explicit `render()` is useful when assigning HTML; echo already renders
+controls and parts.
 
 ## Identity and type
 
@@ -99,7 +81,8 @@ prefill, even if choices or a value are supplied.
 Foreign keys ending in `_id` infer selects; `tags._ids` infers a multiple select.
 Terminal `email` infers email; `tel`, `telephone`, and `phone` infer tel. Names are
 case-sensitive. Override schema mappings with the form builder's `typeMap()` and
-register custom aliases with `types()`. Non-choice types do not consume choice
+discover custom aliases with [`AsFieldType`](/custom-fields). Use `types()` for
+explicit instance overrides. Non-choice types do not consume choice
 iterators or reserve choice IDs.
 
 ## Values
@@ -145,7 +128,7 @@ echo $form->control('email')
 Use zero-argument label/help closures when a reusable config must evaluate text
 later. They resolve once per field snapshot after overrides merge and return
 string, Html, false, or null. Call CakePHP's translation functions inside the
-closure for deferred translation. See [translation timing](/blueprints#translate-a-blueprint).
+closure for deferred translation. See [translation timing](/blueprint-reference#translation).
 
 ## Constraints and state
 
@@ -175,10 +158,80 @@ choice exists. Other choice fallbacks submit an empty string under the base
 name. Multiple names gain `[]`. Disabled controls disable their fallbacks too.
 See [choices](/choices) for `ChoiceConfig`, `ChoiceGroupConfig`, and enums.
 
+### Typed choice metadata
+
+`ChoiceConfig(value, label, attributes, id)` configures one option.
+`ChoiceConfig::builder(value, label)` returns an immutable config with `label()`,
+`id()`, `disabled()`, and `attributes()` setters. Omitted enum labels use the enum's
+label; explicit null or empty string supplies a blank label.
+
+`ChoiceGroupConfig(label, choices, attributes)` groups choices.
+Its `builder(label, choices)` factory and `choices()` / `attributes()` methods
+return immutable group configs. For example:
+
+```php
+use FormCompose\Configuration\ChoiceConfig;
+use FormCompose\Configuration\ChoiceGroupConfig;
+
+echo $form->control('audience')->choices([
+    ChoiceGroupConfig::builder('Internal')
+        ->choices([
+            ChoiceConfig::builder('staff', 'Staff')->attributes(['data-tier' => 'internal']),
+            ChoiceConfig::builder('legacy', 'Legacy team')->disabled(),
+        ])
+        ->attributes(['data-group' => 'internal']),
+]);
+```
+
+Labels are escaped unless wrapped in trusted `Html`. Lazy choice iterables are
+consumed when rendering. An explicit non-choice type retains its type and does not
+consume those iterators. Backed enum classes supply cases in declaration order;
+iterable keys do not replace case backing values. Pure enums are rejected.
+CakePHP schema `enum-*` types discover registered backed enums automatically,
+including on associated fields. `choices(null)` or `choices([])` opts out.
+
+A real empty-string choice takes precedence over a generated placeholder; both
+submit an empty string. Zero remains a valid choice value. `readonly()` has no
+native effect on selects, radios, or checkboxes. Validate permitted values and
+collection cardinality in your application.
+
+### Association conventions
+
+For conventional choices, `_id` paths look for a pluralized view variable;
+`tags._ids` looks for `$tags`. Other inferred choice fields use the pluralized
+final property, such as `$statuses` for `status`. Variables must be iterable and
+are read from the current view when resolving the field. Explicit `choices()`
+takes priority, including null or an empty list.
+
+Collection selectors work with `belongsToMany` and `hasMany`. Loaded associated
+entities supply their identifiers, including single-column UUID/string keys.
+Custom association properties use their property name: `topic_tags._ids` looks
+for `$topicTags`. Nested selectors such as `comments.0.tags._ids` follow the same
+rules. The context supplies association schemas even when no child entity exists.
+
+Inferred `._ids` fields are multiple selects. An explicit `type('select')` keeps
+its type; add `multiple()` if needed. `multiple(false)` overrides inferred state.
+Collection validation and required metadata come from the association property;
+errors on `tags` appear on `tags._ids`. Submitted empty arrays, empty strings,
+and null do not restore old selected identifiers. Ordinary value-source ordering
+and explicit field overrides still apply. See [association examples](/associations).
+
 ## Attributes
 
-`attributes(array)` configures the input's HTML attributes; `partAttributes(string, array)`
-configures a named part such as `container`, `label`, `help`, or `errors`.
+`attributes(array)` configures the input's HTML attributes. `partAttributes(target,
+attributes)` configures another attribute bag:
+
+| Attribute target | Applies to | Rendered by |
+| --- | --- | --- |
+| `container` | The complete control's outer wrapper. | `control.php` |
+| `label` | Label or legend. | `label.php` |
+| `help` | Help text element. | `help.php` |
+| `errors` | Validation feedback element. | `errors.php` |
+
+`container` is an attribute target, not a separate renderable or template part.
+For example, `partAttributes('container', ['class' => 'article-field'])` adds a class
+to the wrapper produced by `control.php`. A custom control element must output
+its supplied `$attributes` for those settings to appear.
 Arbitrary `data-*`, Alpine, HTMX, and other integration attributes are supported.
 Native identity/state belongs in typed setters. A null attribute removes an
 inherited value; false omits a boolean attribute. Values are escaped.

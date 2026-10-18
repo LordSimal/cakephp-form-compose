@@ -56,6 +56,24 @@ select it on child fields or buttons. Field variant paths are
 `variants/{variant}/{part}.php`; there is no additional type directory inside a
 variant.
 
+### Layer priority
+
+For `new Theme(['forms/application', 'MyDesignSystem.forms'])` and an email field
+requesting `compact`, lookup tries:
+
+```text
+1. forms/application/variants/compact/control
+2. forms/application/email/control
+3. forms/application/control
+4. MyDesignSystem.forms/variants/compact/control
+5. MyDesignSystem.forms/email/control
+6. MyDesignSystem.forms/control
+7. Bundled base candidates
+```
+
+An application generic control wins over a plugin variant. Avoid that generic
+override or use `$parent()` to delegate if the shared variant should remain reachable.
+
 ### Explicit overrides
 
 Use `template()` to select the complete field control element. It takes
@@ -100,7 +118,10 @@ Elements receive a `$parent()` closure that renders the same part in the next
 layer. For example, an application can wrap a shared control:
 
 ```php
-<?php /** @var \Closure(): string $parent */ ?>
+<?php
+
+/** @var \Closure(): string $parent */
+?>
 <section class="application-field">
     <?= $parent() ?>
 </section>
@@ -186,7 +207,7 @@ constraints, and typed `config`.
 
 | Part | Purpose |
 | --- | --- |
-| `control.php` | Arrange the complete field. Receives the container attributes. |
+| `control.php` | Arrange the complete field. Receives the wrapper attributes from the `container` attribute target. |
 | `label.php` | Render a label, or a legend for a grouped control. |
 | `input.php` | Render the input hook; normally calls `$field->renderInput($attributes)`. |
 | `help.php` | Render enabled help content. |
@@ -313,11 +334,55 @@ layout. There is no `row` template part. See the
 The `error-summary` scope renders `control`. Its element receives `$form`,
 `$entries` (`list<FeedbackEntry>`), `$title`, `$attributes`, `$titleAttributes`,
 and `$templateData`. An entry exposes `label` (text or trusted `Html`), `messages`
-(escaped strings), and `target` (an emitted DOM ID or null for an unlinked message).
+(raw validation strings; escape them when outputting), and `target` (an emitted DOM ID or null for an unlinked message).
 
 The default section and heading IDs are associated with `aria-labelledby` and
 checked for collisions. Preserve those supplied attributes in custom markup.
-See the [complete summary element](/error-summaries#customize-the-summary-element).
+Create the element in the second tab, then select it on a summary builder inside
+an open form after rendering the fields (or pass it through `SummaryConfig` when
+configuring a complete form):
+
+::: code-group
+
+```php [Inside an open form, after its controls]
+echo $form->errorSummary()->template('forms/summary');
+```
+
+```php [templates/element/forms/summary.php]
+<?php
+declare(strict_types=1);
+
+use FormCompose\Rendering\Html;
+
+/**
+ * @var list<\FormCompose\Form\FeedbackEntry> $entries
+ * @var string|\FormCompose\Rendering\Html $title
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var \FormCompose\Rendering\Attributes $titleAttributes
+ */
+?>
+<section<?= $attributes ?>>
+    <h2<?= $titleAttributes ?>><?= Html::text($title) ?></h2>
+    <ul>
+        <?php foreach ($entries as $entry): ?>
+            <?php foreach ($entry->messages as $message): ?>
+                <li>
+                    <?php if ($entry->target !== null): ?>
+                        <a href="<?= Html::text('#' . rawurlencode($entry->target)) ?>">
+                            <?= Html::text($entry->label) ?>: <?= Html::text($message) ?>
+                        </a>
+                    <?php else: ?>
+                        <?= Html::text($entry->label) ?>: <?= Html::text($message) ?>
+                    <?php endif; ?>
+                </li>
+            <?php endforeach; ?>
+        <?php endforeach; ?>
+    </ul>
+</section>
+```
+
+:::
+
 
 ## POST action templates
 
@@ -325,7 +390,7 @@ Standalone action buttons use `button/control.php`; action links use
 `action/control.php`. Both receive `$form`, `$label`, `$attributes`, and
 `$templateData`. Preserve the supplied trigger associations in custom markup.
 The external action script is registered through CakePHP's HTML helper and the
-`script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](/post-actions#options-and-presentation).
+`script` view block; control loading with the `autoActionScript` helper option. See [POST action templates](/post-action-reference#options-and-presentation).
 
 ## Attributes
 
@@ -383,6 +448,14 @@ $form = $this->Form
 and `defaults`. Layers are element prefixes in priority order. Empty prefixes or
 prefixes containing `..` throw `InvalidArgumentException`. `Theme::base(): self`
 returns a theme with no custom layers or defaults; bundled elements remain available.
+
+The helper's `theme` setting accepts a `Theme`, `'Base'`, or null (bundled markup).
+An explicit form theme replaces the helper theme, including layers and defaults.
+Omitting the form setting or passing null inherits the helper theme. Helper
+`setConfig()` changes future bindings and standalone actions; existing sessions
+retain their selected theme. `themeDebug` defaults to false and requires true to
+emit lookup comments. An explicitly supplied renderer keeps its own tracing
+behavior; construct `PhpRenderer` with `themeDebug: true` when needed.
 
 `attributes(string $part, string $type): Attributes` starts with generic defaults,
 then replaces matching keys with type-specific defaults. An email class default

@@ -108,6 +108,9 @@ Composer scripts resolve dependency binaries from `vendor/bin`. For direct execu
 - Keep the README concise and link to the documentation site. The site owns the full explanation: show the problem and a control call connected to its PHP element before detailed setup, recipes, and reference material.
 - Keep the homepage short, with a few tabbed code examples. Put conceptual explanations, recipes, and detailed contracts in the guides and reference pages.
 - Prefer built-in navigation, local search, code groups, callouts, and details blocks over custom Vue components when they meet the need.
+- Write guides as focused task recipes: explain the goal, show the smallest working example, then describe the result. Introduce ordinary usage before advanced variations. Keep exhaustive contracts in the reference and delete duplicated or unhelpful prose.
+- Group related example files in labeled code tabs, distinguishing cooperating files from alternative approaches. Include imports and identify application-supplied data. Alias-discovery examples must use the discovered alias; manual instance registration belongs in advanced override examples.
+- Use VitePress extensions only to improve reading: highlight the setting being introduced, reserve callouts for actionable caveats, and put only optional expansions in details blocks. Keep prerequisites visible. Omit line numbers unless they help explain a longer example. Preserve published routes and linked anchors when restructuring pages.
 - Keep short, simple documentation chains on one line, such as `$form->add('body')->type('textarea');`. Break longer chains with multiple configuration calls onto separate indented lines.
 - Group consecutive template variable annotations in one multiline docblock, including in documentation examples.
 - Write CSS examples as multiline rule blocks with one declaration per line.

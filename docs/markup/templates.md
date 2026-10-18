@@ -98,32 +98,17 @@ so the input's `aria-describedby` reference still points to the help. `helpText(
 returns escaped text or explicitly trusted markup. With no configured help, the
 help part is empty and this element is not rendered.
 
-`template('forms/email')` selects the same part as
-`partTemplate('control', 'forms/email')`. Combine it with other part overrides
-when needed:
-
-```php
-echo $form->control('email')
-    ->type('email')
-    ->help('Use your company address.')
-    ->template('forms/email')
-    ->partTemplate('help', 'forms/email-help');
-```
-
-Parts without an explicit selection continue to use the theme. If you select
-the same part again, the last selection wins.
-
-::: tip Match the part you want to change
-`control` arranges the complete field. `input` is the input rendering hook;
-`native` is the standard input markup it ultimately renders. Hidden fields
-bypass the control layout, so customize their input parts instead.
-The [template reference](/template-reference#field-templates) lists all parts.
-:::
+`template()` selects the whole control; `partTemplate()` selects only the named
+part. Other parts keep using the theme. See [all field parts](/template-reference#field-templates)
+when changing the actual input markup rather than its wrapper.
 
 ## Pass custom presentation data
 
-Use `templateData` for values your element needs. Here the decoration becomes
-configurable:
+Pass data when the same layout needs different decorations. Here the prefix is
+configured by the caller. Replace the email element with the version in the
+second tab:
+
+::: code-group
 
 ```php [Inside an open form]
 echo $form->control('email')
@@ -132,20 +117,34 @@ echo $form->control('email')
     ->templateData(['prefix' => '@']);
 ```
 
-In the email element, add `use FormCompose\Rendering\Html;` after
-`declare(strict_types=1);`, then replace the decorative span with:
+```php [templates/element/forms/email.php]
+<?php
+declare(strict_types=1);
 
-```php
-<span aria-hidden="true"><?= Html::text($templateData['prefix']) ?></span>
+use FormCompose\Rendering\Html;
+
+/**
+ * @var \FormCompose\Form\Field\BoundField $field
+ * @var \FormCompose\Rendering\Attributes $attributes
+ * @var array{prefix?: string} $templateData
+ */
+?>
+<div<?= $attributes ?>>
+    <?= $field->label() ?>
+    <div class="input-with-icon">
+        <span aria-hidden="true"><?= Html::text($templateData['prefix'] ?? '@') ?></span>
+        <?= $field->input() ?>
+    </div>
+    <?= $field->help() ?>
+    <?= $field->errors() ?>
+</div>
 ```
 
-Custom data stays in `$templateData`; it does not become HTML attributes or
-replace `$field`. The same bag is available to this field's parts. Escape its
-values when outputting them.
+:::
 
-Form, button, and blueprint data have separate scopes. See
-[template data](/template-reference#template-data) for replacement rules and
-the complete scope table.
+The element defaults to `@` when no prefix is supplied. Data is available in
+`$templateData`, separate from HTML attributes. Escape it at the point of output. See [template-data scope and merging](/template-reference#template-data)
+for its full contract.
 
 ## Reuse the layout automatically
 

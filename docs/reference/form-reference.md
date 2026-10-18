@@ -24,7 +24,7 @@ $form = $this->Form
 `form(mixed $data = null, FormConfig|null $config = null): FormBuilder` accepts ORM
 entities, CakePHP `Form` objects, array contexts, `ContextInterface`, or null.
 `bind(): FormSession` creates a fresh session each time; later builder changes do
-not change existing sessions. There is no helper-level `bind()` method.
+not change existing sessions.
 
 ### Binding options
 
@@ -60,6 +60,26 @@ When a config explicitly supplies a blueprint selection, `apply()` and `merge()`
 replace the whole selection; an unspecified selection preserves existing defaults.
 The shared [presentation API](/field-options#templates) configures attributes,
 templates, variants, and template data.
+
+### Value sources
+
+`valueSources(array $sources)` selects where displayed field values are read.
+It does not change where or how the browser submits the form. Configure it before
+`bind()`. The [search-form guide](/search-forms) shows a complete GET example.
+
+| Source | Reads from |
+| --- | --- |
+| `data` | Parsed request body: `$request->getData()`. |
+| `query` | URL query parameters: `$request->getQueryParams()`. |
+| `context` | The entity, CakePHP Form, or context passed to `form()`. |
+
+The default order is `['data', 'context']`. Sources are checked in order;
+`['query', 'context']` reads URL parameters first and uses the bound object as a
+fallback. The list must be nonempty and contain only these source names.
+An explicit field `value()` overrides every source. Missing sources fall back
+to the field's `default()`; context lookup also receives `default()` and
+`schemaDefault()` according to CakePHP's context contract. Submitted null, false,
+zero, and empty strings count as present. A context null falls through.
 
 ### Helper configuration
 
@@ -214,25 +234,48 @@ embed paths fail before the form opens. See [blueprint composition](/composition
 
 ### Application-owned complete-form layouts
 
-`template('forms/editor')` on the form builder selects the complete form layout.
-Its variables are `$form`, `$state`, `$body`, `$summary`, `$submit`, `$submitConfig`,
-`$attributes`, and `$templateData`. The opening tag has already rendered; emit
-the buffered body once and do not open or close another form.
+Select `template()` on the form builder for an outer layout. Create the element
+in the second tab; the `article` blueprint is defined in the
+[blueprint guide](/blueprints).
 
-```php
+::: code-group
+
+```php [View]
+echo $this->Form
+    ->form($article)
+    ->blueprint('article')
+    ->errorSummary()
+    ->template('forms/editor')
+    ->submit('Save article');
+```
+
+```php [templates/element/forms/editor.php]
 <?php
+declare(strict_types=1);
 
 /**
  * @var \FormCompose\Form\FormSession $form
  * @var \FormCompose\Configuration\ButtonConfig $submitConfig
+ * @var string $summary
+ * @var string $body
+ * @var string|\FormCompose\Rendering\Html|false $submit
  */
 ?>
 <?= $summary ?>
-<section<?= (string)$attributes ?>><?= $body ?></section>
-<?php if ($submit !== false): ?>
-    <?= $form->submit($submit, config: $submitConfig) ?>
-<?php endif;
+<section class="form-body"><?= $body ?></section>
+<div class="form-actions">
+    <?php if ($submit !== false): ?>
+        <?= $form->submit($submit, config: $submitConfig) ?>
+    <?php endif; ?>
+</div>
 ```
+
+:::
+
+The form is already open. Emit the prepared `$summary` and `$body` once, then
+render actions; do not open or close another form. Fields added by this outer
+layout after summary preparation do not appear in that summary. See
+[layout variables](/template-reference#complete-form-layouts) for the full contract.
 
 ## errorSummary() {#error-summary}
 
@@ -247,6 +290,20 @@ of errors from successfully rendered controls. Render it after the controls;
 buffer their HTML first if the summary should appear above them. Inspection
 alone adds no summary entries. `errors(false)` suppresses that field's entry.
 See [error summaries](/error-summaries).
+
+### Summary entries
+
+Controls contribute errors in rendering order with their resolved labels. Hidden,
+disabled, empty/all-disabled choice controls do not become focus targets.
+`errors(false)` suppresses inline messages and summary entries. Collection errors
+from repeated embeds are unlinked; row-field errors link to their actual controls.
+Composite group errors target the first eligible rendered child and do not
+duplicate nested child errors. Handwritten registrations contribute unlinked
+messages because registration cannot prove which focusable element was emitted.
+
+Suppressed or blank field labels use the humanized field name in the summary. Text is escaped, and summary
+links target only IDs actually recorded by the session. Failed rendering rolls
+back feedback along with submitted names and IDs.
 
 ## hiddenFields() {#hidden-fields}
 
@@ -269,7 +326,8 @@ which also exposes native button `name()`, `value()`, and `disabled()` setters.
 Both offer `method()`, `data()`, `confirm()`, `block()`, `form(FormConfig)`,
 and common presentation setters.
 `block()` takes a nonempty block name or null. See [POST actions](/post-actions)
-for delegated JavaScript, blocks, and protection contracts.
+for ordinary usage, or the [POST action reference](/post-action-reference) for
+JavaScript and protection contracts.
 
 ## Lifecycle and failures
 

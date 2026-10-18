@@ -1,28 +1,21 @@
 ---
 title: Association fields
-description: Render belongsTo, hasOne, hasMany, and belongsToMany fields with CakePHP association conventions and PHP templates.
+description: Choose related records and edit associated data using CakePHP property paths.
 ---
 
 # Association fields
 
-FormCompose uses CakePHP's entity context to resolve associated values, schemas,
-and validation metadata. The usual field paths work with both `control()` and
-`field()`, including inside [reusable blueprints](/reusable-forms).
-
-For basic select, radio, and checkbox syntax, start with [Choice controls](/choices).
-
-::: info Your application owns association data
-Load the associated records you want to edit before binding the entity. Supply
-choice lists from your application; FormCompose can discover matching view
-variables, but it does not query the ORM for choices or load and save associations.
-:::
+Use CakePHP's property paths to choose related records or edit nested data.
+Load the associations you want to edit before binding the entity.
 
 ## Choose related records
 
-For an article with `belongsTo('Authors')` and `belongsToMany('Tags')`, expose the
-option lists in your controller:
+For an article with Authors and Tags associations, supply option lists from your
+controller. These snippets belong to your existing edit action and view.
 
-```php [src/Controller/ArticlesController.php]
+::: code-group
+
+```php [ArticlesController::edit() — view data]
 $article = $this->Articles->get($id, contain: ['Tags']);
 $authors = $this->Articles->Authors->find('list');
 $tags = $this->Articles->Tags->find('list');
@@ -30,28 +23,23 @@ $tags = $this->Articles->Tags->find('list');
 $this->set(compact('article', 'authors', 'tags'));
 ```
 
-Then render the fields without repeating conventional choice configuration:
-
 ```php [templates/Articles/edit.php]
 <?php
 $form = $this->Form->form($article)->bind();
 ?>
-
 <?= $form->open() ?>
-<?= $form->control('author_id') ?>
-<?= $form->control('tags._ids') ?>
-<?= $form->submit('Save') ?>
+<?= $form->control('author_id')
+    ->choices($authors)
+    ->placeholder('No author') ?>
+<?= $form->control('tags._ids')->choices($tags) ?>
+<?= $form->submit('Save article') ?>
 <?= $form->close() ?>
 ```
 
-| Field | Default presentation | Choice variable | Submitted name |
-| --- | --- | --- | --- |
-| `author_id` | Single select labeled “Author” | `$authors` | `author_id` |
-| `tags._ids` | Multiple select labeled “Tags” | `$tags` | `tags[_ids][]` |
-| `comments.0.author_id` | Single select labeled “Author” | `$authors` | `comments[0][author_id]` |
-| `comments.0.tags._ids` | Multiple select labeled “Tags” | `$tags` | `comments[0][tags][_ids][]` |
+:::
 
-Selecting author 7 and tags 2 and 5 produces request data shaped like:
+`author_id` is a single select. `tags._ids` is a multiple select, with the article's
+loaded tags selected. Choosing author 7 and tags 2 and 5 submits:
 
 ```php
 [
@@ -60,115 +48,74 @@ Selecting author 7 and tags 2 and 5 produces request data shaped like:
 ];
 ```
 
-Your normal `patchEntity()` call applies this data according to the application's
-association and accessibility configuration.
-
-`._ids` also works with `hasMany` associations. Loaded associated entities supply
-their selected identifiers through CakePHP's context, including custom single-column
-primary keys such as UUIDs or string keys. Custom association properties use their
-property name: `topic_tags._ids` looks for `$topicTags` and gets the label “Topic Tags”.
+Pass this data to your normal CakePHP `patchEntity()` and save workflow with the
+appropriate association configuration.
 
 ### Choice discovery and explicit overrides
 
-Field names ending in `_id` use the pluralized name for their choice variable.
-Collection paths ending in `._ids` use the collection property without further
-pluralization. Other inferred choice fields use the pluralized final property,
-following CakePHP's convention; for example `status` can use `$statuses`.
+With conventional field and view-variable names, you can omit `choices()`:
 
-View variables must be iterable. Discovery reads the current view when resolving
-each field, so lists set after `bind()` are available too. Explicit `choices()` wins,
-including an empty array. Pass lists directly when using nonconventional foreign
-key names or when you want to avoid name-based discovery:
+```php
+// Uses the $authors and $tags view variables set above.
+echo $form->control('author_id');
+echo $form->control('tags._ids');
+```
+
+An `_id` field looks for its pluralized view variable. A `._ids` selector looks
+for the collection's variable. FormCompose reads those lists; it does not query
+the database for them. Explicit `choices()` takes priority, including an empty
+list. Use it for nonconventional names or to make the source visible at the call.
+
+For a checkbox presentation:
 
 ```php
 echo $form->control('tags._ids')
-    ->choices($availableTags)
-    ->label('Choose topics');
+    ->type('multicheckbox')
+    ->choices($tags);
 ```
-
-Here `$availableTags` is an application-supplied iterable choice list. The explicit
-list replaces discovery for this field. All ordinary [field options](/field-options)
-and [template overrides](/usage#choose-a-template-for-one-control) still apply.
-
-Explicit types are preserved. An inferred `._ids` control defaults to a multiple
-select; if you specify `type('select')` yourself, also specify `multiple()`
-when needed. `multiple(false)` overrides the inferred multiple-selection default.
-
-For a checkbox group, use the plugin's explicit field type:
-
-```php
-echo $form->control('tags._ids')->type('multicheckbox');
-```
-
-The group still discovers `$tags`, selects the loaded IDs, and uses “Tags” as its
-legend. Radio fields can also discover option lists when explicitly requested.
 
 ## Edit associated records
 
-For an article with a `hasOne` details association and `hasMany` comments, use
-property paths and numeric indexes after loading those records:
+Load `Details` and `Comments` in the controller's existing article query, then
+render their property paths inside the open article form:
 
 ```php
-// Inside the open article form, with these associations loaded.
 echo $form->control('details.id');
 echo $form->control('details.summary');
-
 echo $form->control('comments.0.id');
 echo $form->control('comments.0.body');
-echo $form->control('comments.0.author_id');
 ```
 
-The context resolves each associated table's schema, validator, and errors.
-For example, `comments.0.body` can become a textarea with the comment validator's
-required and maximum-length constraints. Request data takes precedence over the
-loaded record by default, so submitted edits survive validation failures.
+`comments.0.body` submits `comments[0][body]`. Associated schemas supply types,
+validation constraints, and errors. Known primary keys render as hidden inputs.
+Use [repeated blueprints](/repeated-embeds) when every comment needs the same set
+of fields.
 
-Primary keys identified by the context default to hidden inputs, including nested
-keys. Their rendered values are locked when form protection is enabled. Explicit
-field types can override that presentation. Associated schema metadata is available
-even when a new parent has no related entity yet.
-
+::: details Edit values on a join record
 For editable `belongsToMany` junction data, use CakePHP's `_joinData` property.
-For example, if the tags table uses `tag_key` as its primary key:
+With loaded tags whose primary key is `id`, render:
 
 ```php
-echo $form->control('tags.0.tag_key');
+echo $form->control('tags.0.id');
 echo $form->control('tags.0._joinData.priority');
 ```
 
-Use nested records when editing individual links and their junction fields. Use
-`tags._ids` when choosing a set of related records. CakePHP's configured
-associations and marshalling options determine how the submitted data is applied.
+Use this form of nested record editing when editing each link's data. Use
+`tags._ids` when choosing a set of related records.
+:::
 
 ## Validation feedback and empty selections
 
-An error attached to the `tags` property appears on its `tags._ids` selector.
-Nested collection errors similarly appear on controls such as
-`comments.0.tags._ids`. The selector reads required-state metadata from that
-collection property, and the normal templates associate escaped feedback with
-the input through its ID and ARIA attributes.
+An error on `tags` appears on its `tags._ids` control. Nested errors appear next
+to their corresponding fields. Clearing the tags selection submits an empty
+value, allowing your application to remove the old selection.
 
-Multiple selects and checkbox groups include a hidden empty-selection fallback.
-Clearing a selection therefore submits `tags[_ids]` as an empty string instead of
-leaving the field absent. Submitted empty arrays, empty strings, and null values
-do not restore previously selected IDs. Explicit `value` and configured
-[value-source ordering](/usage#data-and-value-sources) keep their usual precedence.
-
-Form protection tracks the rendered nested names and hidden primary keys.
-Inspecting a field registers no submission, and disabled inputs do not become
-expected submitted fields. Normal CSRF and form-protection setup still belongs
-to the host application.
-
-Pass the resulting request data to CakePHP's normal `patchEntity()` workflow with
-the appropriate `associated` configuration, then validate and save through the
-ORM. Definitions, templates, and form sessions do not load or persist associations.
+Your application still controls association accessibility, validation, and saving.
+See [association conventions](/field-options#association-conventions) for custom
+property names, primary keys, inferred types, and empty-value behavior.
 
 ## Reuse associated field configuration
 
-For a blueprint declared with `#[Form('author')]`, use `$form->embed('author', 'author')` in the parent hook
-to compose it, or render it with `$form->blueprint('author', at: 'author')`.
-The child keeps its own PHP layout and relative field names. See
-[nested blueprints and layouts](/composition#compose-an-association).
-
-Use [repeated embeds](/repeated-embeds) to render a reusable child blueprint
-for every row of a loaded or submitted association.
+A parent blueprint can embed a child at `author`, or repeat a child at `comments`.
+Follow [blueprint composition](/composition#compose-an-association) and
+[repeated embeds](/repeated-embeds) for complete declarations and views.
